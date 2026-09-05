@@ -1,0 +1,46 @@
+blueprint_version: 0.5.2
+updated_at: '2026-09-05T16:18:00-03:00'
+phases:
+  discovery:
+    status: COMPLETE
+    progress: 100
+    note: Discovery product vision and MVP scope were explicitly approved by Luis Hernández on 2026-09-05.
+  target_definition:
+    status: NOT_STARTED
+    progress: 0
+  requirements_domain:
+    status: NOT_STARTED
+    progress: 0
+checks:
+  discovery.product_vision:
+    status: PASS
+    verification: manual
+    note: Explicit human approval recorded after review of the Discovery package.
+    evidence_ids: [EVD-DISC-PRODUCT-001, EVD-DISC-APPROVAL-001]
+  discovery.scope_mvp:
+    status: PASS
+    verification: manual
+    note: Explicit human approval recorded after review of the MVP boundary and exclusions.
+    evidence_ids: [EVD-DISC-SCOPE-001, EVD-DISC-APPROVAL-001]
+gates:
+  requirements_ready:
+    status: PENDING
+    evaluated_at: null
+    note: Requirements have not started; this is the first formal downstream gate in the Greenfield workflow.
+functional_slices: []
+scoped_gates: []
+blockers: []
+api_impacts: []
+artifacts:
+  - id: EVD-BLUEPRINT-BASELINE-001
+    type: blueprint_baseline
+    value: documentation/discovery/BASELINE_VERIFICATION.md
+  - id: EVD-DISC-PRODUCT-001
+    type: discovery_product_vision
+    value: documentation/discovery/DISCOVERY.md
+  - id: EVD-DISC-SCOPE-001
+    type: discovery_scope
+    value: documentation/discovery/DISCOVERY.md
+  - id: EVD-DISC-APPROVAL-001
+    type: manual_approval
+    value: documentation/discovery/DISCOVERY_APPROVAL.md
