@@ -1,0 +1,43 @@
+blueprint_version: 0.5.2
+updated_at: '2026-09-05T13:50:00-03:00'
+phases:
+  discovery:
+    status: READY_FOR_REVIEW
+    progress: 100
+    note: Discovery packet prepared from the approved handoff and live Blueprint 0.5.2 verification. Manual review is pending.
+  target_definition:
+    status: NOT_STARTED
+    progress: 0
+  requirements_domain:
+    status: NOT_STARTED
+    progress: 0
+checks:
+  discovery.product_vision:
+    status: PENDING
+    verification: manual
+    note: Product vision is documented and awaits explicit human review.
+    evidence_ids: [EVD-DISC-PRODUCT-001]
+  discovery.scope_mvp:
+    status: PENDING
+    verification: manual
+    note: MVP scope and exclusions are documented and await explicit human review.
+    evidence_ids: [EVD-DISC-SCOPE-001]
+gates:
+  requirements_ready:
+    status: PENDING
+    evaluated_at: null
+    note: Requirements have not started; this is the first formal downstream gate in the Greenfield workflow.
+functional_slices: []
+scoped_gates: []
+blockers: []
+api_impacts: []
+artifacts:
+  - id: EVD-BLUEPRINT-BASELINE-001
+    type: blueprint_baseline
+    value: documentation/discovery/BASELINE_VERIFICATION.md
+  - id: EVD-DISC-PRODUCT-001
+    type: discovery_product_vision
+    value: documentation/discovery/DISCOVERY.md
+  - id: EVD-DISC-SCOPE-001
+    type: discovery_scope
+    value: documentation/discovery/DISCOVERY.md

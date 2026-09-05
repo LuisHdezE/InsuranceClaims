@@ -1,0 +1,43 @@
+project:
+  name: Insurance Claims Legacy Modernization
+  repository: LuisHdezE/InsuranceClaims
+  description: Technical case study for incremental modernization of insurance claims workflows over a simulated legacy core.
+blueprint:
+  version: 0.5.2
+  mode: greenfield
+stack:
+  backend: nodejs-typescript
+  database: postgresql
+  frontend: react-typescript
+  styling: tailwindcss
+  mobile: null
+capabilities:
+  web: true
+  android: false
+  saas: false
+  multi_tenant: false
+  offline_mobile: false
+  redis: false
+  docker: true
+  mcp: true
+  kubernetes: true
+  legacy_simulator: true
+artifact_locations:
+  status: .blueprint/status.yaml
+  evidence_root: .blueprint/evidence
+  interface_scope_baseline: .blueprint/ui/interface-scope-baseline.json
+  interface_inventory: .blueprint/ui/interface-inventory.json
+  visual_identity: .blueprint/ui/visual-identity.md
+  design_system: .blueprint/ui/design-system.json
+  design_tokens: .blueprint/ui/design-tokens.json
+  mockups_root: .blueprint/mockups
+  client_architecture_root: .blueprint/client-architecture
+  functional_slices_root: .blueprint/functional-slices
+  api_impacts_root: .blueprint/api-impacts
+  openapi: openapi.yaml
+skills:
+  profiles:
+    - core
+    - backend
+    - web
+    - devops
