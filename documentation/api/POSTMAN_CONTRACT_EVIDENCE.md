@@ -1,11 +1,11 @@
-# Postman Operational Contract Evidence — Insurance Claims Legacy Modernization MVP
+# Postman Contract Evidence — Insurance Claims Legacy Modernization MVP
 
 Date: 2026-09-05
 Blueprint: 0.5.2
 Mode: GREENFIELD with SIMULATED legacy coexistence
 Boundary: `postman_contract`
 Gate: `postman_ready`
-Status: READY_FOR_REVIEW
+Status: APPROVED
 
 > Unofficial technical case study inspired by publicly observable insurance workflows. No affiliation with FAR Seguros. All policy, claim, user and operational data are synthetic.
 
@@ -17,29 +17,20 @@ This evidence proves the three canonical Blueprint obligations for the Postman O
 - `api.postman_environment`
 - `api.postman_coverage`
 
-It does not claim API QA execution. Runtime positive, negative, security, contract and audit validation remain downstream in the `api_qa` boundary.
+The Postman artifacts operationalize the already-approved REST contract without expanding scope or claiming API QA execution.
 
 ## 2. Generated artifacts
 
-Collection:
+Canonical files:
 
-`postman/InsuranceClaims.postman_collection.json`
+- `postman/InsuranceClaims.postman_collection.json`
+- `postman/InsuranceClaims.local.postman_environment.json`
 
-Environment:
+Collection schema:
 
-`postman/InsuranceClaims.local.postman_environment.json`
+`Postman Collection v2.1`
 
-Validation script:
-
-`scripts/validate-postman-contract.mjs`
-
-CI workflow:
-
-`.github/workflows/postman-contract.yml`
-
-## 3. REST coverage
-
-The collection contains exactly one canonical request for each approved REST operationId:
+REST operationIds represented exactly once:
 
 1. `verifyPolicyVehicle`
 2. `createClaim`
@@ -52,105 +43,123 @@ The collection contains exactly one canonical request for each approved REST ope
 9. `getLiveness`
 10. `getReadiness`
 
-`MCP:get_claim_status` remains intentionally outside this REST Postman collection.
+`MCP:get_claim_status` remains intentionally outside the REST Postman collection.
 
-Static coverage is therefore 10/10 approved REST operations with no extra request pretending to be an approved operation.
+## 3. Operational environment
+
+The local environment contains configurable values for:
+
+- `baseUrl`
+- `requestId`
+- `idempotencyKey`
+- `policyReference`
+- `vehicleReference`
+- `trackingCode`
+- `operatorLogin`
+- `operatorPassword`
+- `bearerToken`
+- `claimId`
+- `evidenceId`
+- `expectedFromStatus`
+- `toStatus`
+
+Security properties:
+
+- `operatorPassword` is committed empty and typed as `secret`;
+- `bearerToken` is committed empty and typed as `secret`;
+- no live credentials, tokens or FAR data are stored.
 
 ## 4. Operational chaining
 
-The collection is arranged for manual and later automated execution using environment variables rather than committed business truth.
-
-Successful responses may populate:
+Successful responses may populate reusable environment values:
 
 - `authenticateOperator` -> `bearerToken`
 - `createClaim` -> `trackingCode`
 - `listClaims` -> first `claimId` when present
 - `getClaimDetail` -> first `evidenceId` when present
 
-The environment also exposes synthetic/configurable inputs for:
+This makes the collection manually operable while keeping runtime behavior downstream of this static contract boundary.
 
-- `baseUrl`
-- policy and vehicle references
-- idempotency key
-- event data
-- pagination/status filter
-- transition states
+## 5. Static coverage validation
 
-The optional evidence file part is present but disabled by default because a portable repository cannot safely commit a machine-local file path.
+Workflow:
 
-## 5. Secret handling
+`.github/workflows/postman-contract.yml`
 
-Committed environment values deliberately contain no operator password and no bearer token.
+Validator:
 
-Both variables are typed as Postman `secret` values with empty committed contents:
-
-- `operatorPassword`
-- `bearerToken`
-
-The operator login uses the synthetic `.invalid` address already approved for this case study.
-
-## 6. Static contract validation
+`scripts/validate-postman-contract.mjs`
 
 The validator checks:
 
-- Postman Collection v2.1 schema declaration;
-- exact request count against `API_ENDPOINT_INVENTORY.json`;
-- operationId identity through canonical request names;
-- method and normalized route alignment;
-- no unexpected REST operations;
-- no MCP tool represented as REST;
-- required `X-Request-Id` on business routes;
+- Postman Collection v2.1 declaration;
+- exact 10/10 REST operation coverage;
+- no extra/fake MCP REST operation;
+- HTTP method and route alignment with `API_ENDPOINT_INVENTORY.json`;
+- bearer/noauth behavior;
+- `X-Request-Id` coverage on business operations;
 - required `Idempotency-Key` on `createClaim`;
-- bearer auth only on approved protected operations;
-- `noauth` on public/operational requests;
-- JSON versus multipart body mode;
-- required multipart field presence;
-- required query variables;
-- operational capture of token/tracking/claim/evidence identifiers;
+- JSON/form-data body mode alignment;
+- complete multipart field set for `createClaim`;
+- expected query-variable wiring;
+- safe operational capture scripts;
 - required environment variables;
-- local `baseUrl`;
-- absence of committed password/token values;
-- valid example idempotency-key bounds.
+- empty committed operator password and bearer token.
 
-## 7. Exact-head evidence
+## 6. Exact-head CI evidence before approval
 
-Initial candidate:
+Review candidate:
 
-`5093b5c7f109c13b69f7f4c67f8c8dddd4929328`
+`807c3a2c0f6d71a79975c6f0be41448fa443ac60`
 
-Postman Contract workflow:
+Runs:
 
-- run `33998631294`
-- conclusion: **SUCCESS**
-- `Validate Postman collection and environment coverage`: PASS
+- Postman Contract `33998724806` = SUCCESS
+- OpenAPI Validation regression `33998724767` = SUCCESS
+- API Implementation regression `33998724781` = SUCCESS
 
-Regression evidence on the same SHA:
+## 7. Exact-head CI evidence after approval
 
-- OpenAPI Validation run `33998631232`: **SUCCESS**
-- API Implementation run `33998631248`: **SUCCESS**
+Approved final head before this documentation-only evidence refresh:
 
-The regression run again passed locked dependency installation, Prisma contract emit, TypeScript typecheck, backend tests, architecture conformance and build.
+`fd175a3635ae2e445ca685a94d2c7461f7c900da`
 
-## 8. Boundary integrity
+Runs:
+
+- Postman Contract `33999659965` = SUCCESS
+- OpenAPI Validation regression `33999659848` = SUCCESS
+- API Implementation regression `33999659876` = SUCCESS
+
+The backend regression passed locked dependency installation, Prisma contract emit, TypeScript typecheck, backend tests, architecture conformance and build.
+
+## 8. Human approval
+
+Luis Hernández explicitly approved:
+
+> Apruebo Postman Ready
+
+Approval evidence:
+
+`documentation/api/POSTMAN_READY_APPROVAL.md`
+
+## 9. Scope integrity
 
 This boundary does not:
 
-- execute positive/negative API QA scenarios;
-- classify dependency advisories for Security QA;
-- claim runtime audit-event verification;
-- add or change REST operations;
-- change the OpenAPI contract;
-- add client interfaces;
+- claim positive/negative API QA execution;
+- claim runtime contract validation against deployed PostgreSQL/legacy simulator;
+- claim security QA or audit QA completion;
+- change REST operation implementation;
+- expose MCP as REST;
 - modify Blueprint Master;
-- claim FAR Seguros internal API/process/infrastructure details.
+- claim FAR Seguros internal systems, APIs, workflows or infrastructure.
 
-## 9. Blueprint disposition
-
-Evidence supports:
+## 10. Blueprint disposition
 
 - `api.postman_collection = PASS`
 - `api.postman_environment = PASS`
 - `api.postman_coverage = PASS`
-- `postman_ready = READY_FOR_REVIEW`
+- `postman_contract = COMPLETE`
+- `postman_ready = PASS`
 
-The gate must not become `PASS` until explicit human approval is recorded. Gate approval and PR merge authorization remain separate decisions.
+API QA may begin only after PR #8 receives separate merge authorization, is merged, and `main` is verified post-merge.
