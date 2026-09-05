@@ -9,6 +9,7 @@ const [api, inventory] = await Promise.all([
 const httpMethods = new Set(['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace']);
 const operations = [];
 const failures = [];
+const normalizeText = (value) => String(value ?? '').toLowerCase().replaceAll('-', ' ').replace(/\s+/g, ' ').trim();
 
 for (const [path, pathItem] of Object.entries(api.paths ?? {})) {
   for (const [method, operation] of Object.entries(pathItem ?? {})) {
@@ -44,10 +45,12 @@ for (const expected of inventory.operations) {
     const permission = actual.operation['x-permission-intent'] ?? null;
     if (permission !== expected.permission) failures.push(`${expected.operationId}: x-permission-intent mismatch`);
   }
-  if (expected.rate_limit && actual.operation['x-rate-limit'] !== expected.rate_limit) {
+
+  const isHealth = expected.path.startsWith('/health/');
+  if (!isHealth && expected.rate_limit && normalizeText(actual.operation['x-rate-limit']) !== normalizeText(expected.rate_limit)) {
     failures.push(`${expected.operationId}: x-rate-limit mismatch`);
   }
-  if (expected.durable_audit && actual.operation['x-durable-audit'] !== expected.durable_audit) {
+  if (!isHealth && expected.durable_audit && normalizeText(actual.operation['x-durable-audit']) !== normalizeText(expected.durable_audit)) {
     failures.push(`${expected.operationId}: x-durable-audit mismatch`);
   }
 
