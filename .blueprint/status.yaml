@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T18:34:00-03:00'
+updated_at: '2026-09-05T18:35:00-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -22,9 +22,9 @@ phases:
     progress: 100
     note: Architecture, security/threat, authoritative data/migration and audit contracts were explicitly approved by Luis Hernández; Architecture Ready passed on 2026-09-05.
   api_contract_design:
-    status: READY_FOR_REVIEW
+    status: COMPLETE
     progress: 100
-    note: Initial v1 REST and MCP-facing contract package is complete and traceable; human API Contract Ready decision is pending.
+    note: Initial v1 REST and MCP-facing contract package was explicitly approved by Luis Hernández; API Contract Ready passed on 2026-09-05.
   api_implementation:
     status: NOT_STARTED
     progress: 0
@@ -194,10 +194,10 @@ gates:
     note: Explicit human approval recorded after review of the Architecture, Security/Threat, Data/Migration and Audit contracts.
     evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-ARCH-CLARIFICATIONS-001, EVD-SECURITY-MODEL-001, EVD-DATA-ARCH-001, EVD-AUDIT-MODEL-001, EVD-ARCH-READY-APPROVAL-001]
   api_contract_ready:
-    status: READY_FOR_REVIEW
-    evaluated_at: null
-    note: All required initial API Contract checks have evidence. Human approval is required before any endpoint implementation begins.
-    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+    status: PASS
+    evaluated_at: '2026-09-05T18:35:00-03:00'
+    note: Explicit human approval recorded after review of the initial v1 REST/MCP-facing API contract, permissions, audit, idempotency, concurrency and traceability package.
+    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001, EVD-API-CONTRACT-READY-APPROVAL-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -275,3 +275,6 @@ artifacts:
   - id: EVD-API-INVENTORY-001
     type: api_endpoint_inventory
     value: documentation/api/API_ENDPOINT_INVENTORY.json
+  - id: EVD-API-CONTRACT-READY-APPROVAL-001
+    type: manual_approval
+    value: documentation/api/API_CONTRACT_READY_APPROVAL.md
