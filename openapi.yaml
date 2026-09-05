@@ -1,0 +1,1291 @@
+openapi: 3.1.0
+info:
+  title: Insurance Claims Legacy Modernization MVP API
+  version: 1.0.0
+  description: 'Unofficial technical case study inspired by publicly observable insurance workflows. No affiliation with FAR
+    Seguros. All policy, claim, user and operational data are synthetic.
+
+
+    Formalization of approved contract revision api-v1-r1. MCP tool get_claim_status is intentionally outside this REST OpenAPI
+    description.'
+servers:
+- url: http://localhost:3000
+  description: Local demo API
+tags:
+- name: Public claims
+  description: Anonymous synthetic policy verification, claim creation, and proof-bound tracking.
+- name: Operator auth
+  description: Claims-operator authentication.
+- name: Operator claims
+  description: JWT-protected backoffice claim operations.
+- name: Health
+  description: Operational liveness and readiness probes.
+paths:
+  /api/v1/public/policy-verifications:
+    post:
+      operationId: verifyPolicyVehicle
+      summary: Verify a synthetic policy and vehicle pair
+      tags:
+      - Public claims
+      parameters:
+      - $ref: '#/components/parameters/RequestId'
+      x-permission-intent: claims.intake.create
+      x-rate-limit: 20 requests/minute/IP
+      x-durable-audit: not_required
+      x-requirements:
+      - FR-001
+      - FR-002
+      - BR-008
+      - NFR-002
+      - NFR-014
+      x-interfaces:
+      - WEB-002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyVehicleVerificationRequest'
+      responses:
+        '200':
+          description: Synthetic policy/vehicle pair is eligible.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyVehicleVerificationResponse'
+        '422':
+          description: Pair is not eligible or request validation failed.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          description: Rate limit exceeded.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Synthetic legacy verification dependency unavailable.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/public/claims:
+    post:
+      operationId: createClaim
+      summary: Create a claim with optional evidence
+      tags:
+      - Public claims
+      parameters:
+      - $ref: '#/components/parameters/RequestId'
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Opaque client idempotency key. Same key + same fingerprint replays the original successful response;
+          conflicting reuse returns 409.
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 128
+      x-permission-intent: claims.intake.create
+      x-rate-limit: 5 requests/minute/IP
+      x-durable-audit: CLAIM_CREATED
+      x-requirements:
+      - FR-002
+      - FR-003
+      - FR-004
+      - FR-005
+      - FR-006
+      - BR-004
+      - BR-008
+      - BR-009
+      - BR-010
+      - NFR-005
+      - NFR-007
+      x-interfaces:
+      - WEB-003
+      - WEB-004
+      - WEB-005
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - policyReference
+              - vehicleReference
+              - eventType
+              - occurredAt
+              - locationText
+              - description
+              additionalProperties: false
+              properties:
+                policyReference:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+                vehicleReference:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+                eventType:
+                  type: string
+                  minLength: 1
+                  maxLength: 60
+                occurredAt:
+                  type: string
+                  format: date-time
+                locationText:
+                  type: string
+                  minLength: 1
+                  maxLength: 300
+                description:
+                  type: string
+                  minLength: 1
+                  maxLength: 4000
+                evidence:
+                  type: array
+                  maxItems: 5
+                  items:
+                    type: string
+                    format: binary
+                    description: JPEG, PNG or PDF; maximum 5 MiB per file.
+      responses:
+        '201':
+          description: Claim created.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            Idempotency-Replayed:
+              $ref: '#/components/headers/IdempotencyReplayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateClaimResponse'
+        '400':
+          description: Malformed multipart request.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Idempotency key conflict or request already in progress.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '413':
+          description: Payload or file size exceeded.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '415':
+          description: Unsupported request or evidence content type.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Validation, eligibility or evidence validation failed.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          description: Rate limit exceeded.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Required dependency unavailable or atomic claim commit failed safely.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/public/claim-tracking:
+    post:
+      operationId: trackClaim
+      summary: Track a claim using the opaque tracking proof pair
+      tags:
+      - Public claims
+      parameters:
+      - $ref: '#/components/parameters/RequestId'
+      x-permission-intent: claims.tracking.read
+      x-rate-limit: 20 requests/minute/IP
+      x-durable-audit: not_required
+      x-requirements:
+      - FR-007
+      - FR-008
+      - BR-007
+      - BR-009
+      - NFR-002
+      - NFR-014
+      x-interfaces:
+      - WEB-006
+      - WEB-007
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackClaimRequest'
+      responses:
+        '200':
+          description: Customer-safe claim status.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerClaimStatusResponse'
+        '404':
+          description: Claim not found. Invalid tracking code, policy reference, and mismatched proof pairs intentionally share this response.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          description: Rate limit exceeded.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Unexpected safe server failure.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/operator/auth/login:
+    post:
+      operationId: authenticateOperator
+      summary: Authenticate a claims operator
+      tags:
+      - Operator auth
+      parameters:
+      - $ref: '#/components/parameters/RequestId'
+      x-permission-intent: null
+      x-rate-limit: 5 requests/minute/IP and 10 requests/15 minutes/normalized login
+      x-durable-audit: AUTH_LOGIN_SUCCEEDED on success; AUTH_LOGIN_FAILED attempted on credential failure
+      x-requirements:
+      - FR-009
+      - NFR-002
+      - NFR-004
+      - NFR-007
+      - NFR-014
+      x-interfaces:
+      - WEB-008
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OperatorLoginRequest'
+      responses:
+        '200':
+          description: Operator authenticated.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorLoginResponse'
+        '401':
+          description: Invalid credentials.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          description: Rate limit exceeded.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Authentication cannot complete safely, including required success-audit persistence failure.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/operator/claims:
+    get:
+      operationId: listClaims
+      summary: List claims for backoffice review
+      tags:
+      - Operator claims
+      parameters:
+      - $ref: '#/components/parameters/RequestId'
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/ClaimStatus'
+      x-permission-intent: claims.backoffice.read
+      x-rate-limit: 120 requests/minute/operator
+      x-durable-audit: not_required
+      x-requirements:
+      - FR-010
+      - BR-006
+      - NFR-002
+      x-interfaces:
+      - WEB-009
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Page of claims.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimsPageResponse'
+        '401':
+          description: Authentication required.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Authenticated caller lacks permission.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Invalid query parameters.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/operator/claims/{claimId}:
+    get:
+      operationId: getClaimDetail
+      summary: Get authorized claim detail
+      tags:
+      - Operator claims
+      parameters:
+      - $ref: '#/components/parameters/RequestId'
+      - $ref: '#/components/parameters/ClaimId'
+      x-permission-intent: claims.backoffice.read
+      x-rate-limit: 120 requests/minute/operator
+      x-durable-audit: not_required
+      x-requirements:
+      - FR-011
+      - BR-001
+      - BR-002
+      - BR-003
+      - BR-005
+      - BR-006
+      - NFR-002
+      x-interfaces:
+      - WEB-010
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Authorized claim detail.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorClaimDetailResponse'
+        '401':
+          description: Authentication required.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Authenticated caller lacks permission.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Claim not found.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/operator/claims/{claimId}/evidence/{evidenceId}:
+    get:
+      operationId: downloadClaimEvidence
+      summary: Download private claim evidence
+      tags:
+      - Operator claims
+      parameters:
+      - $ref: '#/components/parameters/RequestId'
+      - $ref: '#/components/parameters/ClaimId'
+      - $ref: '#/components/parameters/EvidenceId'
+      x-permission-intent: claims.backoffice.read
+      x-rate-limit: 60 requests/minute/operator
+      x-durable-audit: not_required
+      x-requirements:
+      - FR-011
+      - NFR-002
+      - NFR-005
+      x-interfaces:
+      - WEB-010
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Private evidence bytes using the stored allowlisted media type and sanitized Content-Disposition.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            Content-Disposition:
+              description: Attachment filename sanitized by the server.
+              schema:
+                type: string
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Authentication required.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Authenticated caller lacks permission.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Evidence not found or does not belong to the authorized claim.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/operator/claims/{claimId}/transitions:
+    post:
+      operationId: transitionClaimStatus
+      summary: Transition a claim to an allowed lifecycle state
+      tags:
+      - Operator claims
+      parameters:
+      - $ref: '#/components/parameters/RequestId'
+      - $ref: '#/components/parameters/ClaimId'
+      x-permission-intent: claims.backoffice.transition
+      x-rate-limit: 60 requests/minute/operator
+      x-durable-audit: CLAIM_STATE_TRANSITIONED
+      x-requirements:
+      - FR-012
+      - FR-013
+      - BR-001
+      - BR-002
+      - BR-003
+      - BR-005
+      - BR-006
+      - NFR-002
+      - NFR-007
+      x-interfaces:
+      - WEB-010
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionClaimStatusRequest'
+      responses:
+        '200':
+          description: Claim transition committed atomically.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransitionClaimStatusResponse'
+        '401':
+          description: Authentication required.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Authenticated caller lacks permission.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Claim not found.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Stale expected state or invalid lifecycle transition.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Validation failed.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Transition could not be committed safely.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /health/live:
+    get:
+      operationId: getLiveness
+      summary: Process liveness probe
+      tags:
+      - Health
+      responses:
+        '200':
+          description: Process is alive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+      x-requirements:
+      - FR-019
+      - NFR-009
+      x-interfaces: []
+  /health/ready:
+    get:
+      operationId: getReadiness
+      summary: Application readiness probe
+      tags:
+      - Health
+      responses:
+        '200':
+          description: Application is ready to serve required traffic.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+      x-requirements:
+      - FR-019
+      - NFR-009
+      x-interfaces: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Short-lived operator access token. Target lifetime: 900 seconds.'
+  headers:
+    XRequestId:
+      description: Correlation identifier propagated or generated by the server.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    IdempotencyReplayed:
+      description: Present with value true when a completed createClaim response is replayed.
+      schema:
+        type: string
+        const: 'true'
+    RetryAfter:
+      description: Seconds or HTTP-date indicating when a rate-limited caller may retry.
+      schema:
+        type: string
+  parameters:
+    ClaimId:
+      name: claimId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    EvidenceId:
+      name: evidenceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      description: Optional caller correlation identifier; server may replace syntactically unacceptable values.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+  schemas:
+    ClaimStatus:
+      type: string
+      enum:
+      - RECEIVED
+      - UNDER_REVIEW
+      - OBSERVED
+      - APPROVED
+      - IN_REPAIR
+      - CLOSED
+    ProblemDetails:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - detail
+      - instance
+      - code
+      - requestId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          examples:
+          - urn:insuranceclaims:problem:validation-error
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          enum:
+          - MALFORMED_REQUEST
+          - AUTHENTICATION_REQUIRED
+          - INVALID_CREDENTIALS
+          - FORBIDDEN
+          - CLAIM_NOT_FOUND
+          - EVIDENCE_NOT_FOUND
+          - INVALID_STATE_TRANSITION
+          - CLAIM_STATE_CONFLICT
+          - IDEMPOTENCY_KEY_REUSED
+          - IDEMPOTENCY_IN_PROGRESS
+          - PAYLOAD_TOO_LARGE
+          - UNSUPPORTED_CONTENT_TYPE
+          - VALIDATION_ERROR
+          - POLICY_VEHICLE_NOT_ELIGIBLE
+          - EVIDENCE_VALIDATION_FAILED
+          - RATE_LIMITED
+          - SERVICE_DEPENDENCY_UNAVAILABLE
+          - AUTHENTICATION_TEMPORARILY_UNAVAILABLE
+          - CLAIM_SUBMISSION_TEMPORARILY_UNAVAILABLE
+          - CLAIM_TRANSITION_TEMPORARILY_UNAVAILABLE
+        requestId:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Optional field-level validation messages.
+      additionalProperties: false
+    PolicyVehicleVerificationRequest:
+      type: object
+      required:
+      - policyReference
+      - vehicleReference
+      additionalProperties: false
+      properties:
+        policyReference:
+          type: string
+          minLength: 1
+          maxLength: 80
+        vehicleReference:
+          type: string
+          minLength: 1
+          maxLength: 80
+    PolicyVehicleVerificationResponse:
+      type: object
+      required:
+      - policyReference
+      - vehicleReference
+      - eligible
+      - customerLabel
+      additionalProperties: false
+      properties:
+        policyReference:
+          type: string
+          maxLength: 80
+        vehicleReference:
+          type: string
+          maxLength: 80
+        eligible:
+          const: true
+        customerLabel:
+          type:
+          - string
+          - 'null'
+          maxLength: 160
+    CreateClaimResponse:
+      type: object
+      required:
+      - trackingCode
+      - status
+      - submittedAt
+      - nextSteps
+      additionalProperties: false
+      properties:
+        trackingCode:
+          type: string
+          maxLength: 80
+        status:
+          const: RECEIVED
+        submittedAt:
+          type: string
+          format: date-time
+        nextSteps:
+          type: array
+          items:
+            type: string
+    TrackClaimRequest:
+      type: object
+      required:
+      - trackingCode
+      - policyReference
+      additionalProperties: false
+      properties:
+        trackingCode:
+          type: string
+          minLength: 1
+          maxLength: 80
+        policyReference:
+          type: string
+          minLength: 1
+          maxLength: 80
+    CustomerClaimSummary:
+      type: object
+      required:
+      - vehicleReference
+      - eventType
+      - occurredAt
+      additionalProperties: false
+      properties:
+        vehicleReference:
+          type: string
+          maxLength: 80
+        eventType:
+          type: string
+          maxLength: 60
+        occurredAt:
+          type: string
+          format: date-time
+    CustomerTimelineEntry:
+      type: object
+      required:
+      - status
+      - occurredAt
+      additionalProperties: false
+      properties:
+        status:
+          $ref: '#/components/schemas/ClaimStatus'
+        occurredAt:
+          type: string
+          format: date-time
+    CustomerClaimStatusResponse:
+      type: object
+      required:
+      - trackingCode
+      - summary
+      - status
+      - timeline
+      - nextSteps
+      additionalProperties: false
+      properties:
+        trackingCode:
+          type: string
+          maxLength: 80
+        summary:
+          $ref: '#/components/schemas/CustomerClaimSummary'
+        status:
+          $ref: '#/components/schemas/ClaimStatus'
+        timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerTimelineEntry'
+        nextSteps:
+          type: array
+          items:
+            type: string
+    OperatorLoginRequest:
+      type: object
+      required:
+      - login
+      - password
+      additionalProperties: false
+      properties:
+        login:
+          type: string
+          minLength: 1
+          maxLength: 160
+        password:
+          type: string
+          minLength: 1
+          maxLength: 256
+          writeOnly: true
+    OperatorIdentity:
+      type: object
+      required:
+      - id
+      - login
+      - role
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        login:
+          type: string
+          maxLength: 160
+        role:
+          const: CLAIMS_OPERATOR
+    OperatorLoginResponse:
+      type: object
+      required:
+      - accessToken
+      - tokenType
+      - expiresIn
+      - operator
+      additionalProperties: false
+      properties:
+        accessToken:
+          type: string
+          writeOnly: false
+        tokenType:
+          const: Bearer
+        expiresIn:
+          const: 900
+        operator:
+          $ref: '#/components/schemas/OperatorIdentity'
+    ClaimSummary:
+      type: object
+      required:
+      - claimId
+      - trackingCode
+      - status
+      - occurredAt
+      - policyReference
+      - vehicleReference
+      - createdAt
+      additionalProperties: false
+      properties:
+        claimId:
+          type: string
+          format: uuid
+        trackingCode:
+          type: string
+          maxLength: 80
+        status:
+          $ref: '#/components/schemas/ClaimStatus'
+        occurredAt:
+          type: string
+          format: date-time
+        policyReference:
+          type: string
+          maxLength: 80
+        vehicleReference:
+          type: string
+          maxLength: 80
+        createdAt:
+          type: string
+          format: date-time
+    ClaimsPageResponse:
+      type: object
+      required:
+      - items
+      - page
+      - pageSize
+      - totalItems
+      - totalPages
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClaimSummary'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+        totalItems:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+    EvidenceMetadata:
+      type: object
+      required:
+      - evidenceId
+      - mediaType
+      - sizeBytes
+      - displayFilename
+      - createdAt
+      additionalProperties: false
+      properties:
+        evidenceId:
+          type: string
+          format: uuid
+        mediaType:
+          type: string
+          enum:
+          - image/jpeg
+          - image/png
+          - application/pdf
+        sizeBytes:
+          type: integer
+          minimum: 0
+          maximum: 5242880
+        displayFilename:
+          type:
+          - string
+          - 'null'
+        createdAt:
+          type: string
+          format: date-time
+    StatusHistoryEntry:
+      type: object
+      required:
+      - fromStatus
+      - toStatus
+      - actorType
+      - actorId
+      - occurredAt
+      additionalProperties: false
+      properties:
+        fromStatus:
+          oneOf:
+          - $ref: '#/components/schemas/ClaimStatus'
+          - type: 'null'
+        toStatus:
+          $ref: '#/components/schemas/ClaimStatus'
+        actorType:
+          type: string
+          enum:
+          - SYSTEM
+          - OPERATOR
+        actorId:
+          type:
+          - string
+          - 'null'
+        occurredAt:
+          type: string
+          format: date-time
+    AuditEventSummary:
+      type: object
+      required:
+      - eventCode
+      - occurredAt
+      - actorType
+      - actorId
+      - outcome
+      - requestId
+      additionalProperties: false
+      properties:
+        eventCode:
+          type: string
+          enum:
+          - CLAIM_CREATED
+          - CLAIM_STATE_TRANSITIONED
+          - AUTH_LOGIN_SUCCEEDED
+          - AUTH_LOGIN_FAILED
+        occurredAt:
+          type: string
+          format: date-time
+        actorType:
+          type: string
+          enum:
+          - ANONYMOUS
+          - CUSTOMER_PUBLIC
+          - OPERATOR
+        actorId:
+          type:
+          - string
+          - 'null'
+        outcome:
+          type: string
+          enum:
+          - SUCCESS
+          - FAILURE
+        requestId:
+          type:
+          - string
+          - 'null'
+    OperatorClaimDetailResponse:
+      type: object
+      required:
+      - claimId
+      - trackingCode
+      - policyReference
+      - vehicleReference
+      - verifiedCustomerLabel
+      - eventType
+      - occurredAt
+      - locationText
+      - description
+      - status
+      - allowedTransitions
+      - evidence
+      - history
+      - auditEvents
+      - createdAt
+      - updatedAt
+      additionalProperties: false
+      properties:
+        claimId:
+          type: string
+          format: uuid
+        trackingCode:
+          type: string
+          maxLength: 80
+        policyReference:
+          type: string
+          maxLength: 80
+        vehicleReference:
+          type: string
+          maxLength: 80
+        verifiedCustomerLabel:
+          type:
+          - string
+          - 'null'
+          maxLength: 160
+        eventType:
+          type: string
+          maxLength: 60
+        occurredAt:
+          type: string
+          format: date-time
+        locationText:
+          type: string
+          maxLength: 300
+        description:
+          type: string
+          maxLength: 4000
+        status:
+          $ref: '#/components/schemas/ClaimStatus'
+        allowedTransitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClaimStatus'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceMetadata'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryEntry'
+        auditEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEventSummary'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TransitionClaimStatusRequest:
+      type: object
+      required:
+      - expectedFromStatus
+      - toStatus
+      additionalProperties: false
+      properties:
+        expectedFromStatus:
+          $ref: '#/components/schemas/ClaimStatus'
+        toStatus:
+          $ref: '#/components/schemas/ClaimStatus'
+    TransitionClaimStatusResponse:
+      type: object
+      required:
+      - claimId
+      - fromStatus
+      - toStatus
+      - status
+      - allowedTransitions
+      - transitionedAt
+      additionalProperties: false
+      properties:
+        claimId:
+          type: string
+          format: uuid
+        fromStatus:
+          $ref: '#/components/schemas/ClaimStatus'
+        toStatus:
+          $ref: '#/components/schemas/ClaimStatus'
+        status:
+          $ref: '#/components/schemas/ClaimStatus'
+        allowedTransitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClaimStatus'
+        transitionedAt:
+          type: string
+          format: date-time
+    HealthResponse:
+      type: object
+      required:
+      - status
+      properties:
+        status:
+          type: string
+          examples:
+          - ok
+      additionalProperties:
+        type:
+        - string
+        - boolean
+        - number
+        - 'null'
