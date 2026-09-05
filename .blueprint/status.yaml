@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T18:16:34-03:00'
+updated_at: '2026-09-05T18:19:13-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -18,9 +18,9 @@ phases:
     progress: 100
     note: Greenfield descriptive interface scope baseline approved by Luis Hernández; Interface Scope Ready passed on 2026-09-05.
   architecture_security_data:
-    status: READY_FOR_REVIEW
+    status: COMPLETE
     progress: 100
-    note: Architecture, security/threat, authoritative data/migration and audit contracts are complete; human Architecture Ready decision is pending.
+    note: Architecture, security/threat, authoritative data/migration and audit contracts were explicitly approved by Luis Hernández; Architecture Ready passed on 2026-09-05.
   api_contract_design:
     status: NOT_STARTED
     progress: 0
@@ -145,10 +145,10 @@ gates:
     note: Explicit human approval recorded after review of the 10-interface Greenfield scope baseline, slice mapping and exclusions.
     evidence_ids: [EVD-UI-SCOPE-BASELINE-001, EVD-UI-SCOPE-TRACE-001, EVD-UI-SCOPE-READY-APPROVAL-001]
   architecture_ready:
-    status: READY_FOR_REVIEW
-    evaluated_at: null
-    note: All required Architecture/Security/Data/Audit checks and the applicable threat-model check have evidence. Human approval is required before API Contract Design begins.
-    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-ARCH-CLARIFICATIONS-001, EVD-SECURITY-MODEL-001, EVD-DATA-ARCH-001, EVD-AUDIT-MODEL-001]
+    status: PASS
+    evaluated_at: '2026-09-05T18:19:13-03:00'
+    note: Explicit human approval recorded after review of the Architecture, Security/Threat, Data/Migration and Audit contracts.
+    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-ARCH-CLARIFICATIONS-001, EVD-SECURITY-MODEL-001, EVD-DATA-ARCH-001, EVD-AUDIT-MODEL-001, EVD-ARCH-READY-APPROVAL-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -217,3 +217,6 @@ artifacts:
   - id: EVD-AUDIT-MODEL-001
     type: audit_catalog_retention
     value: documentation/audit/AUDIT_MODEL.md
+  - id: EVD-ARCH-READY-APPROVAL-001
+    type: manual_approval
+    value: documentation/architecture/ARCHITECTURE_READY_APPROVAL.md
