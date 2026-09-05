@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T19:52:30-03:00'
+updated_at: '2026-09-05T19:44:00-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -30,9 +30,9 @@ phases:
     progress: 100
     note: API implementation and executable architecture conformance were explicitly approved by Luis Hernández; API Implemented passed on 2026-09-05.
   openapi_validation:
-    status: READY_FOR_REVIEW
+    status: COMPLETE
     progress: 100
-    note: OpenAPI 3.1 formalization and exact contract validation are complete; human OpenAPI Valid decision remains pending.
+    note: OpenAPI 3.1 formalization and exact contract validation were explicitly approved by Luis Hernández; OpenAPI Valid passed on 2026-09-05.
 checks:
   discovery.product_vision:
     status: PASS
@@ -244,9 +244,10 @@ gates:
     note: Explicit human API Implemented approval recorded after clean exact-head CI success and review of implementation/conformance evidence.
     evidence_ids: [EVD-API-IMPLEMENTATION-001, EVD-API-ARCH-CONFORMANCE-001, EVD-API-IMPLEMENTED-APPROVAL-001]
   openapi_valid:
-    status: READY_FOR_REVIEW
-    note: Both required OpenAPI checks have PASS evidence; explicit human OpenAPI Valid approval remains pending before Postman Contract begins.
-    evidence_ids: [EVD-OPENAPI-001, EVD-OPENAPI-VALIDATION-001]
+    status: PASS
+    evaluated_at: '2026-09-05T19:44:00-03:00'
+    note: Explicit human OpenAPI Valid approval recorded after exact-head OpenAPI validation and API implementation regression success.
+    evidence_ids: [EVD-OPENAPI-001, EVD-OPENAPI-VALIDATION-001, EVD-OPENAPI-VALID-APPROVAL-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -342,3 +343,6 @@ artifacts:
   - id: EVD-OPENAPI-VALIDATION-001
     type: openapi_validation_evidence
     value: documentation/api/OPENAPI_VALIDATION_EVIDENCE.md
+  - id: EVD-OPENAPI-VALID-APPROVAL-001
+    type: manual_approval
+    value: documentation/api/OPENAPI_VALID_APPROVAL.md
