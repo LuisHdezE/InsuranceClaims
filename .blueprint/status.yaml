@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T18:19:13-03:00'
+updated_at: '2026-09-05T18:35:00-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -22,6 +22,10 @@ phases:
     progress: 100
     note: Architecture, security/threat, authoritative data/migration and audit contracts were explicitly approved by Luis Hernández; Architecture Ready passed on 2026-09-05.
   api_contract_design:
+    status: COMPLETE
+    progress: 100
+    note: Initial v1 REST and MCP-facing contract package was explicitly approved by Luis Hernández; API Contract Ready passed on 2026-09-05.
+  api_implementation:
     status: NOT_STARTED
     progress: 0
 checks:
@@ -126,13 +130,53 @@ checks:
   api.error_contract:
     status: PASS
     verification: evidence
-    note: RFC 9457 Problem Details with safe project extensions is approved; concrete operation mappings remain for API Contract Design.
-    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-SECURITY-MODEL-001]
+    note: RFC 9457 Problem Details with safe project extensions is approved and concrete operation mappings are frozen in API Contract Design.
+    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-SECURITY-MODEL-001, EVD-API-CONTRACT-001]
   api.versioning_policy:
     status: PASS
     verification: evidence
-    note: URL major versioning under /api/v1 is approved and later OpenAPI operationIds remain authoritative downstream bindings.
-    evidence_ids: [EVD-ARCH-CONTRACT-001]
+    note: URL major versioning under /api/v1 is approved; operationIds are now frozen for the initial contract baseline.
+    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-API-CONTRACT-001]
+  api.scope_defined:
+    status: PASS
+    verification: evidence
+    note: Initial business REST scope is eight operations plus two operational health routes; MCP status is a separate read-only Presentation contract.
+    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+  api.endpoint_inventory:
+    status: PASS
+    verification: evidence
+    note: Stable methods, paths, operationIds, schemas, status codes, rate limits and operation ownership are explicitly inventoried before implementation.
+    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+  api.auth_contract:
+    status: PASS
+    verification: evidence
+    note: Anonymous public proof flows and short-lived operator bearer JWT behavior are defined per operation, including fail-closed success-login audit semantics.
+    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+  api.permission_matrix:
+    status: PASS
+    verification: evidence
+    note: Every protected operation and the MCP tool map to approved requirement-level permission intents; UI remains non-authoritative.
+    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+  api.audit_event_mapping:
+    status: PASS
+    verification: evidence
+    note: Login, claim creation and state transition operations map to the approved durable audit catalog with explicit atomic/failure rules.
+    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001, EVD-AUDIT-MODEL-001]
+  api.idempotency_matrix:
+    status: PASS
+    verification: evidence
+    note: createClaim requires Idempotency-Key with replay/conflict semantics; transitionClaimStatus uses expectedFromStatus as a concurrency guard without inventing a second idempotency protocol.
+    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+  api.contract_traceability:
+    status: PASS
+    verification: evidence
+    note: OperationIds and MCP identity are traced to approved requirements, use cases and Interface Scope Baseline IDs.
+    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+  api.change_impact_analysis:
+    status: N/A
+    verification: evidence
+    note: Initial API baseline; no prior api_gate consumers exist, so post-baseline change-impact analysis is not applicable yet.
+    evidence_ids: [EVD-API-CONTRACT-001]
 gates:
   requirements_ready:
     status: PASS
@@ -149,6 +193,11 @@ gates:
     evaluated_at: '2026-09-05T18:19:13-03:00'
     note: Explicit human approval recorded after review of the Architecture, Security/Threat, Data/Migration and Audit contracts.
     evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-ARCH-CLARIFICATIONS-001, EVD-SECURITY-MODEL-001, EVD-DATA-ARCH-001, EVD-AUDIT-MODEL-001, EVD-ARCH-READY-APPROVAL-001]
+  api_contract_ready:
+    status: PASS
+    evaluated_at: '2026-09-05T18:35:00-03:00'
+    note: Explicit human approval recorded after review of the initial v1 REST/MCP-facing API contract, permissions, audit, idempotency, concurrency and traceability package.
+    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001, EVD-API-CONTRACT-READY-APPROVAL-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -220,3 +269,12 @@ artifacts:
   - id: EVD-ARCH-READY-APPROVAL-001
     type: manual_approval
     value: documentation/architecture/ARCHITECTURE_READY_APPROVAL.md
+  - id: EVD-API-CONTRACT-001
+    type: api_contract
+    value: documentation/api/API_CONTRACT.md
+  - id: EVD-API-INVENTORY-001
+    type: api_endpoint_inventory
+    value: documentation/api/API_ENDPOINT_INVENTORY.json
+  - id: EVD-API-CONTRACT-READY-APPROVAL-001
+    type: manual_approval
+    value: documentation/api/API_CONTRACT_READY_APPROVAL.md
