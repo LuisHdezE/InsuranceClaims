@@ -1,0 +1,32 @@
+name: OpenAPI Validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Validate OpenAPI 3.1 structure
+        run: npx --yes @redocly/cli@2.51.2 lint --extends=spec openapi.yaml
+
+      - name: Bundle OpenAPI for semantic checks
+        run: |
+          mkdir -p .runtime
+          npx --yes @redocly/cli@2.51.2 bundle openapi.yaml --output .runtime/openapi.bundle.json
+
+      - name: Validate approved contract coverage
+        run: node scripts/validate-openapi-contract.mjs .runtime/openapi.bundle.json documentation/api/API_ENDPOINT_INVENTORY.json
