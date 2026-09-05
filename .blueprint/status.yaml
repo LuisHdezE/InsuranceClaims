@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T19:32:41-03:00'
+updated_at: '2026-09-05T20:06:12-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -29,6 +29,10 @@ phases:
     status: COMPLETE
     progress: 100
     note: API implementation and executable architecture conformance were explicitly approved by Luis Hernández; API Implemented passed on 2026-09-05.
+  openapi_validation:
+    status: COMPLETE
+    progress: 100
+    note: OpenAPI 3.1 formalization and exact contract validation were explicitly approved by Luis Hernández; OpenAPI Valid passed on 2026-09-05.
 checks:
   discovery.product_vision:
     status: PASS
@@ -203,6 +207,16 @@ checks:
     verification: evidence
     note: Executable dependency-boundary assertions plus explicit responsibility review confirm the implementation preserves the approved Clean Architecture/Ports & Adapters contract.
     evidence_ids: [EVD-API-IMPLEMENTATION-001, EVD-API-ARCH-CONFORMANCE-001]
+  api.openapi:
+    status: PASS
+    verification: file
+    note: OpenAPI 3.1 description formalizes all ten approved REST operations without exposing MCP as REST.
+    evidence_ids: [EVD-OPENAPI-001]
+  api.openapi_validation:
+    status: PASS
+    verification: evidence
+    note: Redocly specification validation and semantic inventory validation pass; an earlier harness failure was corrected without relaxing business-contract checks.
+    evidence_ids: [EVD-OPENAPI-001, EVD-OPENAPI-VALIDATION-001]
 gates:
   requirements_ready:
     status: PASS
@@ -229,6 +243,11 @@ gates:
     evaluated_at: '2026-09-05T19:32:41-03:00'
     note: Explicit human API Implemented approval recorded after clean exact-head CI success and review of implementation/conformance evidence.
     evidence_ids: [EVD-API-IMPLEMENTATION-001, EVD-API-ARCH-CONFORMANCE-001, EVD-API-IMPLEMENTED-APPROVAL-001]
+  openapi_valid:
+    status: PASS
+    evaluated_at: '2026-09-05T19:44:00-03:00'
+    note: Explicit human OpenAPI Valid approval recorded after exact-head OpenAPI validation and API implementation regression success.
+    evidence_ids: [EVD-OPENAPI-001, EVD-OPENAPI-VALIDATION-001, EVD-OPENAPI-VALID-APPROVAL-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -318,3 +337,12 @@ artifacts:
   - id: EVD-API-IMPLEMENTED-APPROVAL-001
     type: manual_approval
     value: documentation/api/API_IMPLEMENTED_APPROVAL.md
+  - id: EVD-OPENAPI-001
+    type: openapi
+    value: openapi.yaml
+  - id: EVD-OPENAPI-VALIDATION-001
+    type: openapi_validation_evidence
+    value: documentation/api/OPENAPI_VALIDATION_EVIDENCE.md
+  - id: EVD-OPENAPI-VALID-APPROVAL-001
+    type: manual_approval
+    value: documentation/api/OPENAPI_VALID_APPROVAL.md
