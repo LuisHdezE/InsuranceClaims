@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T17:29:00-03:00'
+updated_at: '2026-09-05T18:00:38-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -14,6 +14,13 @@ phases:
     progress: 100
     note: Requirements package approved by Luis Hernández; Requirements Ready passed on 2026-09-05.
   interface_scope_baseline:
+    status: READY_FOR_REVIEW
+    progress: 100
+    note: Greenfield descriptive interface scope baseline is complete and traceable to approved requirements; human Interface Scope Ready decision is pending.
+  architecture_security_data:
+    status: NOT_STARTED
+    progress: 0
+  api_contract_design:
     status: NOT_STARTED
     progress: 0
 checks:
@@ -55,12 +62,27 @@ checks:
     status: PASS
     verification: evidence
     evidence_ids: [EVD-REQ-TRACE-001]
+  ui.interface_scope_baseline:
+    status: PASS
+    verification: evidence
+    note: The 10-item Greenfield web scope baseline follows the canonical Blueprint template shape and preserves unresolved API bindings.
+    evidence_ids: [EVD-UI-SCOPE-BASELINE-001, EVD-UI-SCOPE-TRACE-001]
+  ui.interface_scope_traceability:
+    status: PASS
+    verification: evidence
+    note: Every committed web interface is linked to approved requirements/slices and non-visual requirements are explicitly assigned to downstream evidence owners.
+    evidence_ids: [EVD-UI-SCOPE-BASELINE-001, EVD-UI-SCOPE-TRACE-001]
 gates:
   requirements_ready:
     status: PASS
     evaluated_at: '2026-09-05T17:29:00-03:00'
     note: Explicit human approval recorded after review of Target Definition and Requirements package.
     evidence_ids: [EVD-REQ-READY-APPROVAL-001]
+  interface_scope_ready:
+    status: READY_FOR_REVIEW
+    evaluated_at: null
+    note: Required Interface Scope Baseline checks have evidence. Human approval is required before Architecture/Security/Data and API Contract Design begin.
+    evidence_ids: [EVD-UI-SCOPE-BASELINE-001, EVD-UI-SCOPE-TRACE-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -105,3 +127,9 @@ artifacts:
   - id: EVD-REQ-READY-APPROVAL-001
     type: manual_approval
     value: documentation/requirements/REQUIREMENTS_READY_APPROVAL.md
+  - id: EVD-UI-SCOPE-BASELINE-001
+    type: interface_scope_baseline
+    value: .blueprint/ui/interface-scope-baseline.json
+  - id: EVD-UI-SCOPE-TRACE-001
+    type: interface_scope_traceability
+    value: documentation/interface-scope/INTERFACE_SCOPE_BASELINE.md
