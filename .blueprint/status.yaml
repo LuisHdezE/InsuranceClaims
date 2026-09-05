@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T20:26:50-03:00'
+updated_at: '2026-09-05T20:46:00-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -34,9 +34,9 @@ phases:
     progress: 100
     note: OpenAPI 3.1 formalization and exact contract validation were explicitly approved by Luis Hernández; OpenAPI Valid passed on 2026-09-05.
   postman_contract:
-    status: READY_FOR_REVIEW
+    status: COMPLETE
     progress: 100
-    note: Postman collection, local environment and exact REST coverage validation are complete; human Postman Ready decision remains pending.
+    note: Postman collection, local environment and exact REST coverage were explicitly approved by Luis Hernández; Postman Ready passed on 2026-09-05.
 checks:
   discovery.product_vision:
     status: PASS
@@ -240,7 +240,7 @@ gates:
   requirements_ready:
     status: PASS
     evaluated_at: '2026-09-05T17:29:00-03:00'
-    note: Explicit human approval recorded after review of Target Definition and Requirements package.
+    note: Explicit human approval recorded after review of the Discovery package.
     evidence_ids: [EVD-REQ-READY-APPROVAL-001]
   interface_scope_ready:
     status: PASS
@@ -268,9 +268,10 @@ gates:
     note: Explicit human OpenAPI Valid approval recorded after exact-head OpenAPI validation and API implementation regression success.
     evidence_ids: [EVD-OPENAPI-001, EVD-OPENAPI-VALIDATION-001, EVD-OPENAPI-VALID-APPROVAL-001]
   postman_ready:
-    status: READY_FOR_REVIEW
-    note: Collection, environment and static coverage checks have PASS evidence; explicit human Postman Ready approval remains pending before API QA begins.
-    evidence_ids: [EVD-POSTMAN-COLLECTION-001, EVD-POSTMAN-ENVIRONMENT-001, EVD-POSTMAN-COVERAGE-001]
+    status: PASS
+    evaluated_at: '2026-09-05T20:46:00-03:00'
+    note: Explicit human Postman Ready approval recorded after exact-head Postman Contract, OpenAPI Validation and API Implementation regression success.
+    evidence_ids: [EVD-POSTMAN-COLLECTION-001, EVD-POSTMAN-ENVIRONMENT-001, EVD-POSTMAN-COVERAGE-001, EVD-POSTMAN-READY-APPROVAL-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -378,3 +379,6 @@ artifacts:
   - id: EVD-POSTMAN-COVERAGE-001
     type: postman_coverage_evidence
     value: documentation/api/POSTMAN_CONTRACT_EVIDENCE.md
+  - id: EVD-POSTMAN-READY-APPROVAL-001
+    type: manual_approval
+    value: documentation/api/POSTMAN_READY_APPROVAL.md
