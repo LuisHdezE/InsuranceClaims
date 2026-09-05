@@ -76,3 +76,36 @@ After the MVP, evaluate adding a versioned Interface Scope Baseline JSON Schema 
 
 Disposition:
 DEFERRED_UNTIL_MVP_COMPLETE
+
+---
+
+## OBS-004
+
+Blueprint version:
+0.5.2
+
+Phase:
+API Contract Design
+
+Finding:
+Blueprint 0.5.2 defines a strong `api_contract_ready` gate with seven required contract checks and a materialized `dev-api-design` skill, but the pinned release does not provide a dedicated initial API endpoint-inventory/API-contract JSON Schema or example template. The only API-specific schema/template in this area is for post-baseline `api-impact`, while OpenAPI is intentionally validated in a later phase.
+
+Evidence:
+At Blueprint commit `737556e24195aa909117790f2d7ff0be2fe0a474`:
+
+- `catalog/checks.yaml` requires `api.scope_defined`, `api.endpoint_inventory`, `api.auth_contract`, `api.permission_matrix`, `api.audit_event_mapping`, `api.idempotency_matrix` and `api.contract_traceability`;
+- `catalog/gates.yaml` binds those checks to `api_contract_ready`;
+- `templates/` contains `api-impact.example.json` but no initial API-contract/endpoint-inventory template;
+- `schemas/` contains `api-impact.schema.json` but no initial API-contract/endpoint-inventory schema.
+
+Impact:
+LOW
+
+Consumer handling:
+This project uses `documentation/api/API_CONTRACT.md` as the human-authoritative contract and `documentation/api/API_ENDPOINT_INVENTORY.json` as a machine-readable evidence artifact. Later OpenAPI must formalize the same approved contract rather than redesign it.
+
+Potential improvement:
+After the MVP, evaluate whether Blueprint should define a technology-neutral schema/template for the pre-implementation API contract inventory, while keeping OpenAPI as the later canonical executable HTTP contract.
+
+Disposition:
+DEFERRED_UNTIL_MVP_COMPLETE
