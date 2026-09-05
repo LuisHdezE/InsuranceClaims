@@ -51,3 +51,28 @@ Document an explicit empty-repository bootstrap exception that permits one minim
 
 Disposition:
 DEFERRED_UNTIL_MVP_COMPLETE
+
+---
+
+## OBS-003
+
+Blueprint version:
+0.5.2
+
+Phase:
+Interface Scope Baseline
+
+Finding:
+Blueprint 0.5.2 provides the canonical `templates/interface-scope-baseline.example.json` and the `interface_scope_ready` gate/check contracts, but there is no corresponding `schemas/interface-scope-baseline.schema.json` in the pinned release tree. The artifact can therefore follow the official template and gate semantics, but it has no dedicated JSON Schema for automatic structural validation.
+
+Evidence:
+At Blueprint commit `737556e24195aa909117790f2d7ff0be2fe0a474`, the repository tree contains `templates/interface-scope-baseline.example.json` while the `schemas/` directory contains schemas such as `interface-inventory.schema.json` but no interface-scope-baseline schema.
+
+Impact:
+LOW
+
+Potential improvement:
+After the MVP, evaluate adding a versioned Interface Scope Baseline JSON Schema and wiring it into the relevant validation workflow, while preserving the descriptive/pre-API nature of the artifact.
+
+Disposition:
+DEFERRED_UNTIL_MVP_COMPLETE
