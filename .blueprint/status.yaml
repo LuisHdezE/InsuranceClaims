@@ -240,7 +240,7 @@ gates:
   requirements_ready:
     status: PASS
     evaluated_at: '2026-09-05T17:29:00-03:00'
-    note: Explicit human approval recorded after review of the Discovery package.
+    note: Explicit human approval recorded after review of Target Definition and Requirements package.
     evidence_ids: [EVD-REQ-READY-APPROVAL-001]
   interface_scope_ready:
     status: PASS
