@@ -1,0 +1,237 @@
+{
+  "info": {
+    "_postman_id": "0bb72b55-b8ec-44c5-90c6-2afe782cc101",
+    "name": "Insurance Claims Legacy Modernization MVP",
+    "description": "Unofficial technical case study. No affiliation with FAR Seguros. All data is synthetic. Operational collection for approved contract revision api-v1-r1; API QA is a downstream boundary.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Public Claims",
+      "item": [
+        {
+          "name": "verifyPolicyVehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"},
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policyReference\": \"{{policyReference}}\",\n  \"vehicleReference\": \"{{vehicleReference}}\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/public/policy-verifications", "host": ["{{baseUrl}}"], "path": ["api", "v1", "public", "policy-verifications"]},
+            "auth": {"type": "noauth"},
+            "description": "operationId: verifyPolicyVehicle"
+          }
+        },
+        {
+          "name": "createClaim",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.trackingCode) pm.environment.set('trackingCode', body.trackingCode);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"},
+              {"key": "Idempotency-Key", "value": "{{idempotencyKey}}", "type": "text"}
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "policyReference", "value": "{{policyReference}}", "type": "text"},
+                {"key": "vehicleReference", "value": "{{vehicleReference}}", "type": "text"},
+                {"key": "eventType", "value": "{{eventType}}", "type": "text"},
+                {"key": "occurredAt", "value": "{{occurredAt}}", "type": "text"},
+                {"key": "locationText", "value": "{{locationText}}", "type": "text"},
+                {"key": "description", "value": "{{claimDescription}}", "type": "text"},
+                {"key": "evidence", "type": "file", "src": "", "disabled": true, "description": "Optional. Enable and choose one JPEG, PNG or PDF file. Repeat this part for up to five files."}
+              ]
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/public/claims", "host": ["{{baseUrl}}"], "path": ["api", "v1", "public", "claims"]},
+            "auth": {"type": "noauth"},
+            "description": "operationId: createClaim. Successful 201 stores trackingCode in the active environment."
+          }
+        },
+        {
+          "name": "trackClaim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"},
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackingCode\": \"{{trackingCode}}\",\n  \"policyReference\": \"{{policyReference}}\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/public/claim-tracking", "host": ["{{baseUrl}}"], "path": ["api", "v1", "public", "claim-tracking"]},
+            "auth": {"type": "noauth"},
+            "description": "operationId: trackClaim"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Operator",
+      "item": [
+        {
+          "name": "authenticateOperator",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.accessToken) pm.environment.set('bearerToken', body.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"},
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{operatorLogin}}\",\n  \"password\": \"{{operatorPassword}}\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/operator/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "operator", "auth", "login"]},
+            "auth": {"type": "noauth"},
+            "description": "operationId: authenticateOperator. Successful 200 stores bearerToken in the active environment."
+          }
+        },
+        {
+          "name": "listClaims",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (Array.isArray(body.items) && body.items[0]?.claimId) pm.environment.set('claimId', body.items[0].claimId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/claims?page={{page}}&pageSize={{pageSize}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "operator", "claims"],
+              "query": [
+                {"key": "page", "value": "{{page}}"},
+                {"key": "pageSize", "value": "{{pageSize}}"},
+                {"key": "status", "value": "{{status}}", "disabled": true, "description": "Optional lifecycle filter."}
+              ]
+            },
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{bearerToken}}", "type": "string"}]},
+            "description": "operationId: listClaims. Successful response stores the first claimId when available."
+          }
+        },
+        {
+          "name": "getClaimDetail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (Array.isArray(body.evidence) && body.evidence[0]?.evidenceId) pm.environment.set('evidenceId', body.evidence[0].evidenceId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"}],
+            "url": {"raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "operator", "claims", "{{claimId}}"]},
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{bearerToken}}", "type": "string"}]},
+            "description": "operationId: getClaimDetail. Successful response stores the first evidenceId when available."
+          }
+        },
+        {
+          "name": "downloadClaimEvidence",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"}],
+            "url": {"raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/evidence/{{evidenceId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "operator", "claims", "{{claimId}}", "evidence", "{{evidenceId}}"]},
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{bearerToken}}", "type": "string"}]},
+            "description": "operationId: downloadClaimEvidence. Binary response may be JPEG, PNG or PDF."
+          }
+        },
+        {
+          "name": "transitionClaimStatus",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"},
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedFromStatus\": \"{{expectedFromStatus}}\",\n  \"toStatus\": \"{{toStatus}}\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/transitions", "host": ["{{baseUrl}}"], "path": ["api", "v1", "operator", "claims", "{{claimId}}", "transitions"]},
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{bearerToken}}", "type": "string"}]},
+            "description": "operationId: transitionClaimStatus"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "getLiveness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/health/live", "host": ["{{baseUrl}}"], "path": ["health", "live"]},
+            "auth": {"type": "noauth"},
+            "description": "operationId: getLiveness"
+          }
+        },
+        {
+          "name": "getReadiness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/health/ready", "host": ["{{baseUrl}}"], "path": ["health", "ready"]},
+            "auth": {"type": "noauth"},
+            "description": "operationId: getReadiness"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+name: Postman Contract
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Validate Postman collection and environment coverage
+        run: >-
+          node scripts/validate-postman-contract.mjs
+          postman/InsuranceClaims.postman_collection.json
+          postman/InsuranceClaims.local.postman_environment.json
+          documentation/api/API_ENDPOINT_INVENTORY.json

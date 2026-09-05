@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T20:06:12-03:00'
+updated_at: '2026-09-05T20:46:00-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -33,6 +33,10 @@ phases:
     status: COMPLETE
     progress: 100
     note: OpenAPI 3.1 formalization and exact contract validation were explicitly approved by Luis Hernández; OpenAPI Valid passed on 2026-09-05.
+  postman_contract:
+    status: COMPLETE
+    progress: 100
+    note: Postman collection, local environment and exact REST coverage were explicitly approved by Luis Hernández; Postman Ready passed on 2026-09-05.
 checks:
   discovery.product_vision:
     status: PASS
@@ -217,6 +221,21 @@ checks:
     verification: evidence
     note: Redocly specification validation and semantic inventory validation pass; an earlier harness failure was corrected without relaxing business-contract checks.
     evidence_ids: [EVD-OPENAPI-001, EVD-OPENAPI-VALIDATION-001]
+  api.postman_collection:
+    status: PASS
+    verification: file
+    note: Postman Collection v2.1 contains exactly the ten approved REST operations and no fake MCP REST operation.
+    evidence_ids: [EVD-POSTMAN-COLLECTION-001, EVD-POSTMAN-COVERAGE-001]
+  api.postman_environment:
+    status: PASS
+    verification: file
+    note: Local Postman environment provides synthetic/configurable variables and contains no committed operator password or bearer token.
+    evidence_ids: [EVD-POSTMAN-ENVIRONMENT-001, EVD-POSTMAN-COVERAGE-001]
+  api.postman_coverage:
+    status: PASS
+    verification: evidence
+    note: Exact static validation proves 10/10 REST request coverage, method/path/auth/header/body alignment and safe environment wiring; runtime QA remains downstream.
+    evidence_ids: [EVD-POSTMAN-COVERAGE-001]
 gates:
   requirements_ready:
     status: PASS
@@ -248,6 +267,11 @@ gates:
     evaluated_at: '2026-09-05T19:44:00-03:00'
     note: Explicit human OpenAPI Valid approval recorded after exact-head OpenAPI validation and API implementation regression success.
     evidence_ids: [EVD-OPENAPI-001, EVD-OPENAPI-VALIDATION-001, EVD-OPENAPI-VALID-APPROVAL-001]
+  postman_ready:
+    status: PASS
+    evaluated_at: '2026-09-05T20:46:00-03:00'
+    note: Explicit human Postman Ready approval recorded after exact-head Postman Contract, OpenAPI Validation and API Implementation regression success.
+    evidence_ids: [EVD-POSTMAN-COLLECTION-001, EVD-POSTMAN-ENVIRONMENT-001, EVD-POSTMAN-COVERAGE-001, EVD-POSTMAN-READY-APPROVAL-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -346,3 +370,15 @@ artifacts:
   - id: EVD-OPENAPI-VALID-APPROVAL-001
     type: manual_approval
     value: documentation/api/OPENAPI_VALID_APPROVAL.md
+  - id: EVD-POSTMAN-COLLECTION-001
+    type: postman_collection
+    value: postman/InsuranceClaims.postman_collection.json
+  - id: EVD-POSTMAN-ENVIRONMENT-001
+    type: postman_environment
+    value: postman/InsuranceClaims.local.postman_environment.json
+  - id: EVD-POSTMAN-COVERAGE-001
+    type: postman_coverage_evidence
+    value: documentation/api/POSTMAN_CONTRACT_EVIDENCE.md
+  - id: EVD-POSTMAN-READY-APPROVAL-001
+    type: manual_approval
+    value: documentation/api/POSTMAN_READY_APPROVAL.md
