@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T18:15:26-03:00'
+updated_at: '2026-09-05T18:16:34-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -81,13 +81,13 @@ checks:
   architecture.decision_records:
     status: PASS
     verification: evidence
-    note: Ten explicit ADR decisions freeze the architecture boundary and justified technology/process choices.
-    evidence_ids: [EVD-ARCH-CONTRACT-001]
+    note: Architecture decisions and review clarifications freeze server, MCP, legacy, frontend boundary and authentication choices.
+    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-ARCH-CLARIFICATIONS-001]
   architecture.security_model:
     status: PASS
     verification: evidence
-    note: Trust boundaries, actor authentication/authorization, public endpoint, upload, secret and redaction controls are defined.
-    evidence_ids: [EVD-SECURITY-MODEL-001]
+    note: Trust boundaries, actor authentication/authorization, public endpoint, upload, secret and redaction controls are defined; clarification closes login-audit behavior.
+    evidence_ids: [EVD-SECURITY-MODEL-001, EVD-ARCH-CLARIFICATIONS-001]
   architecture.threat_model:
     status: PASS
     verification: evidence
@@ -111,8 +111,8 @@ checks:
   audit.event_catalog:
     status: PASS
     verification: evidence
-    note: Stable durable audit events and log-vs-audit classification are defined.
-    evidence_ids: [EVD-AUDIT-MODEL-001]
+    note: Stable durable audit events and log-vs-audit classification are defined; login audit failure policy is closed by architecture clarification.
+    evidence_ids: [EVD-AUDIT-MODEL-001, EVD-ARCH-CLARIFICATIONS-001]
   audit.retention_policy:
     status: PASS
     verification: evidence
@@ -121,8 +121,8 @@ checks:
   api.auth_strategy:
     status: PASS
     verification: evidence
-    note: Short-lived operator bearer JWT with no refresh flow is approved for the mandatory MVP; customer/MCP lookup remains separate.
-    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-SECURITY-MODEL-001]
+    note: Short-lived operator bearer JWT with Argon2id password hashing and no refresh flow is approved for the mandatory MVP; customer/MCP lookup remains separate.
+    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-SECURITY-MODEL-001, EVD-ARCH-CLARIFICATIONS-001]
   api.error_contract:
     status: PASS
     verification: evidence
@@ -148,7 +148,7 @@ gates:
     status: READY_FOR_REVIEW
     evaluated_at: null
     note: All required Architecture/Security/Data/Audit checks and the applicable threat-model check have evidence. Human approval is required before API Contract Design begins.
-    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-SECURITY-MODEL-001, EVD-DATA-ARCH-001, EVD-AUDIT-MODEL-001]
+    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-ARCH-CLARIFICATIONS-001, EVD-SECURITY-MODEL-001, EVD-DATA-ARCH-001, EVD-AUDIT-MODEL-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -205,6 +205,9 @@ artifacts:
   - id: EVD-ARCH-CONTRACT-001
     type: architecture_contract
     value: documentation/architecture/ARCHITECTURE.md
+  - id: EVD-ARCH-CLARIFICATIONS-001
+    type: architecture_decision_clarifications
+    value: documentation/architecture/DECISION_CLARIFICATIONS.md
   - id: EVD-SECURITY-MODEL-001
     type: security_threat_model
     value: documentation/security/SECURITY_THREAT_MODEL.md
