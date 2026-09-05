@@ -1,14 +1,19 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T16:18:00-03:00'
+updated_at: '2026-09-05T16:40:00-03:00'
 phases:
   discovery:
     status: COMPLETE
     progress: 100
     note: Discovery product vision and MVP scope were explicitly approved by Luis Hernández on 2026-09-05.
   target_definition:
-    status: NOT_STARTED
-    progress: 0
+    status: COMPLETE
+    progress: 100
+    note: Greenfield target definition completed from approved Discovery without introducing Architecture/API implementation decisions.
   requirements_domain:
+    status: READY_FOR_REVIEW
+    progress: 100
+    note: Requirements package is complete and evidenced; explicit human Requirements Ready decision is pending.
+  interface_scope_baseline:
     status: NOT_STARTED
     progress: 0
 checks:
@@ -22,11 +27,39 @@ checks:
     verification: manual
     note: Explicit human approval recorded after review of the MVP boundary and exclusions.
     evidence_ids: [EVD-DISC-SCOPE-001, EVD-DISC-APPROVAL-001]
+  requirements.actors_authorization:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-REQ-AUTH-001]
+  requirements.functional:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-REQ-FUNC-001]
+  requirements.non_functional:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-REQ-NFR-001]
+  requirements.business_rules:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-REQ-RULES-001]
+  requirements.use_cases:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-REQ-UC-001]
+  requirements.acceptance_criteria:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-REQ-AC-001]
+  requirements.traceability:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-REQ-TRACE-001]
 gates:
   requirements_ready:
-    status: PENDING
+    status: READY_FOR_REVIEW
     evaluated_at: null
-    note: Requirements have not started; this is the first formal downstream gate in the Greenfield workflow.
+    note: All required Requirements checks have evidence. Human approval is required before interface scope baseline begins.
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -44,3 +77,27 @@ artifacts:
   - id: EVD-DISC-APPROVAL-001
     type: manual_approval
     value: documentation/discovery/DISCOVERY_APPROVAL.md
+  - id: EVD-TARGET-001
+    type: target_definition
+    value: documentation/target/TARGET_DEFINITION.md
+  - id: EVD-REQ-AUTH-001
+    type: requirements_actors_authorization
+    value: documentation/requirements/REQUIREMENTS.md
+  - id: EVD-REQ-FUNC-001
+    type: requirements_functional
+    value: documentation/requirements/REQUIREMENTS.md
+  - id: EVD-REQ-NFR-001
+    type: requirements_non_functional
+    value: documentation/requirements/REQUIREMENTS.md
+  - id: EVD-REQ-RULES-001
+    type: requirements_business_rules
+    value: documentation/requirements/REQUIREMENTS.md
+  - id: EVD-REQ-UC-001
+    type: requirements_use_cases
+    value: documentation/requirements/REQUIREMENTS.md
+  - id: EVD-REQ-AC-001
+    type: requirements_acceptance_criteria
+    value: documentation/requirements/REQUIREMENTS.md
+  - id: EVD-REQ-TRACE-001
+    type: requirements_traceability
+    value: documentation/requirements/REQUIREMENTS.md
