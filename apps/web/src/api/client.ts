@@ -20,6 +20,7 @@ export function toApiFailure(error: unknown): ApiFailure {
   if (!(error instanceof AxiosError)) {
     return Object.assign(new Error('No fue posible completar la solicitud.'), {
       requestId: null,
+      network: false,
     }) as ApiFailure;
   }
 
@@ -30,12 +31,16 @@ export function toApiFailure(error: unknown): ApiFailure {
     headerValue(error.response?.headers?.['x-request-id']) ??
     null;
   const retryAfter = headerValue(error.response?.headers?.['retry-after']) ?? null;
-  const message = problem?.detail || problem?.title || 'No fue posible completar la solicitud.';
+  const network = !error.response;
+  const message = network
+    ? 'No fue posible contactar al servicio.'
+    : problem?.detail || problem?.title || 'No fue posible completar la solicitud.';
 
   return Object.assign(new Error(message), {
     problem,
     requestId,
     retryAfter,
+    network,
   }) as ApiFailure;
 }
 
