@@ -1,0 +1,81 @@
+name: Reconcile Design Status
+
+on:
+  push:
+    branches: [blueprint/design-system]
+    paths:
+      - .github/workflows/design-status-reconcile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.ref_name == 'blueprint/design-system'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: blueprint/design-system
+          fetch-depth: 0
+      - name: Reconcile only Design System status
+        shell: python
+        run: |
+          from pathlib import Path
+          import os, re
+
+          path = Path('.blueprint/status.yaml')
+          text = path.read_text()
+          original = text
+
+          timestamp = os.popen("TZ=America/Montevideo date --iso-8601=seconds").read().strip()
+          text, n = re.subn(r"updated_at: '[^']+'", f"updated_at: '{timestamp}'", text, count=1)
+          assert n == 1
+
+          old_phase = """  design_system:\n    status: READY_FOR_REVIEW\n    progress: 100\n    note: Neutral case-study Design System, tokens, accessibility, responsive behavior and semantic states are validated; explicit human Design System Ready approval remains pending.\n"""
+          new_phase = """  visual_identity:\n    status: COMPLETE\n    progress: 100\n    note: FAR Seguros visual identity is applicable by explicit human direction; recognizable logo and core cyan/yellow/dark identity are preserved without copying the current FAR site layout.\n  design_system:\n    status: READY_FOR_REVIEW\n    progress: 100\n    note: FAR-aligned public/customer and operational backoffice Design System, tokens, accessibility, responsive behavior and semantic states are validated; explicit human Design System Ready approval remains pending.\n"""
+          assert old_phase in text, 'expected superseded design_system phase block not found'
+          text = text.replace(old_phase, new_phase, 1)
+
+          old_identity = """  design.identity:\n    status: N/A\n    verification: evidence\n    note: Visual Identity is not applicable to this unofficial technical case study; no insurer brand identity is fabricated or imitated.\n    evidence_ids: [EVD-DESIGN-SYSTEM-EVIDENCE-001]\n"""
+          new_identity = """  design.identity:\n    status: PASS\n    verification: evidence\n    note: Explicit human direction makes FAR identity applicable; the revised contract preserves the observed FAR cyan/yellow/dark language while modernizing layout and keeping the no-affiliation disclosure.\n    evidence_ids: [EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-LANDING-REFERENCE-001]\n"""
+          assert old_identity in text, 'expected superseded design.identity block not found'
+          text = text.replace(old_identity, new_identity, 1)
+
+          old_logo = """  design.logo:\n    status: N/A\n    verification: evidence\n    note: No custom logo is required for this MVP and no FAR Seguros logo or approximation is introduced.\n    evidence_ids: [EVD-DESIGN-SYSTEM-EVIDENCE-001]\n"""
+          new_logo = """  design.logo:\n    status: PASS\n    verification: file\n    note: The FAR Seguros logo reference is versioned at the exact logo_path required by the Design System; its use remains inside the clearly disclosed unofficial case study.\n    evidence_ids: [EVD-DESIGN-LOGO-001, EVD-DESIGN-SYSTEM-VALIDATION-001]\n"""
+          assert old_logo in text, 'expected superseded design.logo block not found'
+          text = text.replace(old_logo, new_logo, 1)
+
+          old_system_note = """    note: The reusable visual/component contract covers the complete approved web inventory and three executable slices without adding capabilities.\n    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001]\n"""
+          new_system_note = """    note: The reusable FAR-aligned visual/component contract covers all 10 approved web interfaces, keeps public and administrative usage modes distinct, and adds no capability beyond the executable inventory.\n    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001, EVD-DESIGN-LANDING-REFERENCE-001]\n"""
+          assert old_system_note in text, 'expected design.system note not found'
+          text = text.replace(old_system_note, new_system_note, 1)
+
+          old_gate = """  design_system_ready:\n    status: READY_FOR_REVIEW\n    note: All five required Design System checks pass and conditional Visual Identity/Logo are explicitly N/A; exact-head human approval remains pending.\n    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001]\n"""
+          new_gate = """  design_system_ready:\n    status: READY_FOR_REVIEW\n    note: All five required Design System checks pass and applicable FAR Visual Identity/Logo checks also pass; exact-head human approval remains pending.\n    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001, EVD-DESIGN-LOGO-001, EVD-DESIGN-LANDING-REFERENCE-001]\n"""
+          assert old_gate in text, 'expected superseded design_system_ready block not found'
+          text = text.replace(old_gate, new_gate, 1)
+
+          anchor = """  - id: EVD-DESIGN-SYSTEM-VALIDATION-001\n    type: design_system_validation_evidence\n    value: documentation/design-system/DESIGN_SYSTEM_VALIDATION_EVIDENCE.md\n"""
+          additions = anchor + """  - id: EVD-DESIGN-LOGO-001\n    type: logo_asset\n    value: .blueprint/ui/assets/far-seguros-logo.svg\n  - id: EVD-DESIGN-LANDING-REFERENCE-001\n    type: approved_visual_reference\n    value: .blueprint/ui/references/far-public-landing-approved.md\n"""
+          assert anchor in text, 'expected design validation artifact anchor not found'
+          assert 'EVD-DESIGN-LOGO-001' not in original, 'logo evidence already existed unexpectedly'
+          text = text.replace(anchor, additions, 1)
+
+          assert text != original
+          path.write_text(text)
+      - name: Verify no historical gate was changed
+        run: |
+          git diff -- .blueprint/status.yaml
+          git diff -- .blueprint/status.yaml | grep -q 'design.identity'
+          git diff -- .blueprint/status.yaml | grep -q 'design.logo'
+          git diff -- .blueprint/status.yaml | grep -q 'design_system_ready'
+      - name: Commit reconciled status
+        run: |
+          git config user.name "MSc Luis A. Hernández Elias"
+          git config user.email "88979457+LuisHdezE@users.noreply.github.com"
+          git add .blueprint/status.yaml
+          git commit -m "chore: reconcile FAR Design System status"
+          git push origin HEAD:blueprint/design-system
