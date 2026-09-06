@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T22:51:09-03:00'
+updated_at: '2026-09-05T23:11:54-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -45,6 +45,10 @@ phases:
     status: COMPLETE
     progress: 100
     note: Project-scoped API Gate was explicitly approved by Luis Hernández after all fifteen canonical aggregate checks passed.
+  interface_inventory:
+    status: COMPLETE
+    progress: 100
+    note: Executable web inventory was explicitly approved by Luis Hernández after exact 10/10 reconciliation against canonical API operationIds, permissions, dependencies and the three approved slice backlogs.
 checks:
   discovery.product_vision:
     status: PASS
@@ -274,6 +278,56 @@ checks:
     verification: evidence
     note: Initial API baseline with no accepted executable client consumers; impact-based downstream revalidation is not applicable yet.
     evidence_ids: [EVD-API-QA-001]
+  ui.web_inventory:
+    status: PASS
+    verification: evidence
+    note: The executable inventory contains exactly the 10 approved web interfaces and no Android/native scope.
+    evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-VALIDATION-001]
+  ui.android_inventory:
+    status: N/A
+    verification: evidence
+    note: Project capability android=false; no Android interface inventory is applicable.
+    evidence_ids: [EVD-UI-INVENTORY-EVIDENCE-001]
+  ui.inventory_scope_complete:
+    status: PASS
+    verification: evidence
+    note: All WEB-001..WEB-010 baseline items reconcile as COMMITTED with no additions, deferrals or drops.
+    evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-VALIDATION-001]
+  ui.inventory_traceability:
+    status: PASS
+    verification: evidence
+    note: Every inventory item preserves approved requirements, route intent, role/permission intent and downstream slice ownership.
+    evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-EVIDENCE-001]
+  ui.inventory_requirement_links:
+    status: PASS
+    verification: evidence
+    note: Automated validation proves no approved baseline requirement link was lost during executable reconciliation.
+    evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-VALIDATION-001]
+  ui.inventory_permission_links:
+    status: PASS
+    verification: evidence
+    note: Inventory permissions match the approved baseline and canonical API permission matrix; client presentation remains non-authoritative.
+    evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-VALIDATION-001]
+  ui.inventory_operation_links:
+    status: PASS
+    verification: evidence
+    note: API-backed data/actions bind only approved canonical operationIds; health and MCP remain outside the visual web inventory and no convenience endpoint is invented.
+    evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-VALIDATION-001]
+  ui.inventory_dependencies:
+    status: PASS
+    verification: evidence
+    note: Navigation destinations and interface dependencies resolve only to committed inventory items; the web client has no direct PostgreSQL or simulated-legacy dependency.
+    evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-VALIDATION-001]
+  ui.inventory_slice_backlog:
+    status: PASS
+    verification: evidence
+    note: The executable backlog preserves exactly digital-claim-intake, customer-claim-tracking and claims-backoffice; WEB-001 remains a shared entry rather than a fourth slice.
+    evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-EVIDENCE-001, EVD-UI-INVENTORY-VALIDATION-001]
+  ui.brownfield_observed_proposed_separation:
+    status: N/A
+    verification: evidence
+    note: Delivery mode is GREENFIELD; Brownfield observed/proposed separation is not applicable.
+    evidence_ids: [EVD-UI-INVENTORY-EVIDENCE-001]
 gates:
   requirements_ready:
     status: PASS
@@ -320,6 +374,11 @@ gates:
     evaluated_at: '2026-09-05T22:51:09-03:00'
     note: Explicit human API Gate approval recorded after all fifteen canonical aggregate checks and exact-head regressions passed.
     evidence_ids: [EVD-API-GATE-001, EVD-API-GATE-APPROVAL-001]
+  interface_inventory_ready:
+    status: PASS
+    evaluated_at: '2026-09-05T23:11:54-03:00'
+    note: Explicit human Interface Inventory Ready approval recorded after exact 10/10 reconciliation and exact-head Interface Inventory plus full API regression success.
+    evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-EVIDENCE-001, EVD-UI-INVENTORY-VALIDATION-001, EVD-UI-INVENTORY-READY-APPROVAL-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -442,3 +501,15 @@ artifacts:
   - id: EVD-API-GATE-APPROVAL-001
     type: manual_approval
     value: documentation/api/API_GATE_APPROVAL.md
+  - id: EVD-UI-INVENTORY-001
+    type: interface_inventory
+    value: .blueprint/ui/interface-inventory.json
+  - id: EVD-UI-INVENTORY-EVIDENCE-001
+    type: interface_inventory_evidence
+    value: documentation/interface-inventory/INTERFACE_INVENTORY.md
+  - id: EVD-UI-INVENTORY-VALIDATION-001
+    type: interface_inventory_validation_evidence
+    value: documentation/interface-inventory/INTERFACE_INVENTORY_VALIDATION_EVIDENCE.md
+  - id: EVD-UI-INVENTORY-READY-APPROVAL-001
+    type: manual_approval
+    value: documentation/interface-inventory/INTERFACE_INVENTORY_READY_APPROVAL.md
