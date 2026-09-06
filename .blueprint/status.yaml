@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-06T01:04:39-03:00'
+updated_at: '2026-09-06T07:12:37-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -61,6 +61,10 @@ phases:
     status: COMPLETE
     progress: 100
     note: Reusable web platform baseline and all three exact web slice bindings were explicitly approved by Luis Hernández after exact-head semantic validation and full regression success.
+  functional_interface_slice:
+    status: IN_PROGRESS
+    progress: 33
+    note: digital-claim-intake/web is FUNCTIONAL after explicit human Functional Slice Ready approval and exact reviewed-head validation; customer-claim-tracking/web and claims-backoffice/web remain pending.
 checks:
   discovery.product_vision:
     status: PASS
@@ -511,7 +515,10 @@ gates:
     evaluated_at: '2026-09-06T00:39:18-03:00'
     note: Explicit human Design System Ready approval recorded after revised FAR identity/logo validation and exact-head success of Design System, Interface Inventory and full API regressions.
     evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001, EVD-DESIGN-LOGO-001, EVD-DESIGN-LANDING-REFERENCE-001, EVD-DESIGN-SYSTEM-READY-APPROVAL-001]
-functional_slices: []
+functional_slices:
+  - id: digital-claim-intake
+    platform: web
+    artifact: .blueprint/functional-slices/digital-claim-intake.web.json
 scoped_gates:
   - gate: client_architecture_ready
     scope: interface_slice_platform
@@ -537,6 +544,14 @@ scoped_gates:
     evaluated_at: '2026-09-06T01:04:39-03:00'
     note: Explicit human Client Architecture Ready approval recorded for claims-backoffice/web after exact-head semantic validation and full regression success.
     evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-BACKOFFICE-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001, EVD-CLIENT-ARCH-READY-APPROVAL-001]
+  - gate: functional_slice_ready
+    scope: interface_slice_platform
+    scope_id: digital-claim-intake
+    platform: web
+    status: PASS
+    evaluated_at: '2026-09-06T07:12:37-03:00'
+    note: Explicit human Functional Slice Ready approval recorded for digital-claim-intake/web after exact-head 8/8 workflow success; lifecycle is now FUNCTIONAL.
+    evidence_ids: [EVD-FUNCTIONAL-INTAKE-WEB-001, EVD-FUNCTIONAL-INTAKE-WEB-APPROVAL-001]
 blockers: []
 api_impacts: []
 artifacts:
@@ -711,3 +726,9 @@ artifacts:
   - id: EVD-CLIENT-ARCH-READY-APPROVAL-001
     type: manual_approval
     value: documentation/client-architecture/CLIENT_ARCHITECTURE_READY_APPROVAL.md
+  - id: EVD-FUNCTIONAL-INTAKE-WEB-001
+    type: functional_slice_evidence
+    value: documentation/functional-slices/DIGITAL_CLAIM_INTAKE_WEB_EVIDENCE.md
+  - id: EVD-FUNCTIONAL-INTAKE-WEB-APPROVAL-001
+    type: manual_approval
+    value: documentation/functional-slices/DIGITAL_CLAIM_INTAKE_WEB_APPROVAL.md

@@ -1,0 +1,53 @@
+{
+  "schema_version": "0.5.0",
+  "id": "digital-claim-intake",
+  "name": "Digital Claim Intake",
+  "platform": "web",
+  "inventory_ids": ["WEB-002", "WEB-003", "WEB-004", "WEB-005"],
+  "dependencies": [],
+  "api_binding": {
+    "openapi_ref": "openapi.yaml",
+    "revision": "api-v1-r1",
+    "operation_ids": ["verifyPolicyVehicle", "createClaim"]
+  },
+  "client_architecture": {
+    "artifact": ".blueprint/client-architecture/digital-claim-intake.web.json",
+    "gate_status": "PASS"
+  },
+  "lifecycle_status": "FUNCTIONAL",
+  "blocker": null,
+  "definition_of_done": {
+    "status": "PASS",
+    "checks": {
+      "routing": "PASS",
+      "real_api": "PASS",
+      "auth_rbac": "PASS",
+      "forms_errors": "PASS",
+      "observability": "PASS",
+      "responsive": "PASS",
+      "accessibility": "PASS",
+      "tests": "PASS",
+      "traceability": "PASS",
+      "no_hardcoded_business_data": "PASS",
+      "no_invented_capabilities": "PASS",
+      "idempotency": "PASS",
+      "offline": "PASS"
+    },
+    "evidence_ids": ["EVD-FUNCTIONAL-INTAKE-WEB-001", "EVD-FUNCTIONAL-INTAKE-WEB-APPROVAL-001"]
+  },
+  "visual_functional_review": {
+    "status": "PENDING",
+    "evidence_ids": [],
+    "human_complete": false,
+    "approved_visual_references": [".blueprint/ui/references/far-public-landing-approved.md"]
+  },
+  "integration_qa": {
+    "status": "PENDING",
+    "evidence_ids": []
+  },
+  "human_acceptance": {
+    "status": "PENDING",
+    "evidence_ids": []
+  },
+  "evidence_ids": ["EVD-FUNCTIONAL-INTAKE-WEB-001", "EVD-FUNCTIONAL-INTAKE-WEB-APPROVAL-001"]
+}
