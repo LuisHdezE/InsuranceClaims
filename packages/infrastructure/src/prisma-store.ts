@@ -12,24 +12,38 @@ import type {
   TransactionContext,
   TransactionPort,
 } from '@insurance/application';
-import type { ClaimProps, ClaimStatus } from '@insurance/domain';
+import { ClaimStateConflictError, type ClaimProps, type ClaimStatus } from '@insurance/domain';
+
+function toDbInstant(value: Date): any {
+  const temporal = (globalThis as any).Temporal;
+  if (!temporal?.Instant) throw new Error('Temporal.Instant is required by the PostgreSQL runtime.');
+  return temporal.Instant.from(value.toISOString());
+}
+
+function toAppDate(value: any): Date {
+  if (value instanceof Date) return value;
+  const serialized = typeof value === 'string' ? value : value?.toString?.();
+  const parsed = new Date(serialized);
+  if (Number.isNaN(parsed.getTime())) throw new Error('PostgreSQL returned an invalid timestamp value.');
+  return parsed;
+}
 
 function claimRow(row: any): ClaimProps {
   return {
     id: row.id, trackingCode: row.trackingCode, policyReference: row.policyReference, vehicleReference: row.vehicleReference,
-    verifiedCustomerLabel: row.verifiedCustomerLabel ?? null, eventType: row.eventType, occurredAt: new Date(row.occurredAt),
+    verifiedCustomerLabel: row.verifiedCustomerLabel ?? null, eventType: row.eventType, occurredAt: toAppDate(row.occurredAt),
     locationText: row.locationText, description: row.description, status: row.status as ClaimStatus,
-    createdAt: new Date(row.createdAt), updatedAt: new Date(row.updatedAt),
+    createdAt: toAppDate(row.createdAt), updatedAt: toAppDate(row.updatedAt),
   };
 }
 function evidenceRow(row: any): EvidenceRecord {
-  return { evidenceId: row.id, claimId: row.claimId, storageKey: row.storageKey, mediaType: row.mediaType, sizeBytes: Number(row.sizeBytes), displayFilename: row.displayFilename ?? null, createdAt: new Date(row.createdAt) };
+  return { evidenceId: row.id, claimId: row.claimId, storageKey: row.storageKey, mediaType: row.mediaType, sizeBytes: Number(row.sizeBytes), displayFilename: row.displayFilename ?? null, createdAt: toAppDate(row.createdAt) };
 }
 function historyRow(row: any): HistoryRecord {
-  return { historyId: row.id, claimId: row.claimId, fromStatus: row.fromStatus ?? null, toStatus: row.toStatus, actorType: row.actorType, actorId: row.actorId ?? null, occurredAt: new Date(row.occurredAt) };
+  return { historyId: row.id, claimId: row.claimId, fromStatus: row.fromStatus ?? null, toStatus: row.toStatus, actorType: row.actorType, actorId: row.actorId ?? null, occurredAt: toAppDate(row.occurredAt) };
 }
 function auditRow(row: any): AuditEventRecord {
-  return { id: row.id, eventCode: row.eventCode, occurredAt: new Date(row.occurredAt), actorType: row.actorType, actorId: row.actorId ?? null, targetType: row.targetType ?? null, targetId: row.targetId ?? null, outcome: row.outcome, requestId: row.requestId ?? null, metadata: row.metadata ?? null };
+  return { id: row.id, eventCode: row.eventCode, occurredAt: toAppDate(row.occurredAt), actorType: row.actorType, actorId: row.actorId ?? null, targetType: row.targetType ?? null, targetId: row.targetId ?? null, outcome: row.outcome, requestId: row.requestId ?? null, metadata: row.metadata ?? null };
 }
 
 export class PrismaWorkflowStore implements ClaimRepository, AuditPort, IdempotencyPort, OperatorRepository, TransactionPort {
@@ -38,16 +52,18 @@ export class PrismaWorkflowStore implements ClaimRepository, AuditPort, Idempote
   async create(claim: ClaimProps, evidence: EvidenceRecord[], initialHistory: HistoryRecord): Promise<void> {
     await this.db.orm.public.Claim.create({
       id: claim.id, trackingCode: claim.trackingCode, policyReference: claim.policyReference, vehicleReference: claim.vehicleReference,
-      verifiedCustomerLabel: claim.verifiedCustomerLabel, eventType: claim.eventType, occurredAt: claim.occurredAt,
-      locationText: claim.locationText, description: claim.description, status: claim.status, createdAt: claim.createdAt, updatedAt: claim.updatedAt,
+      verifiedCustomerLabel: claim.verifiedCustomerLabel, eventType: claim.eventType, occurredAt: toDbInstant(claim.occurredAt),
+      locationText: claim.locationText, description: claim.description, status: claim.status,
+      createdAt: toDbInstant(claim.createdAt), updatedAt: toDbInstant(claim.updatedAt),
     });
     if (evidence.length) await this.db.orm.public.ClaimEvidence.createAll(evidence.map((item) => ({
       id: item.evidenceId, claimId: item.claimId, storageKey: item.storageKey, mediaType: item.mediaType,
-      sizeBytes: BigInt(item.sizeBytes), displayFilename: item.displayFilename, createdAt: item.createdAt,
+      sizeBytes: BigInt(item.sizeBytes), displayFilename: item.displayFilename, createdAt: toDbInstant(item.createdAt),
     })));
     await this.db.orm.public.ClaimStatusHistory.create({
       id: initialHistory.historyId, claimId: initialHistory.claimId, fromStatus: initialHistory.fromStatus,
-      toStatus: initialHistory.toStatus, actorType: initialHistory.actorType, actorId: initialHistory.actorId, occurredAt: initialHistory.occurredAt,
+      toStatus: initialHistory.toStatus, actorType: initialHistory.actorType, actorId: initialHistory.actorId,
+      occurredAt: toDbInstant(initialHistory.occurredAt),
     });
   }
 
@@ -81,18 +97,26 @@ export class PrismaWorkflowStore implements ClaimRepository, AuditPort, Idempote
   }
 
   async applyTransition(claim: ClaimProps, history: HistoryRecord): Promise<void> {
-    await this.db.orm.public.Claim.where({ id: claim.id }).update({ status: claim.status, updatedAt: claim.updatedAt });
+    if (!history.fromStatus) throw new Error('Transition history requires a source status.');
+    const updated = await this.db.orm.public.Claim
+      .where({ id: claim.id, status: history.fromStatus })
+      .update({ status: claim.status, updatedAt: toDbInstant(claim.updatedAt) });
+    if (!updated) {
+      const current = await this.db.orm.public.Claim.first({ id: claim.id });
+      const actualStatus = (current?.status ?? history.fromStatus) as ClaimStatus;
+      throw new ClaimStateConflictError(history.fromStatus, actualStatus);
+    }
     await this.db.orm.public.ClaimStatusHistory.create({
       id: history.historyId, claimId: history.claimId, fromStatus: history.fromStatus, toStatus: history.toStatus,
-      actorType: history.actorType, actorId: history.actorId, occurredAt: history.occurredAt,
+      actorType: history.actorType, actorId: history.actorId, occurredAt: toDbInstant(history.occurredAt),
     });
   }
 
   async append(event: AuditEventRecord): Promise<void> {
     await this.db.orm.public.AuditEvent.create({
-      id: event.id, eventCode: event.eventCode, occurredAt: event.occurredAt, actorType: event.actorType,
+      id: event.id, eventCode: event.eventCode, occurredAt: toDbInstant(event.occurredAt), actorType: event.actorType,
       actorId: event.actorId, targetType: event.targetType, targetId: event.targetId, outcome: event.outcome,
-      requestId: event.requestId, metadata: event.metadata, createdAt: event.occurredAt,
+      requestId: event.requestId, metadata: event.metadata, createdAt: toDbInstant(event.occurredAt),
     });
   }
 
@@ -103,7 +127,16 @@ export class PrismaWorkflowStore implements ClaimRepository, AuditPort, Idempote
 
   async get(scope: string, keyHash: string): Promise<IdempotencyRecord | null> {
     const row = await this.db.orm.public.IdempotencyRecord.first({ scope, idempotencyKeyHash: keyHash });
-    return row ? { scope: row.scope, keyHash: row.idempotencyKeyHash, requestFingerprint: row.requestFingerprint, status: row.status, claimId: row.claimId ?? null, responseReference: row.responseReference ?? null, createdAt: new Date(row.createdAt), expiresAt: new Date(row.expiresAt) } : null;
+    return row ? {
+      scope: row.scope,
+      keyHash: row.idempotencyKeyHash,
+      requestFingerprint: row.requestFingerprint,
+      status: row.status,
+      claimId: row.claimId ?? null,
+      responseReference: row.responseReference ?? null,
+      createdAt: toAppDate(row.createdAt),
+      expiresAt: toAppDate(row.expiresAt),
+    } : null;
   }
 
   async reserve(record: IdempotencyRecord): Promise<boolean> {
@@ -111,7 +144,7 @@ export class PrismaWorkflowStore implements ClaimRepository, AuditPort, Idempote
       await this.db.orm.public.IdempotencyRecord.create({
         scope: record.scope, idempotencyKeyHash: record.keyHash, requestFingerprint: record.requestFingerprint,
         status: record.status, claimId: record.claimId, responseReference: record.responseReference,
-        createdAt: record.createdAt, expiresAt: record.expiresAt,
+        createdAt: toDbInstant(record.createdAt), expiresAt: toDbInstant(record.expiresAt),
       });
       return true;
     } catch { return false; }
@@ -139,6 +172,14 @@ export class PrismaWorkflowStore implements ClaimRepository, AuditPort, Idempote
   async seedOperator(operator: OperatorRecord, now: Date): Promise<void> {
     const current = await this.db.orm.public.Operator.first({ login: operator.login });
     if (current) return;
-    await this.db.orm.public.Operator.create({ id: operator.id, login: operator.login, passwordHash: operator.passwordHash, role: operator.role, isActive: operator.isActive, createdAt: now, updatedAt: now });
+    await this.db.orm.public.Operator.create({
+      id: operator.id,
+      login: operator.login,
+      passwordHash: operator.passwordHash,
+      role: operator.role,
+      isActive: operator.isActive,
+      createdAt: toDbInstant(now),
+      updatedAt: toDbInstant(now),
+    });
   }
 }
