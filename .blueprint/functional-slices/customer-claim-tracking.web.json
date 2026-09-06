@@ -56,8 +56,11 @@
     ]
   },
   "integration_qa": {
-    "status": "PENDING",
-    "evidence_ids": []
+    "status": "READY_FOR_REVIEW",
+    "evidence_ids": [
+      "EVD-INTEGRATION-QA-WEB-SYSTEM-001",
+      "EVD-INTEGRATION-QA-TRACKING-WEB-001"
+    ]
   },
   "human_acceptance": {
     "status": "PENDING",
@@ -68,6 +71,8 @@
     "EVD-FUNCTIONAL-TRACKING-WEB-APPROVAL-001",
     "EVD-VFR-BROWSER-WEB-001",
     "EVD-VFR-TRACKING-WEB-001",
-    "EVD-VFR-TRACKING-WEB-APPROVAL-001"
+    "EVD-VFR-TRACKING-WEB-APPROVAL-001",
+    "EVD-INTEGRATION-QA-WEB-SYSTEM-001",
+    "EVD-INTEGRATION-QA-TRACKING-WEB-001"
   ]
 }
