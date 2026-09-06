@@ -1,0 +1,144 @@
+name: Reconcile VFR Human Approval
+
+on:
+  push:
+    branches:
+      - blueprint/visual-functional-review-web
+    paths:
+      - .github/workflows/reconcile-vfr-approval.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: blueprint/visual-functional-review-web
+          fetch-depth: 0
+
+      - name: Reconcile approved VFR state
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          approval_time = '2026-09-06T09:43:43-03:00'
+          slices = [
+              (
+                  Path('.blueprint/functional-slices/digital-claim-intake.web.json'),
+                  'EVD-VFR-INTAKE-WEB-001',
+                  'EVD-VFR-INTAKE-WEB-APPROVAL-001',
+              ),
+              (
+                  Path('.blueprint/functional-slices/customer-claim-tracking.web.json'),
+                  'EVD-VFR-TRACKING-WEB-001',
+                  'EVD-VFR-TRACKING-WEB-APPROVAL-001',
+              ),
+              (
+                  Path('.blueprint/functional-slices/claims-backoffice.web.json'),
+                  'EVD-VFR-BACKOFFICE-WEB-001',
+                  'EVD-VFR-BACKOFFICE-WEB-APPROVAL-001',
+              ),
+          ]
+
+          for path, evidence_id, approval_id in slices:
+              data = json.loads(path.read_text(encoding='utf-8'))
+              if data.get('lifecycle_status') != 'FUNCTIONAL':
+                  raise SystemExit(f'{path}: lifecycle is not FUNCTIONAL')
+              vfr = data['visual_functional_review']
+              if vfr.get('status') != 'READY_FOR_REVIEW' or vfr.get('human_complete') is not False:
+                  raise SystemExit(f'{path}: expected READY_FOR_REVIEW with human_complete=false')
+              vfr['status'] = 'PASS'
+              vfr['human_complete'] = True
+              ordered_vfr = []
+              for item in [*vfr.get('evidence_ids', []), approval_id]:
+                  if item not in ordered_vfr:
+                      ordered_vfr.append(item)
+              vfr['evidence_ids'] = ordered_vfr
+              if 'EVD-VFR-BROWSER-WEB-001' not in ordered_vfr or evidence_id not in ordered_vfr or approval_id not in ordered_vfr:
+                  raise SystemExit(f'{path}: incomplete VFR evidence binding')
+              if data.get('integration_qa', {}).get('status') != 'PENDING':
+                  raise SystemExit(f'{path}: Integration QA unexpectedly advanced')
+              overall = data.setdefault('evidence_ids', [])
+              for item in ['EVD-VFR-BROWSER-WEB-001', evidence_id, approval_id]:
+                  if item not in overall:
+                      overall.append(item)
+              path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          status_path = Path('.blueprint/status.yaml')
+          status = status_path.read_text(encoding='utf-8')
+          status = re.sub(r"updated_at: '[^']+'", f"updated_at: '{approval_time}'", status, count=1)
+
+          old_phase = '''  visual_functional_review:\n    status: READY_FOR_REVIEW\n    progress: 89\n    note: All three web slices passed the applicable machine/evidence Visual & Functional Review checks in a real Chrome runtime; explicit human review remains pending per slice/platform.\n'''
+          new_phase = '''  visual_functional_review:\n    status: COMPLETE\n    progress: 100\n    note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web all passed Visual & Functional Review after real-browser evidence and explicit human approval on the exact reviewed candidate.\n'''
+          if old_phase not in status:
+              raise SystemExit('visual_functional_review phase anchor not found')
+          status = status.replace(old_phase, new_phase, 1)
+
+          human_pattern = re.compile(
+              r"  review\.human_complete:\n"
+              r"    status: PENDING\n"
+              r"    verification: manual\n"
+              r"    note: Explicit human Visual & Functional Review is required independently for each slice/platform and has not yet been granted\.\n"
+              r"    evidence_ids: \[EVD-VFR-INTAKE-WEB-001, EVD-VFR-TRACKING-WEB-001, EVD-VFR-BACKOFFICE-WEB-001\]\n"
+          )
+          human_replacement = '''  review.human_complete:\n    status: PASS\n    verification: manual\n    note: Luis Hernández explicitly approved Visual & Functional Review for all three scoped web slices on the exact PR #17 reviewed head; CI did not infer this decision.\n    evidence_ids: [EVD-VFR-INTAKE-WEB-APPROVAL-001, EVD-VFR-TRACKING-WEB-APPROVAL-001, EVD-VFR-BACKOFFICE-WEB-APPROVAL-001]\n'''
+          status, count = human_pattern.subn(human_replacement, status, count=1)
+          if count != 1:
+              raise SystemExit('review.human_complete anchor not found')
+
+          scoped = [
+              ('digital-claim-intake', 'EVD-VFR-INTAKE-WEB-001', 'EVD-VFR-INTAKE-WEB-APPROVAL-001', ''),
+              ('customer-claim-tracking', 'EVD-VFR-TRACKING-WEB-001', 'EVD-VFR-TRACKING-WEB-APPROVAL-001', ''),
+              ('claims-backoffice', 'EVD-VFR-BACKOFFICE-WEB-001', 'EVD-VFR-BACKOFFICE-WEB-APPROVAL-001', ' Static reference comparison remains N/A because no approved static backoffice reference exists.'),
+          ]
+          for scope_id, evidence_id, approval_id, suffix in scoped:
+              pattern = re.compile(
+                  rf"(  - gate: visual_functional_review_pass\n"
+                  rf"    scope: interface_slice_platform\n"
+                  rf"    scope_id: {re.escape(scope_id)}\n"
+                  rf"    platform: web\n)"
+                  rf"    status: READY_FOR_REVIEW\n"
+                  rf"    evaluated_at: '[^']+'\n"
+                  rf"    note: [^\n]+\n"
+                  rf"    evidence_ids: \[EVD-VFR-BROWSER-WEB-001, {re.escape(evidence_id)}\]\n"
+              )
+              replacement = (
+                  rf"\1    status: PASS\n"
+                  rf"    evaluated_at: '{approval_time}'\n"
+                  rf"    note: Explicit human Visual & Functional Review approval recorded after exact-head browser evidence and 11/11 pull-request workflow success.{suffix}\n"
+                  rf"    evidence_ids: [EVD-VFR-BROWSER-WEB-001, {evidence_id}, {approval_id}]\n"
+              )
+              status, count = pattern.subn(replacement, status, count=1)
+              if count != 1:
+                  raise SystemExit(f'scoped VFR anchor not found for {scope_id}')
+
+          approval_artifacts = [
+              ('EVD-VFR-INTAKE-WEB-APPROVAL-001', 'documentation/visual-functional-review/DIGITAL_CLAIM_INTAKE_WEB_APPROVAL.md'),
+              ('EVD-VFR-TRACKING-WEB-APPROVAL-001', 'documentation/visual-functional-review/CUSTOMER_CLAIM_TRACKING_WEB_APPROVAL.md'),
+              ('EVD-VFR-BACKOFFICE-WEB-APPROVAL-001', 'documentation/visual-functional-review/CLAIMS_BACKOFFICE_WEB_APPROVAL.md'),
+          ]
+          for evidence_id, value in approval_artifacts:
+              if evidence_id not in status:
+                  status += f"\n  - id: {evidence_id}\n    type: manual_approval\n    value: {value}\n"
+
+          status_path.write_text(status, encoding='utf-8')
+          PY
+
+      - name: Remove one-time reconciler
+        run: rm -f .github/workflows/reconcile-vfr-approval.yml
+
+      - name: Commit approved state
+        shell: bash
+        run: |
+          git config user.name 'MSc Luis A. Hernández Elias'
+          git config user.email '88979457+LuisHdezE@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'chore(blueprint): record VFR human approvals'
+          git push origin HEAD:blueprint/visual-functional-review-web
