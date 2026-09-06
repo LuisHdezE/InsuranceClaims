@@ -113,7 +113,9 @@ def click_button(label: str) -> None:
     button = wait.until(
         EC.element_to_be_clickable((By.XPATH, f"//button[normalize-space()={json.dumps(label, ensure_ascii=False)}]"))
     )
-    button.click()
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", button)
+    time.sleep(0.15)
+    driver.execute_script("arguments[0].click();", button)
 
 
 def set_viewport(width: int, height: int) -> None:
