@@ -1,0 +1,33 @@
+name: Integration QA - Ready State
+
+on:
+  push:
+    branches: [blueprint/integration-qa-web]
+    paths:
+      - .blueprint/functional-slices/**
+      - .blueprint/status.yaml
+      - documentation/integration-qa/**
+      - scripts/validate-integration-qa-ready.mjs
+      - .github/workflows/integration-qa-ready-state.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - .blueprint/functional-slices/**
+      - .blueprint/status.yaml
+      - documentation/integration-qa/**
+      - scripts/validate-integration-qa-ready.mjs
+      - .github/workflows/integration-qa-ready-state.yml
+
+permissions:
+  contents: read
+
+jobs:
+  ready-state:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Validate Integration QA ready state
+        run: node scripts/validate-integration-qa-ready.mjs
