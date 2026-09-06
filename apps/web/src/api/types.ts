@@ -68,6 +68,106 @@ export type CustomerClaimStatusResponse = {
   nextSteps: string[];
 };
 
+export type OperatorLoginRequest = {
+  login: string;
+  password: string;
+};
+
+export type OperatorIdentity = {
+  id: string;
+  login: string;
+  role: 'CLAIMS_OPERATOR';
+};
+
+export type OperatorLoginResponse = {
+  accessToken: string;
+  tokenType: 'Bearer';
+  expiresIn: 900;
+  operator: OperatorIdentity;
+};
+
+export type ClaimSummary = {
+  claimId: string;
+  trackingCode: string;
+  status: ClaimStatus;
+  occurredAt: string;
+  policyReference: string;
+  vehicleReference: string;
+  createdAt: string;
+};
+
+export type ClaimsPageResponse = {
+  items: ClaimSummary[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+};
+
+export type EvidenceMetadata = {
+  evidenceId: string;
+  mediaType: 'image/jpeg' | 'image/png' | 'application/pdf';
+  sizeBytes: number;
+  displayFilename: string | null;
+  createdAt: string;
+};
+
+export type StatusHistoryEntry = {
+  fromStatus: ClaimStatus | null;
+  toStatus: ClaimStatus;
+  actorType: 'SYSTEM' | 'OPERATOR';
+  actorId: string | null;
+  occurredAt: string;
+};
+
+export type AuditEventSummary = {
+  eventCode: 'CLAIM_CREATED' | 'CLAIM_STATE_TRANSITIONED' | 'AUTH_LOGIN_SUCCEEDED' | 'AUTH_LOGIN_FAILED';
+  occurredAt: string;
+  actorType: 'ANONYMOUS' | 'CUSTOMER_PUBLIC' | 'OPERATOR';
+  actorId: string | null;
+  outcome: 'SUCCESS' | 'FAILURE';
+  requestId: string | null;
+};
+
+export type OperatorClaimDetailResponse = {
+  claimId: string;
+  trackingCode: string;
+  policyReference: string;
+  vehicleReference: string;
+  verifiedCustomerLabel: string | null;
+  eventType: string;
+  occurredAt: string;
+  locationText: string;
+  description: string;
+  status: ClaimStatus;
+  allowedTransitions: ClaimStatus[];
+  evidence: EvidenceMetadata[];
+  history: StatusHistoryEntry[];
+  auditEvents: AuditEventSummary[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TransitionClaimStatusRequest = {
+  expectedFromStatus: ClaimStatus;
+  toStatus: ClaimStatus;
+};
+
+export type TransitionClaimStatusResponse = {
+  claimId: string;
+  fromStatus: ClaimStatus;
+  toStatus: ClaimStatus;
+  status: ClaimStatus;
+  allowedTransitions: ClaimStatus[];
+  transitionedAt: string;
+};
+
+export type EvidenceDownload = {
+  bytes: ArrayBuffer;
+  mediaType: string;
+  filename: string | null;
+};
+
 export type ApiResult<T> = {
   data: T;
   requestId: string | null;

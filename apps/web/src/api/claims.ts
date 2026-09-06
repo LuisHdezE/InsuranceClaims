@@ -3,11 +3,19 @@ import { createApiClient, toApiFailure } from './client';
 import type {
   ApiResult,
   ClaimDraft,
+  ClaimsPageResponse,
+  ClaimStatus,
   CreateClaimResponse,
   CustomerClaimStatusResponse,
+  EvidenceDownload,
+  OperatorClaimDetailResponse,
+  OperatorLoginRequest,
+  OperatorLoginResponse,
   PolicyVerificationRequest,
   PolicyVerificationResponse,
   TrackClaimRequest,
+  TransitionClaimStatusRequest,
+  TransitionClaimStatusResponse,
 } from './types';
 
 const browserClient = createApiClient();
@@ -79,6 +87,109 @@ export async function trackClaim(
   } catch (error) {
     throw toApiFailure(error);
   }
+}
+
+export async function authenticateOperator(
+  payload: OperatorLoginRequest,
+  client: AxiosInstance = browserClient,
+): Promise<ApiResult<OperatorLoginResponse>> {
+  try {
+    const response = await client.post<OperatorLoginResponse>('/api/v1/operator/auth/login', payload);
+    return { data: response.data, requestId: readHeader(response.headers['x-request-id']) };
+  } catch (error) {
+    throw toApiFailure(error);
+  }
+}
+
+export async function listClaims(
+  input: { page?: number; pageSize?: number; status?: ClaimStatus },
+  accessToken: string,
+  client: AxiosInstance = browserClient,
+): Promise<ApiResult<ClaimsPageResponse>> {
+  try {
+    const response = await client.get<ClaimsPageResponse>('/api/v1/operator/claims', {
+      params: input,
+      headers: bearerHeaders(accessToken),
+    });
+    return { data: response.data, requestId: readHeader(response.headers['x-request-id']) };
+  } catch (error) {
+    throw toApiFailure(error);
+  }
+}
+
+export async function getClaimDetail(
+  claimId: string,
+  accessToken: string,
+  client: AxiosInstance = browserClient,
+): Promise<ApiResult<OperatorClaimDetailResponse>> {
+  try {
+    const response = await client.get<OperatorClaimDetailResponse>(
+      `/api/v1/operator/claims/${encodeURIComponent(claimId)}`,
+      { headers: bearerHeaders(accessToken) },
+    );
+    return { data: response.data, requestId: readHeader(response.headers['x-request-id']) };
+  } catch (error) {
+    throw toApiFailure(error);
+  }
+}
+
+export async function downloadClaimEvidence(
+  claimId: string,
+  evidenceId: string,
+  accessToken: string,
+  client: AxiosInstance = browserClient,
+): Promise<ApiResult<EvidenceDownload>> {
+  try {
+    const response = await client.get<ArrayBuffer>(
+      `/api/v1/operator/claims/${encodeURIComponent(claimId)}/evidence/${encodeURIComponent(evidenceId)}`,
+      { headers: bearerHeaders(accessToken), responseType: 'arraybuffer' },
+    );
+    return {
+      data: {
+        bytes: response.data,
+        mediaType: readHeader(response.headers['content-type']) ?? 'application/octet-stream',
+        filename: parseFilename(readHeader(response.headers['content-disposition'])),
+      },
+      requestId: readHeader(response.headers['x-request-id']),
+    };
+  } catch (error) {
+    throw toApiFailure(error);
+  }
+}
+
+export async function transitionClaimStatus(
+  claimId: string,
+  payload: TransitionClaimStatusRequest,
+  accessToken: string,
+  client: AxiosInstance = browserClient,
+): Promise<ApiResult<TransitionClaimStatusResponse>> {
+  try {
+    const response = await client.post<TransitionClaimStatusResponse>(
+      `/api/v1/operator/claims/${encodeURIComponent(claimId)}/transitions`,
+      payload,
+      { headers: bearerHeaders(accessToken) },
+    );
+    return { data: response.data, requestId: readHeader(response.headers['x-request-id']) };
+  } catch (error) {
+    throw toApiFailure(error);
+  }
+}
+
+function bearerHeaders(accessToken: string) {
+  return { Authorization: `Bearer ${accessToken}` };
+}
+
+function parseFilename(contentDisposition: string | null): string | null {
+  if (!contentDisposition) return null;
+  const encoded = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded);
+    } catch {
+      return encoded;
+    }
+  }
+  return contentDisposition.match(/filename="?([^";]+)"?/i)?.[1] ?? null;
 }
 
 function readHeader(value: unknown): string | null {

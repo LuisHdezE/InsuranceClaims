@@ -1,0 +1,123 @@
+name: Functional Slice - Claims Backoffice Web
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  web-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate functional slice contract
+        run: node scripts/validate-functional-slice-claims-backoffice.mjs
+      - name: Typecheck web client
+        run: npm run typecheck --workspace=@insurance/web
+      - name: Web tests
+        run: npm run test --workspace=@insurance/web
+      - name: Build web client
+        run: npm run build --workspace=@insurance/web
+
+  real-api-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_backoffice_qa
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_backoffice_qa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_backoffice_qa
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-backoffice
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+      - name: Prepare synthetic runtime secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=backoffice-qa-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=Backoffice-qa-$(openssl rand -hex 12)!" >> "$GITHUB_ENV"
+      - name: Ensure PostgreSQL client
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Bootstrap ephemeral PostgreSQL schema
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+      - name: Seed synthetic claims operator
+        run: npx tsx qa/seed.ts
+      - name: Start simulated legacy system and API
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-backoffice
+          npm run start:legacy > .runtime/backoffice-legacy.log 2>&1 &
+          echo $! > .runtime/backoffice-legacy.pid
+          npm run start:api > .runtime/backoffice-api.log 2>&1 &
+          echo $! > .runtime/backoffice-api.pid
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1; then break; fi
+            if [[ "$attempt" == "40" ]]; then
+              cat .runtime/backoffice-api.log || true
+              cat .runtime/backoffice-legacy.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+      - name: Exercise backoffice web client against real API
+        run: npx tsx qa/web-claims-backoffice-runtime.ts
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          echo '=== API LOG ==='
+          tail -n 200 .runtime/backoffice-api.log 2>/dev/null || true
+          echo '=== LEGACY LOG ==='
+          tail -n 200 .runtime/backoffice-legacy.log 2>/dev/null || true
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          [[ -f .runtime/backoffice-api.pid ]] && kill "$(cat .runtime/backoffice-api.pid)" 2>/dev/null || true
+          [[ -f .runtime/backoffice-legacy.pid ]] && kill "$(cat .runtime/backoffice-legacy.pid)" 2>/dev/null || true

@@ -4,9 +4,11 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { ClaimFlowProvider } from './flow/ClaimFlowContext';
+import { OperatorSessionProvider } from './flow/OperatorSessionContext';
 import { TrackingFlowProvider } from './flow/TrackingFlowContext';
 import './styles.css';
 import './tracking.css';
+import './backoffice.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,7 +23,9 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <ClaimFlowProvider>
           <TrackingFlowProvider>
-            <App />
+            <OperatorSessionProvider>
+              <App />
+            </OperatorSessionProvider>
           </TrackingFlowProvider>
         </ClaimFlowProvider>
       </BrowserRouter>
