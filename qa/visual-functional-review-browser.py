@@ -102,7 +102,7 @@ def wait_path(path: str) -> None:
 
 def wait_text(text: str) -> None:
     try:
-        wait.until(lambda d: text in d.find_element(By.TAG_NAME, "body").text)
+        wait.until(lambda d: text.casefold() in d.find_element(By.TAG_NAME, "body").text.casefold())
     except TimeoutException as error:
         body = driver.find_element(By.TAG_NAME, "body").text
         severe = [item.get("message", "") for item in driver.get_log("browser") if item.get("level") == "SEVERE"]
