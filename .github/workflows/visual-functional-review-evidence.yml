@@ -1,0 +1,159 @@
+name: Visual Functional Review Evidence - Web
+
+on:
+  push:
+    branches: [blueprint/visual-functional-review-web]
+    paths:
+      - qa/visual-functional-review-browser.py
+      - .github/workflows/visual-functional-review-evidence.yml
+
+permissions:
+  contents: write
+
+jobs:
+  browser-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_visual_review
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_visual_review"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_visual_review
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-visual-review
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: blueprint/visual-functional-review-web
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install locked application dependencies
+        run: npm ci
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+      - name: Prepare synthetic runtime secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=visual-review-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=Visual-review-$(openssl rand -hex 12)!" >> "$GITHUB_ENV"
+      - name: Ensure PostgreSQL client
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Bootstrap ephemeral PostgreSQL schema
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+      - name: Seed synthetic operator
+        run: npx tsx qa/seed.ts
+      - name: Prepare browser review runtime
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$browser_bin" ]]; then
+            echo "No supported Chrome/Chromium binary found on runner" >&2
+            exit 1
+          fi
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+          "$browser_bin" --version
+      - name: Start simulated legacy, API and web client
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-visual-review
+          npm run start:legacy > .runtime/visual-review-legacy.log 2>&1 &
+          echo $! > .runtime/visual-review-legacy.pid
+          npm run start:api > .runtime/visual-review-api.log 2>&1 &
+          echo $! > .runtime/visual-review-api.pid
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/visual-review-web.log 2>&1 &
+          echo $! > .runtime/visual-review-web.pid
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 50); do
+            api_ok=0
+            web_ok=0
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$api_ok" == "1" && "$web_ok" == "1" ]]; then exit 0; fi
+            if [[ "$attempt" == "50" ]]; then
+              cat .runtime/visual-review-api.log || true
+              cat .runtime/visual-review-legacy.log || true
+              cat .runtime/visual-review-web.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+      - name: Exercise actual rendered client and capture review evidence
+        run: GITHUB_SHA="$(git rev-parse HEAD)" python qa/visual-functional-review-browser.py
+      - name: Validate generated machine review summary
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('documentation/visual-functional-review/generated/visual-functional-review-browser.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          assert data['summary']['machine_review_ready'] is True
+          assert data['summary']['human_review_required'] is True
+          assert data['summary']['next_status'] == 'READY_FOR_REVIEW'
+          assert data['summary']['screenshot_count'] == 12
+          for item in data['slices'].values():
+              assert item['machine_review_ready'] is True
+              assert item['checks']['review.human_complete'] == 'PENDING_MANUAL'
+          print(json.dumps(data['summary']))
+          PY
+          test "$(find documentation/visual-functional-review/generated/assets -name '*.png' | wc -l)" -eq 12
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          echo '=== API LOG ==='
+          tail -n 200 .runtime/visual-review-api.log 2>/dev/null || true
+          echo '=== LEGACY LOG ==='
+          tail -n 200 .runtime/visual-review-legacy.log 2>/dev/null || true
+          echo '=== WEB LOG ==='
+          tail -n 200 .runtime/visual-review-web.log 2>/dev/null || true
+      - name: Commit generated browser evidence
+        shell: bash
+        run: |
+          git config user.name "MSc Luis A. Hernández Elias"
+          git config user.email "88979457+LuisHdezE@users.noreply.github.com"
+          git add documentation/visual-functional-review/generated
+          if git diff --cached --quiet; then
+            echo "No generated evidence changes"
+            exit 0
+          fi
+          git commit -m "test(ui): capture browser visual functional review evidence"
+          git push origin HEAD:blueprint/visual-functional-review-web
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          [[ -f .runtime/visual-review-web.pid ]] && kill "$(cat .runtime/visual-review-web.pid)" 2>/dev/null || true
+          [[ -f .runtime/visual-review-api.pid ]] && kill "$(cat .runtime/visual-review-api.pid)" 2>/dev/null || true
+          [[ -f .runtime/visual-review-legacy.pid ]] && kill "$(cat .runtime/visual-review-legacy.pid)" 2>/dev/null || true

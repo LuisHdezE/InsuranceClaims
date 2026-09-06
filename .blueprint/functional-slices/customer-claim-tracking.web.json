@@ -3,12 +3,17 @@
   "id": "customer-claim-tracking",
   "name": "Customer Claim Tracking",
   "platform": "web",
-  "inventory_ids": ["WEB-006", "WEB-007"],
+  "inventory_ids": [
+    "WEB-006",
+    "WEB-007"
+  ],
   "dependencies": [],
   "api_binding": {
     "openapi_ref": "openapi.yaml",
     "revision": "api-v1-r1",
-    "operation_ids": ["trackClaim"]
+    "operation_ids": [
+      "trackClaim"
+    ]
   },
   "client_architecture": {
     "artifact": ".blueprint/client-architecture/customer-claim-tracking.web.json",
@@ -33,13 +38,22 @@
       "idempotency": "N/A",
       "offline": "PASS"
     },
-    "evidence_ids": ["EVD-FUNCTIONAL-TRACKING-WEB-001", "EVD-FUNCTIONAL-TRACKING-WEB-APPROVAL-001"]
+    "evidence_ids": [
+      "EVD-FUNCTIONAL-TRACKING-WEB-001",
+      "EVD-FUNCTIONAL-TRACKING-WEB-APPROVAL-001"
+    ]
   },
   "visual_functional_review": {
-    "status": "PENDING",
-    "evidence_ids": [],
-    "human_complete": false,
-    "approved_visual_references": [".blueprint/ui/references/far-public-landing-approved.md"]
+    "status": "PASS",
+    "evidence_ids": [
+      "EVD-VFR-BROWSER-WEB-001",
+      "EVD-VFR-TRACKING-WEB-001",
+      "EVD-VFR-TRACKING-WEB-APPROVAL-001"
+    ],
+    "human_complete": true,
+    "approved_visual_references": [
+      ".blueprint/ui/references/far-public-landing-approved.md"
+    ]
   },
   "integration_qa": {
     "status": "PENDING",
@@ -49,5 +63,11 @@
     "status": "PENDING",
     "evidence_ids": []
   },
-  "evidence_ids": ["EVD-FUNCTIONAL-TRACKING-WEB-001", "EVD-FUNCTIONAL-TRACKING-WEB-APPROVAL-001"]
+  "evidence_ids": [
+    "EVD-FUNCTIONAL-TRACKING-WEB-001",
+    "EVD-FUNCTIONAL-TRACKING-WEB-APPROVAL-001",
+    "EVD-VFR-BROWSER-WEB-001",
+    "EVD-VFR-TRACKING-WEB-001",
+    "EVD-VFR-TRACKING-WEB-APPROVAL-001"
+  ]
 }
