@@ -1,0 +1,68 @@
+name: Reconcile VFR Ready State
+
+on:
+  push:
+    branches:
+      - blueprint/visual-functional-review-web
+    paths:
+      - .github/workflows/reconcile-vfr-ready.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: blueprint/visual-functional-review-web
+          fetch-depth: 0
+
+      - name: Reconcile machine-ready VFR status
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.blueprint/status.yaml')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace("updated_at: '2026-09-06T08:41:49-03:00'", "updated_at: '2026-09-06T09:29:24-03:00'", 1)
+
+          phase_anchor = """  functional_interface_slice:\n    status: COMPLETE\n    progress: 100\n    note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web are all FUNCTIONAL after explicit human Functional Slice Ready approvals and exact reviewed-head validation.\nchecks:\n"""
+          phase_replacement = """  functional_interface_slice:\n    status: COMPLETE\n    progress: 100\n    note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web are all FUNCTIONAL after explicit human Functional Slice Ready approvals and exact reviewed-head validation.\n  visual_functional_review:\n    status: READY_FOR_REVIEW\n    progress: 89\n    note: All three web slices passed the applicable machine/evidence Visual & Functional Review checks in a real Chrome runtime; explicit human review remains pending per slice/platform.\nchecks:\n"""
+          if phase_anchor not in text:
+              raise SystemExit('phase anchor not found')
+          text = text.replace(phase_anchor, phase_replacement, 1)
+
+          checks_block = """  review.interface_fidelity:\n    status: PASS\n    verification: evidence\n    note: Browser review confirms the rendered routes and states remain faithful to the committed Interface Inventory for all three web slices.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-INTAKE-WEB-001, EVD-VFR-TRACKING-WEB-001, EVD-VFR-BACKOFFICE-WEB-001]\n  review.design_system_fidelity:\n    status: PASS\n    verification: evidence\n    note: Public/customer and operational backoffice surfaces preserve the approved FAR-aligned Design System while retaining their distinct usage modes.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-INTAKE-WEB-001, EVD-VFR-TRACKING-WEB-001, EVD-VFR-BACKOFFICE-WEB-001]\n  review.api_permission_fidelity:\n    status: PASS\n    verification: evidence\n    note: Browser flows preserve anonymous proof boundaries and protected operator routing/session behavior while API/Application authorization remains authoritative.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-INTAKE-WEB-001, EVD-VFR-TRACKING-WEB-001, EVD-VFR-BACKOFFICE-WEB-001]\n  review.business_data_fidelity:\n    status: PASS\n    verification: evidence\n    note: Authoritative synthetic claim data flows through the real API from public intake to tracking and backoffice without hardcoded business truth.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-INTAKE-WEB-001, EVD-VFR-TRACKING-WEB-001, EVD-VFR-BACKOFFICE-WEB-001]\n  review.interaction_states:\n    status: PASS\n    verification: evidence\n    note: Browser review exercises validation, valid/invalid proof, protected-route redirect, authenticated list/detail and success states across the committed slices.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-INTAKE-WEB-001, EVD-VFR-TRACKING-WEB-001, EVD-VFR-BACKOFFICE-WEB-001]\n  review.responsive:\n    status: PASS\n    verification: evidence\n    note: Captured mobile and desktop states remain within the viewport with no horizontal page overflow on the reviewed responsive surfaces.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-INTAKE-WEB-001, EVD-VFR-TRACKING-WEB-001, EVD-VFR-BACKOFFICE-WEB-001]\n  review.accessibility:\n    status: PASS\n    verification: evidence\n    note: Reviewed states expose one H1 and no unlabeled controls, images without alt text or unnamed actions in the automated browser audit.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-INTAKE-WEB-001, EVD-VFR-TRACKING-WEB-001, EVD-VFR-BACKOFFICE-WEB-001]\n  review.reference_comparison:\n    status: PASS\n    verification: evidence\n    note: The approved public FAR visual reference is compared for intake/tracking and passes; claims-backoffice has no approved static reference and is correctly N/A at scoped evidence level.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-INTAKE-WEB-001, EVD-VFR-TRACKING-WEB-001]\n  review.human_complete:\n    status: PENDING\n    verification: manual\n    note: Explicit human Visual & Functional Review is required independently for each slice/platform and has not yet been granted.\n    evidence_ids: [EVD-VFR-INTAKE-WEB-001, EVD-VFR-TRACKING-WEB-001, EVD-VFR-BACKOFFICE-WEB-001]\n"""
+          if '\ngates:\n' not in text:
+              raise SystemExit('gates anchor not found')
+          text = text.replace('\ngates:\n', '\n' + checks_block + 'gates:\n', 1)
+
+          scoped_block = """  - gate: visual_functional_review_pass\n    scope: interface_slice_platform\n    scope_id: digital-claim-intake\n    platform: web\n    status: READY_FOR_REVIEW\n    evaluated_at: '2026-09-06T09:29:24-03:00'\n    note: Applicable machine/evidence VFR checks pass on the exact browser-reviewed candidate; explicit human review remains pending.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-INTAKE-WEB-001]\n  - gate: visual_functional_review_pass\n    scope: interface_slice_platform\n    scope_id: customer-claim-tracking\n    platform: web\n    status: READY_FOR_REVIEW\n    evaluated_at: '2026-09-06T09:29:24-03:00'\n    note: Applicable machine/evidence VFR checks pass on the exact browser-reviewed candidate; explicit human review remains pending.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-TRACKING-WEB-001]\n  - gate: visual_functional_review_pass\n    scope: interface_slice_platform\n    scope_id: claims-backoffice\n    platform: web\n    status: READY_FOR_REVIEW\n    evaluated_at: '2026-09-06T09:29:24-03:00'\n    note: Applicable machine/evidence VFR checks pass on the exact browser-reviewed candidate; reference comparison is N/A because no static approved reference exists, and explicit human review remains pending.\n    evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-BACKOFFICE-WEB-001]\n"""
+          if '\nblockers: []\n' not in text:
+              raise SystemExit('blockers anchor not found')
+          text = text.replace('\nblockers: []\n', '\n' + scoped_block + 'blockers: []\n', 1)
+
+          artifact_anchor = """  - id: EVD-FUNCTIONAL-BACKOFFICE-WEB-APPROVAL-001\n    type: manual_approval\n    value: documentation/functional-slices/CLAIMS_BACKOFFICE_WEB_APPROVAL.md"""
+          artifacts_append = artifact_anchor + """\n  - id: EVD-VFR-BROWSER-WEB-001\n    type: visual_functional_review_browser_evidence\n    value: documentation/visual-functional-review/generated/visual-functional-review-browser.json\n  - id: EVD-VFR-INTAKE-WEB-001\n    type: visual_functional_review_evidence\n    value: documentation/visual-functional-review/DIGITAL_CLAIM_INTAKE_WEB_EVIDENCE.md\n  - id: EVD-VFR-TRACKING-WEB-001\n    type: visual_functional_review_evidence\n    value: documentation/visual-functional-review/CUSTOMER_CLAIM_TRACKING_WEB_EVIDENCE.md\n  - id: EVD-VFR-BACKOFFICE-WEB-001\n    type: visual_functional_review_evidence\n    value: documentation/visual-functional-review/CLAIMS_BACKOFFICE_WEB_EVIDENCE.md"""
+          if artifact_anchor not in text:
+              raise SystemExit('artifact tail anchor not found')
+          text = text.replace(artifact_anchor, artifacts_append, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Remove reconciler
+        run: rm -f .github/workflows/reconcile-vfr-ready.yml
+
+      - name: Commit reconciled state
+        shell: bash
+        run: |
+          git config user.name 'MSc Luis A. Hernández Elias'
+          git config user.email '88979457+LuisHdezE@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'chore(blueprint): reconcile VFR ready state'
+          git push origin HEAD:blueprint/visual-functional-review-web
