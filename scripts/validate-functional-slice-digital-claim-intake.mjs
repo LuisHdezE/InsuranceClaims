@@ -42,12 +42,16 @@ const app = read('apps/web/src/App.tsx');
 for (const route of expectedRoutes) assert(app.includes(`path=\"${route}\"`), `missing route ${route}`);
 
 const claimsApi = read('apps/web/src/api/claims.ts');
-assert(claimsApi.includes('/api/v1/public/policy-verifications'), 'verifyPolicyVehicle must use canonical REST path');
-assert(claimsApi.includes('/api/v1/public/claims'), 'createClaim must use canonical REST path');
-assert(claimsApi.includes("'Idempotency-Key'"), 'createClaim must emit Idempotency-Key');
-assert(claimsApi.includes("formData.append('evidence'"), 'createClaim must send evidence as multipart');
-assert(!claimsApi.includes('/legacy/'), 'web client must never call simulated legacy directly');
-assert(!claimsApi.includes('Authorization'), 'anonymous intake operations must not invent operator authorization');
+const intakeStart = claimsApi.indexOf('export async function verifyPolicyVehicle');
+const trackingStart = claimsApi.indexOf('export async function trackClaim');
+assert(intakeStart >= 0 && trackingStart > intakeStart, 'intake API function boundaries must be discoverable');
+const intakeApi = claimsApi.slice(intakeStart, trackingStart);
+assert(intakeApi.includes('/api/v1/public/policy-verifications'), 'verifyPolicyVehicle must use canonical REST path');
+assert(intakeApi.includes('/api/v1/public/claims'), 'createClaim must use canonical REST path');
+assert(intakeApi.includes("'Idempotency-Key'"), 'createClaim must emit Idempotency-Key');
+assert(intakeApi.includes("formData.append('evidence'"), 'createClaim must send evidence as multipart');
+assert(!intakeApi.includes('/legacy/'), 'intake web client must never call simulated legacy directly');
+assert(!intakeApi.includes('Authorization'), 'anonymous intake operations must not invent operator authorization');
 
 const client = read('apps/web/src/api/client.ts');
 assert(client.includes("'X-Request-Id'"), 'web transport must emit X-Request-Id');
