@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.5.0",
+  "architecture_id": "CLIENT-WEB-CUSTOMER-CLAIM-TRACKING",
+  "project_id": "LuisHdezE/InsuranceClaims",
+  "mode": "greenfield",
+  "interface_slice": "customer-claim-tracking",
+  "platform": "web",
+  "inventory_ids": ["WEB-006", "WEB-007"],
+  "status": "READY_FOR_REVIEW",
+  "platform_baseline_ref": ".blueprint/client-architecture/web-platform.json",
+  "visual_references": {
+    "mode": "none",
+    "approved_reference_paths": []
+  },
+  "api_binding": {
+    "openapi_path": "openapi.yaml",
+    "revision": "api-v1-r1",
+    "operation_ids": ["trackClaim"],
+    "permissions": ["claims.tracking.read"]
+  },
+  "routing": {
+    "routes": ["/claims/track", "/claims/track/status"],
+    "permission_aware_navigation": false
+  },
+  "async_states": {
+    "loading": "REQUIRED",
+    "empty": "REQUIRED",
+    "error": "REQUIRED",
+    "401": "NOT_APPLICABLE",
+    "403": "NOT_APPLICABLE",
+    "404": "REQUIRED",
+    "409": "NOT_APPLICABLE",
+    "422": "NOT_APPLICABLE",
+    "429": "REQUIRED",
+    "offline": "REQUIRED"
+  },
+  "idempotency": {
+    "required_operations": [],
+    "key_generation": "No Idempotency-Key is generated because trackClaim is a read operation and the approved API contract does not require one.",
+    "replay_handling": "Repeated explicit lookups are independent reads and always render the latest customer-safe response returned by the API.",
+    "conflict_handling": "No mutation conflict protocol is introduced for this read-only slice."
+  },
+  "slice_overrides": {
+    "cache_invalidation": [
+      "Treat the tracking proof pair as sensitive input and never persist it as a durable cache key.",
+      "WEB-007 may use the immediately preceding trackClaim result in memory; explicit refresh/lookup refetches canonical customer-safe state."
+    ],
+    "offline_override": "inherit",
+    "testing_notes": [
+      "Prove invalid tracking proof collapses to the approved 404 behavior without revealing which proof element failed.",
+      "Prove customer-safe status/timeline never renders internal audit or backoffice-only data.",
+      "Prove the web client uses REST trackClaim and never invokes the MCP tool or database directly."
+    ]
+  },
+  "implementation_guardrails": {
+    "api_authoritative": true,
+    "no_new_api_behavior": true,
+    "approved_inventory_only": true,
+    "no_hardcoded_authoritative_business_data": true
+  }
+}
