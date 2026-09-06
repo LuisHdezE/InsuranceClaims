@@ -12,7 +12,7 @@ export function ClaimSubmittedPage() {
     <ClaimFlowLayout step={4}>
       <span className="eyebrow">Paso 4 de 4</span>
       <h1>Siniestro reportado</h1>
-      <p className="lead">El API confirmó la creación. Guarda el código de seguimiento para consultar el estado cuando el slice de tracking esté habilitado.</p>
+      <p className="lead">El API confirmó la creación. Guarda el código de seguimiento y usa tu referencia de póliza para consultar el estado cuando lo necesites.</p>
 
       <div className="alert alert-success" role="status">
         <strong>Tu reporte fue recibido correctamente.</strong>
@@ -36,8 +36,8 @@ export function ClaimSubmittedPage() {
       </div>
 
       <div className="form-actions" style={{ marginTop: 24 }}>
-        <button className="btn btn-primary" type="button" onClick={() => { flow.reset(); navigate('/'); }}>Volver al inicio</button>
-        <button className="btn btn-ghost" type="button" disabled aria-disabled="true">Seguimiento · siguiente slice</button>
+        <button className="btn btn-primary" type="button" onClick={() => navigate('/claims/track')}>Dar seguimiento</button>
+        <button className="btn btn-ghost" type="button" onClick={() => { flow.reset(); navigate('/'); }}>Volver al inicio</button>
       </div>
     </ClaimFlowLayout>
   );
