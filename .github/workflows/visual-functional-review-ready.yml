@@ -1,0 +1,76 @@
+name: Visual Functional Review Ready - Web
+
+on:
+  push:
+    branches:
+      - blueprint/visual-functional-review-web
+    paths:
+      - apps/web/**
+      - apps/api/**
+      - apps/legacy-simulator/**
+      - packages/**
+      - openapi.yaml
+      - .blueprint/functional-slices/**
+      - .blueprint/status.yaml
+      - documentation/visual-functional-review/**
+      - qa/visual-functional-review-browser.py
+      - qa/validate-visual-functional-review-ready.py
+      - .github/workflows/visual-functional-review-ready.yml
+      - .github/workflows/visual-functional-review-evidence.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - apps/web/**
+      - apps/api/**
+      - apps/legacy-simulator/**
+      - packages/**
+      - openapi.yaml
+      - .blueprint/functional-slices/**
+      - .blueprint/status.yaml
+      - documentation/visual-functional-review/**
+      - qa/visual-functional-review-browser.py
+      - qa/validate-visual-functional-review-ready.py
+      - .github/workflows/visual-functional-review-ready.yml
+      - .github/workflows/visual-functional-review-evidence.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate-vfr-ready:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Validate VFR ready artifacts
+        run: python qa/validate-visual-functional-review-ready.py
+      - name: Verify reviewed commit is an ancestor
+        shell: bash
+        run: |
+          reviewed="$(python - <<'PY'
+          import json
+          print(json.load(open('documentation/visual-functional-review/generated/visual-functional-review-browser.json'))['reviewed_commit'])
+          PY
+          )"
+          git merge-base --is-ancestor "$reviewed" HEAD
+      - name: Reject product drift after browser-reviewed commit
+        shell: bash
+        run: |
+          reviewed="$(python - <<'PY'
+          import json
+          print(json.load(open('documentation/visual-functional-review/generated/visual-functional-review-browser.json'))['reviewed_commit'])
+          PY
+          )"
+          forbidden=0
+          while IFS= read -r path; do
+            case "$path" in
+              .blueprint/status.yaml|.blueprint/functional-slices/*|documentation/visual-functional-review/*|qa/validate-visual-functional-review-ready.py|.github/workflows/visual-functional-review-ready.yml)
+                ;;
+              *)
+                echo "Product/review-runtime drift after reviewed commit: $path" >&2
+                forbidden=1
+                ;;
+            esac
+          done < <(git diff --name-only "$reviewed"..HEAD)
+          test "$forbidden" -eq 0
