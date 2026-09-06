@@ -17,23 +17,23 @@
   "lifecycle_status": "IN_PROGRESS",
   "blocker": null,
   "definition_of_done": {
-    "status": "PENDING",
+    "status": "READY_FOR_REVIEW",
     "checks": {
-      "routing": "PENDING",
-      "real_api": "PENDING",
-      "auth_rbac": "N/A",
-      "forms_errors": "PENDING",
-      "observability": "PENDING",
-      "responsive": "PENDING",
-      "accessibility": "PENDING",
-      "tests": "PENDING",
-      "traceability": "PENDING",
-      "no_hardcoded_business_data": "PENDING",
-      "no_invented_capabilities": "PENDING",
-      "idempotency": "PENDING",
-      "offline": "PENDING"
+      "routing": "PASS",
+      "real_api": "PASS",
+      "auth_rbac": "PASS",
+      "forms_errors": "PASS",
+      "observability": "PASS",
+      "responsive": "PASS",
+      "accessibility": "PASS",
+      "tests": "PASS",
+      "traceability": "PASS",
+      "no_hardcoded_business_data": "PASS",
+      "no_invented_capabilities": "PASS",
+      "idempotency": "PASS",
+      "offline": "PASS"
     },
-    "evidence_ids": []
+    "evidence_ids": ["EVD-FUNCTIONAL-INTAKE-WEB-001"]
   },
   "visual_functional_review": {
     "status": "PENDING",
@@ -49,5 +49,5 @@
     "status": "PENDING",
     "evidence_ids": []
   },
-  "evidence_ids": []
+  "evidence_ids": ["EVD-FUNCTIONAL-INTAKE-WEB-001"]
 }
