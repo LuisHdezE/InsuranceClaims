@@ -47,11 +47,17 @@ assert(app.includes('RequireOperator'), 'protected routes must use RequireOperat
 
 const claimsApi = read('apps/web/src/api/claims.ts');
 for (const fn of expectedOps) assert(claimsApi.includes(`export async function ${fn}`), `missing API client function ${fn}`);
-for (const canonicalPath of ['/api/v1/operator/auth/login', '/api/v1/operator/claims']) assert(claimsApi.includes(canonicalPath), `missing canonical operator path ${canonicalPath}`);
-assert(claimsApi.includes('Authorization: `Bearer ${accessToken}`'), 'protected API calls must carry bearer auth');
-assert(claimsApi.includes("responseType: 'arraybuffer'"), 'evidence download must use protected binary response handling');
-assert(!claimsApi.includes('Idempotency-Key'), 'backoffice operations must not invent Idempotency-Key behavior');
-assert(!claimsApi.includes('/mcp') && !claimsApi.includes('/legacy/'), 'web backoffice must not bypass REST API boundary');
+const operatorStart = claimsApi.indexOf('export async function authenticateOperator');
+const helperStart = claimsApi.indexOf('function bearerHeaders');
+assert(operatorStart >= 0 && helperStart > operatorStart, 'operator API function boundaries must be discoverable');
+const operatorApi = claimsApi.slice(operatorStart, helperStart);
+const bearerHelper = claimsApi.slice(helperStart, claimsApi.indexOf('function parseFilename'));
+for (const canonicalPath of ['/api/v1/operator/auth/login', '/api/v1/operator/claims']) assert(operatorApi.includes(canonicalPath), `missing canonical operator path ${canonicalPath}`);
+assert(operatorApi.includes('bearerHeaders(accessToken)'), 'protected operator API calls must use bearer auth helper');
+assert(bearerHelper.includes('Authorization: `Bearer ${accessToken}`'), 'bearer helper must emit Authorization header');
+assert(operatorApi.includes("responseType: 'arraybuffer'"), 'evidence download must use protected binary response handling');
+assert(!operatorApi.includes('Idempotency-Key'), 'backoffice operations must not invent Idempotency-Key behavior');
+assert(!operatorApi.includes('/mcp') && !operatorApi.includes('/legacy/'), 'web backoffice must not bypass REST API boundary');
 
 const session = read('apps/web/src/flow/OperatorSessionContext.tsx');
 for (const forbidden of ['localStorage', 'sessionStorage', 'indexedDB']) assert(!session.includes(forbidden), `operator token must remain memory-only: ${forbidden}`);
