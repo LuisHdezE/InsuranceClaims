@@ -24,24 +24,24 @@ This evidence records runtime verification for the five mandatory Blueprint API 
 
 No client implementation, Interface Inventory execution, Design System work or API Gate decision is claimed by this document.
 
-## 2. Verified baseline and candidate
+## 2. Verified baseline and final technical candidate
 
 Verified base `main` before the API QA branch:
 
 `27617f3be901243a975314b03851d922651949c3`
 
-Technical runtime-QA candidate:
+Final runtime-QA technical candidate before this evidence-only refresh:
 
-`441930564f8846879f557b7bd2881b75c41bc39b`
+`48498611fa4af5ffabaf767fb75b733bcab757f6`
 
 Exact-head GitHub Actions runs:
 
-- API QA: `34000730047` = **SUCCESS**
-- API Implementation regression: `34000730019` = **SUCCESS**
-- OpenAPI Validation regression: `34000730052` = **SUCCESS**
-- Postman Contract regression: `34000730070` = **SUCCESS**
+- API QA: `34001187386` = **SUCCESS**
+- API Implementation regression: `34001187382` = **SUCCESS**
+- OpenAPI Validation regression: `34001187373` = **SUCCESS**
+- Postman Contract regression: `34001187390` = **SUCCESS**
 
-The candidate therefore passed the new runtime boundary while preserving all previously accepted implementation and contract checks.
+This candidate passed the real runtime boundary while preserving all previously accepted implementation and contract checks.
 
 ## 3. Runtime topology actually exercised
 
@@ -56,7 +56,7 @@ The API QA workflow uses the production composition rather than the memory runti
 7. private filesystem evidence storage in the ephemeral runner;
 8. a synthetic operator seeded through the production Infrastructure store.
 
-Observed runner versions in the successful run:
+Observed runner versions in the successful QA cycle:
 
 - Node.js `24.20.0`
 - npm `11.19.0`
@@ -81,7 +81,7 @@ The runtime suite demonstrated successful behavior for the approved REST surface
 - `transitionClaimStatus` from `RECEIVED` to `UNDER_REVIEW`;
 - public tracking observing the new status and timeline after the operator transition.
 
-The runtime emitted:
+The successful runtime emitted:
 
 `API_QA_RUNTIME_PASS`
 
@@ -159,7 +159,7 @@ The runtime-specific security classification executes:
 
 `npm audit --omit=dev --json`
 
-Successful candidate result:
+Successful classification:
 
 - info: 0
 - low: 0
@@ -170,7 +170,7 @@ Successful candidate result:
 
 Therefore the current npm audit classification reports no advisory in the production dependency tree. The 13 full-tree advisories remain tooling/development-tree hygiene and must not be misrepresented as “the repository has zero vulnerabilities.”
 
-The workflow would fail `api.security_qa` if a high or critical production advisory were present.
+The workflow fails `api.security_qa` if a high or critical production advisory is present.
 
 Disposition: `api.security_qa = PASS`.
 
@@ -190,7 +190,7 @@ Verified invariants:
 - concurrent transition race creates only one `CLAIM_STATE_TRANSITIONED` audit event;
 - successful QA claims have completed idempotency records linked to claims.
 
-The SQL suite emitted:
+The successful SQL suite emitted:
 
 `API_QA_AUDIT_ASSERTIONS_PASS`
 
@@ -200,18 +200,22 @@ Disposition: `api.audit_qa = PASS`.
 
 API QA executes two concurrent transition requests against a fresh `RECEIVED` claim, both carrying `expectedFromStatus = RECEIVED`.
 
-Expected and observed invariant:
+Final expected and observed invariant:
 
 - exactly one request succeeds with HTTP `200`;
 - exactly one request fails with HTTP `409 CLAIM_STATE_CONFLICT`;
 - PostgreSQL contains only one transition history row beyond the initial history;
 - PostgreSQL contains only one durable transition audit for the race.
 
-This proves the PostgreSQL adapter now enforces the contract as an atomic compare-and-set rather than relying only on an earlier in-memory aggregate read.
+The final PostgreSQL adapter implements the compare-and-set with the Prisma 8 RC count-returning mutation terminal:
+
+`where({ id, status: expectedFromStatus }).updateAndCount(...)`
+
+A returned count other than one is converted to `ClaimStateConflictError`. This keeps the concurrency guard in Infrastructure while Application/Domain retain the approved state-transition semantics.
 
 ## 10. Defects discovered by real runtime QA
 
-The runtime boundary found defects that the earlier memory-backed implementation tests could not expose.
+The runtime boundary found defects that the earlier memory-backed implementation tests could not expose. Failed attempts are retained here because they are part of the QA evidence, not erased from the history.
 
 ### QA-FINDING-001 — Prisma Temporal runtime initialization
 
@@ -233,17 +237,32 @@ Resolution:
 
 This keeps Prisma/Temporal concerns inside Infrastructure and preserves Clean Architecture dependency direction.
 
-### QA-FINDING-003 — transition compare-and-set
+### QA-FINDING-003 — singular update was not an atomic compare-and-set
 
-The original PostgreSQL adapter updated a claim by ID after the Application aggregate had checked `expectedFromStatus`. Two concurrent transactions could therefore race after the read.
+An initial filtered singular Prisma `update()` appeared to pass one runtime execution at candidate `441930564f8846879f557b7bd2881b75c41bc39b`.
 
-Resolution:
+The exact-head revalidation after evidence/state refresh, however, reproduced the race and returned:
 
-- Infrastructure update is now filtered by both claim ID and expected source status;
-- a no-match update becomes `ClaimStateConflictError`;
-- transition history/audit are not written by the losing request.
+`200,200`
 
-The concurrent runtime test and durable PostgreSQL assertions now pass.
+for the two simultaneous transitions. That invalidated the apparent success and proved the singular update path was not a reliable PostgreSQL compare-and-set for this pinned Prisma runtime.
+
+The failed revalidation was therefore treated as a product defect, not retried away.
+
+### QA-FINDING-004 — count terminal name differs in the pinned Prisma 8 RC
+
+A subsequent correction attempted the count-returning terminal as `updateCount()`. The pinned `@prisma/orm-postgres 8.0.0-rc.8` does not expose that terminal name. The normal valid transition consequently failed before the concurrency test.
+
+The Prisma 8 RC release surface uses `updateAndCount(...)`, whose mutation result is `Promise<number>`.
+
+Final resolution:
+
+- use the filtered `updateAndCount(...)` mutation;
+- require exactly one affected row;
+- translate zero affected rows to `ClaimStateConflictError`;
+- write transition history and durable audit only after the compare-and-set succeeds inside the transaction.
+
+Candidate `48498611fa4af5ffabaf767fb75b733bcab757f6` then passed the normal transition, the concurrent race, durable PostgreSQL assertions, security classification and all three inherited regression workflows.
 
 ## 11. Scope integrity
 
