@@ -3,10 +3,16 @@ import path from 'node:path';
 
 const root = process.cwd();
 const readJson = (relativePath) => JSON.parse(fs.readFileSync(path.join(root, relativePath), 'utf8'));
+const exists = (relativePath) => fs.existsSync(path.join(root, relativePath));
+const readText = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'utf8');
 
 const designSystem = readJson('.blueprint/ui/design-system.json');
 const tokens = readJson('.blueprint/ui/design-tokens.json');
 const inventory = readJson('.blueprint/ui/interface-inventory.json');
+
+const logoPath = '.blueprint/ui/assets/far-seguros-logo.svg';
+const landingReferencePath = '.blueprint/ui/references/far-public-landing-approved.md';
+const landingReference = exists(landingReferencePath) ? readText(landingReferencePath) : '';
 
 const errors = [];
 const assert = (condition, message) => {
@@ -20,6 +26,10 @@ const requiredSemanticStates = [
 
 const requiredComponents = [
   'Public header',
+  'Public hero',
+  'Public quick-action card',
+  'Public trust feature',
+  'Case-study disclaimer',
   'Operator app shell',
   'Primary button',
   'Text input',
@@ -40,15 +50,31 @@ const lifecycleStates = ['RECEIVED', 'UNDER_REVIEW', 'OBSERVED', 'APPROVED', 'IN
 assert(designSystem.schema_version === '0.5.0', 'design-system schema_version must be 0.5.0');
 assert(tokens.schema_version === '0.5.0', 'design-tokens schema_version must be 0.5.0');
 assert(designSystem.tokens_path === '.blueprint/ui/design-tokens.json', 'tokens_path must point to canonical design tokens');
-assert(designSystem.identity?.logo_required === false, 'logo_required must remain false for this case study');
-assert(designSystem.identity?.logo_path === null, 'logo_path must remain null when no logo is required');
-assert(typeof designSystem.identity?.direction === 'string' && designSystem.identity.direction.length > 20, 'design direction must be explicit');
+assert(designSystem.identity?.logo_required === true, 'FAR visual identity requires logo_required=true');
+assert(designSystem.identity?.logo_path === logoPath, `logo_path must be ${logoPath}`);
+assert(exists(logoPath), `versioned FAR logo asset is missing: ${logoPath}`);
+assert(exists(landingReferencePath), `approved public landing reference manifest is missing: ${landingReferencePath}`);
+assert(landingReference.includes('HUMAN APPROVED VISUAL GUIDE'), 'landing reference must preserve explicit human-approved status');
+assert(landingReference.includes('not a functional requirements source'), 'landing reference must preserve the functional-scope guardrail');
+assert(landingReference.includes('No affiliation with FAR Seguros'), 'landing reference must preserve the no-affiliation disclosure');
+assert(typeof designSystem.identity?.direction === 'string' && designSystem.identity.direction.length > 40, 'design direction must explicitly describe FAR identity modernization');
 
 for (const key of ['brand', 'surface', 'text', 'semantic']) {
   assert(tokens.colors?.[key] && typeof tokens.colors[key] === 'object', `missing colors.${key}`);
 }
 for (const key of ['info', 'success', 'warning', 'danger', 'neutral']) {
   assert(typeof tokens.colors?.semantic?.[key] === 'string', `missing semantic color ${key}`);
+}
+
+const expectedBrand = {
+  primary: '#00BED8',
+  primary_strong: '#006B78',
+  accent: '#FEF200',
+  ink: '#221E1F',
+  focus: '#005FCC'
+};
+for (const [key, expected] of Object.entries(expectedBrand)) {
+  assert(tokens.colors?.brand?.[key]?.toUpperCase() === expected, `brand.${key} must preserve ${expected}`);
 }
 
 assert(tokens.accessibility?.target === 'WCAG 2.2 AA', 'accessibility target must be WCAG 2.2 AA');
@@ -81,6 +107,16 @@ for (const componentName of requiredComponents) {
   assert(componentNames.has(componentName), `missing required reusable component: ${componentName}`);
 }
 
+const publicHero = (designSystem.components ?? []).find((component) => component.name === 'Public hero');
+assert(publicHero?.notes?.includes('WEB-001'), 'Public hero must remain explicitly bound to WEB-001');
+assert(publicHero?.notes?.includes('cannot create capabilities'), 'Public hero must preserve the no-invented-capability rule');
+
+const operatorShell = (designSystem.components ?? []).find((component) => component.name === 'Operator app shell');
+assert(operatorShell?.notes?.includes('operational'), 'Operator app shell must be explicitly operational rather than marketing-oriented');
+
+const disclaimer = (designSystem.components ?? []).find((component) => component.name === 'Case-study disclaimer');
+assert(disclaimer?.notes?.includes('no FAR affiliation'), 'Case-study disclaimer must explicitly preserve no-affiliation meaning');
+
 const statusBadge = (designSystem.components ?? []).find((component) => component.name === 'Status badge');
 for (const status of lifecycleStates) {
   assert(statusBadge?.states?.includes(status), `Status badge must support lifecycle state ${status}`);
@@ -112,12 +148,12 @@ function contrastRatio(a, b) {
 }
 
 const lightSurfaces = [tokens.colors.surface.primary, tokens.colors.surface.canvas];
-const contrastForegrounds = {
+const accessibleForegrounds = {
   'text.primary': tokens.colors.text.primary,
   'text.secondary': tokens.colors.text.secondary,
   'text.muted': tokens.colors.text.muted,
-  'brand.primary': tokens.colors.brand.primary,
-  'brand.secondary': tokens.colors.brand.secondary,
+  'brand.primary_strong': tokens.colors.brand.primary_strong,
+  'brand.focus': tokens.colors.brand.focus,
   'semantic.info': tokens.colors.semantic.info,
   'semantic.success': tokens.colors.semantic.success,
   'semantic.warning': tokens.colors.semantic.warning,
@@ -125,12 +161,17 @@ const contrastForegrounds = {
   'semantic.neutral': tokens.colors.semantic.neutral
 };
 
-for (const [name, foreground] of Object.entries(contrastForegrounds)) {
+for (const [name, foreground] of Object.entries(accessibleForegrounds)) {
   for (const background of lightSurfaces) {
     const ratio = contrastRatio(foreground, background);
     assert(ratio >= 4.5, `${name} contrast ${ratio.toFixed(2)}:1 against ${background} is below 4.5:1`);
   }
 }
+
+const inkOnCyan = contrastRatio(tokens.colors.brand.ink, tokens.colors.brand.primary);
+const inkOnYellow = contrastRatio(tokens.colors.brand.ink, tokens.colors.brand.accent);
+assert(inkOnCyan >= 4.5, `brand.ink contrast ${inkOnCyan.toFixed(2)}:1 on FAR cyan is below 4.5:1`);
+assert(inkOnYellow >= 4.5, `brand.ink contrast ${inkOnYellow.toFixed(2)}:1 on FAR yellow is below 4.5:1`);
 
 if (errors.length > 0) {
   console.error('Design System validation FAILED');
@@ -142,5 +183,8 @@ console.log('Design System validation PASS');
 console.log(`- inventory interfaces: ${inventory.items.length}/10`);
 console.log(`- reusable components: ${designSystem.components.length}`);
 console.log(`- semantic states: ${Object.keys(designSystem.semantic_states).length}`);
-console.log('- visual identity/logo: N/A by approved applicability rationale');
-console.log('- WCAG text contrast checks: PASS');
+console.log('- visual identity/logo: APPLICABLE / PASS');
+console.log('- FAR core brand colors: preserved');
+console.log('- public/admin experience separation: asserted');
+console.log('- approved public landing reference guardrail: asserted');
+console.log('- WCAG text/brand pairing contrast checks: PASS');
