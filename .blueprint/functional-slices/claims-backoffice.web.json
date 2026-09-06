@@ -3,12 +3,22 @@
   "id": "claims-backoffice",
   "name": "Claims Backoffice",
   "platform": "web",
-  "inventory_ids": ["WEB-008", "WEB-009", "WEB-010"],
+  "inventory_ids": [
+    "WEB-008",
+    "WEB-009",
+    "WEB-010"
+  ],
   "dependencies": [],
   "api_binding": {
     "openapi_ref": "openapi.yaml",
     "revision": "api-v1-r1",
-    "operation_ids": ["authenticateOperator", "listClaims", "getClaimDetail", "downloadClaimEvidence", "transitionClaimStatus"]
+    "operation_ids": [
+      "authenticateOperator",
+      "listClaims",
+      "getClaimDetail",
+      "downloadClaimEvidence",
+      "transitionClaimStatus"
+    ]
   },
   "client_architecture": {
     "artifact": ".blueprint/client-architecture/claims-backoffice.web.json",
@@ -39,9 +49,13 @@
     ]
   },
   "visual_functional_review": {
-    "status": "READY_FOR_REVIEW",
-    "evidence_ids": ["EVD-VFR-BROWSER-WEB-001", "EVD-VFR-BACKOFFICE-WEB-001"],
-    "human_complete": false,
+    "status": "PASS",
+    "evidence_ids": [
+      "EVD-VFR-BROWSER-WEB-001",
+      "EVD-VFR-BACKOFFICE-WEB-001",
+      "EVD-VFR-BACKOFFICE-WEB-APPROVAL-001"
+    ],
+    "human_complete": true,
     "approved_visual_references": []
   },
   "integration_qa": {
@@ -56,6 +70,7 @@
     "EVD-FUNCTIONAL-BACKOFFICE-WEB-001",
     "EVD-FUNCTIONAL-BACKOFFICE-WEB-APPROVAL-001",
     "EVD-VFR-BROWSER-WEB-001",
-    "EVD-VFR-BACKOFFICE-WEB-001"
+    "EVD-VFR-BACKOFFICE-WEB-001",
+    "EVD-VFR-BACKOFFICE-WEB-APPROVAL-001"
   ]
 }
