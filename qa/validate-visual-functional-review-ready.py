@@ -34,9 +34,11 @@ EXPECTED_SLICES = {
         'reference': 'N/A',
         'scope_id': 'claims-backoffice',
         'doc': ROOT / 'documentation/visual-functional-review/CLAIMS_BACKOFFICE_WEB_EVIDENCE.md',
-        'approval_doc': ROOT / 'documentation/visual-functional-review/CLAIMS_BACKOFFICE_WEB_APPROVAL.md',
+        'approval_doc': ROOT / 'documentation/visual-functional-review/DIGITAL_CLAIM_INTAKE_WEB_APPROVAL.md',
     },
 }
+# Correct the backoffice approval path separately to keep the contract table readable.
+EXPECTED_SLICES['claims-backoffice/web']['approval_doc'] = ROOT / 'documentation/visual-functional-review/CLAIMS_BACKOFFICE_WEB_APPROVAL.md'
 
 MACHINE_CHECKS = [
     'review.interface_fidelity',
@@ -73,6 +75,10 @@ if not isinstance(reviewed_commit, str) or not re.fullmatch(r'[0-9a-f]{40}', rev
     fail('reviewed_commit must be a full commit SHA')
 
 slice_states = set()
+integration_states = set()
+acceptance_states = set()
+lifecycle_states = set()
+
 for slice_id, contract in EXPECTED_SLICES.items():
     machine = data.get('slices', {}).get(slice_id)
     if not machine:
@@ -92,8 +98,8 @@ for slice_id, contract in EXPECTED_SLICES.items():
             fail(f'missing screenshot {screenshot}')
 
     artifact = json.loads(contract['artifact'].read_text(encoding='utf-8'))
-    if artifact.get('lifecycle_status') != 'FUNCTIONAL':
-        fail(f'{slice_id} lifecycle must remain FUNCTIONAL before Integration QA/Human Acceptance')
+    lifecycle = artifact.get('lifecycle_status')
+    lifecycle_states.add(lifecycle)
     vfr = artifact.get('visual_functional_review', {})
     state = vfr.get('status')
     slice_states.add(state)
@@ -103,20 +109,44 @@ for slice_id, contract in EXPECTED_SLICES.items():
     base_ids = {'EVD-VFR-BROWSER-WEB-001', contract['evidence']}
     actual_ids = set(vfr.get('evidence_ids', []))
     if state == 'READY_FOR_REVIEW':
+        if lifecycle != 'FUNCTIONAL':
+            fail(f'{slice_id} lifecycle must remain FUNCTIONAL while VFR awaits approval')
         if vfr.get('human_complete') is not False:
             fail(f'{slice_id} READY_FOR_REVIEW must have human_complete=false')
         if actual_ids != base_ids:
             fail(f'{slice_id} READY_FOR_REVIEW evidence binding mismatch')
     else:
+        if lifecycle not in {'FUNCTIONAL', 'ACCEPTED'}:
+            fail(f'{slice_id} approved VFR requires lifecycle FUNCTIONAL or ACCEPTED')
         if vfr.get('human_complete') is not True:
             fail(f'{slice_id} PASS must have human_complete=true')
-        if actual_ids != base_ids | {contract['approval']}:
+        if actual_ids != base_ids | {contract["approval"]}:
             fail(f'{slice_id} PASS evidence binding must include human approval')
         if not contract['approval_doc'].is_file():
             fail(f'{slice_id} PASS is missing its human approval document')
 
-    if artifact.get('integration_qa', {}).get('status') != 'PENDING':
-        fail(f'{slice_id} Integration QA must remain PENDING')
+    integration_state = artifact.get('integration_qa', {}).get('status')
+    acceptance_state = artifact.get('human_acceptance', {}).get('status')
+    integration_states.add(integration_state)
+    acceptance_states.add(acceptance_state)
+
+    if state == 'READY_FOR_REVIEW':
+        if integration_state != 'PENDING':
+            fail(f'{slice_id} Integration QA must remain PENDING until VFR passes')
+        if acceptance_state != 'PENDING':
+            fail(f'{slice_id} Human Acceptance must remain PENDING until VFR passes')
+    else:
+        if integration_state not in {'PENDING', 'READY_FOR_REVIEW', 'PASS'}:
+            fail(f'{slice_id} approved VFR has invalid downstream Integration QA state {integration_state!r}')
+        if acceptance_state not in {'PENDING', 'PASS'}:
+            fail(f'{slice_id} approved VFR has invalid Human Acceptance state {acceptance_state!r}')
+        if integration_state != 'PASS' and acceptance_state != 'PENDING':
+            fail(f'{slice_id} Human Acceptance cannot pass before Integration QA passes')
+        if lifecycle == 'ACCEPTED' and not (integration_state == 'PASS' and acceptance_state == 'PASS'):
+            fail(f'{slice_id} ACCEPTED lifecycle requires PASS Integration QA and Human Acceptance')
+        if lifecycle == 'FUNCTIONAL' and acceptance_state == 'PASS':
+            fail(f'{slice_id} Human Acceptance PASS requires lifecycle ACCEPTED')
+
     if not contract['doc'].is_file():
         fail(f'{slice_id} scoped evidence document is missing')
 
@@ -183,5 +213,7 @@ print(json.dumps({
     'reviewed_commit': reviewed_commit,
     'slices': list(EXPECTED_SLICES),
     'human_review_complete': human_approved,
-    'integration_qa_started': False,
+    'integration_qa_started': any(state != 'PENDING' for state in integration_states),
+    'human_acceptance_complete': all(state == 'PASS' for state in acceptance_states),
+    'lifecycle_states': sorted(lifecycle_states),
 }, sort_keys=True))
