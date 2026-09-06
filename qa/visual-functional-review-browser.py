@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any
 
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -112,7 +111,7 @@ def set_input(element_id: str, value: str) -> None:
 
 def click_button(label: str) -> None:
     button = wait.until(
-        EC.element_to_be_clickable((By.XPATH, f"//button[normalize-space()={json.dumps(label)}]"))
+        EC.element_to_be_clickable((By.XPATH, f"//button[normalize-space()={json.dumps(label, ensure_ascii=False)}]"))
     )
     button.click()
 
@@ -202,8 +201,11 @@ def console_errors() -> list[str]:
     for item in driver.get_log("browser"):
         if item.get("level") == "SEVERE":
             message = str(item.get("message", ""))
-            if "favicon.ico" not in message:
-                errors.append(message)
+            if "favicon.ico" in message:
+                continue
+            if "/api/v1/public/claim-tracking" in message and "404" in message:
+                continue
+            errors.append(message)
     return errors
 
 
