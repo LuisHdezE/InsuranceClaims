@@ -6,6 +6,7 @@ import { App } from './App';
 import { ClaimFlowProvider } from './flow/ClaimFlowContext';
 import { TrackingFlowProvider } from './flow/TrackingFlowContext';
 import './styles.css';
+import './tracking.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
