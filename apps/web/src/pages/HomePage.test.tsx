@@ -11,11 +11,15 @@ describe('HomePage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('img', { name: 'FAR Seguros' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Protección simple/i })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'FAR Seguros' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /Protección simple/i })).toBeTruthy();
+
     const intakeLinks = screen.getAllByRole('link', { name: 'Reportar un siniestro' });
     expect(intakeLinks.length).toBeGreaterThan(0);
-    for (const link of intakeLinks) expect(link).toHaveAttribute('href', '/claims/new/verify');
-    expect(screen.getByText(/Caso técnico no oficial/i)).toBeInTheDocument();
+    for (const link of intakeLinks) {
+      expect(link.getAttribute('href')).toBe('/claims/new/verify');
+    }
+
+    expect(screen.getByText(/Caso técnico no oficial/i)).toBeTruthy();
   });
 });
