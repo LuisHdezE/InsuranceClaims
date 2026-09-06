@@ -59,8 +59,11 @@
     "approved_visual_references": []
   },
   "integration_qa": {
-    "status": "PENDING",
-    "evidence_ids": []
+    "status": "READY_FOR_REVIEW",
+    "evidence_ids": [
+      "EVD-INTEGRATION-QA-WEB-SYSTEM-001",
+      "EVD-INTEGRATION-QA-BACKOFFICE-WEB-001"
+    ]
   },
   "human_acceptance": {
     "status": "PENDING",
@@ -71,6 +74,8 @@
     "EVD-FUNCTIONAL-BACKOFFICE-WEB-APPROVAL-001",
     "EVD-VFR-BROWSER-WEB-001",
     "EVD-VFR-BACKOFFICE-WEB-001",
-    "EVD-VFR-BACKOFFICE-WEB-APPROVAL-001"
+    "EVD-VFR-BACKOFFICE-WEB-APPROVAL-001",
+    "EVD-INTEGRATION-QA-WEB-SYSTEM-001",
+    "EVD-INTEGRATION-QA-BACKOFFICE-WEB-001"
   ]
 }
