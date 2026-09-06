@@ -2,16 +2,20 @@
   "schema_version": "0.5.0",
   "identity": {
     "product_name": "Insurance Claims Legacy Modernization",
-    "direction": "Neutral technical case-study UI focused on trust, operational clarity, readable insurance workflows and clear separation from any insurer brand identity.",
-    "logo_required": false,
-    "logo_path": null
+    "direction": "FAR Seguros-aligned visual modernization for an unofficial technical case study: preserve the recognizable FAR logo and core cyan/yellow/dark identity while using a contemporary, accessible public experience and a distinct operational backoffice without copying the current FAR site structure.",
+    "logo_required": true,
+    "logo_path": ".blueprint/ui/assets/far-seguros-logo.svg"
   },
   "tokens_path": ".blueprint/ui/design-tokens.json",
   "components": [
-    {"name":"Public header","category":"navigation","states":["default","mobile"]},
-    {"name":"Operator app shell","category":"navigation","states":["default","mobile"]},
+    {"name":"Public header","category":"navigation","states":["default","mobile"],"notes":"Customer-facing header uses the FAR Seguros logo and brand treatment. Navigation must follow the approved executable inventory; the current FAR site is not a layout template."},
+    {"name":"Public hero","category":"layout","states":["default","mobile"],"notes":"WEB-001 may use the approved modern customer-facing hero treatment from .blueprint/ui/references/far-public-landing-approved.md. Hero content cannot create capabilities absent from the Interface Inventory."},
+    {"name":"Public quick-action card","category":"navigation","states":["default","hover","focus"],"notes":"Modern rounded customer task card. Internal destinations are limited to approved WEB inventory items unless an explicit external-link decision is documented."},
+    {"name":"Public trust feature","category":"data_display","states":["default"],"notes":"Marketing/trust presentation is limited to approved static case-study content and must not invent insurer claims or operational promises."},
+    {"name":"Case-study disclaimer","category":"feedback","states":["default"],"notes":"Visible disclosure that this is an unofficial technical case study with synthetic data and no FAR affiliation; required whenever FAR identity is presented."},
+    {"name":"Operator app shell","category":"navigation","states":["default","mobile"],"notes":"Administrative/backoffice shell shares FAR identity tokens but is operational rather than marketing-oriented: restrained brand accents, dense readable work areas, no customer hero imagery."},
     {"name":"Breadcrumbs","category":"navigation","states":["default"]},
-    {"name":"Primary button","category":"action","states":["default","hover","focus","disabled","loading"]},
+    {"name":"Primary button","category":"action","states":["default","hover","focus","disabled","loading"],"notes":"Public primary CTA may use FAR yellow with dark text; administrative primary actions use an accessible strong-cyan treatment when appropriate."},
     {"name":"Secondary button","category":"action","states":["default","hover","focus","disabled"]},
     {"name":"Destructive/critical action button","category":"action","states":["default","hover","focus","disabled","loading"]},
     {"name":"Text input","category":"input","states":["default","focus","disabled","error"]},
@@ -37,9 +41,9 @@
     {"name":"Confirmation dialog","category":"overlay","states":["default","loading","error"]}
   ],
   "responsive": {
-    "mobile": "From 360px, use one-column forms and stacked detail regions; convert backoffice tables to readable row cards/list treatment when columns cannot remain legible; keep all actions keyboard/touch reachable and avoid horizontal page overflow.",
-    "tablet": "From 768px, preserve single-column form readability while allowing paired low-complexity fields and compact claim-list columns; timelines remain vertically readable.",
-    "desktop": "From 1024px, allow constrained two-column detail/review layouts, full claims table density and persistent operator navigation while preserving logical DOM/keyboard order."
+    "mobile": "From 360px, public marketing regions stack into a clear customer journey and all forms/detail regions use one column; convert backoffice tables to readable row cards/list treatment when columns cannot remain legible; keep actions keyboard/touch reachable and avoid horizontal page overflow.",
+    "tablet": "From 768px, public cards may use compact responsive grids while preserving reading order; forms keep readable widths, paired low-complexity fields are allowed, claim-list columns remain selective and timelines remain vertically readable.",
+    "desktop": "From 1024px, WEB-001 may use the approved modern hero/card composition while backoffice uses persistent operational navigation, constrained detail/review columns and full claim-table density; visual layout never changes logical DOM/keyboard task order."
   },
   "semantic_states": {
     "default": "Stable interactive or display state with no pending async work.",
