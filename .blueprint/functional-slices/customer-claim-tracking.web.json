@@ -14,7 +14,7 @@
     "artifact": ".blueprint/client-architecture/customer-claim-tracking.web.json",
     "gate_status": "PASS"
   },
-  "lifecycle_status": "IN_PROGRESS",
+  "lifecycle_status": "FUNCTIONAL",
   "blocker": null,
   "definition_of_done": {
     "status": "PASS",
@@ -33,7 +33,7 @@
       "idempotency": "N/A",
       "offline": "PASS"
     },
-    "evidence_ids": ["EVD-FUNCTIONAL-TRACKING-WEB-001"]
+    "evidence_ids": ["EVD-FUNCTIONAL-TRACKING-WEB-001", "EVD-FUNCTIONAL-TRACKING-WEB-APPROVAL-001"]
   },
   "visual_functional_review": {
     "status": "PENDING",
@@ -49,5 +49,5 @@
     "status": "PENDING",
     "evidence_ids": []
   },
-  "evidence_ids": ["EVD-FUNCTIONAL-TRACKING-WEB-001"]
+  "evidence_ids": ["EVD-FUNCTIONAL-TRACKING-WEB-001", "EVD-FUNCTIONAL-TRACKING-WEB-APPROVAL-001"]
 }
