@@ -1,0 +1,63 @@
+{
+  "schema_version": "0.5.0",
+  "architecture_id": "CLIENT-WEB-CLAIMS-BACKOFFICE",
+  "project_id": "LuisHdezE/InsuranceClaims",
+  "mode": "greenfield",
+  "interface_slice": "claims-backoffice",
+  "platform": "web",
+  "inventory_ids": ["WEB-008", "WEB-009", "WEB-010"],
+  "status": "READY_FOR_REVIEW",
+  "platform_baseline_ref": ".blueprint/client-architecture/web-platform.json",
+  "visual_references": {
+    "mode": "none",
+    "approved_reference_paths": []
+  },
+  "api_binding": {
+    "openapi_path": "openapi.yaml",
+    "revision": "api-v1-r1",
+    "operation_ids": ["authenticateOperator", "listClaims", "getClaimDetail", "downloadClaimEvidence", "transitionClaimStatus"],
+    "permissions": ["claims.backoffice.read", "claims.backoffice.transition"]
+  },
+  "routing": {
+    "routes": ["/operator/login", "/operator/claims", "/operator/claims/:claimId"],
+    "permission_aware_navigation": true
+  },
+  "async_states": {
+    "loading": "REQUIRED",
+    "empty": "REQUIRED",
+    "error": "REQUIRED",
+    "401": "REQUIRED",
+    "403": "REQUIRED",
+    "404": "REQUIRED",
+    "409": "REQUIRED",
+    "422": "REQUIRED",
+    "429": "REQUIRED",
+    "offline": "REQUIRED"
+  },
+  "idempotency": {
+    "required_operations": [],
+    "key_generation": "No Idempotency-Key is generated for backoffice operations because the approved API contract does not require one; transition concurrency is protected by expectedFromStatus instead.",
+    "replay_handling": "Read retries refetch canonical API state. State-transition retries are explicit user actions after authoritative state refresh and never replay an assumed successful mutation.",
+    "conflict_handling": "Map CLAIM_STATE_CONFLICT and INVALID_STATE_TRANSITION to the Design System conflict state, preserve operator context, refetch claim detail, and require a new explicit transition decision."
+  },
+  "slice_overrides": {
+    "cache_invalidation": [
+      "Successful authenticateOperator establishes only the in-memory operator session and then loads protected claims explicitly.",
+      "Successful transitionClaimStatus invalidates the affected claim detail/history and the claims collection/status-filter queries that can display that claim.",
+      "401 clears protected cache and in-memory credentials before routing through operator login."
+    ],
+    "offline_override": "inherit",
+    "testing_notes": [
+      "Exercise 900-second access-token lifecycle with no refresh endpoint and local-only logout.",
+      "Exercise claims.backoffice.read and claims.backoffice.transition presentation while proving API authorization remains authoritative.",
+      "Exercise protected evidence download without exposing raw evidence in client logs or persistent browser storage.",
+      "Exercise expectedFromStatus conflict recovery without duplicating lifecycle rules in the client."
+    ]
+  },
+  "implementation_guardrails": {
+    "api_authoritative": true,
+    "no_new_api_behavior": true,
+    "approved_inventory_only": true,
+    "no_hardcoded_authoritative_business_data": true
+  }
+}

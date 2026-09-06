@@ -1,0 +1,33 @@
+name: Client Architecture
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.blueprint/client-architecture/**'
+      - '.blueprint/ui/interface-inventory.json'
+      - '.blueprint/ui/design-system.json'
+      - '.blueprint/ui/design-tokens.json'
+      - '.blueprint/ui/references/**'
+      - '.blueprint/status.yaml'
+      - 'documentation/client-architecture/**'
+      - 'openapi.yaml'
+      - 'scripts/validate-client-architecture.mjs'
+      - '.github/workflows/client-architecture.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Validate Client Architecture contracts
+        run: node scripts/validate-client-architecture.mjs

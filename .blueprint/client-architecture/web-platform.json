@@ -1,0 +1,99 @@
+{
+  "schema_version": "0.5.0",
+  "baseline_id": "CLIENT-BASELINE-WEB-INSURANCE-CLAIMS",
+  "project_id": "LuisHdezE/InsuranceClaims",
+  "mode": "greenfield",
+  "platform": "web",
+  "status": "READY_FOR_REVIEW",
+  "design_system": {
+    "design_system_path": ".blueprint/ui/design-system.json",
+    "tokens_path": ".blueprint/ui/design-tokens.json"
+  },
+  "api_client": {
+    "openapi_path": "openapi.yaml",
+    "authorization_boundary": "api",
+    "error_contract": "RFC 9457 Problem Details (application/problem+json)",
+    "request_id_header": "X-Request-Id",
+    "idempotency_header": "Idempotency-Key"
+  },
+  "auth_lifecycle": {
+    "mechanism": "bearer_jwt",
+    "access_credential_storage": "memory",
+    "refresh_credential_storage": "not_applicable",
+    "refresh_enabled": false,
+    "refresh_rotation": false,
+    "concurrent_refresh_policy": "not_applicable",
+    "unauthenticated_behavior": "Public customer routes remain anonymous. Protected operator routes with a missing or expired access token redirect to /operator/login and preserve the intended protected route only in ephemeral client state.",
+    "forbidden_behavior": "Render the Design System 403 state, disclose no protected claim data, and provide safe navigation without retry loops.",
+    "logout_behavior": "Clear the in-memory bearer token, operator identity, protected query cache and ephemeral auth state. No logout endpoint or refresh/session store is invented.",
+    "secrets_must_not_be_logged": true
+  },
+  "permissions": {
+    "source": "api_contract",
+    "ui_hides_or_disables_unauthorized_actions": true,
+    "api_remains_authoritative": true
+  },
+  "state_management": {
+    "server_state_strategy": "TanStack Query owns REST server state, request lifecycle and explicit query invalidation; no authoritative business state is recreated in a global client store.",
+    "ui_state_strategy": "React component state and narrowly scoped context own ephemeral UI state such as form flow, dialogs, filters and the in-memory operator session.",
+    "cache_strategy": "Query keys are operation/resource oriented. Protected cache is cleared on logout/401; mutations invalidate only affected canonical resources and refetch authoritative state before conflict recovery."
+  },
+  "forms_validation": {
+    "client_validation_strategy": "React Hook Form with Zod schemas provides immediate structural and format feedback only; server eligibility, lifecycle and authorization rules are never duplicated as client authority.",
+    "api_validation_mapping": "Map RFC 9457 422 errors to accessible field/global errors while preserving entered synthetic data where safe.",
+    "conflict_mapping": "Map 409 Problem Details to the Design System conflict state, preserve context, refetch canonical state when required, and never pretend the mutation succeeded.",
+    "rate_limit_mapping": "Map 429 plus Retry-After when present to restrained retry guidance and never create automatic retry storms."
+  },
+  "observability": {
+    "request_id_header": "X-Request-Id",
+    "client_error_strategy": "Capture sanitized route/operation context and the response requestId for diagnostics; never emit raw evidence, credentials, policy proof values or full claim payloads.",
+    "secret_redaction": true,
+    "pii_policy": "Treat all demo customer/claim values as sensitive synthetic data: no bearer tokens, evidence bytes, tracking proofs or form payloads in telemetry, URLs or browser logs."
+  },
+  "accessibility": {
+    "target": "WCAG 2.2 AA",
+    "keyboard_or_switch_navigation": "All public and operator journeys are fully keyboard operable with no pointer-only action.",
+    "screen_reader_or_talkback": "Semantic landmarks, labels, status text and live regions expose navigation, validation and async outcomes.",
+    "focus_management": "Move focus intentionally to validation summaries, route-level errors, dialogs and post-navigation headings while preserving logical reading order.",
+    "min_touch_target_px": 44
+  },
+  "testing": {
+    "unit": {
+      "required": true,
+      "strategy": "Test API mappers, Problem Details mapping, idempotency-key lifecycle, permission presentation and auth/session utilities."
+    },
+    "component_or_ui": {
+      "required": true,
+      "strategy": "React component tests cover forms, semantic states, responsive behavior, permission presentation and public/admin Design System variants."
+    },
+    "integration": {
+      "required": true,
+      "strategy": "Test Axios transport, TanStack Query orchestration, JWT lifecycle, headers, Problem Details and cache invalidation against controlled HTTP fixtures and the real API contract."
+    },
+    "e2e": {
+      "required": true,
+      "strategy": "Critical intake, tracking and backoffice journeys execute against the real synthetic API before slice acceptance."
+    }
+  },
+  "offline": {
+    "mode": "degraded",
+    "storage_strategy": "No durable browser persistence for authoritative claim data, evidence, tracking proofs or bearer tokens in the MVP. Ephemeral in-memory form state may remain visible while the current page is open.",
+    "sync_conflict_policy": "No queued business writes. After connectivity returns, refetch authoritative server state before explicit mutation retry; expired operator credentials require login again."
+  },
+  "implementation_guardrails": {
+    "no_new_api_behavior": true,
+    "no_auth_bypass": true,
+    "approved_inventory_only": true,
+    "high_risk_mutations_follow_idempotency": true,
+    "no_hardcoded_authoritative_business_data": true
+  },
+  "web": {
+    "framework": "react",
+    "rendering_mode": "SPA",
+    "router": "React Router",
+    "server_state_library": "TanStack Query",
+    "form_library": "React Hook Form",
+    "build_tool": "Vite",
+    "browser_support": "Current evergreen desktop and mobile browsers, responsive from approximately 360px."
+  }
+}
