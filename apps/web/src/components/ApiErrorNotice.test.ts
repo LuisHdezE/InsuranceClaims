@@ -15,6 +15,22 @@ describe('describeApiFailure', () => {
     expect(presentation.recovery).toContain('No asumimos');
   });
 
+  it('collapses invalid tracking proof to one privacy-safe not-found presentation', () => {
+    const presentation = describeApiFailure(failure('not found', {
+      problem: {
+        type: 'about:blank',
+        title: 'Not found',
+        status: 404,
+        detail: 'CLAIM_NOT_FOUND',
+      },
+    }));
+
+    expect(presentation.tone).toBe('info');
+    expect(presentation.title).toContain('No encontramos');
+    expect(presentation.detail).toContain('código de seguimiento');
+    expect(presentation.recovery).toContain('no indicamos cuál');
+  });
+
   it('presents rate limiting with Retry-After guidance', () => {
     const presentation = describeApiFailure(failure('rate limited', {
       retryAfter: '17',
