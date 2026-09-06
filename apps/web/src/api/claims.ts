@@ -4,8 +4,10 @@ import type {
   ApiResult,
   ClaimDraft,
   CreateClaimResponse,
+  CustomerClaimStatusResponse,
   PolicyVerificationRequest,
   PolicyVerificationResponse,
+  TrackClaimRequest,
 } from './types';
 
 const browserClient = createApiClient();
@@ -55,6 +57,24 @@ export async function createClaim(
       requestId: readHeader(response.headers['x-request-id']),
       idempotencyReplayed:
         readHeader(response.headers['idempotency-replayed'])?.toLowerCase() === 'true',
+    };
+  } catch (error) {
+    throw toApiFailure(error);
+  }
+}
+
+export async function trackClaim(
+  payload: TrackClaimRequest,
+  client: AxiosInstance = browserClient,
+): Promise<ApiResult<CustomerClaimStatusResponse>> {
+  try {
+    const response = await client.post<CustomerClaimStatusResponse>(
+      '/api/v1/public/claim-tracking',
+      payload,
+    );
+    return {
+      data: response.data,
+      requestId: readHeader(response.headers['x-request-id']),
     };
   } catch (error) {
     throw toApiFailure(error);
