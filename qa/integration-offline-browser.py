@@ -28,11 +28,13 @@ if browser_bin:
 
 driver = webdriver.Chrome(options=options)
 wait = WebDriverWait(driver, 20)
+driver.execute_cdp_cmd("Network.enable", {})
 
 results = {
     "schema_version": "0.5.0",
     "review_type": "integration_qa_offline",
     "reviewed_commit": os.environ.get("GITHUB_SHA"),
+    "transport_simulation": "Chrome DevTools Network.setBlockedURLs on the SPA /api transport",
     "slices": {},
 }
 
@@ -57,20 +59,23 @@ def click_button(label: str) -> None:
 
 
 def wait_text(text: str) -> None:
-    wait.until(lambda d: text.casefold() in d.find_element(By.TAG_NAME, "body").text.casefold())
+    try:
+        wait.until(lambda d: text.casefold() in d.find_element(By.TAG_NAME, "body").text.casefold())
+    except Exception:
+        body = driver.find_element(By.TAG_NAME, "body").text
+        print(json.dumps({"event": "OFFLINE_ASSERTION_DIAGNOSTIC", "expected": text, "url": driver.current_url, "body": body}, ensure_ascii=False))
+        raise
 
 
-def set_offline(value: bool) -> None:
-    driver.execute_cdp_cmd("Network.enable", {})
-    driver.execute_cdp_cmd(
-        "Network.emulateNetworkConditions",
-        {
-            "offline": value,
-            "latency": 0,
-            "downloadThroughput": -1,
-            "uploadThroughput": -1,
-        },
-    )
+def block_api(value: bool) -> None:
+    # The browser talks to the relative /api path through Vite's 5173 proxy. Blocking
+    # that transport keeps the already-loaded SPA alive while making the authoritative
+    # API unreachable, which is the client state this check is intended to prove.
+    urls = [
+        "*://127.0.0.1:5173/api/*",
+        "*://localhost:5173/api/*",
+    ] if value else []
+    driver.execute_cdp_cmd("Network.setBlockedURLs", {"urls": urls})
 
 
 try:
@@ -78,21 +83,21 @@ try:
     visit("/claims/new/verify")
     set_input("policyReference", "SYN-POL-001")
     set_input("vehicleReference", "SYN-VEH-001")
-    set_offline(True)
+    block_api(True)
     click_button("Verificar y continuar")
     wait_text("No pudimos conectar con el servicio")
     wait_text("No asumimos que la operación se completó")
     results["slices"]["digital-claim-intake/web"] = {
         "qa.offline": "PASS",
-        "observation": "Verification fails closed and never substitutes authoritative API data while browser transport is offline.",
+        "observation": "Verification fails closed and never substitutes authoritative API data while the SPA API transport is unavailable.",
     }
-    set_offline(False)
+    block_api(False)
 
     # Customer tracking: proof lookup must expose the approved network/degraded presentation.
     visit("/claims/track")
     set_input("trackingCode", "SYN-OFFLINE-CODE")
     set_input("trackingPolicyReference", "SYN-POL-001")
-    set_offline(True)
+    block_api(True)
     click_button("Consultar estado")
     wait_text("No pudimos conectar con el servicio")
     wait_text("No asumimos que la operación se completó")
@@ -100,16 +105,17 @@ try:
         "qa.offline": "PASS",
         "observation": "Tracking lookup exposes the network state without fabricating a claim projection.",
     }
-    set_offline(False)
+    block_api(False)
 
-    # Backoffice: authenticate online, then prove an explicit refresh fails closed offline.
+    # Backoffice: authenticate online, then prove an explicit refresh fails closed when
+    # the API transport disappears while the protected SPA remains loaded.
     visit("/operator/login")
     set_input("operator-login", OPERATOR_LOGIN)
     set_input("operator-password", OPERATOR_PASSWORD)
     click_button("Ingresar")
     wait.until(lambda d: d.current_url.startswith(f"{WEB_BASE_URL}/operator/claims"))
     wait_text("Listado autoritativo del API")
-    set_offline(True)
+    block_api(True)
     click_button("Actualizar")
     wait_text("Sin conexión con el servicio")
     wait_text("No mostramos datos locales como si fueran el estado real")
@@ -117,10 +123,10 @@ try:
         "qa.offline": "PASS",
         "observation": "Protected claims refresh fails closed and explicitly refuses to present cached data as authoritative.",
     }
-    set_offline(False)
+    block_api(False)
 finally:
     try:
-        set_offline(False)
+        block_api(False)
     except Exception:
         pass
     driver.quit()
