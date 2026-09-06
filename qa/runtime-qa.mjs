@@ -1,8 +1,9 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 
 const baseUrl = process.env.QA_BASE_URL ?? 'http://127.0.0.1:3000';
-const operatorLogin = 'qa.operator@example.invalid';
-const operatorPassword = 'Qa-Operator-Password-2026!';
+const operatorLogin = process.env.QA_OPERATOR_LOGIN ?? 'qa.operator@example.invalid';
+const operatorPassword = process.env.QA_OPERATOR_PASSWORD;
+if (!operatorPassword) throw new Error('QA_OPERATOR_PASSWORD is required for runtime QA.');
 
 function assert(condition, message) {
   if (!condition) throw new Error(`QA_ASSERTION_FAILED: ${message}`);
