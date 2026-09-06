@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -100,7 +101,14 @@ def wait_path(path: str) -> None:
 
 
 def wait_text(text: str) -> None:
-    wait.until(lambda d: text in d.find_element(By.TAG_NAME, "body").text)
+    try:
+        wait.until(lambda d: text in d.find_element(By.TAG_NAME, "body").text)
+    except TimeoutException as error:
+        body = driver.find_element(By.TAG_NAME, "body").text
+        severe = [item.get("message", "") for item in driver.get_log("browser") if item.get("level") == "SEVERE"]
+        raise AssertionError(
+            f"Timed out waiting for {text!r}; url={driver.current_url!r}; body={body[:2500]!r}; severe={severe[:10]!r}"
+        ) from error
 
 
 def set_input(element_id: str, value: str) -> None:
