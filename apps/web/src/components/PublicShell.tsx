@@ -17,8 +17,8 @@ export function PublicShell({ children }: { children: ReactNode }) {
           <nav className="header-nav" aria-label="Navegación principal">
             <Link to="/">Inicio</Link>
             <Link to="/claims/new/verify">Reportar siniestro</Link>
-            <span aria-disabled="true">Seguimiento</span>
-            <span aria-disabled="true">Operadores</span>
+            <Link to="/claims/track">Seguimiento</Link>
+            <Link to="/operator/login">Operadores</Link>
           </nav>
         </div>
       </header>
