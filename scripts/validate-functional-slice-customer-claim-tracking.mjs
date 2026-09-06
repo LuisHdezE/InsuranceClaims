@@ -55,7 +55,7 @@ assert(trackingContext.includes('proof: TrackClaimRequest'), 'tracking proof mus
 const lookup = read('apps/web/src/pages/TrackClaimPage.tsx');
 assert(lookup.includes('ApiErrorNotice'), 'tracking lookup must render normalized API failures');
 assert(lookup.includes('aria-describedby'), 'tracking form hints/errors must be programmatically associated');
-assert(lookup.includes('no indicamos cuál'), 'lookup must explain privacy-safe non-disclosure without identifying failed proof element');
+assert(lookup.includes('indicamos cuál de los dos datos'), 'lookup must explain privacy-safe non-disclosure without identifying failed proof element');
 
 const status = read('apps/web/src/pages/ClaimStatusPage.tsx');
 assert(status.includes('trackClaim(tracking.state.proof)'), 'explicit refresh must refetch canonical trackClaim state');
