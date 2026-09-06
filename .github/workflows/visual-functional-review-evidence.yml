@@ -109,7 +109,7 @@ jobs:
             sleep 1
           done
       - name: Exercise actual rendered client and capture review evidence
-        run: python qa/visual-functional-review-browser.py
+        run: GITHUB_SHA="$(git rev-parse HEAD)" python qa/visual-functional-review-browser.py
       - name: Validate generated machine review summary
         shell: bash
         run: |
