@@ -10,13 +10,13 @@ export function ReviewClaimPage() {
   const flow = useClaimFlow();
   const navigate = useNavigate();
 
-  if (!flow.verification) return <Navigate to="/claims/new/verify" replace />;
-  if (!flow.draft) return <Navigate to="/claims/new" replace />;
-
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!flow.verification || !flow.draft) {
+        throw new Error('El flujo de reporte ya no contiene los datos necesarios.');
+      }
       const key = flow.ensureIdempotencyKey();
-      return createClaim(flow.verification!, flow.draft!, key);
+      return createClaim(flow.verification, flow.draft, key);
     },
     onSuccess(result) {
       flow.setReceipt({
@@ -27,6 +27,9 @@ export function ReviewClaimPage() {
       navigate('/claims/new/success');
     },
   });
+
+  if (!flow.verification) return <Navigate to="/claims/new/verify" replace />;
+  if (!flow.draft) return <Navigate to="/claims/new" replace />;
 
   const failure = mutation.error as ApiFailure | null;
 
