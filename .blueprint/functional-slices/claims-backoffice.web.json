@@ -39,8 +39,8 @@
     ]
   },
   "visual_functional_review": {
-    "status": "PENDING",
-    "evidence_ids": [],
+    "status": "READY_FOR_REVIEW",
+    "evidence_ids": ["EVD-VFR-BROWSER-WEB-001", "EVD-VFR-BACKOFFICE-WEB-001"],
     "human_complete": false,
     "approved_visual_references": []
   },
@@ -54,6 +54,8 @@
   },
   "evidence_ids": [
     "EVD-FUNCTIONAL-BACKOFFICE-WEB-001",
-    "EVD-FUNCTIONAL-BACKOFFICE-WEB-APPROVAL-001"
+    "EVD-FUNCTIONAL-BACKOFFICE-WEB-APPROVAL-001",
+    "EVD-VFR-BROWSER-WEB-001",
+    "EVD-VFR-BACKOFFICE-WEB-001"
   ]
 }
