@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-06T09:43:43-03:00'
+updated_at: '2026-09-06T11:06:07-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -69,6 +69,10 @@ phases:
     status: COMPLETE
     progress: 100
     note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web all passed Visual & Functional Review after real-browser evidence and explicit human approval on the exact reviewed candidate.
+  integration_qa:
+    status: READY_FOR_REVIEW
+    progress: 89
+    note: All three web slices passed the applicable machine/evidence Integration QA checks against real API transport, PostgreSQL 18 and the simulated legacy dependency; explicit human review remains pending per slice/platform.
 checks:
   discovery.product_vision:
     status: PASS
@@ -508,6 +512,51 @@ checks:
     verification: manual
     note: Luis Hernández explicitly approved Visual & Functional Review for all three scoped web slices on the exact PR #17 reviewed head; CI did not infer this decision.
     evidence_ids: [EVD-VFR-INTAKE-WEB-APPROVAL-001, EVD-VFR-TRACKING-WEB-APPROVAL-001, EVD-VFR-BACKOFFICE-WEB-APPROVAL-001]
+  qa.functional:
+    status: PASS
+    verification: evidence
+    note: All three scoped web slices preserve their approved functional behavior in the integrated runtime.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-TRACKING-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
+  qa.real_api_transport:
+    status: PASS
+    verification: evidence
+    note: Each web slice executes its canonical Axios client against the production Nest API composition with PostgreSQL 18 and the simulated legacy HTTP dependency.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-TRACKING-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
+  qa.integration:
+    status: PASS
+    verification: evidence
+    note: The integrated browser journey and real-client runtimes carry authoritative synthetic claim data from intake through tracking and protected backoffice without direct React access to DB, MCP or legacy.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-TRACKING-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
+  qa.security:
+    status: PASS
+    verification: evidence
+    note: Authentication, authorization, proof redaction, protected evidence, rate limiting, durable audit, stale-state concurrency and production dependency checks pass in the integrated runtime.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-TRACKING-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
+  qa.responsive:
+    status: PASS
+    verification: evidence
+    note: Real Chrome responsive checks pass for all three scoped web slices without horizontal page overflow on the reviewed surfaces.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-TRACKING-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
+  qa.accessibility:
+    status: PASS
+    verification: evidence
+    note: Automated real-browser accessibility checks pass across the integrated journey for all three scoped web slices.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-TRACKING-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
+  qa.e2e:
+    status: PASS
+    verification: evidence
+    note: Real-browser and real-client end-to-end evidence covers intake, customer tracking and protected backoffice against the same authoritative runtime.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-TRACKING-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
+  qa.idempotency:
+    status: PASS
+    verification: evidence
+    note: digital-claim-intake/web proves createClaim Idempotency-Key replay semantics; customer tracking and backoffice are correctly N/A, with expectedFromStatus retained as the backoffice concurrency guard.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
+  qa.offline:
+    status: PASS
+    verification: evidence
+    note: CDP transport blocking proves all three loaded web slices fail closed when /api transport is unavailable and do not substitute local authoritative business state.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-TRACKING-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
 gates:
   requirements_ready:
     status: PASS
@@ -647,6 +696,30 @@ scoped_gates:
     evaluated_at: '2026-09-06T09:43:43-03:00'
     note: Explicit human Visual & Functional Review approval recorded after exact-head browser evidence and 11/11 pull-request workflow success. Static reference comparison remains N/A because no approved static backoffice reference exists.
     evidence_ids: [EVD-VFR-BROWSER-WEB-001, EVD-VFR-BACKOFFICE-WEB-001, EVD-VFR-BACKOFFICE-WEB-APPROVAL-001]
+  - gate: integration_qa_pass
+    scope: interface_slice_platform
+    scope_id: digital-claim-intake
+    platform: web
+    status: READY_FOR_REVIEW
+    evaluated_at: '2026-09-06T11:06:07-03:00'
+    note: All applicable Integration QA checks pass against the real-dependency candidate; explicit human review remains pending.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001]
+  - gate: integration_qa_pass
+    scope: interface_slice_platform
+    scope_id: customer-claim-tracking
+    platform: web
+    status: READY_FOR_REVIEW
+    evaluated_at: '2026-09-06T11:06:07-03:00'
+    note: All applicable Integration QA checks pass against the real-dependency candidate; idempotency is N/A and explicit human review remains pending.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-TRACKING-WEB-001]
+  - gate: integration_qa_pass
+    scope: interface_slice_platform
+    scope_id: claims-backoffice
+    platform: web
+    status: READY_FOR_REVIEW
+    evaluated_at: '2026-09-06T11:06:07-03:00'
+    note: All applicable Integration QA checks pass against the real-dependency candidate; expectedFromStatus remains the concurrency guard, idempotency is N/A, and explicit human review remains pending.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
 blockers: []
 api_impacts: []
 artifacts:
@@ -851,3 +924,15 @@ artifacts:
   - id: EVD-VFR-BACKOFFICE-WEB-001
     type: visual_functional_review_evidence
     value: documentation/visual-functional-review/CLAIMS_BACKOFFICE_WEB_EVIDENCE.md
+  - id: EVD-INTEGRATION-QA-WEB-SYSTEM-001
+    type: integration_qa_system_evidence
+    value: documentation/integration-qa/INTEGRATION_QA_WEB_SYSTEM_EVIDENCE.md
+  - id: EVD-INTEGRATION-QA-INTAKE-WEB-001
+    type: integration_qa_evidence
+    value: documentation/integration-qa/DIGITAL_CLAIM_INTAKE_WEB_EVIDENCE.md
+  - id: EVD-INTEGRATION-QA-TRACKING-WEB-001
+    type: integration_qa_evidence
+    value: documentation/integration-qa/CUSTOMER_CLAIM_TRACKING_WEB_EVIDENCE.md
+  - id: EVD-INTEGRATION-QA-BACKOFFICE-WEB-001
+    type: integration_qa_evidence
+    value: documentation/integration-qa/CLAIMS_BACKOFFICE_WEB_EVIDENCE.md
