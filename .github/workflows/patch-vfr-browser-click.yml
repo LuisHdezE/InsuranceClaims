@@ -1,0 +1,52 @@
+name: Patch VFR Browser Click
+
+on:
+  push:
+    branches: [blueprint/visual-functional-review-web]
+    paths:
+      - .github/workflows/patch-vfr-browser-click.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: blueprint/visual-functional-review-web
+          fetch-depth: 0
+      - name: Harden mobile browser click behavior
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('qa/visual-functional-review-browser.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''def click_button(label: str) -> None:
+              button = wait.until(
+                  EC.element_to_be_clickable((By.XPATH, f"//button[normalize-space()={json.dumps(label, ensure_ascii=False)}]"))
+              )
+              button.click()
+          '''
+          new = '''def click_button(label: str) -> None:
+              button = wait.until(
+                  EC.element_to_be_clickable((By.XPATH, f"//button[normalize-space()={json.dumps(label, ensure_ascii=False)}]"))
+              )
+              driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", button)
+              time.sleep(0.15)
+              driver.execute_script("arguments[0].click();", button)
+          '''
+          if old not in text:
+              raise SystemExit('Expected click_button anchor not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          git diff --check
+          git diff -- qa/visual-functional-review-browser.py
+      - name: Commit harness correction
+        run: |
+          git config user.name "MSc Luis A. Hernández Elias"
+          git config user.email "88979457+LuisHdezE@users.noreply.github.com"
+          git add qa/visual-functional-review-browser.py
+          git commit -m "test(ui): center browser actions before mobile clicks"
+          git push origin HEAD:blueprint/visual-functional-review-web
