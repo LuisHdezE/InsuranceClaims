@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T23:11:54-03:00'
+updated_at: '2026-09-05T23:40:54-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -49,6 +49,10 @@ phases:
     status: COMPLETE
     progress: 100
     note: Executable web inventory was explicitly approved by Luis Hernández after exact 10/10 reconciliation against canonical API operationIds, permissions, dependencies and the three approved slice backlogs.
+  design_system:
+    status: READY_FOR_REVIEW
+    progress: 100
+    note: Neutral case-study Design System, tokens, accessibility, responsive behavior and semantic states are validated; explicit human Design System Ready approval remains pending.
 checks:
   discovery.product_vision:
     status: PASS
@@ -328,6 +332,41 @@ checks:
     verification: evidence
     note: Delivery mode is GREENFIELD; Brownfield observed/proposed separation is not applicable.
     evidence_ids: [EVD-UI-INVENTORY-EVIDENCE-001]
+  design.identity:
+    status: N/A
+    verification: evidence
+    note: Visual Identity is not applicable to this unofficial technical case study; no insurer brand identity is fabricated or imitated.
+    evidence_ids: [EVD-DESIGN-SYSTEM-EVIDENCE-001]
+  design.logo:
+    status: N/A
+    verification: evidence
+    note: No custom logo is required for this MVP and no FAR Seguros logo or approximation is introduced.
+    evidence_ids: [EVD-DESIGN-SYSTEM-EVIDENCE-001]
+  design.system:
+    status: PASS
+    verification: evidence
+    note: The reusable visual/component contract covers the complete approved web inventory and three executable slices without adding capabilities.
+    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001]
+  design.tokens:
+    status: PASS
+    verification: file
+    note: Versioned color, typography, spacing, radius, breakpoint and accessibility tokens satisfy the Blueprint Design Tokens contract.
+    evidence_ids: [EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-VALIDATION-001]
+  design.accessibility:
+    status: PASS
+    verification: evidence
+    note: WCAG 2.2 AA, keyboard/focus behavior, non-color-only communication, 44px touch targets and text contrast obligations are explicit and validated.
+    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001]
+  design.responsive:
+    status: PASS
+    verification: evidence
+    note: Responsive contracts cover approximately 360px mobile through tablet and desktop without changing semantic reading order or authority.
+    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-VALIDATION-001]
+  design.semantic_states:
+    status: PASS
+    verification: evidence
+    note: Loading, empty, error, offline, forbidden, validation, conflict and rate-limit states plus all normalized inventory states are represented text-first.
+    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-SYSTEM-VALIDATION-001]
 gates:
   requirements_ready:
     status: PASS
@@ -379,6 +418,10 @@ gates:
     evaluated_at: '2026-09-05T23:11:54-03:00'
     note: Explicit human Interface Inventory Ready approval recorded after exact 10/10 reconciliation and exact-head Interface Inventory plus full API regression success.
     evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-EVIDENCE-001, EVD-UI-INVENTORY-VALIDATION-001, EVD-UI-INVENTORY-READY-APPROVAL-001]
+  design_system_ready:
+    status: READY_FOR_REVIEW
+    note: All five required Design System checks pass and conditional Visual Identity/Logo are explicitly N/A; exact-head human approval remains pending.
+    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -513,3 +556,15 @@ artifacts:
   - id: EVD-UI-INVENTORY-READY-APPROVAL-001
     type: manual_approval
     value: documentation/interface-inventory/INTERFACE_INVENTORY_READY_APPROVAL.md
+  - id: EVD-DESIGN-SYSTEM-001
+    type: design_system
+    value: .blueprint/ui/design-system.json
+  - id: EVD-DESIGN-TOKENS-001
+    type: design_tokens
+    value: .blueprint/ui/design-tokens.json
+  - id: EVD-DESIGN-SYSTEM-EVIDENCE-001
+    type: design_system_evidence
+    value: documentation/design-system/DESIGN_SYSTEM.md
+  - id: EVD-DESIGN-SYSTEM-VALIDATION-001
+    type: design_system_validation_evidence
+    value: documentation/design-system/DESIGN_SYSTEM_VALIDATION_EVIDENCE.md
