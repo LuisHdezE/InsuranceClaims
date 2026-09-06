@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.5.0",
+  "architecture_id": "CLIENT-WEB-DIGITAL-CLAIM-INTAKE",
+  "project_id": "LuisHdezE/InsuranceClaims",
+  "mode": "greenfield",
+  "interface_slice": "digital-claim-intake",
+  "platform": "web",
+  "inventory_ids": ["WEB-002", "WEB-003", "WEB-004", "WEB-005"],
+  "status": "READY_FOR_REVIEW",
+  "platform_baseline_ref": ".blueprint/client-architecture/web-platform.json",
+  "visual_references": {
+    "mode": "none",
+    "approved_reference_paths": []
+  },
+  "api_binding": {
+    "openapi_path": "openapi.yaml",
+    "revision": "api-v1-r1",
+    "operation_ids": ["verifyPolicyVehicle", "createClaim"],
+    "permissions": ["claims.intake.create"]
+  },
+  "routing": {
+    "routes": ["/claims/new/verify", "/claims/new", "/claims/new/review", "/claims/new/success"],
+    "permission_aware_navigation": false
+  },
+  "async_states": {
+    "loading": "REQUIRED",
+    "empty": "NOT_APPLICABLE",
+    "error": "REQUIRED",
+    "401": "NOT_APPLICABLE",
+    "403": "NOT_APPLICABLE",
+    "404": "NOT_APPLICABLE",
+    "409": "REQUIRED",
+    "422": "REQUIRED",
+    "429": "REQUIRED",
+    "offline": "REQUIRED"
+  },
+  "idempotency": {
+    "required_operations": ["createClaim"],
+    "key_generation": "Generate one cryptographically strong client UUID per explicit claim-submission intent at WEB-004 and retain that key only for retries of the identical prepared payload during the current in-memory flow.",
+    "replay_handling": "Treat an Idempotency-Replayed response as the canonical successful createClaim outcome and navigate once to WEB-005 without duplicating local success effects.",
+    "conflict_handling": "A 409 IDEMPOTENCY_KEY_REUSED or IDEMPOTENCY_IN_PROGRESS never generates a new implicit submission. Preserve the review state, explain the conflict, and require an explicit safe recovery path."
+  },
+  "slice_overrides": {
+    "cache_invalidation": [
+      "No long-lived claim collection cache exists in the anonymous intake flow.",
+      "After successful createClaim, keep only the returned submission receipt needed by WEB-005 and do not manufacture claim status beyond the response."
+    ],
+    "offline_override": "inherit",
+    "testing_notes": [
+      "Exercise policy/vehicle verification against verifyPolicyVehicle and fail closed when the simulated legacy dependency is unavailable.",
+      "Exercise evidence restrictions, 422 mapping, mandatory Idempotency-Key reuse and successful replay behavior against createClaim.",
+      "Prove no client pre-validation endpoint or authoritative eligibility/lifecycle rule is invented."
+    ]
+  },
+  "implementation_guardrails": {
+    "api_authoritative": true,
+    "no_new_api_behavior": true,
+    "approved_inventory_only": true,
+    "no_hardcoded_authoritative_business_data": true
+  }
+}
