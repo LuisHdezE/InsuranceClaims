@@ -1,0 +1,159 @@
+name: API QA
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_qa
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_qa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_qa
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Typecheck production code
+        run: npm run typecheck
+
+      - name: Prepare synthetic QA secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=qa-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=qa-pass-$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+
+      - name: Ensure PostgreSQL client
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+
+      - name: Bootstrap ephemeral PostgreSQL QA schema
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+
+      - name: Seed synthetic QA operator
+        run: npx tsx qa/seed.ts
+
+      - name: Start simulated legacy system and API
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence
+          npm run start:legacy > .runtime/legacy.log 2>&1 &
+          echo $! > .runtime/legacy.pid
+          npm run start:api > .runtime/api.log 2>&1 &
+          echo $! > .runtime/api.pid
+
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 40); do
+            if curl -fsS -X POST \
+              -H 'content-type: application/json' \
+              -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' \
+              http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null; then
+              break
+            fi
+            if [[ "$attempt" == "40" ]]; then
+              cat .runtime/legacy.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+          for attempt in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000/health/live >/dev/null; then
+              break
+            fi
+            if [[ "$attempt" == "40" ]]; then
+              cat .runtime/api.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Execute positive negative contract and security runtime QA
+        run: node qa/runtime-qa.mjs
+
+      - name: Verify durable audit and persistence invariants
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/audit-assertions.sql
+
+      - name: Classify production dependency vulnerabilities
+        shell: bash
+        run: |
+          npm audit --omit=dev --json > .runtime/npm-audit-production.json || true
+          node <<'NODE'
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('.runtime/npm-audit-production.json', 'utf8'));
+          const counts = report.metadata?.vulnerabilities ?? {};
+          const summary = {
+            info: counts.info ?? 0,
+            low: counts.low ?? 0,
+            moderate: counts.moderate ?? 0,
+            high: counts.high ?? 0,
+            critical: counts.critical ?? 0,
+            total: counts.total ?? 0,
+          };
+          console.log(JSON.stringify({ event: 'PRODUCTION_DEPENDENCY_AUDIT', ...summary }));
+          if (summary.high > 0 || summary.critical > 0) {
+            console.error('High or critical production dependency advisories block api.security_qa.');
+            process.exit(1);
+          }
+          NODE
+
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          echo '=== API LOG ==='
+          tail -n 200 .runtime/api.log 2>/dev/null || true
+          echo '=== LEGACY SIMULATOR LOG ==='
+          tail -n 200 .runtime/legacy.log 2>/dev/null || true
+
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          [[ -f .runtime/api.pid ]] && kill "$(cat .runtime/api.pid)" 2>/dev/null || true
+          [[ -f .runtime/legacy.pid ]] && kill "$(cat .runtime/legacy.pid)" 2>/dev/null || true
