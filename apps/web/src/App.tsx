@@ -1,8 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { ClaimStatusPage } from './pages/ClaimStatusPage';
 import { ClaimSubmittedPage } from './pages/ClaimSubmittedPage';
 import { HomePage } from './pages/HomePage';
 import { NewClaimPage } from './pages/NewClaimPage';
 import { ReviewClaimPage } from './pages/ReviewClaimPage';
+import { TrackClaimPage } from './pages/TrackClaimPage';
 import { VerifyPolicyPage } from './pages/VerifyPolicyPage';
 
 export function App() {
@@ -13,6 +15,8 @@ export function App() {
       <Route path="/claims/new" element={<NewClaimPage />} />
       <Route path="/claims/new/review" element={<ReviewClaimPage />} />
       <Route path="/claims/new/success" element={<ClaimSubmittedPage />} />
+      <Route path="/claims/track" element={<TrackClaimPage />} />
+      <Route path="/claims/track/status" element={<ClaimStatusPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

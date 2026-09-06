@@ -36,6 +36,38 @@ export type CreateClaimResponse = {
   nextSteps: string[];
 };
 
+export type ClaimStatus =
+  | 'RECEIVED'
+  | 'UNDER_REVIEW'
+  | 'OBSERVED'
+  | 'APPROVED'
+  | 'IN_REPAIR'
+  | 'CLOSED';
+
+export type TrackClaimRequest = {
+  trackingCode: string;
+  policyReference: string;
+};
+
+export type CustomerClaimSummary = {
+  vehicleReference: string;
+  eventType: string;
+  occurredAt: string;
+};
+
+export type CustomerTimelineEntry = {
+  status: ClaimStatus;
+  occurredAt: string;
+};
+
+export type CustomerClaimStatusResponse = {
+  trackingCode: string;
+  summary: CustomerClaimSummary;
+  status: ClaimStatus;
+  timeline: CustomerTimelineEntry[];
+  nextSteps: string[];
+};
+
 export type ApiResult<T> = {
   data: T;
   requestId: string | null;
