@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { createClaim } from '../api/claims';
 import type { ApiFailure } from '../api/types';
+import { ApiErrorNotice } from '../components/ApiErrorNotice';
 import { ClaimFlowLayout } from '../components/ClaimFlowLayout';
 import { formatFileSize } from '../flow/evidence';
 import { useClaimFlow } from '../flow/ClaimFlowContext';
@@ -39,14 +40,7 @@ export function ReviewClaimPage() {
       <h1>Revisa antes de confirmar</h1>
       <p className="lead">Comprueba los datos. Al confirmar se ejecutará la única creación autoritativa del siniestro mediante <code>createClaim</code>.</p>
 
-      {failure && (
-        <div className={failure.problem?.status === 409 ? 'alert alert-warning' : 'alert alert-error'} role="alert">
-          <strong>{failure.problem?.status === 409 ? 'La solicitud necesita revisión.' : 'No pudimos enviar el siniestro.'}</strong><br />
-          {failure.message}
-          {failure.problem?.status === 409 && <div>Conservamos la misma clave de idempotencia para evitar duplicados. No se generará una nueva solicitud automáticamente.</div>}
-          {failure.requestId && <div className="request-id">Referencia técnica: {failure.requestId}</div>}
-        </div>
-      )}
+      {failure && <ApiErrorNotice failure={failure} />}
 
       <div className="review-card">
         <dl>
