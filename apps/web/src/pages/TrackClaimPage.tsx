@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
+import { flushSync } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -27,7 +28,12 @@ export function TrackClaimPage() {
   const mutation = useMutation({
     mutationFn: (values: TrackClaimRequest) => trackClaim(values),
     onSuccess(result, proof) {
-      tracking.setResult(proof, result.data, result.requestId);
+      // The status route requires the proof/result pair synchronously on its first render.
+      // Commit the in-memory tracking state before navigation so the route guard never
+      // observes a transient null value and redirects a successful lookup back to search.
+      flushSync(() => {
+        tracking.setResult(proof, result.data, result.requestId);
+      });
       navigate('/claims/track/status');
     },
   });
