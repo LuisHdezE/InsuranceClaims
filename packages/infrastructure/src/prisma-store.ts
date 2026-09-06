@@ -98,10 +98,10 @@ export class PrismaWorkflowStore implements ClaimRepository, AuditPort, Idempote
 
   async applyTransition(claim: ClaimProps, history: HistoryRecord): Promise<void> {
     if (!history.fromStatus) throw new Error('Transition history requires a source status.');
-    const updated = await this.db.orm.public.Claim
+    const updatedCount = await this.db.orm.public.Claim
       .where({ id: claim.id, status: history.fromStatus })
-      .update({ status: claim.status, updatedAt: toDbInstant(claim.updatedAt) });
-    if (!updated) {
+      .updateCount({ status: claim.status, updatedAt: toDbInstant(claim.updatedAt) });
+    if (updatedCount !== 1) {
       const current = await this.db.orm.public.Claim.first({ id: claim.id });
       const actualStatus = (current?.status ?? history.fromStatus) as ClaimStatus;
       throw new ClaimStateConflictError(history.fromStatus, actualStatus);
