@@ -1,0 +1,53 @@
+{
+  "schema_version": "0.5.0",
+  "id": "customer-claim-tracking",
+  "name": "Customer Claim Tracking",
+  "platform": "web",
+  "inventory_ids": ["WEB-006", "WEB-007"],
+  "dependencies": [],
+  "api_binding": {
+    "openapi_ref": "openapi.yaml",
+    "revision": "api-v1-r1",
+    "operation_ids": ["trackClaim"]
+  },
+  "client_architecture": {
+    "artifact": ".blueprint/client-architecture/customer-claim-tracking.web.json",
+    "gate_status": "PASS"
+  },
+  "lifecycle_status": "IN_PROGRESS",
+  "blocker": null,
+  "definition_of_done": {
+    "status": "PENDING",
+    "checks": {
+      "routing": "PENDING",
+      "real_api": "PENDING",
+      "auth_rbac": "PENDING",
+      "forms_errors": "PENDING",
+      "observability": "PENDING",
+      "responsive": "PENDING",
+      "accessibility": "PENDING",
+      "tests": "PENDING",
+      "traceability": "PENDING",
+      "no_hardcoded_business_data": "PENDING",
+      "no_invented_capabilities": "PENDING",
+      "idempotency": "N/A",
+      "offline": "PENDING"
+    },
+    "evidence_ids": []
+  },
+  "visual_functional_review": {
+    "status": "PENDING",
+    "evidence_ids": [],
+    "human_complete": false,
+    "approved_visual_references": [".blueprint/ui/references/far-public-landing-approved.md"]
+  },
+  "integration_qa": {
+    "status": "PENDING",
+    "evidence_ids": []
+  },
+  "human_acceptance": {
+    "status": "PENDING",
+    "evidence_ids": []
+  },
+  "evidence_ids": []
+}
