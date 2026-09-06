@@ -105,6 +105,20 @@ def wait_text(text: str) -> None:
 
 def set_input(element_id: str, value: str) -> None:
     element = wait.until(EC.visibility_of_element_located((By.ID, element_id)))
+    if element.get_attribute("type") == "datetime-local":
+        driver.execute_script(
+            """
+            const el = arguments[0];
+            const value = arguments[1];
+            const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+            setter.call(el, value);
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            """,
+            element,
+            value,
+        )
+        return
     element.clear()
     element.send_keys(value)
 
