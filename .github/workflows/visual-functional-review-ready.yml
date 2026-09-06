@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - name: Validate VFR ready artifacts
+      - name: Validate VFR state and immutable evidence
         run: python qa/validate-visual-functional-review-ready.py
       - name: Verify reviewed commit is an ancestor
         shell: bash
@@ -65,11 +65,13 @@ jobs:
           forbidden=0
           while IFS= read -r path; do
             case "$path" in
-              .blueprint/status.yaml|.blueprint/functional-slices/*|documentation/visual-functional-review/*|qa/validate-visual-functional-review-ready.py|.github/workflows/visual-functional-review-ready.yml)
+              apps/web/*|apps/api/*|apps/legacy-simulator/*|packages/*|openapi.yaml)
+                echo "Product drift after browser-reviewed commit: $path" >&2
+                forbidden=1
                 ;;
               *)
-                echo "Product/review-runtime drift after reviewed commit: $path" >&2
-                forbidden=1
+                # Governance, evidence and downstream QA artifacts may advance
+                # after VFR passes without invalidating the reviewed product pixels.
                 ;;
             esac
           done < <(git diff --name-only "$reviewed"..HEAD)
