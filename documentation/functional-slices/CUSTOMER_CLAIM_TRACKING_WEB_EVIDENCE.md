@@ -9,6 +9,7 @@ This evidence package evaluates the Blueprint 0.5.2 `functional_slice_ready` gat
 - Repository: `LuisHdezE/InsuranceClaims`
 - Base `main`: `fd042ddc0d861b40190e763e6a916c8d0afeb7b9`
 - Implementation validation head: `1257de1f7c027b587bf9ae8d8e63985d98cc7af8`
+- Review-state validation head: `94812fb26e07d08c3895e20abf2a704bad2ff688`
 - Pull request: `#15`
 - Platform: `web`
 - Slice: `customer-claim-tracking`
@@ -59,7 +60,23 @@ The tracking workflow proves two independent layers:
 1. `web-contract`: locked install, executable slice-contract validation, TypeScript typecheck, web tests and production Vite build.
 2. `real-api-integration`: PostgreSQL 18 + simulated legacy HTTP dependency + production NestJS composition + actual web Axios client, including synthetic claim creation, successful `trackClaim`, customer-safe projection assertions, invalid proof collapse to `404 CLAIM_NOT_FOUND`, request-id observation and explicit canonical refresh.
 
-The approved Client Architecture artifacts were unchanged on the implementation head, so the path-filtered Client Architecture workflow did not trigger there. The tracking slice validator nevertheless revalidated the exact `customer-claim-tracking.web.json` inventory, operation and route bindings. Updating `.blueprint/status.yaml` for the review candidate is itself a Client Architecture workflow trigger and therefore provides a final exact-head regression before the gate is presented.
+## Review-state exact-head revalidation
+
+After registering the slice Definition of Done as evidenced, reconciling `.blueprint/status.yaml` to `READY_FOR_REVIEW`, and removing the one-time status reconciler from the candidate diff, exact review-state head `94812fb26e07d08c3895e20abf2a704bad2ff688` passed all nine applicable workflows:
+
+| Workflow | Run | Result |
+|---|---:|---|
+| Functional Slice - Customer Claim Tracking Web | `34028824999` | SUCCESS |
+| Functional Slice - Digital Claim Intake Web | `34028825131` | SUCCESS |
+| API QA | `34028825073` | SUCCESS |
+| API Implementation | `34028825137` | SUCCESS |
+| OpenAPI Validation | `34028825121` | SUCCESS |
+| Postman Contract | `34028825044` | SUCCESS |
+| Interface Inventory | `34028825041` | SUCCESS |
+| Design System | `34028825068` | SUCCESS |
+| Client Architecture | `34028825004` | SUCCESS |
+
+This second layer is significant because the status reconciliation itself triggers the path-filtered Client Architecture workflow. Therefore the review-state candidate revalidates the approved client architecture binding in addition to functional, API, contract, inventory and design-system regressions. The temporary reconciliation workflow was deleted before this nine-workflow candidate was evaluated and is not part of the proposed review artifact.
 
 ## Privacy and sensitive-state boundary
 
