@@ -1,62 +1,41 @@
-# Design System Validation Evidence — Insurance Claims Legacy Modernization MVP
+# Design System Validation Evidence — revision pending
 
-Date: 2026-09-05  
+Date: 2026-09-06  
 Timezone: America/Montevideo  
 Blueprint: 0.5.2  
-Boundary: `design_system`
+Boundary: `visual_identity` + `design_system`  
+Pull request: #12
 
 > Unofficial technical case study inspired by publicly observable insurance workflows. No affiliation with FAR Seguros. All policy, claim, user and operational data are synthetic.
 
-## Candidate
+## Superseded evidence
 
-- Base `main`: `3776f7d4ca85c2dcd16b7f0a11ea35435e6202b4`
-- Branch: `blueprint/design-system`
-- Validated head: `6a86e91aab75a644c8fb32119dd3d0b7f616bf36`
-- Pull request: #12
+The earlier Design System validation that treated Visual Identity and Logo as `N/A` is **SUPERSEDED** by explicit human direction received on 2026-09-06.
 
-## Design System validation
+The revised requirement is:
 
-- Design System run `34006845392` = **SUCCESS**
+- preserve the FAR Seguros visual identity;
+- use the FAR logo;
+- preserve the recognizable FAR cyan/yellow/dark palette;
+- modernize the customer experience using current UI/UX practices;
+- do not copy the structure of the current FAR website;
+- keep the customer-facing landing experience distinct from the administrative/backoffice experience;
+- use the human-approved modern public landing concept as the visual guide;
+- do not infer new functional capabilities from that visual reference.
 
-The repository-owned validator proves:
+Therefore, the historical runs recorded in the previous version of this file remain truthful evidence about the superseded neutral Design System candidate, but **they do not support the revised Design System Ready gate**.
 
-- canonical Design System/token files exist and use schema component version `0.5.0` compatible with Blueprint 0.5.2;
-- logo is intentionally not required and no logo path is fabricated;
-- WCAG 2.2 AA is the declared target;
-- minimum touch target is at least 44 px;
-- committed foreground colors meet 4.5:1 contrast against the primary light surfaces;
-- responsive breakpoints are coherent;
-- all six authoritative claim lifecycle states are represented;
-- all normalized states used by the 10-interface executable inventory are represented by the Design System;
-- the reusable component set covers intake, tracking and backoffice needs;
-- every inventory item retains responsive and accessibility obligations.
+## Revised candidate status
 
-## Regression evidence on the same head
+A new exact-head validation must prove all of the following before this evidence file may again claim PASS:
 
-- Interface Inventory run `34006845368` = **SUCCESS**
-- API QA run `34006845395` = **SUCCESS**
-- API Implementation run `34006845365` = **SUCCESS**
-- OpenAPI Validation run `34006845377` = **SUCCESS**
-- Postman Contract run `34006845358` = **SUCCESS**
+- `design.identity` is applicable and validated;
+- `design.logo` is applicable and the declared logo asset exists;
+- FAR core identity colors are retained;
+- accessible supporting colors meet WCAG 2.2 AA contrast requirements;
+- the approved public landing reference guardrail is present;
+- public/customer and administrative/backoffice visual families are distinct but coherent;
+- all 10 approved interfaces remain covered without scope expansion;
+- Interface Inventory and all existing API regressions still pass.
 
-The Design System therefore does not alter the approved executable inventory, API contract, implementation or runtime API behavior.
-
-## Visual Identity applicability
-
-Visual Identity and Logo are intentionally **N/A**. The product is an unofficial technical case study and has no requirement for a standalone insurer brand. The Design System provides visual consistency without inventing a brand or imitating FAR Seguros.
-
-## Proposed Blueprint disposition
-
-Evidence supports:
-
-- `design.identity = N/A`
-- `design.logo = N/A`
-- `design.system = PASS`
-- `design.tokens = PASS`
-- `design.accessibility = PASS`
-- `design.responsive = PASS`
-- `design.semantic_states = PASS`
-- `design_system = READY_FOR_REVIEW`
-- `design_system_ready = READY_FOR_REVIEW`
-
-Human approval is still required before `design_system_ready` may become PASS. Gate approval does not authorize merge.
+Until those exact-head workflows succeed, `design_system_ready` must not be treated as reviewable or approved.
