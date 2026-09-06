@@ -71,28 +71,53 @@ export function NewClaimPage() {
         <div className="form-grid two">
           <div className="field">
             <label htmlFor="eventType">Tipo de evento</label>
-            <input id="eventType" className="input" aria-invalid={Boolean(form.formState.errors.eventType)} {...form.register('eventType')} />
-            <span className="hint">Texto libre según el contrato API; el cliente no inventa un catálogo autoritativo.</span>
-            {form.formState.errors.eventType && <span className="field-error">{form.formState.errors.eventType.message}</span>}
+            <input
+              id="eventType"
+              className="input"
+              aria-invalid={Boolean(form.formState.errors.eventType)}
+              aria-describedby={form.formState.errors.eventType ? 'eventType-error' : 'eventType-hint'}
+              {...form.register('eventType')}
+            />
+            <span id="eventType-hint" className="hint">Texto libre según el contrato API; el cliente no inventa un catálogo autoritativo.</span>
+            {form.formState.errors.eventType && <span id="eventType-error" className="field-error">{form.formState.errors.eventType.message}</span>}
           </div>
           <div className="field">
             <label htmlFor="occurredAt">Fecha y hora</label>
-            <input id="occurredAt" className="input" type="datetime-local" aria-invalid={Boolean(form.formState.errors.occurredAt)} {...form.register('occurredAt')} />
-            {form.formState.errors.occurredAt && <span className="field-error">{form.formState.errors.occurredAt.message}</span>}
+            <input
+              id="occurredAt"
+              className="input"
+              type="datetime-local"
+              aria-invalid={Boolean(form.formState.errors.occurredAt)}
+              aria-describedby={form.formState.errors.occurredAt ? 'occurredAt-error' : undefined}
+              {...form.register('occurredAt')}
+            />
+            {form.formState.errors.occurredAt && <span id="occurredAt-error" className="field-error">{form.formState.errors.occurredAt.message}</span>}
           </div>
         </div>
 
         <div className="field">
           <label htmlFor="locationText">Ubicación</label>
-          <input id="locationText" className="input" aria-invalid={Boolean(form.formState.errors.locationText)} {...form.register('locationText')} />
-          {form.formState.errors.locationText && <span className="field-error">{form.formState.errors.locationText.message}</span>}
+          <input
+            id="locationText"
+            className="input"
+            aria-invalid={Boolean(form.formState.errors.locationText)}
+            aria-describedby={form.formState.errors.locationText ? 'locationText-error' : undefined}
+            {...form.register('locationText')}
+          />
+          {form.formState.errors.locationText && <span id="locationText-error" className="field-error">{form.formState.errors.locationText.message}</span>}
         </div>
 
         <div className="field">
           <label htmlFor="description">Descripción</label>
-          <textarea id="description" className="textarea" aria-invalid={Boolean(form.formState.errors.description)} {...form.register('description')} />
-          <span className="hint">Máximo 4000 caracteres según el contrato vigente.</span>
-          {form.formState.errors.description && <span className="field-error">{form.formState.errors.description.message}</span>}
+          <textarea
+            id="description"
+            className="textarea"
+            aria-invalid={Boolean(form.formState.errors.description)}
+            aria-describedby={form.formState.errors.description ? 'description-error' : 'description-hint'}
+            {...form.register('description')}
+          />
+          <span id="description-hint" className="hint">Máximo 4000 caracteres según el contrato vigente.</span>
+          {form.formState.errors.description && <span id="description-error" className="field-error">{form.formState.errors.description.message}</span>}
         </div>
 
         <div className="field">
@@ -103,10 +128,12 @@ export function NewClaimPage() {
             type="file"
             multiple
             accept="image/jpeg,image/png,application/pdf"
+            aria-invalid={evidenceErrors.length > 0}
+            aria-describedby={evidenceErrors.length > 0 ? 'evidence-hint evidence-error' : 'evidence-hint'}
             onChange={(event) => onEvidenceSelection(Array.from(event.target.files ?? []))}
           />
-          <span className="hint">Máximo 5 archivos, 5 MiB cada uno. JPEG, PNG o PDF. El servidor vuelve a validar tipo, cantidad y tamaño.</span>
-          {evidenceErrors.length > 0 && <div className="alert alert-error" role="alert">{evidenceErrors.map((error) => <div key={error}>{error}</div>)}</div>}
+          <span id="evidence-hint" className="hint">Máximo 5 archivos, 5 MiB cada uno. JPEG, PNG o PDF. El servidor vuelve a validar tipo, cantidad y tamaño.</span>
+          {evidenceErrors.length > 0 && <div id="evidence-error" className="alert alert-error" role="alert">{evidenceErrors.map((error) => <div key={error}>{error}</div>)}</div>}
           {evidence.length > 0 && (
             <ul className="evidence-list" aria-label="Archivos seleccionados">
               {evidence.map((file, index) => (
