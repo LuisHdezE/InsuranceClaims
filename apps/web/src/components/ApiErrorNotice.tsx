@@ -18,6 +18,13 @@ export function describeApiFailure(failure: ApiFailure): ApiErrorPresentation {
   }
 
   switch (failure.problem?.status) {
+    case 404:
+      return {
+        tone: 'info',
+        title: 'No encontramos un siniestro con esos datos.',
+        detail: 'Verifica el código de seguimiento y la referencia de póliza e inténtalo nuevamente.',
+        recovery: 'Por seguridad no indicamos cuál de los dos datos de la prueba de seguimiento no coincidió.',
+      };
     case 409:
       return {
         tone: 'warning',
