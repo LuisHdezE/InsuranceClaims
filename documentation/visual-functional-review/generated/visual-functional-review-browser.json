@@ -1,0 +1,120 @@
+{
+  "schema_version": "0.5.0",
+  "review_type": "visual_functional_review",
+  "reviewed_commit": "69fa7d5d76dc7634042fd7dbdc648c933ab10a35",
+  "web_base_url": "http://127.0.0.1:5173",
+  "generated_at": "2026-09-06T12:24:56Z",
+  "browser": {
+    "name": "chrome",
+    "version": "152.0.7977.64"
+  },
+  "slices": {
+    "digital-claim-intake/web": {
+      "slice_id": "digital-claim-intake/web",
+      "platform": "web",
+      "inventory_ids": [
+        "WEB-002",
+        "WEB-003",
+        "WEB-004",
+        "WEB-005"
+      ],
+      "checks": {
+        "review.interface_fidelity": "PASS",
+        "review.design_system_fidelity": "PASS",
+        "review.api_permission_fidelity": "PASS",
+        "review.business_data_fidelity": "PASS",
+        "review.interaction_states": "PASS",
+        "review.responsive": "PASS",
+        "review.accessibility": "PASS",
+        "review.reference_comparison": "PASS",
+        "review.human_complete": "PENDING_MANUAL"
+      },
+      "screenshots": [
+        "documentation/visual-functional-review/generated/assets/intake-01-validation-desktop.png",
+        "documentation/visual-functional-review/generated/assets/intake-02-details-mobile.png",
+        "documentation/visual-functional-review/generated/assets/intake-03-review-desktop.png",
+        "documentation/visual-functional-review/generated/assets/intake-04-success-desktop.png"
+      ],
+      "observations": [
+        "Created authoritative synthetic claim with tracking code present: True",
+        "Public visual contract preserves FAR logo, yellow primary action, visible no-affiliation disclosure and customer-facing flow treatment.",
+        "Mobile details view stayed within viewport without horizontal page overflow.",
+        "Accessibility audit: {'h1_count': 1, 'unlabeled_controls': 0, 'images_without_alt': 0, 'unnamed_actions': 0}"
+      ],
+      "machine_review_ready": true
+    },
+    "customer-claim-tracking/web": {
+      "slice_id": "customer-claim-tracking/web",
+      "platform": "web",
+      "inventory_ids": [
+        "WEB-006",
+        "WEB-007"
+      ],
+      "checks": {
+        "review.interface_fidelity": "PASS",
+        "review.design_system_fidelity": "PASS",
+        "review.api_permission_fidelity": "PASS",
+        "review.business_data_fidelity": "PASS",
+        "review.interaction_states": "PASS",
+        "review.responsive": "PASS",
+        "review.accessibility": "PASS",
+        "review.reference_comparison": "PASS",
+        "review.human_complete": "PENDING_MANUAL"
+      },
+      "screenshots": [
+        "documentation/visual-functional-review/generated/assets/tracking-01-invalid-proof-desktop.png",
+        "documentation/visual-functional-review/generated/assets/tracking-02-status-desktop.png",
+        "documentation/visual-functional-review/generated/assets/tracking-03-status-mobile.png"
+      ],
+      "observations": [
+        "Invalid proof pair renders the approved indistinguishable not-found presentation.",
+        "Valid proof renders only the public customer-safe authoritative projection.",
+        "Desktop and mobile status views preserve the public FAR-aligned visual contract without horizontal page overflow.",
+        "Accessibility audit: {'h1_count': 1, 'unlabeled_controls': 0, 'images_without_alt': 0, 'unnamed_actions': 0}"
+      ],
+      "machine_review_ready": true
+    },
+    "claims-backoffice/web": {
+      "slice_id": "claims-backoffice/web",
+      "platform": "web",
+      "inventory_ids": [
+        "WEB-008",
+        "WEB-009",
+        "WEB-010"
+      ],
+      "checks": {
+        "review.interface_fidelity": "PASS",
+        "review.design_system_fidelity": "PASS",
+        "review.api_permission_fidelity": "PASS",
+        "review.business_data_fidelity": "PASS",
+        "review.interaction_states": "PASS",
+        "review.responsive": "PASS",
+        "review.accessibility": "PASS",
+        "review.reference_comparison": "N/A",
+        "review.human_complete": "PENDING_MANUAL"
+      },
+      "screenshots": [
+        "documentation/visual-functional-review/generated/assets/backoffice-01-login-desktop.png",
+        "documentation/visual-functional-review/generated/assets/backoffice-02-claims-desktop.png",
+        "documentation/visual-functional-review/generated/assets/backoffice-03-claims-mobile.png",
+        "documentation/visual-functional-review/generated/assets/backoffice-04-detail-desktop.png",
+        "documentation/visual-functional-review/generated/assets/backoffice-05-detail-mobile.png"
+      ],
+      "observations": [
+        "Protected claims route redirected unauthenticated browser to operator login.",
+        "Operator login establishes the approved short-lived in-memory session and unlocks the protected route.",
+        "Claims list and detail render the claim created through the public UI, proving end-user/business-data continuity through the real API.",
+        "Backoffice remains operationally distinct from public marketing treatment while retaining FAR identity tokens.",
+        "Mobile claims/detail views remain within viewport without horizontal page overflow.",
+        "Accessibility audit: {'h1_count': 1, 'unlabeled_controls': 0, 'images_without_alt': 0, 'unnamed_actions': 0}"
+      ],
+      "machine_review_ready": true
+    }
+  },
+  "summary": {
+    "machine_review_ready": true,
+    "human_review_required": true,
+    "next_status": "READY_FOR_REVIEW",
+    "screenshot_count": 12
+  }
+}
