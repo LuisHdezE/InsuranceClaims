@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T22:47:00-03:00'
+updated_at: '2026-09-05T22:51:09-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -42,9 +42,9 @@ phases:
     progress: 100
     note: Runtime API QA against PostgreSQL 18 and the simulated legacy HTTP dependency was explicitly approved by Luis Hernández; API QA Pass passed on 2026-09-05.
   api_gate:
-    status: READY_FOR_REVIEW
+    status: COMPLETE
     progress: 100
-    note: All fifteen canonical project API Gate checks are PASS; explicit human API Gate decision remains pending before Interface Inventory begins.
+    note: Project-scoped API Gate was explicitly approved by Luis Hernández after all fifteen canonical aggregate checks passed.
 checks:
   discovery.product_vision:
     status: PASS
@@ -316,9 +316,10 @@ gates:
     note: Explicit human API QA Pass approval recorded after real PostgreSQL/runtime QA and exact-head API QA, API Implementation, OpenAPI Validation and Postman Contract success.
     evidence_ids: [EVD-API-QA-001, EVD-API-QA-PASS-APPROVAL-001]
   api_gate:
-    status: READY_FOR_REVIEW
-    note: All fifteen canonical API Gate checks are PASS and aggregated in project-scoped evidence; explicit human API Gate approval remains pending.
-    evidence_ids: [EVD-API-GATE-001]
+    status: PASS
+    evaluated_at: '2026-09-05T22:51:09-03:00'
+    note: Explicit human API Gate approval recorded after all fifteen canonical aggregate checks and exact-head regressions passed.
+    evidence_ids: [EVD-API-GATE-001, EVD-API-GATE-APPROVAL-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -438,3 +439,6 @@ artifacts:
   - id: EVD-API-GATE-001
     type: api_gate_evidence
     value: documentation/api/API_GATE_EVIDENCE.md
+  - id: EVD-API-GATE-APPROVAL-001
+    type: manual_approval
+    value: documentation/api/API_GATE_APPROVAL.md
