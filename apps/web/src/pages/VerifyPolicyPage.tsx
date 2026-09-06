@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { verifyPolicyVehicle } from '../api/claims';
 import type { ApiFailure } from '../api/types';
+import { ApiErrorNotice } from '../components/ApiErrorNotice';
 import { ClaimFlowLayout } from '../components/ClaimFlowLayout';
 import { useClaimFlow } from '../flow/ClaimFlowContext';
 
@@ -39,13 +40,7 @@ export function VerifyPolicyPage() {
       <h1>Verifica tu póliza y vehículo</h1>
       <p className="lead">Antes de iniciar el reporte, validamos la combinación contra el servicio autorizado. El navegador nunca consulta directamente el sistema legacy simulado.</p>
 
-      {failure && (
-        <div className="alert alert-error" role="alert">
-          <strong>No pudimos verificar los datos.</strong><br />
-          {failure.message}
-          {failure.requestId && <div className="request-id">Referencia técnica: {failure.requestId}</div>}
-        </div>
-      )}
+      {failure && <ApiErrorNotice failure={failure} />}
 
       <form className="form-grid" onSubmit={form.handleSubmit((values) => mutation.mutate(values))} noValidate>
         <div className="form-grid two">
@@ -56,10 +51,10 @@ export function VerifyPolicyPage() {
               className="input"
               autoComplete="off"
               aria-invalid={Boolean(form.formState.errors.policyReference)}
-              aria-describedby={form.formState.errors.policyReference ? 'policyReference-error' : undefined}
+              aria-describedby={form.formState.errors.policyReference ? 'policyReference-error' : 'policyReference-hint'}
               {...form.register('policyReference')}
             />
-            <span className="hint">Para la demo puedes usar, por ejemplo, SYN-POL-001.</span>
+            <span id="policyReference-hint" className="hint">Para la demo puedes usar, por ejemplo, SYN-POL-001.</span>
             {form.formState.errors.policyReference && <span id="policyReference-error" className="field-error">{form.formState.errors.policyReference.message}</span>}
           </div>
 
@@ -70,10 +65,10 @@ export function VerifyPolicyPage() {
               className="input"
               autoComplete="off"
               aria-invalid={Boolean(form.formState.errors.vehicleReference)}
-              aria-describedby={form.formState.errors.vehicleReference ? 'vehicleReference-error' : undefined}
+              aria-describedby={form.formState.errors.vehicleReference ? 'vehicleReference-error' : 'vehicleReference-hint'}
               {...form.register('vehicleReference')}
             />
-            <span className="hint">Para la demo puedes usar, por ejemplo, SYN-VEH-001.</span>
+            <span id="vehicleReference-hint" className="hint">Para la demo puedes usar, por ejemplo, SYN-VEH-001.</span>
             {form.formState.errors.vehicleReference && <span id="vehicleReference-error" className="field-error">{form.formState.errors.vehicleReference.message}</span>}
           </div>
         </div>
