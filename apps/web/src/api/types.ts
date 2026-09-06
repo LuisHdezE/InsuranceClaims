@@ -46,4 +46,5 @@ export type ApiFailure = Error & {
   problem?: ProblemDetails;
   requestId?: string | null;
   retryAfter?: string | null;
+  network?: boolean;
 };
