@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T23:40:54-03:00'
+updated_at: '2026-09-06T00:21:42-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -49,10 +49,14 @@ phases:
     status: COMPLETE
     progress: 100
     note: Executable web inventory was explicitly approved by Luis Hernández after exact 10/10 reconciliation against canonical API operationIds, permissions, dependencies and the three approved slice backlogs.
+  visual_identity:
+    status: COMPLETE
+    progress: 100
+    note: FAR Seguros visual identity is applicable by explicit human direction; recognizable logo and core cyan/yellow/dark identity are preserved without copying the current FAR site layout.
   design_system:
     status: READY_FOR_REVIEW
     progress: 100
-    note: Neutral case-study Design System, tokens, accessibility, responsive behavior and semantic states are validated; explicit human Design System Ready approval remains pending.
+    note: FAR-aligned public/customer and operational backoffice Design System, tokens, accessibility, responsive behavior and semantic states are validated; explicit human Design System Ready approval remains pending.
 checks:
   discovery.product_vision:
     status: PASS
@@ -333,20 +337,20 @@ checks:
     note: Delivery mode is GREENFIELD; Brownfield observed/proposed separation is not applicable.
     evidence_ids: [EVD-UI-INVENTORY-EVIDENCE-001]
   design.identity:
-    status: N/A
+    status: PASS
     verification: evidence
-    note: Visual Identity is not applicable to this unofficial technical case study; no insurer brand identity is fabricated or imitated.
-    evidence_ids: [EVD-DESIGN-SYSTEM-EVIDENCE-001]
+    note: Explicit human direction makes FAR identity applicable; the revised contract preserves the observed FAR cyan/yellow/dark language while modernizing layout and keeping the no-affiliation disclosure.
+    evidence_ids: [EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-LANDING-REFERENCE-001]
   design.logo:
-    status: N/A
-    verification: evidence
-    note: No custom logo is required for this MVP and no FAR Seguros logo or approximation is introduced.
-    evidence_ids: [EVD-DESIGN-SYSTEM-EVIDENCE-001]
+    status: PASS
+    verification: file
+    note: The FAR Seguros logo reference is versioned at the exact logo_path required by the Design System; its use remains inside the clearly disclosed unofficial case study.
+    evidence_ids: [EVD-DESIGN-LOGO-001, EVD-DESIGN-SYSTEM-VALIDATION-001]
   design.system:
     status: PASS
     verification: evidence
-    note: The reusable visual/component contract covers the complete approved web inventory and three executable slices without adding capabilities.
-    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001]
+    note: The reusable FAR-aligned visual/component contract covers all 10 approved web interfaces, keeps public and administrative usage modes distinct, and adds no capability beyond the executable inventory.
+    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001, EVD-DESIGN-LANDING-REFERENCE-001]
   design.tokens:
     status: PASS
     verification: file
@@ -420,8 +424,8 @@ gates:
     evidence_ids: [EVD-UI-INVENTORY-001, EVD-UI-INVENTORY-EVIDENCE-001, EVD-UI-INVENTORY-VALIDATION-001, EVD-UI-INVENTORY-READY-APPROVAL-001]
   design_system_ready:
     status: READY_FOR_REVIEW
-    note: All five required Design System checks pass and conditional Visual Identity/Logo are explicitly N/A; exact-head human approval remains pending.
-    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001]
+    note: All five required Design System checks pass and applicable FAR Visual Identity/Logo checks also pass; exact-head human approval remains pending.
+    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001, EVD-DESIGN-LOGO-001, EVD-DESIGN-LANDING-REFERENCE-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -568,3 +572,9 @@ artifacts:
   - id: EVD-DESIGN-SYSTEM-VALIDATION-001
     type: design_system_validation_evidence
     value: documentation/design-system/DESIGN_SYSTEM_VALIDATION_EVIDENCE.md
+  - id: EVD-DESIGN-LOGO-001
+    type: logo_asset
+    value: .blueprint/ui/assets/far-seguros-logo.svg
+  - id: EVD-DESIGN-LANDING-REFERENCE-001
+    type: approved_visual_reference
+    value: .blueprint/ui/references/far-public-landing-approved.md
