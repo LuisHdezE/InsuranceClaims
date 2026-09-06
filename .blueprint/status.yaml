@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-06T00:39:18-03:00'
+updated_at: '2026-09-06T00:58:06-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -57,6 +57,10 @@ phases:
     status: COMPLETE
     progress: 100
     note: FAR-aligned public/customer and operational backoffice Design System was explicitly approved by Luis Hernández after exact-head validation of identity, logo, tokens, accessibility, responsive behavior and semantic states.
+  client_architecture:
+    status: READY_FOR_REVIEW
+    progress: 100
+    note: Reusable web platform baseline and three exact slice/platform bindings are semantically validated; explicit human Client Architecture Ready decisions remain pending.
 checks:
   discovery.product_vision:
     status: PASS
@@ -371,6 +375,86 @@ checks:
     verification: evidence
     note: Loading, empty, error, offline, forbidden, validation, conflict and rate-limit states plus all normalized inventory states are represented text-first.
     evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-SYSTEM-VALIDATION-001]
+  client.architecture_contract:
+    status: PASS
+    verification: file
+    note: One reusable Greenfield web platform baseline composes with three exact slice bindings into the effective client contracts.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-INTAKE-WEB-001, EVD-CLIENT-TRACKING-WEB-001, EVD-CLIENT-BACKOFFICE-WEB-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.visual_contract_binding:
+    status: PASS
+    verification: evidence
+    note: All slices bind to the approved FAR-aligned Design System/tokens; WEB-001 preserves its approved landing reference as a shared visual input without becoming a fourth slice.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001, EVD-DESIGN-SYSTEM-001, EVD-DESIGN-LANDING-REFERENCE-001]
+  client.auth_lifecycle:
+    status: PASS
+    verification: evidence
+    note: Operator JWT is memory-only, refresh is disabled/N/A, protected 401 clears auth/cache, and logout remains local because no logout/refresh API exists.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-BACKOFFICE-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.api_client_strategy:
+    status: PASS
+    verification: evidence
+    note: A centralized Axios REST transport behind TanStack Query is constrained to current OpenAPI, RFC 9457, correlation headers and approved auth/idempotency behavior.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.api_contract_binding:
+    status: PASS
+    verification: evidence
+    note: All three bindings identify api-v1-r1 and exactly reconcile operationIds against executable inventory and current OpenAPI.
+    evidence_ids: [EVD-CLIENT-INTAKE-WEB-001, EVD-CLIENT-TRACKING-WEB-001, EVD-CLIENT-BACKOFFICE-WEB-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.authorization_presentation:
+    status: PASS
+    verification: evidence
+    note: Permission-aware presentation improves UX but every binding preserves API/Application authorization as authoritative.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-INTAKE-WEB-001, EVD-CLIENT-TRACKING-WEB-001, EVD-CLIENT-BACKOFFICE-WEB-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.routing_navigation:
+    status: PASS
+    verification: evidence
+    note: The three slice route sets exactly match their executable inventory; WEB-001 remains the shared public entry outside scoped slice bindings.
+    evidence_ids: [EVD-CLIENT-INTAKE-WEB-001, EVD-CLIENT-TRACKING-WEB-001, EVD-CLIENT-BACKOFFICE-WEB-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.state_cache_strategy:
+    status: PASS
+    verification: evidence
+    note: TanStack Query owns server state, React owns ephemeral UI state, protected cache clears on auth loss, and transition success/conflict has explicit invalidation/refetch behavior.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.forms_validation:
+    status: PASS
+    verification: evidence
+    note: React Hook Form plus Zod provides structural feedback only; policy eligibility, evidence acceptance, lifecycle and authorization remain server-authoritative.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-INTAKE-WEB-001, EVD-CLIENT-BACKOFFICE-WEB-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.async_error_offline:
+    status: PASS
+    verification: evidence
+    note: Required async/error states are slice-bound and degraded offline queues no business writes or durable authoritative browser state.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-INTAKE-WEB-001, EVD-CLIENT-TRACKING-WEB-001, EVD-CLIENT-BACKOFFICE-WEB-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.idempotency_strategy:
+    status: PASS
+    verification: evidence
+    note: createClaim is the only Idempotency-Key client mutation; transitionClaimStatus retains expectedFromStatus concurrency without an invented idempotency protocol.
+    evidence_ids: [EVD-CLIENT-INTAKE-WEB-001, EVD-CLIENT-BACKOFFICE-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.observability_correlation:
+    status: PASS
+    verification: evidence
+    note: X-Request-Id/requestId correlates sanitized client diagnostics while credentials, tracking proofs, evidence and payloads remain redacted.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.accessibility:
+    status: PASS
+    verification: evidence
+    note: WCAG 2.2 AA, keyboard semantics, focus management, live regions and minimum 44px touch targets are mandatory across public and backoffice clients.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.testing_strategy:
+    status: PASS
+    verification: evidence
+    note: Unit, component/UI, integration and real-API E2E layers are all mandatory before slice acceptance.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.platform_contract:
+    status: PASS
+    verification: evidence
+    note: The web platform contract fixes React SPA, React Router, TanStack Query, React Hook Form, Vite, Tailwind-aligned Design System use and the approved browser support boundary.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  client.brownfield_coexistence:
+    status: N/A
+    verification: evidence
+    note: Project delivery mode is GREENFIELD; the SIMULATED LEGACY SYSTEM is a server-side Infrastructure dependency, not an existing client coexistence/cutover surface.
+    evidence_ids: [EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
 gates:
   requirements_ready:
     status: PASS
@@ -428,7 +512,28 @@ gates:
     note: Explicit human Design System Ready approval recorded after revised FAR identity/logo validation and exact-head success of Design System, Interface Inventory and full API regressions.
     evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001, EVD-DESIGN-LOGO-001, EVD-DESIGN-LANDING-REFERENCE-001, EVD-DESIGN-SYSTEM-READY-APPROVAL-001]
 functional_slices: []
-scoped_gates: []
+scoped_gates:
+  - gate: client_architecture_ready
+    scope: interface_slice_platform
+    scope_id: digital-claim-intake
+    platform: web
+    status: READY_FOR_REVIEW
+    note: Platform baseline plus digital-claim-intake/web binding passes semantic validation; explicit human scoped approval remains pending.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-INTAKE-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  - gate: client_architecture_ready
+    scope: interface_slice_platform
+    scope_id: customer-claim-tracking
+    platform: web
+    status: READY_FOR_REVIEW
+    note: Platform baseline plus customer-claim-tracking/web binding passes semantic validation; explicit human scoped approval remains pending.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-TRACKING-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
+  - gate: client_architecture_ready
+    scope: interface_slice_platform
+    scope_id: claims-backoffice
+    platform: web
+    status: READY_FOR_REVIEW
+    note: Platform baseline plus claims-backoffice/web binding passes semantic validation; explicit human scoped approval remains pending.
+    evidence_ids: [EVD-CLIENT-PLATFORM-WEB-001, EVD-CLIENT-BACKOFFICE-WEB-001, EVD-CLIENT-ARCH-EVIDENCE-001, EVD-CLIENT-ARCH-VALIDATION-001]
 blockers: []
 api_impacts: []
 artifacts:
@@ -582,3 +687,21 @@ artifacts:
   - id: EVD-DESIGN-SYSTEM-READY-APPROVAL-001
     type: manual_approval
     value: documentation/design-system/DESIGN_SYSTEM_READY_APPROVAL.md
+  - id: EVD-CLIENT-PLATFORM-WEB-001
+    type: client_platform_architecture
+    value: .blueprint/client-architecture/web-platform.json
+  - id: EVD-CLIENT-INTAKE-WEB-001
+    type: client_slice_architecture
+    value: .blueprint/client-architecture/digital-claim-intake.web.json
+  - id: EVD-CLIENT-TRACKING-WEB-001
+    type: client_slice_architecture
+    value: .blueprint/client-architecture/customer-claim-tracking.web.json
+  - id: EVD-CLIENT-BACKOFFICE-WEB-001
+    type: client_slice_architecture
+    value: .blueprint/client-architecture/claims-backoffice.web.json
+  - id: EVD-CLIENT-ARCH-EVIDENCE-001
+    type: client_architecture_evidence
+    value: documentation/client-architecture/CLIENT_ARCHITECTURE.md
+  - id: EVD-CLIENT-ARCH-VALIDATION-001
+    type: client_architecture_validation_evidence
+    value: documentation/client-architecture/CLIENT_ARCHITECTURE_VALIDATION_EVIDENCE.md
