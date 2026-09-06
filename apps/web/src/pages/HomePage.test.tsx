@@ -13,7 +13,9 @@ describe('HomePage', () => {
 
     expect(screen.getByRole('img', { name: 'FAR Seguros' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Protección simple/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Reportar un siniestro' })).toHaveAttribute('href', '/claims/new/verify');
+    const intakeLinks = screen.getAllByRole('link', { name: 'Reportar un siniestro' });
+    expect(intakeLinks.length).toBeGreaterThan(0);
+    for (const link of intakeLinks) expect(link).toHaveAttribute('href', '/claims/new/verify');
     expect(screen.getByText(/Caso técnico no oficial/i)).toBeInTheDocument();
   });
 });
