@@ -1,0 +1,489 @@
+{
+  "schema_version": "0.5.0",
+  "project": "LuisHdezE/InsuranceClaims",
+  "mode": "greenfield",
+  "maturity": "EXECUTABLE_INVENTORY",
+  "baseline_revision": "scope-2026-09-05-r1",
+  "reconciled_from": ".blueprint/ui/interface-scope-baseline.json",
+  "items": [
+    {
+      "id": "WEB-001",
+      "platform": "web",
+      "module": "Public Entry",
+      "name": "Case Study Home",
+      "purpose": "Introduce the public technical case study, show the no-affiliation and synthetic-data disclaimer, and route users into the three approved journeys.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": ["NFR-003", "NFR-018"],
+      "roles": ["guest"],
+      "permissions": [],
+      "data": [
+        {
+          "name": "case_study_identity_and_disclaimer",
+          "source": "static",
+          "authoritative": true,
+          "note": "Approved portfolio case-study content only; no FAR branding or operational data."
+        }
+      ],
+      "actions": [
+        {"name": "Start a claim", "kind": "navigate", "permission": null, "source_classification": "PROPOSED"},
+        {"name": "Track a claim", "kind": "navigate", "permission": null, "source_classification": "PROPOSED"},
+        {"name": "Operator login", "kind": "navigate", "permission": null, "source_classification": "PROPOSED"}
+      ],
+      "states": ["default"],
+      "navigation": {
+        "route": "/",
+        "entry_points": [],
+        "destinations": ["WEB-002", "WEB-006", "WEB-008"]
+      },
+      "dependencies": [],
+      "priority": 10,
+      "responsive": "Single-column mobile layout from approximately 360px; wider layouts may present the three entry actions as separate panels without changing reading order.",
+      "accessibility": ["Logical heading hierarchy", "Keyboard-operable navigation", "Disclaimer readable without color-only meaning"],
+      "notes": ["Shared entry for the three approved slices; it does not create a fourth functional slice."],
+      "unresolved_api_needs": []
+    },
+    {
+      "id": "WEB-002",
+      "platform": "web",
+      "module": "Claim Intake",
+      "name": "Verify Policy and Vehicle",
+      "purpose": "Collect synthetic policy and vehicle references and obtain authoritative verification before intake can continue.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": ["FR-001", "FR-002", "BR-008", "NFR-002", "NFR-013", "NFR-014"],
+      "roles": ["guest"],
+      "permissions": ["claims.intake.create"],
+      "data": [
+        {
+          "name": "policy_vehicle_verification",
+          "source": "api",
+          "operation_ids": ["verifyPolicyVehicle"],
+          "authoritative": true,
+          "note": "Server verification is authoritative; the web client never calls the simulated legacy service directly."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Verify policy and vehicle",
+          "kind": "create",
+          "operation_ids": ["verifyPolicyVehicle"],
+          "permission": "claims.intake.create",
+          "source_classification": "PROPOSED"
+        },
+        {"name": "Return home", "kind": "navigate", "permission": null, "source_classification": "PROPOSED"}
+      ],
+      "states": ["default", "loading", "success", "error", "422", "429"],
+      "navigation": {
+        "route": "/claims/new/verify",
+        "entry_points": ["WEB-001"],
+        "destinations": ["WEB-003", "WEB-001"]
+      },
+      "dependencies": ["WEB-001"],
+      "slice_id": "digital-claim-intake",
+      "priority": 20,
+      "responsive": "One-column form on mobile; constrained form width on larger screens.",
+      "accessibility": ["Programmatic labels", "Field error association", "Verification status announcement", "Visible focus"],
+      "notes": ["Canonical operation: POST /api/v1/public/policy-verifications."],
+      "unresolved_api_needs": []
+    },
+    {
+      "id": "WEB-003",
+      "platform": "web",
+      "module": "Claim Intake",
+      "name": "New Claim Intake",
+      "purpose": "Capture synthetic event data and permitted evidence after successful policy and vehicle verification, preparing the authoritative createClaim request without submitting it early.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": ["FR-003", "FR-004", "FR-005", "NFR-005", "NFR-011", "NFR-012", "NFR-013"],
+      "roles": ["guest"],
+      "permissions": ["claims.intake.create"],
+      "data": [
+        {
+          "name": "verified_policy_vehicle_context",
+          "source": "api",
+          "operation_ids": ["verifyPolicyVehicle"],
+          "authoritative": true,
+          "note": "Read-only verification result carried from WEB-002."
+        },
+        {
+          "name": "claim_draft_input",
+          "source": "local",
+          "authoritative": false,
+          "note": "Untrusted local form state until createClaim validates and persists it."
+        },
+        {
+          "name": "create_claim_contract_dependency",
+          "source": "api",
+          "operation_ids": ["createClaim"],
+          "authoritative": true,
+          "note": "Fields and evidence conform to createClaim; the mutation itself is executed only from WEB-004."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Stage permitted synthetic evidence",
+          "kind": "local",
+          "permission": "claims.intake.create",
+          "source_classification": "PROPOSED",
+          "note": "Local staging only. Server MIME/count/size validation remains authoritative when createClaim executes."
+        },
+        {
+          "name": "Continue to review",
+          "kind": "navigate",
+          "permission": "claims.intake.create",
+          "source_classification": "PROPOSED"
+        }
+      ],
+      "states": ["default", "loading", "error", "422"],
+      "navigation": {
+        "route": "/claims/new",
+        "entry_points": ["WEB-002"],
+        "destinations": ["WEB-004", "WEB-002"]
+      },
+      "dependencies": ["WEB-002"],
+      "slice_id": "digital-claim-intake",
+      "priority": 30,
+      "responsive": "Form sections stack on mobile; desktop grouping may use two columns only where labels and reading order remain clear.",
+      "accessibility": ["Programmatic labels and descriptions", "File restrictions announced in text", "Error summary with field links", "Keyboard-operable evidence controls"],
+      "notes": ["No pre-validation endpoint is invented. createClaim remains the authoritative submission/validation mutation."],
+      "unresolved_api_needs": []
+    },
+    {
+      "id": "WEB-004",
+      "platform": "web",
+      "module": "Claim Intake",
+      "name": "Review and Confirm Claim",
+      "purpose": "Present the pending synthetic claim for explicit confirmation and execute the authoritative idempotent claim submission.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": ["FR-005", "FR-006", "BR-004", "BR-009", "BR-010", "NFR-002", "NFR-013"],
+      "roles": ["guest"],
+      "permissions": ["claims.intake.create"],
+      "data": [
+        {
+          "name": "claim_review_summary",
+          "source": "local",
+          "authoritative": false,
+          "note": "Pending user input only; server remains authoritative at submission."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Confirm and submit claim",
+          "kind": "create",
+          "operation_ids": ["createClaim"],
+          "permission": "claims.intake.create",
+          "source_classification": "PROPOSED",
+          "note": "Must generate and reuse Idempotency-Key according to the approved API contract."
+        },
+        {"name": "Edit claim input", "kind": "navigate", "permission": "claims.intake.create", "source_classification": "PROPOSED"}
+      ],
+      "states": ["default", "loading", "success", "error", "409", "422", "429"],
+      "navigation": {
+        "route": "/claims/new/review",
+        "entry_points": ["WEB-003"],
+        "destinations": ["WEB-005", "WEB-003"]
+      },
+      "dependencies": ["WEB-003"],
+      "slice_id": "digital-claim-intake",
+      "priority": 40,
+      "responsive": "Review sections stack on mobile; grouped summary panels are permitted on desktop.",
+      "accessibility": ["Explicit confirmation language", "Submission state announced", "Errors preserve entered context", "Visible focus"],
+      "notes": ["Canonical mutation: createClaim; Idempotency-Key is mandatory and server validation remains authoritative."],
+      "unresolved_api_needs": []
+    },
+    {
+      "id": "WEB-005",
+      "platform": "web",
+      "module": "Claim Intake",
+      "name": "Claim Submitted",
+      "purpose": "Confirm successful creation and present the opaque tracking code, initial customer-safe state, and synthetic next steps from createClaim.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": ["FR-005", "BR-004", "BR-009", "NFR-003"],
+      "roles": ["guest"],
+      "permissions": ["claims.intake.create"],
+      "data": [
+        {
+          "name": "submission_receipt",
+          "source": "api",
+          "operation_ids": ["createClaim"],
+          "authoritative": true,
+          "note": "Tracking code and next steps come only from the successful createClaim response."
+        }
+      ],
+      "actions": [
+        {"name": "Go to claim tracking", "kind": "navigate", "permission": null, "source_classification": "PROPOSED"},
+        {"name": "Return home", "kind": "navigate", "permission": null, "source_classification": "PROPOSED"}
+      ],
+      "states": ["success"],
+      "navigation": {
+        "route": "/claims/new/success",
+        "entry_points": ["WEB-004"],
+        "destinations": ["WEB-006", "WEB-001"]
+      },
+      "dependencies": ["WEB-004"],
+      "slice_id": "digital-claim-intake",
+      "priority": 50,
+      "responsive": "Single-column receipt on mobile; centered wider receipt on desktop with the tracking code visually prioritized.",
+      "accessibility": ["Success announced semantically", "Tracking code selectable and readable", "Next steps conveyed in text"],
+      "notes": [],
+      "unresolved_api_needs": []
+    },
+    {
+      "id": "WEB-006",
+      "platform": "web",
+      "module": "Claim Tracking",
+      "name": "Track Claim Lookup",
+      "purpose": "Collect tracking code plus synthetic policy reference and execute the customer-safe claim lookup.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": ["FR-007", "BR-009", "NFR-002", "NFR-013", "NFR-014"],
+      "roles": ["guest"],
+      "permissions": ["claims.tracking.read"],
+      "data": [
+        {
+          "name": "tracking_lookup_input",
+          "source": "local",
+          "authoritative": false,
+          "note": "Untrusted lookup proof until validated by trackClaim."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Track claim",
+          "kind": "read",
+          "operation_ids": ["trackClaim"],
+          "permission": "claims.tracking.read",
+          "source_classification": "PROPOSED"
+        },
+        {"name": "Return home", "kind": "navigate", "permission": null, "source_classification": "PROPOSED"}
+      ],
+      "states": ["default", "loading", "success", "error", "404", "429"],
+      "navigation": {
+        "route": "/claims/track",
+        "entry_points": ["WEB-001", "WEB-005"],
+        "destinations": ["WEB-007", "WEB-001"]
+      },
+      "dependencies": ["WEB-001"],
+      "slice_id": "customer-claim-tracking",
+      "priority": 60,
+      "responsive": "Compact one-column lookup form at all sizes with constrained desktop width.",
+      "accessibility": ["Programmatic labels", "Lookup denial does not disclose which proof element failed", "Status messages announced", "Visible focus"],
+      "notes": ["Canonical operation: trackClaim; invalid proof collapses to 404 CLAIM_NOT_FOUND."],
+      "unresolved_api_needs": []
+    },
+    {
+      "id": "WEB-007",
+      "platform": "web",
+      "module": "Claim Tracking",
+      "name": "Claim Status",
+      "purpose": "Display only the customer-safe status, timeline, summary, and next steps returned by trackClaim.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": ["FR-008", "BR-007", "BR-009", "NFR-002", "NFR-011", "NFR-012", "NFR-013"],
+      "roles": ["guest"],
+      "permissions": ["claims.tracking.read"],
+      "data": [
+        {
+          "name": "customer_safe_claim_status",
+          "source": "api",
+          "operation_ids": ["trackClaim"],
+          "authoritative": true,
+          "note": "Internal audit/security data must never be rendered."
+        }
+      ],
+      "actions": [
+        {"name": "Start another lookup", "kind": "navigate", "permission": null, "source_classification": "PROPOSED"},
+        {"name": "Return home", "kind": "navigate", "permission": null, "source_classification": "PROPOSED"}
+      ],
+      "states": ["default", "loading", "empty", "error", "404"],
+      "navigation": {
+        "route": "/claims/track/status",
+        "entry_points": ["WEB-006"],
+        "destinations": ["WEB-006", "WEB-001"]
+      },
+      "dependencies": ["WEB-006"],
+      "slice_id": "customer-claim-tracking",
+      "priority": 70,
+      "responsive": "Timeline becomes a vertical mobile flow; desktop may place summary beside timeline while preserving logical reading order.",
+      "accessibility": ["Status communicated in text", "Semantic timeline structure", "No color-only meaning", "Logical keyboard reading order"],
+      "notes": ["Uses the same customer-safe projection policy as the MCP read tool, but the web client calls REST trackClaim only."],
+      "unresolved_api_needs": []
+    },
+    {
+      "id": "WEB-008",
+      "platform": "web",
+      "module": "Backoffice Identity",
+      "name": "Operator Login",
+      "purpose": "Authenticate the demo Claims Operator and establish the short-lived bearer-token client session before protected backoffice access.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": ["FR-009", "NFR-002", "NFR-004", "NFR-013"],
+      "roles": ["guest"],
+      "permissions": [],
+      "data": [
+        {
+          "name": "operator_session",
+          "source": "api",
+          "operation_ids": ["authenticateOperator"],
+          "authoritative": true,
+          "note": "Bearer JWT is issued by the server for 900 seconds; no refresh endpoint exists."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Authenticate operator",
+          "kind": "create",
+          "operation_ids": ["authenticateOperator"],
+          "permission": null,
+          "source_classification": "PROPOSED"
+        },
+        {"name": "Return home", "kind": "navigate", "permission": null, "source_classification": "PROPOSED"}
+      ],
+      "states": ["default", "loading", "success", "error", "401", "429"],
+      "navigation": {
+        "route": "/operator/login",
+        "entry_points": ["WEB-001"],
+        "destinations": ["WEB-009", "WEB-001"]
+      },
+      "dependencies": ["WEB-001"],
+      "slice_id": "claims-backoffice",
+      "priority": 80,
+      "responsive": "Single-column login form with constrained tablet/desktop width.",
+      "accessibility": ["Programmatic labels", "Authentication errors announced without sensitive detail", "Keyboard submission", "Visible focus"],
+      "notes": ["No refresh or logout API is part of v1."],
+      "unresolved_api_needs": []
+    },
+    {
+      "id": "WEB-009",
+      "platform": "web",
+      "module": "Claims Backoffice",
+      "name": "Claims List",
+      "purpose": "Allow an authenticated Claims Operator to inspect a paginated and status-filterable collection of synthetic claims and navigate to claim detail.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": ["FR-010", "BR-006", "NFR-002", "NFR-011", "NFR-012", "NFR-013"],
+      "roles": ["claims_operator"],
+      "permissions": ["claims.backoffice.read"],
+      "data": [
+        {
+          "name": "claims_collection",
+          "source": "api",
+          "operation_ids": ["listClaims"],
+          "authoritative": true,
+          "note": "Pagination and status filtering use page, pageSize, and status query parameters."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Load or filter claims",
+          "kind": "read",
+          "operation_ids": ["listClaims"],
+          "permission": "claims.backoffice.read",
+          "source_classification": "PROPOSED"
+        },
+        {"name": "Open claim detail", "kind": "navigate", "permission": "claims.backoffice.read", "source_classification": "PROPOSED"},
+        {
+          "name": "Sign out locally",
+          "kind": "local",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Clear local bearer/session state. No logout endpoint exists in API v1."
+        }
+      ],
+      "states": ["default", "loading", "empty", "filtered_empty", "error", "401", "403", "422"],
+      "navigation": {
+        "route": "/operator/claims",
+        "entry_points": ["WEB-008"],
+        "destinations": ["WEB-010", "WEB-008"]
+      },
+      "dependencies": ["WEB-008"],
+      "slice_id": "claims-backoffice",
+      "priority": 90,
+      "responsive": "Essential claim identity and status remain available on narrow screens; desktop may use tabular presentation.",
+      "accessibility": ["Accessible list/table semantics", "Filter controls have labels", "Empty and filtered-empty states announced", "Keyboard-operable row/detail navigation"],
+      "notes": ["Protected by claims.backoffice.read; API authorization remains authoritative."],
+      "unresolved_api_needs": []
+    },
+    {
+      "id": "WEB-010",
+      "platform": "web",
+      "module": "Claims Backoffice",
+      "name": "Claim Detail and State Transition",
+      "purpose": "Present authorized claim detail, evidence, and history and execute only server-authorized state-transition requests for the Claims Operator.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": ["FR-011", "FR-012", "FR-013", "BR-001", "BR-002", "BR-003", "BR-005", "BR-006", "NFR-002", "NFR-007", "NFR-013"],
+      "roles": ["claims_operator"],
+      "permissions": ["claims.backoffice.read", "claims.backoffice.transition"],
+      "data": [
+        {
+          "name": "claim_detail_and_history",
+          "source": "api",
+          "operation_ids": ["getClaimDetail"],
+          "authoritative": true,
+          "note": "Claim state, history, and evidence metadata are server-authoritative."
+        },
+        {
+          "name": "claim_evidence_binary",
+          "source": "api",
+          "operation_ids": ["downloadClaimEvidence"],
+          "authoritative": true,
+          "note": "Protected binary evidence is retrieved only through the approved evidence endpoint."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Refresh claim detail",
+          "kind": "read",
+          "operation_ids": ["getClaimDetail"],
+          "permission": "claims.backoffice.read",
+          "source_classification": "PROPOSED"
+        },
+        {
+          "name": "Download permitted evidence",
+          "kind": "download",
+          "operation_ids": ["downloadClaimEvidence"],
+          "permission": "claims.backoffice.read",
+          "source_classification": "PROPOSED"
+        },
+        {
+          "name": "Request allowed state transition",
+          "kind": "transition",
+          "operation_ids": ["transitionClaimStatus"],
+          "permission": "claims.backoffice.transition",
+          "source_classification": "PROPOSED",
+          "note": "expectedFromStatus is mandatory; 409 conflicts and invalid transitions are server-authoritative."
+        },
+        {"name": "Return to claims list", "kind": "navigate", "permission": "claims.backoffice.read", "source_classification": "PROPOSED"}
+      ],
+      "states": ["default", "loading", "success", "error", "401", "403", "404", "409", "422"],
+      "navigation": {
+        "route": "/operator/claims/:claimId",
+        "entry_points": ["WEB-009"],
+        "destinations": ["WEB-009"]
+      },
+      "dependencies": ["WEB-009"],
+      "slice_id": "claims-backoffice",
+      "priority": 100,
+      "responsive": "Mobile stacks summary, evidence, timeline, and actions; desktop may use a main detail column plus secondary state/action panel.",
+      "accessibility": ["Current state announced in text", "Transition controls have explicit labels", "Conflict and invalid-transition errors preserve context", "Evidence controls keyboard operable"],
+      "notes": ["The client never writes PostgreSQL directly and never duplicates lifecycle authority."],
+      "unresolved_api_needs": []
+    }
+  ],
+  "baseline_reconciliation": [
+    {"baseline_id": "WEB-001", "disposition": "COMMITTED"},
+    {"baseline_id": "WEB-002", "disposition": "COMMITTED"},
+    {"baseline_id": "WEB-003", "disposition": "COMMITTED"},
+    {"baseline_id": "WEB-004", "disposition": "COMMITTED"},
+    {"baseline_id": "WEB-005", "disposition": "COMMITTED"},
+    {"baseline_id": "WEB-006", "disposition": "COMMITTED"},
+    {"baseline_id": "WEB-007", "disposition": "COMMITTED"},
+    {"baseline_id": "WEB-008", "disposition": "COMMITTED"},
+    {"baseline_id": "WEB-009", "disposition": "COMMITTED"},
+    {"baseline_id": "WEB-010", "disposition": "COMMITTED"}
+  ]
+}
