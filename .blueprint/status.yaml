@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-05T20:46:00-03:00'
+updated_at: '2026-09-05T21:18:06-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -37,6 +37,10 @@ phases:
     status: COMPLETE
     progress: 100
     note: Postman collection, local environment and exact REST coverage were explicitly approved by Luis Hernández; Postman Ready passed on 2026-09-05.
+  api_qa:
+    status: READY_FOR_REVIEW
+    progress: 100
+    note: Runtime API QA against PostgreSQL 18 and the simulated legacy HTTP dependency is complete; explicit human API QA Pass decision remains pending.
 checks:
   discovery.product_vision:
     status: PASS
@@ -236,6 +240,36 @@ checks:
     verification: evidence
     note: Exact static validation proves 10/10 REST request coverage, method/path/auth/header/body alignment and safe environment wiring; runtime QA remains downstream.
     evidence_ids: [EVD-POSTMAN-COVERAGE-001]
+  api.qa_positive:
+    status: PASS
+    verification: evidence
+    note: Real runtime QA over PostgreSQL 18, the simulated legacy HTTP dependency and the production API composition passes the approved positive REST workflow.
+    evidence_ids: [EVD-API-QA-001]
+  api.qa_negative:
+    status: PASS
+    verification: evidence
+    note: Runtime negative assertions pass for proof mismatch, authentication, authorization transport, validation, idempotency, evidence, state conflicts and rate limiting.
+    evidence_ids: [EVD-API-QA-001]
+  api.contract_validation:
+    status: PASS
+    verification: evidence
+    note: Runtime REST behavior preserves the frozen contract while exact-head OpenAPI and Postman regressions also pass on the same QA candidate.
+    evidence_ids: [EVD-API-QA-001, EVD-OPENAPI-VALIDATION-001, EVD-POSTMAN-COVERAGE-001]
+  api.security_qa:
+    status: PASS
+    verification: evidence
+    note: Runtime auth, redaction, evidence, rate-limit, Problem Details, idempotency and concurrency assertions pass; npm audit --omit=dev reports zero production advisories.
+    evidence_ids: [EVD-API-QA-001, EVD-SECURITY-MODEL-001]
+  api.audit_qa:
+    status: PASS
+    verification: evidence
+    note: PostgreSQL assertions prove required login, claim creation and transition audit durability, idempotent non-duplication and concurrent transition integrity.
+    evidence_ids: [EVD-API-QA-001, EVD-AUDIT-MODEL-001]
+  api.affected_consumer_revalidation:
+    status: N/A
+    verification: evidence
+    note: Initial API baseline with no accepted executable client consumers; impact-based downstream revalidation is not applicable yet.
+    evidence_ids: [EVD-API-QA-001]
 gates:
   requirements_ready:
     status: PASS
@@ -272,6 +306,10 @@ gates:
     evaluated_at: '2026-09-05T20:46:00-03:00'
     note: Explicit human Postman Ready approval recorded after exact-head Postman Contract, OpenAPI Validation and API Implementation regression success.
     evidence_ids: [EVD-POSTMAN-COLLECTION-001, EVD-POSTMAN-ENVIRONMENT-001, EVD-POSTMAN-COVERAGE-001, EVD-POSTMAN-READY-APPROVAL-001]
+  api_qa_pass:
+    status: READY_FOR_REVIEW
+    note: All mandatory API QA checks have PASS evidence from real PostgreSQL/runtime execution; explicit human API QA Pass approval remains pending.
+    evidence_ids: [EVD-API-QA-001]
 functional_slices: []
 scoped_gates: []
 blockers: []
@@ -382,3 +420,6 @@ artifacts:
   - id: EVD-POSTMAN-READY-APPROVAL-001
     type: manual_approval
     value: documentation/api/POSTMAN_READY_APPROVAL.md
+  - id: EVD-API-QA-001
+    type: api_qa_evidence
+    value: documentation/api/API_QA_EVIDENCE.md
