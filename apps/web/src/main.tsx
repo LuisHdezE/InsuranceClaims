@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { ClaimFlowProvider } from './flow/ClaimFlowContext';
+import { TrackingFlowProvider } from './flow/TrackingFlowContext';
 import './styles.css';
 
 const queryClient = new QueryClient({
@@ -18,7 +19,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ClaimFlowProvider>
-          <App />
+          <TrackingFlowProvider>
+            <App />
+          </TrackingFlowProvider>
         </ClaimFlowProvider>
       </BrowserRouter>
     </QueryClientProvider>
