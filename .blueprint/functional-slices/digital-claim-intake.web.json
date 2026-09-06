@@ -36,8 +36,8 @@
     "evidence_ids": ["EVD-FUNCTIONAL-INTAKE-WEB-001", "EVD-FUNCTIONAL-INTAKE-WEB-APPROVAL-001"]
   },
   "visual_functional_review": {
-    "status": "PENDING",
-    "evidence_ids": [],
+    "status": "READY_FOR_REVIEW",
+    "evidence_ids": ["EVD-VFR-BROWSER-WEB-001", "EVD-VFR-INTAKE-WEB-001"],
     "human_complete": false,
     "approved_visual_references": [".blueprint/ui/references/far-public-landing-approved.md"]
   },
@@ -49,5 +49,5 @@
     "status": "PENDING",
     "evidence_ids": []
   },
-  "evidence_ids": ["EVD-FUNCTIONAL-INTAKE-WEB-001", "EVD-FUNCTIONAL-INTAKE-WEB-APPROVAL-001"]
+  "evidence_ids": ["EVD-FUNCTIONAL-INTAKE-WEB-001", "EVD-FUNCTIONAL-INTAKE-WEB-APPROVAL-001", "EVD-VFR-BROWSER-WEB-001", "EVD-VFR-INTAKE-WEB-001"]
 }
