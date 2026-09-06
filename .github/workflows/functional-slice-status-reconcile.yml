@@ -1,0 +1,81 @@
+name: Reconcile Functional Slice Status
+
+on:
+  push:
+    branches: [blueprint/functional-slice-digital-claim-intake-web]
+    paths:
+      - .github/workflows/functional-slice-status-reconcile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: blueprint/functional-slice-digital-claim-intake-web
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Reconcile scoped Blueprint status
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const file = '.blueprint/status.yaml';
+          let text = fs.readFileSync(file, 'utf8');
+          const replaceOnce = (from, to, label) => {
+            const first = text.indexOf(from);
+            const last = text.lastIndexOf(from);
+            if (first < 0 || first !== last) throw new Error(`Expected one ${label} anchor`);
+            text = text.replace(from, to);
+          };
+
+          replaceOnce(
+            "updated_at: '2026-09-06T01:04:39-03:00'",
+            "updated_at: '2026-09-06T07:02:00-03:00'",
+            'updated_at',
+          );
+
+          replaceOnce(
+            "  client_architecture:\n    status: COMPLETE\n    progress: 100\n    note: Reusable web platform baseline and all three exact web slice bindings were explicitly approved by Luis Hernández after exact-head semantic validation and full regression success.\nchecks:",
+            "  client_architecture:\n    status: COMPLETE\n    progress: 100\n    note: Reusable web platform baseline and all three exact web slice bindings were explicitly approved by Luis Hernández after exact-head semantic validation and full regression success.\n  functional_interface_slice:\n    status: IN_PROGRESS\n    progress: 33\n    note: digital-claim-intake/web is READY_FOR_REVIEW after exact-head functional, real-API, security, responsive and accessibility validation; customer-claim-tracking/web and claims-backoffice/web remain pending.\nchecks:",
+            'functional phase',
+          );
+
+          replaceOnce(
+            'functional_slices: []',
+            "functional_slices:\n  - id: digital-claim-intake\n    platform: web\n    artifact: .blueprint/functional-slices/digital-claim-intake.web.json",
+            'functional_slices',
+          );
+
+          replaceOnce(
+            'blockers: []',
+            "  - gate: functional_slice_ready\n    scope: interface_slice_platform\n    scope_id: digital-claim-intake\n    platform: web\n    status: READY_FOR_REVIEW\n    note: All canonical functional slice checks plus applicable idempotency are evidenced for the real API-backed web intake; explicit human gate approval remains pending before lifecycle FUNCTIONAL.\n    evidence_ids: [EVD-FUNCTIONAL-INTAKE-WEB-001]\nblockers: []",
+            'scoped functional gate',
+          );
+
+          replaceOnce(
+            "  - id: EVD-CLIENT-ARCH-READY-APPROVAL-001\n    type: manual_approval\n    value: documentation/client-architecture/CLIENT_ARCHITECTURE_READY_APPROVAL.md",
+            "  - id: EVD-CLIENT-ARCH-READY-APPROVAL-001\n    type: manual_approval\n    value: documentation/client-architecture/CLIENT_ARCHITECTURE_READY_APPROVAL.md\n  - id: EVD-FUNCTIONAL-INTAKE-WEB-001\n    type: functional_slice_evidence\n    value: documentation/functional-slices/DIGITAL_CLAIM_INTAKE_WEB_EVIDENCE.md",
+            'functional evidence artifact',
+          );
+
+          fs.writeFileSync(file, text);
+          NODE
+
+          grep -q "functional_interface_slice:" .blueprint/status.yaml
+          grep -q "scope_id: digital-claim-intake" .blueprint/status.yaml
+          grep -q "EVD-FUNCTIONAL-INTAKE-WEB-001" .blueprint/status.yaml
+          git diff --check
+          git diff -- .blueprint/status.yaml
+      - name: Commit reconciled status
+        run: |
+          git config user.name "MSc Luis A. Hernández Elias"
+          git config user.email "88979457+LuisHdezE@users.noreply.github.com"
+          git add .blueprint/status.yaml
+          git commit -m "chore(blueprint): register intake functional slice review state"
+          git push origin HEAD:blueprint/functional-slice-digital-claim-intake-web
