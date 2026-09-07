@@ -22,7 +22,7 @@
     "artifact": ".blueprint/client-architecture/digital-claim-intake.web.json",
     "gate_status": "PASS"
   },
-  "lifecycle_status": "FUNCTIONAL",
+  "lifecycle_status": "ACCEPTED",
   "blocker": null,
   "definition_of_done": {
     "status": "PASS",
@@ -67,8 +67,10 @@
     ]
   },
   "human_acceptance": {
-    "status": "PENDING",
-    "evidence_ids": []
+    "status": "APPROVED",
+    "evidence_ids": [
+      "EVD-HUMAN-ACCEPTANCE-INTAKE-WEB-001"
+    ]
   },
   "evidence_ids": [
     "EVD-FUNCTIONAL-INTAKE-WEB-001",
@@ -78,6 +80,7 @@
     "EVD-VFR-INTAKE-WEB-APPROVAL-001",
     "EVD-INTEGRATION-QA-WEB-SYSTEM-001",
     "EVD-INTEGRATION-QA-INTAKE-WEB-001",
-    "EVD-INTEGRATION-QA-INTAKE-WEB-APPROVAL-001"
+    "EVD-INTEGRATION-QA-INTAKE-WEB-APPROVAL-001",
+    "EVD-HUMAN-ACCEPTANCE-INTAKE-WEB-001"
   ]
 }
