@@ -1,4 +1,24 @@
+.ops-timeline-card,
+.ops-timeline-card .ops-panel-heading,
+.ops-timeline-card .ops-panel-heading > div,
+.ops-operational-timeline,
+.ops-operational-timeline li,
+.ops-operational-timeline-copy {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ops-timeline-card .ops-panel-heading {
+  flex-wrap: wrap;
+}
+
+.ops-timeline-card .ops-count-pill {
+  flex: 0 0 auto;
+}
+
 .ops-operational-timeline {
+  width: 100%;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -6,7 +26,7 @@
 }
 
 .ops-operational-timeline li {
-  min-width: 0;
+  width: 100%;
   min-height: 64px;
   display: grid;
   grid-template-columns: 48px 30px minmax(0, 1fr) auto;
@@ -16,6 +36,7 @@
 }
 
 .ops-operational-timeline time {
+  min-width: 0;
   padding-top: 8px;
   color: #536f91;
   font-size: 9px;
@@ -55,7 +76,6 @@
 .ops-operational-timeline li.is-green .ops-operational-timeline-marker { background: #e5f7ed; color: var(--ops-green); }
 
 .ops-operational-timeline-copy {
-  min-width: 0;
   display: grid;
   gap: 3px;
   padding: 5px 0 11px;
@@ -63,10 +83,18 @@
 }
 
 .ops-operational-timeline li:last-child .ops-operational-timeline-copy { border-bottom: 0; }
+.ops-operational-timeline-copy strong,
+.ops-operational-timeline-copy span,
+.ops-operational-timeline-copy small {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .ops-operational-timeline-copy strong { font-size: 10px; }
-.ops-operational-timeline-copy span { color: #405b78; font-size: 9px; line-height: 1.45; overflow-wrap: anywhere; }
+.ops-operational-timeline-copy span { color: #405b78; font-size: 9px; line-height: 1.45; }
 .ops-operational-timeline-copy small { color: var(--ops-muted); font-size: 8px; }
-.ops-operational-timeline-actor { padding-top: 8px; color: var(--ops-muted); font-size: 8px; font-weight: 800; white-space: nowrap; }
+.ops-operational-timeline-actor { min-width: 0; padding-top: 8px; color: var(--ops-muted); font-size: 8px; font-weight: 800; white-space: nowrap; }
 
 @media (max-width: 720px) {
   .ops-operational-timeline li {
@@ -78,12 +106,28 @@
     grid-column: 3;
     padding: 0 0 8px;
     white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
 
 @media (max-width: 420px) {
-  .ops-operational-timeline li { grid-template-columns: 28px minmax(0, 1fr); }
-  .ops-operational-timeline time { grid-column: 2; text-align: left; padding: 0; }
+  .ops-timeline-card {
+    padding-inline: 14px;
+  }
+  .ops-timeline-card .ops-panel-heading {
+    gap: 10px;
+  }
+  .ops-operational-timeline li {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .ops-operational-timeline time {
+    grid-column: 2;
+    width: 100%;
+    text-align: left;
+    padding: 0;
+    white-space: normal;
+  }
   .ops-operational-timeline-marker { grid-column: 1; grid-row: 1 / span 3; }
   .ops-operational-timeline-copy { grid-column: 2; padding-top: 0; }
   .ops-operational-timeline-actor { grid-column: 2; }
