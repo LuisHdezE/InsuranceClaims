@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { PublicIcon } from './PublicIcon';
 import '../public-refresh.css';
 import '../public-refresh-fixes.css';
+import '../hero-hq.css';
 
 export function PublicShell({ children }: { children: ReactNode }) {
   return (
@@ -10,7 +11,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
       <header className="site-header refreshed-header">
         <div className="container-shell refreshed-header-row">
           <Link className="refreshed-brand" to="/" aria-label="Ir al inicio">
-            <img className="brand-logo" src="/far-demo-wordmark.svg" alt="FAR Seguros" />
+            <img className="brand-logo" src="/far-demo-wordmark-v2.svg" alt="FAR Seguros" />
           </Link>
 
           <nav className="refreshed-nav" aria-label="Navegación principal">
@@ -36,7 +37,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
       <footer className="site-footer refreshed-footer" id="contacto">
         <div className="container-shell refreshed-footer-main">
           <div className="footer-brand-block">
-            <img src="/far-demo-wordmark.svg" alt="" aria-hidden="true" />
+            <img src="/far-demo-wordmark-v2.svg" alt="" aria-hidden="true" />
             <p><strong>Caso técnico no oficial.</strong> Modernización demostrativa con datos exclusivamente sintéticos.</p>
           </div>
 
