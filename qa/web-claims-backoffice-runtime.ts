@@ -11,6 +11,7 @@ import {
   verifyPolicyVehicle,
 } from '../apps/web/src/api/claims';
 import { completeClaimTask, listClaimTasks, listTasks } from '../apps/web/src/api/tasks';
+import { getClaimTimeline } from '../apps/web/src/api/timeline';
 import type { ApiFailure, ClaimDraft } from '../apps/web/src/api/types';
 
 const baseURL = process.env.QA_BASE_URL ?? 'http://127.0.0.1:3000';
@@ -75,6 +76,15 @@ assert.deepEqual(
 assert.ok(claimTasks.data.every((task) => task.status === 'OPEN'));
 assert.ok(claimTasks.requestId);
 
+const initialTimeline = await getClaimTimeline(summary.claimId, token, client);
+assert.deepEqual(
+  initialTimeline.data.events.map((event) => event.eventType),
+  ['CLAIM_REPORTED', 'EVIDENCE_ADDED', 'TASK_CREATED', 'TASK_CREATED'],
+  'initial operational timeline must project claim, evidence and task facts in deterministic order',
+);
+assert.ok(initialTimeline.data.events.every((event) => !('eventCode' in event)));
+assert.ok(initialTimeline.requestId);
+
 const openTasks = await listTasks({ page: 1, pageSize: 100, status: 'OPEN' }, token, client);
 const createdClaimTasks = openTasks.data.items.filter((task) => task.claimId === summary.claimId);
 assert.equal(createdClaimTasks.length, 2);
@@ -93,6 +103,10 @@ assert.equal(completedTask.data.status, 'COMPLETED');
 assert.ok(completedTask.data.completedAt);
 assert.equal(completedTask.data.completedById, authenticated.data.operator.id);
 assert.ok(completedTask.requestId);
+
+const timelineAfterTask = await getClaimTimeline(summary.claimId, token, client);
+assert.equal(timelineAfterTask.data.events.filter((event) => event.eventType === 'TASK_COMPLETED').length, 1);
+assert.ok(timelineAfterTask.requestId);
 
 let staleTaskConflict = false;
 try {
@@ -122,6 +136,11 @@ assert.equal(transitioned.data.status, 'UNDER_REVIEW');
 assert.ok(transitioned.requestId);
 const transitionCommitted = true;
 
+const timelineAfterTransition = await getClaimTimeline(summary.claimId, token, client);
+const statusChange = timelineAfterTransition.data.events.find((event) => event.eventType === 'STATUS_CHANGED');
+assert.ok(statusChange && statusChange.fromStatus === 'RECEIVED' && statusChange.toStatus === 'UNDER_REVIEW');
+assert.ok(timelineAfterTransition.requestId);
+
 let staleTransitionConflict = false;
 try {
   await transitionClaimStatus(summary.claimId, {
@@ -144,12 +163,16 @@ console.log(JSON.stringify({
   event: 'BACKOFFICE_RUNTIME_PASS',
   operationIds: [
     'authenticateOperator', 'listClaims', 'getClaimDetail', 'downloadClaimEvidence', 'transitionClaimStatus',
-    'listTasks', 'listClaimTasks', 'completeClaimTask',
+    'listTasks', 'listClaimTasks', 'completeClaimTask', 'getClaimTimeline',
   ],
   tokenLifetimeSeconds: authenticated.data.expiresIn,
   protectedReadRejectedWithoutValidToken,
   evidenceDownloadProtected,
   projectedClaimTasks: claimTasks.data.length,
+  initialTimelineEvents: initialTimeline.data.totalItems,
+  timelineTaskCompletionProjected: timelineAfterTask.data.events.some((event) => event.eventType === 'TASK_COMPLETED'),
+  timelineStatusChangeProjected: Boolean(statusChange),
+  timelineAuditSeparated: initialTimeline.data.events.every((event) => !('eventCode' in event)),
   serverSideTaskTypeFilter: createdEvidenceTasks.length === 1,
   taskCompletionCommitted: completedTask.data.status === 'COMPLETED',
   staleTaskConflict,
@@ -158,7 +181,8 @@ console.log(JSON.stringify({
   staleTransitionConflict,
   authoritativeRefreshStatus: refreshed.data.status,
   requestIdObserved: Boolean(
-    authenticated.requestId && claims.requestId && detail.requestId && claimTasks.requestId && openTasks.requestId
-    && evidenceTasks.requestId && completedTask.requestId && downloaded.requestId && transitioned.requestId && refreshed.requestId
+    authenticated.requestId && claims.requestId && detail.requestId && claimTasks.requestId && initialTimeline.requestId
+    && openTasks.requestId && evidenceTasks.requestId && completedTask.requestId && timelineAfterTask.requestId
+    && downloaded.requestId && transitioned.requestId && timelineAfterTransition.requestId && refreshed.requestId
   ),
 }));

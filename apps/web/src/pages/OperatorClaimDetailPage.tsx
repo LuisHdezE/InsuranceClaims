@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { downloadClaimEvidence, getClaimDetail, transitionClaimStatus } from '../api/claims';
 import type { ApiFailure, ClaimStatus, EvidenceMetadata, OperatorClaimDetailResponse } from '../api/types';
 import { ClaimTasksPanel } from '../components/ClaimTasksPanel';
+import { ClaimTimelinePanel } from '../components/ClaimTimelinePanel';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
@@ -36,6 +37,7 @@ export function OperatorClaimDetailPage() {
       setTransitionFailure(null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId] }),
+        queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'timeline'] }),
         queryClient.invalidateQueries({ queryKey: ['operator', 'claims'] }),
       ]);
     },
@@ -48,7 +50,10 @@ export function OperatorClaimDetailPage() {
       }
       if (failure.problem?.status === 409) {
         setSelectedTransition('');
-        await claimQuery.refetch();
+        await Promise.all([
+          claimQuery.refetch(),
+          queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'timeline'] }),
+        ]);
       }
     },
   });
@@ -93,7 +98,12 @@ export function OperatorClaimDetailPage() {
               detail={detail}
               busy={transitionMutation.isPending}
               refreshBusy={claimQuery.isFetching}
-              onRefresh={() => void claimQuery.refetch()}
+              onRefresh={() => {
+                void Promise.all([
+                  claimQuery.refetch(),
+                  queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'timeline'] }),
+                ]);
+              }}
               onPrimaryTransition={(toStatus) => {
                 setTransitionFailure(null);
                 transitionMutation.mutate({ expectedFromStatus: detail.status, toStatus });
@@ -192,24 +202,7 @@ export function OperatorClaimDetailPage() {
                 <div className="ops-protected-note">🔒 Acceso restringido. La evidencia solo se recupera mediante el endpoint autenticado.</div>
               </section>
 
-              <section className="ops-panel ops-timeline-card" aria-labelledby="history-title">
-                <div className="ops-panel-heading"><div><span className="ops-kicker">Actividad</span><h2 id="history-title">Timeline</h2></div></div>
-                {detail.history.length === 0 ? <div className="ops-compact-empty">No hay eventos de estado disponibles.</div> : (
-                  <ol className="ops-detail-timeline">
-                    {detail.history.map((entry, index) => (
-                      <li key={`${entry.occurredAt}-${index}`}>
-                        <time dateTime={entry.occurredAt}>{formatTime(entry.occurredAt)}</time>
-                        <span className="ops-timeline-dot" aria-hidden="true" />
-                        <div>
-                          <strong>{entry.fromStatus ? 'Cambio de estado' : 'Siniestro reportado'}</strong>
-                          <span>{entry.fromStatus ? `${statusLabel(entry.fromStatus)} → ` : ''}{statusLabel(entry.toStatus)}</span>
-                        </div>
-                        <small>{entry.actorType === 'OPERATOR' ? 'Operador' : 'Sistema'}</small>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </section>
+              <ClaimTimelinePanel claimId={claimId} />
             </div>
 
             <details className="ops-audit-details">
@@ -299,10 +292,6 @@ function stageLabel(status: ClaimStatus) {
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('es-UY', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-}
-
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat('es-UY', { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 }
 
 function formatBytes(value: number) {
