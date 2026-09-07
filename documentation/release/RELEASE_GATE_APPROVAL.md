@@ -4,6 +4,7 @@
 - Blueprint baseline: `0.5.2`
 - Decision: `PASS`
 - Approved release candidate: `05bb93081248c02ecfb93b7b77477bd4862d3281`
+- Approval record commit: `56ca960b68139e052813bd2929adb1fd033fb8b2`
 - Accepted baseline: `ba7f519f36567b142604e213f50e13de4732348d`
 - Pull request: `#20`
 - Approver: Luis Hernández
