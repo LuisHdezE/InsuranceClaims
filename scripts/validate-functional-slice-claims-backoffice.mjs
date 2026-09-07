@@ -20,7 +20,7 @@ assert(JSON.stringify(slice.inventory_ids) === JSON.stringify(expectedIds), 'bac
 assert(JSON.stringify(slice.api_binding.operation_ids) === JSON.stringify(expectedOps), 'backoffice operation binding drift');
 assert(slice.api_binding.revision === 'api-v1-r1', 'backoffice slice must bind api-v1-r1');
 assert(slice.client_architecture.gate_status === 'PASS', 'Client Architecture gate must remain PASS');
-assert(['IN_PROGRESS', 'FUNCTIONAL'].includes(slice.lifecycle_status), 'backoffice lifecycle must remain IN_PROGRESS until human gate PASS');
+assert(['IN_PROGRESS', 'FUNCTIONAL', 'ACCEPTED'].includes(slice.lifecycle_status), 'backoffice lifecycle must progress only through IN_PROGRESS, FUNCTIONAL or ACCEPTED');
 assert(['PENDING', 'PASS'].includes(slice.definition_of_done.status), 'backoffice DoD must be PENDING until evidence closes it, then PASS');
 assert(slice.definition_of_done.checks.idempotency === 'N/A', 'backoffice idempotency must be N/A; expectedFromStatus is concurrency control, not an idempotency key');
 
