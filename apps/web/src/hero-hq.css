@@ -1,0 +1,27 @@
+.landing-hero-photo {
+  image-rendering: auto;
+  filter: saturate(.96) contrast(.98);
+}
+
+.refreshed-brand {
+  min-width: 230px;
+  overflow: visible;
+}
+
+.public-refresh-shell .brand-logo {
+  width: 220px;
+  max-width: 220px;
+  height: auto;
+  overflow: visible;
+}
+
+@media (max-width: 900px) {
+  .refreshed-brand {
+    min-width: 185px;
+  }
+
+  .public-refresh-shell .brand-logo {
+    width: 185px;
+    max-width: 185px;
+  }
+}

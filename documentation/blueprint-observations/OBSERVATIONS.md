@@ -137,3 +137,31 @@ When this observation is evaluated after portfolio closure, consider whether Blu
 
 Disposition:
 DEFERRED_UNTIL_PORTFOLIO_COMPLETE
+
+---
+
+## OBS-006
+
+Blueprint version:
+0.5.2
+
+Phase:
+Post-MVP / product evolution
+
+Finding:
+Blueprint 0.5.2 explicitly defines impact-based revalidation for later API evolution through the `api-impact` artifact, but this consumer could not identify an equivalent generic or client-specific impact artifact for post-Release-Gate visual/client product evolution. The consumer-local Release Gate and Operations validators therefore correctly detect the landing redesign in PR #24 as product drift from the accepted v0.1.0 baselines, while client/browser validators remain bound to the previously accepted logo asset. This creates no ambiguity about the historical MVP, but it leaves the next governed client increment without a canonical machine-readable impact/revalidation boundary comparable to API evolution.
+
+Evidence:
+At Blueprint main `737556e24195aa909117790f2d7ff0be2fe0a474`, `BLUEPRINT.md` documents later API evolution via impact-based revalidation and `schemas/` contains `api-impact.schema.json`; the inspected schema catalog has no corresponding `client-impact`, `ui-impact` or generic post-release increment-impact schema. On InsuranceClaims PR #24 head `5c39a796020dbe02c6f3d2dd9258ccc3d10cd6cc`, backend/web tests, architecture, builds, runtime API QA and all three real-dependency web API client journeys pass, while Release Gate/Operations reject `.blueprint/ui/assets/far-demo-wordmark-v2.svg` as post-baseline product drift and browser/client validators still expect the previously accepted public logo binding.
+
+Impact:
+MEDIUM
+
+Consumer handling:
+Do not weaken or rewrite the historical v0.1.0 Release Gate/Operations evidence. Treat the landing redesign and Claims Operations work as an explicit post-MVP product increment, preserve the old acceptance history, record fresh increment-specific scope/visual/functional evidence, and require human approval before implementation/merge. Do not modify Blueprint Master during this consumer project.
+
+Potential improvement:
+After this consumer increment is complete, evaluate a technology-neutral post-release product/client impact contract that can classify affected interfaces, design-system assets, functional slices and required revalidation without globally invalidating unrelated historical evidence. The mechanism should remain fail-closed for unclassified product drift and should complement, not replace, `api-impact` for API contract changes.
+
+Disposition:
+DEFERRED_UNTIL_POST_MVP_INCREMENT_COMPLETE

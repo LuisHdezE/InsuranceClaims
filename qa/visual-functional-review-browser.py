@@ -208,10 +208,10 @@ def audit_accessibility() -> dict[str, Any]:
 
 def public_visual_contract() -> dict[str, Any]:
     logo = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "img.brand-logo")))
-    if not logo.get_attribute("src").endswith("/far-seguros-logo.svg"):
-        raise AssertionError("Public FAR logo binding is missing")
+    if not logo.get_attribute("src").endswith("/far-demo-wordmark-v2.svg"):
+        raise AssertionError("Public approved demo wordmark binding is missing")
     body_text = driver.find_element(By.TAG_NAME, "body").text
-    if "Caso técnico no oficial" not in body_text or "Sin afiliación con FAR Seguros" not in body_text:
+    if "Caso técnico no oficial" not in body_text or "No oficial · Sin afiliación" not in body_text:
         raise AssertionError("Case-study disclosure is not visible")
     primary = driver.find_element(By.CSS_SELECTOR, ".btn-primary")
     primary_bg = driver.execute_script("return getComputedStyle(arguments[0]).backgroundColor", primary)
@@ -287,7 +287,7 @@ try:
     })
     intake["observations"].extend([
         f"Created authoritative synthetic claim with tracking code present: {bool(tracking_code)}",
-        "Public visual contract preserves FAR logo, yellow primary action, visible no-affiliation disclosure and customer-facing flow treatment.",
+        "Public visual contract preserves the approved demo wordmark, yellow primary action, visible no-affiliation disclosure and customer-facing flow treatment.",
         "Mobile details view stayed within viewport without horizontal page overflow.",
         f"Accessibility audit: {audit_accessibility()}",
     ])

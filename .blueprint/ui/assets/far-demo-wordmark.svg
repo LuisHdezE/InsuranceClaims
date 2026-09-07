@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 78" role="img" aria-labelledby="title desc">
+  <title id="title">FAR Seguros</title>
+  <desc id="desc">Wordmark de referencia para el caso técnico no oficial</desc>
+  <g transform="translate(3 8)">
+    <path d="M20 10h44l10 20-10 20H20L10 30z" fill="#ffe600" stroke="#06294a" stroke-width="4"/>
+    <path d="M28 18h28M24 30h36M28 42h28" stroke="#07a9c4" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <text x="88" y="49" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="900" letter-spacing="-1.4" fill="#06294a">FAR</text>
+  <text x="166" y="49" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="800" letter-spacing="-1.2" fill="#06294a">SEGUROS</text>
+</svg>

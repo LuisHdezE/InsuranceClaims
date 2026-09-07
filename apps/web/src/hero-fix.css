@@ -1,0 +1,41 @@
+.landing-hero::before {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.landing-hero-photo {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 39%;
+  width: 61%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 45%;
+}
+
+.landing-hero-inner {
+  z-index: 2;
+}
+
+@media (max-width: 1180px) {
+  .landing-hero-photo {
+    left: 35%;
+    width: 65%;
+  }
+}
+
+@media (max-width: 900px) {
+  .landing-hero-photo {
+    top: 295px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    object-position: center 46%;
+  }
+}
