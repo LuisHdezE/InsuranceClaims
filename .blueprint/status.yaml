@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-06T11:06:07-03:00'
+updated_at: '2026-09-06T22:56:00-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -70,9 +70,9 @@ phases:
     progress: 100
     note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web all passed Visual & Functional Review after real-browser evidence and explicit human approval on the exact reviewed candidate.
   integration_qa:
-    status: READY_FOR_REVIEW
-    progress: 89
-    note: All three web slices passed the applicable machine/evidence Integration QA checks against real API transport, PostgreSQL 18 and the simulated legacy dependency; explicit human review remains pending per slice/platform.
+    status: COMPLETE
+    progress: 100
+    note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web all passed Integration QA after exact-head real-dependency validation and explicit human approval on 2026-09-06.
 checks:
   discovery.product_vision:
     status: PASS
@@ -700,26 +700,26 @@ scoped_gates:
     scope: interface_slice_platform
     scope_id: digital-claim-intake
     platform: web
-    status: READY_FOR_REVIEW
-    evaluated_at: '2026-09-06T11:06:07-03:00'
-    note: All applicable Integration QA checks pass against the real-dependency candidate; explicit human review remains pending.
-    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001]
+    status: PASS
+    evaluated_at: '2026-09-06T22:56:00-03:00'
+    note: Explicit human Integration QA approval recorded after exact-head 13/13 workflow success and real-dependency evidence; Human Acceptance remains PENDING.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-INTAKE-WEB-APPROVAL-001]
   - gate: integration_qa_pass
     scope: interface_slice_platform
     scope_id: customer-claim-tracking
     platform: web
-    status: READY_FOR_REVIEW
-    evaluated_at: '2026-09-06T11:06:07-03:00'
-    note: All applicable Integration QA checks pass against the real-dependency candidate; idempotency is N/A and explicit human review remains pending.
-    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-TRACKING-WEB-001]
+    status: PASS
+    evaluated_at: '2026-09-06T22:56:00-03:00'
+    note: Explicit human Integration QA approval recorded after exact-head 13/13 workflow success; idempotency remains correctly N/A and Human Acceptance remains PENDING.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-TRACKING-WEB-001, EVD-INTEGRATION-QA-TRACKING-WEB-APPROVAL-001]
   - gate: integration_qa_pass
     scope: interface_slice_platform
     scope_id: claims-backoffice
     platform: web
-    status: READY_FOR_REVIEW
-    evaluated_at: '2026-09-06T11:06:07-03:00'
-    note: All applicable Integration QA checks pass against the real-dependency candidate; expectedFromStatus remains the concurrency guard, idempotency is N/A, and explicit human review remains pending.
-    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
+    status: PASS
+    evaluated_at: '2026-09-06T22:56:00-03:00'
+    note: Explicit human Integration QA approval recorded after exact-head 13/13 workflow success; expectedFromStatus remains the concurrency guard, idempotency remains N/A, and Human Acceptance remains PENDING.
+    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001]
 blockers: []
 api_impacts: []
 artifacts:
@@ -936,3 +936,12 @@ artifacts:
   - id: EVD-INTEGRATION-QA-BACKOFFICE-WEB-001
     type: integration_qa_evidence
     value: documentation/integration-qa/CLAIMS_BACKOFFICE_WEB_EVIDENCE.md
+  - id: EVD-INTEGRATION-QA-INTAKE-WEB-APPROVAL-001
+    type: manual_approval
+    value: documentation/integration-qa/DIGITAL_CLAIM_INTAKE_WEB_APPROVAL.md
+  - id: EVD-INTEGRATION-QA-TRACKING-WEB-APPROVAL-001
+    type: manual_approval
+    value: documentation/integration-qa/CUSTOMER_CLAIM_TRACKING_WEB_APPROVAL.md
+  - id: EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001
+    type: manual_approval
+    value: documentation/integration-qa/CLAIMS_BACKOFFICE_WEB_APPROVAL.md
