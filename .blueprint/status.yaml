@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-07T05:09:00-03:00'
+updated_at: '2026-09-07T05:51:05-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -77,6 +77,10 @@ phases:
     status: COMPLETE
     progress: 100
     note: Explicit human Release Gate approval recorded on 2026-09-07 after all four applicable release checks and 16/16 exact-head PR workflows passed for candidate 05bb93081248c02ecfb93b7b77477bd4862d3281.
+  operations:
+    status: COMPLETE
+    progress: 100
+    note: Repository-local Operations & Maintenance baseline completed after executable observability evidence; no FAR production infrastructure, SLO/SLA, centralized monitoring or on-call topology is claimed.
 checks:
   discovery.product_vision:
     status: PASS
@@ -581,6 +585,11 @@ checks:
     verification: evidence
     note: PostgreSQL 18 pg_dump/pg_restore proof restored six authoritative tables and verified synthetic claim, audit and idempotency sentinels in a distinct database.
     evidence_ids: [EVD-RELEASE-GATE-001]
+  operations.observability:
+    status: PASS
+    verification: evidence
+    note: Real API/PostgreSQL/legacy-simulator runtime proof validates health endpoints, X-Request-Id correlation, safe Problem Details, durable audit correlation and absence of synthetic QA secrets in service logs.
+    evidence_ids: [EVD-OPERATIONS-OBSERVABILITY-001]
 gates:
   requirements_ready:
     status: PASS
@@ -989,3 +998,6 @@ artifacts:
   - id: EVD-RELEASE-GATE-APPROVAL-001
     type: manual_approval
     value: documentation/release/RELEASE_GATE_APPROVAL.md
+  - id: EVD-OPERATIONS-OBSERVABILITY-001
+    type: operations_observability_evidence
+    value: documentation/operations/OPERATIONS_OBSERVABILITY_EVIDENCE.md
