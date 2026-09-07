@@ -106,6 +106,8 @@ const allowedExact = new Set([
   'qa/release-backup-restore.sh',
   'scripts/validate-release-evidence.mjs',
   'scripts/validate-release-gate-ready.mjs',
+  'scripts/validate-human-acceptance.mjs',
+  'scripts/validate-integration-qa-ready.mjs',
   '.github/workflows/release-gate-evidence.yml',
   '.github/workflows/release-gate-ready.yml',
 ]);
@@ -121,4 +123,8 @@ console.log(JSON.stringify({
   slices: expectedSlices.map(([identity]) => identity),
   humanReleaseDecision: gateApproved ? 'APPROVED' : 'PENDING',
   productDrift: false,
+  downstreamGuardrailMaintenance: [
+    'scripts/validate-human-acceptance.mjs',
+    'scripts/validate-integration-qa-ready.mjs',
+  ],
 }, null, 2));
