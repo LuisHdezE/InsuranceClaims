@@ -35,7 +35,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
       <footer className="site-footer refreshed-footer" id="contacto">
         <div className="container-shell refreshed-footer-main">
           <div className="footer-brand-block">
-            <img src="/far-seguros-logo.svg" alt="FAR Seguros" />
+            <img src="/far-seguros-logo.svg" alt="" aria-hidden="true" />
             <p>Caso técnico de modernización con datos exclusivamente sintéticos.</p>
           </div>
 
