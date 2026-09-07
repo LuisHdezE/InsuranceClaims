@@ -1,0 +1,76 @@
+name: Release Gate Evidence
+
+on:
+  push:
+    branches:
+      - blueprint/release-gate
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  release-evidence:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+      - name: Validate Release Gate evidence prerequisites
+        run: node scripts/validate-release-evidence.mjs
+      - name: Typecheck backend and web
+        run: npm run typecheck
+      - name: Run backend tests
+        run: npm test
+      - name: Verify architecture boundaries
+        run: npm run architecture:check
+      - name: Run web tests
+        run: npm --workspace @insurance/web test
+      - name: Build web release candidate
+        run: npm --workspace @insurance/web run build
+      - name: Reject high or critical production dependency advisories
+        run: npm audit --omit=dev --audit-level=high
+      - name: Ensure PostgreSQL client tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+      - name: Prove PostgreSQL backup and restore
+        run: bash qa/release-backup-restore.sh
+      - name: Release Gate machine candidate summary
+        run: |
+          echo "RELEASE_GATE_EVIDENCE_PASS"
+          echo "candidate_sha=${GITHUB_SHA}"
+          echo "release.functional_slices_accepted=PASS"
+          echo "release.security_accepted=PASS"
+          echo "release.documentation=PASS"
+          echo "release.backup_restore=PASS"
+          echo "release_gate=READY_FOR_REVIEW_PENDING_HUMAN_DECISION"

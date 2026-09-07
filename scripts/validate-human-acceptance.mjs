@@ -61,7 +61,9 @@ for (const [sliceId, config] of Object.entries(slices)) {
 
 const status = fs.readFileSync('.blueprint/status.yaml', 'utf8');
 assert(status.startsWith('blueprint_version: 0.5.2\n'), 'consumer Blueprint version must remain 0.5.2');
-assert(status.includes(`updated_at: '${approvalTimestamp}'`), 'status updated_at must match Human Acceptance decision');
+const updatedAt = status.match(/^updated_at: '([^']+)'$/m)?.[1];
+assert(updatedAt, 'status updated_at must remain present');
+assert(Date.parse(updatedAt) >= Date.parse(approvalTimestamp), 'status updated_at cannot predate the Human Acceptance decision');
 assert(status.includes('digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web are all ACCEPTED'), 'functional slice checkpoint must record all three accepted slices');
 assert(/\n  integration_qa:\n    status: COMPLETE\n    progress: 100\n/.test(status), 'Integration QA must remain COMPLETE / 100%');
 
@@ -69,8 +71,23 @@ for (const config of Object.values(slices)) {
   assert(status.includes(`- id: ${config.evidence}\n    type: manual_approval\n    value: ${config.approvalFile}`), `${config.evidence} must be registered as manual_approval`);
 }
 
-assert(!/^  release_gate:/m.test(status), 'Release Gate phase must not be started by Human Acceptance');
-assert(!/^  - gate: release_gate$/m.test(status), 'Release Gate decision must not be created by Human Acceptance');
+const releaseGateOccurrences = [...status.matchAll(/^  release_gate:$/gm)].length;
+assert([0, 2].includes(releaseGateOccurrences), `Release Gate must be absent or represented by phase+project gate, found ${releaseGateOccurrences}`);
+if (releaseGateOccurrences === 2) {
+  const phaseStarted = /\n  release_gate:\n    status: READY_FOR_REVIEW\n    progress: 80\n/.test(status);
+  const phaseComplete = /\n  release_gate:\n    status: COMPLETE\n    progress: 100\n/.test(status);
+  const projectReady = /\n  release_gate:\n    status: READY_FOR_REVIEW\n    evaluated_at: '[^']+'\n/.test(status);
+  const projectPass = /\n  release_gate:\n    status: PASS\n    evaluated_at: '[^']+'\n/.test(status);
+  assert((phaseStarted && projectReady) || (phaseComplete && projectPass), 'downstream Release Gate phase/project state must progress coherently');
+  for (const check of [
+    'release.functional_slices_accepted',
+    'release.security_accepted',
+    'release.documentation',
+    'release.backup_restore',
+  ]) {
+    assert(new RegExp(`^  ${check.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}:\\n    status: PASS\\n`, 'm').test(status), `${check} must be PASS once Release Gate starts`);
+  }
+}
 
 for (const temporaryWorkflow of [
   '.github/workflows/human-acceptance-reconcile.yml',
@@ -86,5 +103,5 @@ console.log(JSON.stringify({
   approvedAt: approvalTimestamp,
   slices: Object.keys(slices),
   lifecycle: 'ACCEPTED',
-  releaseGateStarted: false,
+  releaseGateStarted: releaseGateOccurrences === 2,
 }, null, 2));

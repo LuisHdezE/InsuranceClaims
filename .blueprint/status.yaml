@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-06T23:15:34-03:00'
+updated_at: '2026-09-06T23:57:03-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -73,6 +73,10 @@ phases:
     status: COMPLETE
     progress: 100
     note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web all passed Integration QA after exact-head real-dependency validation and explicit human approval on 2026-09-06.
+  release_gate:
+    status: READY_FOR_REVIEW
+    progress: 80
+    note: All four applicable Release Gate checks passed on exact machine-tested candidate 22ae0618cf865a8c940a2c9c3c243a1830cd4d97; explicit human Release Gate approval remains pending.
 checks:
   discovery.product_vision:
     status: PASS
@@ -557,6 +561,26 @@ checks:
     verification: evidence
     note: CDP transport blocking proves all three loaded web slices fail closed when /api transport is unavailable and do not substitute local authoritative business state.
     evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-INTAKE-WEB-001, EVD-INTEGRATION-QA-TRACKING-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001]
+  release.functional_slices_accepted:
+    status: PASS
+    verification: evidence
+    note: The committed release scope is exactly the three web slices, all lifecycle ACCEPTED with DoD, V&F, Integration QA and Human Acceptance prerequisites complete.
+    evidence_ids: [EVD-RELEASE-GATE-001]
+  release.security_accepted:
+    status: PASS
+    verification: evidence
+    note: Approved security/threat and runtime security evidence remains valid; exact-head production dependency audit reports zero vulnerabilities.
+    evidence_ids: [EVD-RELEASE-GATE-001]
+  release.documentation:
+    status: PASS
+    verification: evidence
+    note: Release scope, setup, verification, runtime, limitations, security aggregation, rollback posture and decision boundary are versioned and reproducible.
+    evidence_ids: [EVD-RELEASE-GATE-001]
+  release.backup_restore:
+    status: PASS
+    verification: evidence
+    note: PostgreSQL 18 pg_dump/pg_restore proof restored six authoritative tables and verified synthetic claim, audit and idempotency sentinels in a distinct database.
+    evidence_ids: [EVD-RELEASE-GATE-001]
 gates:
   requirements_ready:
     status: PASS
@@ -613,6 +637,11 @@ gates:
     evaluated_at: '2026-09-06T00:39:18-03:00'
     note: Explicit human Design System Ready approval recorded after revised FAR identity/logo validation and exact-head success of Design System, Interface Inventory and full API regressions.
     evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001, EVD-DESIGN-LOGO-001, EVD-DESIGN-LANDING-REFERENCE-001, EVD-DESIGN-SYSTEM-READY-APPROVAL-001]
+  release_gate:
+    status: READY_FOR_REVIEW
+    evaluated_at: '2026-09-06T23:57:03-03:00'
+    note: Machine Release Gate evidence is complete on run 34077824586; human Release Gate decision remains pending and cannot be inferred by CI.
+    evidence_ids: [EVD-RELEASE-GATE-001]
 functional_slices:
   - id: digital-claim-intake
     platform: web
@@ -954,3 +983,6 @@ artifacts:
   - id: EVD-HUMAN-ACCEPTANCE-BACKOFFICE-WEB-001
     type: manual_approval
     value: documentation/human-acceptance/CLAIMS_BACKOFFICE_WEB_APPROVAL.md
+  - id: EVD-RELEASE-GATE-001
+    type: release_gate_evidence
+    value: documentation/release/RELEASE_GATE_EVIDENCE.md
