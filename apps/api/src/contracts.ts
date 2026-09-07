@@ -1,10 +1,13 @@
-import type { AccessTokenPort, ClaimsApplication } from '@insurance/application';
+import type { AccessTokenPort } from '@insurance/application';
+import type { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
+import type { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 
 export const API_RUNTIME = Symbol('API_RUNTIME');
 export const ACCESS_TOKENS = Symbol('ACCESS_TOKENS');
 
 export interface ApiRuntimeContract {
-  application: ClaimsApplication;
+  application: ClaimsOperationsApplication;
+  tasks: ClaimTasksApplication;
   accessTokens: AccessTokenPort;
 }
 
