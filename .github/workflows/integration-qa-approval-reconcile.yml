@@ -1,0 +1,125 @@
+name: Reconcile Integration QA Approval
+
+on:
+  push:
+    branches:
+      - blueprint/integration-qa-web
+    paths:
+      - .github/workflows/integration-qa-approval-reconcile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: blueprint/integration-qa-web
+          fetch-depth: 0
+
+      - name: Reconcile approved Integration QA state
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          path = Path('.blueprint/status.yaml')
+          text = path.read_text(encoding='utf-8')
+
+          def replace_once(old, new, label):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one anchor, found {count}')
+              text = text.replace(old, new, 1)
+
+          approval_time = '2026-09-06T22:56:00-03:00'
+
+          replace_once(
+              "updated_at: '2026-09-06T11:06:07-03:00'",
+              f"updated_at: '{approval_time}'",
+              'updated_at',
+          )
+
+          replace_once(
+              "  integration_qa:\n    status: READY_FOR_REVIEW\n    progress: 89\n    note: All three web slices passed the applicable machine/evidence Integration QA checks against real API transport, PostgreSQL 18 and the simulated legacy dependency; explicit human review remains pending per slice/platform.",
+              "  integration_qa:\n    status: COMPLETE\n    progress: 100\n    note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web all passed Integration QA after exact-head real-dependency validation and explicit human approval on 2026-09-06.",
+              'integration_qa phase',
+          )
+
+          gates = {
+              'digital-claim-intake': (
+                  "All applicable Integration QA checks pass against the real-dependency candidate; explicit human review remains pending.",
+                  'EVD-INTEGRATION-QA-INTAKE-WEB-001',
+                  'EVD-INTEGRATION-QA-INTAKE-WEB-APPROVAL-001',
+                  'Explicit human Integration QA approval recorded after exact-head 13/13 workflow success and real-dependency evidence; Human Acceptance remains PENDING.',
+              ),
+              'customer-claim-tracking': (
+                  "All applicable Integration QA checks pass against the real-dependency candidate; idempotency is N/A and explicit human review remains pending.",
+                  'EVD-INTEGRATION-QA-TRACKING-WEB-001',
+                  'EVD-INTEGRATION-QA-TRACKING-WEB-APPROVAL-001',
+                  'Explicit human Integration QA approval recorded after exact-head 13/13 workflow success; idempotency remains correctly N/A and Human Acceptance remains PENDING.',
+              ),
+              'claims-backoffice': (
+                  "All applicable Integration QA checks pass against the real-dependency candidate; expectedFromStatus remains the concurrency guard, idempotency is N/A, and explicit human review remains pending.",
+                  'EVD-INTEGRATION-QA-BACKOFFICE-WEB-001',
+                  'EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001',
+                  'Explicit human Integration QA approval recorded after exact-head 13/13 workflow success; expectedFromStatus remains the concurrency guard, idempotency remains N/A, and Human Acceptance remains PENDING.',
+              ),
+          }
+
+          for scope_id, (old_note, scoped_evidence, approval_evidence, new_note) in gates.items():
+              old = (
+                  "  - gate: integration_qa_pass\n"
+                  "    scope: interface_slice_platform\n"
+                  f"    scope_id: {scope_id}\n"
+                  "    platform: web\n"
+                  "    status: READY_FOR_REVIEW\n"
+                  "    evaluated_at: '2026-09-06T11:06:07-03:00'\n"
+                  f"    note: {old_note}\n"
+                  f"    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, {scoped_evidence}]"
+              )
+              new = (
+                  "  - gate: integration_qa_pass\n"
+                  "    scope: interface_slice_platform\n"
+                  f"    scope_id: {scope_id}\n"
+                  "    platform: web\n"
+                  "    status: PASS\n"
+                  f"    evaluated_at: '{approval_time}'\n"
+                  f"    note: {new_note}\n"
+                  f"    evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, {scoped_evidence}, {approval_evidence}]"
+              )
+              replace_once(old, new, f'{scope_id} gate')
+
+          artifact_anchor = (
+              "  - id: EVD-INTEGRATION-QA-BACKOFFICE-WEB-001\n"
+              "    type: integration_qa_evidence\n"
+              "    value: documentation/integration-qa/CLAIMS_BACKOFFICE_WEB_EVIDENCE.md"
+          )
+          artifact_replacement = artifact_anchor + "\n" + (
+              "  - id: EVD-INTEGRATION-QA-INTAKE-WEB-APPROVAL-001\n"
+              "    type: manual_approval\n"
+              "    value: documentation/integration-qa/DIGITAL_CLAIM_INTAKE_WEB_APPROVAL.md\n"
+              "  - id: EVD-INTEGRATION-QA-TRACKING-WEB-APPROVAL-001\n"
+              "    type: manual_approval\n"
+              "    value: documentation/integration-qa/CUSTOMER_CLAIM_TRACKING_WEB_APPROVAL.md\n"
+              "  - id: EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001\n"
+              "    type: manual_approval\n"
+              "    value: documentation/integration-qa/CLAIMS_BACKOFFICE_WEB_APPROVAL.md"
+          )
+          replace_once(artifact_anchor, artifact_replacement, 'artifact registry')
+
+          if '\n  human_acceptance:\n' in text or '\n  release_gate:\n' in text:
+              raise SystemExit('downstream global phase unexpectedly present')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .blueprint/status.yaml
+          git diff --cached --check
+          git commit -m "chore(blueprint): record Integration QA approval state"
+          git push origin HEAD:blueprint/integration-qa-web

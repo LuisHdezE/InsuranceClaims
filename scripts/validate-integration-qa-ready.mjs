@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 
 function fail(message) {
-  throw new Error(`Integration QA ready-state validation failed: ${message}`);
+  throw new Error(`Integration QA state validation failed: ${message}`);
 }
 
 function assert(condition, message) {
@@ -21,16 +21,22 @@ const expectedSlices = {
   'digital-claim-intake/web': {
     file: '.blueprint/functional-slices/digital-claim-intake.web.json',
     evidence: 'EVD-INTEGRATION-QA-INTAKE-WEB-001',
+    approvalEvidence: 'EVD-INTEGRATION-QA-INTAKE-WEB-APPROVAL-001',
+    approvalFile: 'documentation/integration-qa/DIGITAL_CLAIM_INTAKE_WEB_APPROVAL.md',
     idempotency: 'PASS',
   },
   'customer-claim-tracking/web': {
     file: '.blueprint/functional-slices/customer-claim-tracking.web.json',
     evidence: 'EVD-INTEGRATION-QA-TRACKING-WEB-001',
+    approvalEvidence: 'EVD-INTEGRATION-QA-TRACKING-WEB-APPROVAL-001',
+    approvalFile: 'documentation/integration-qa/CUSTOMER_CLAIM_TRACKING_WEB_APPROVAL.md',
     idempotency: 'N/A',
   },
   'claims-backoffice/web': {
     file: '.blueprint/functional-slices/claims-backoffice.web.json',
     evidence: 'EVD-INTEGRATION-QA-BACKOFFICE-WEB-001',
+    approvalEvidence: 'EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001',
+    approvalFile: 'documentation/integration-qa/CLAIMS_BACKOFFICE_WEB_APPROVAL.md',
     idempotency: 'N/A',
   },
 };
@@ -52,7 +58,7 @@ function validateSummary(summary, expectedReviewedSha = null) {
   assert(summary.gate === 'integration_qa_pass', 'summary gate must be integration_qa_pass');
   assert(summary.scope === 'interface_slice_platform', 'summary scope must be interface_slice_platform');
   assert(summary.platform === 'web', 'summary platform must be web');
-  assert(summary.next_status === 'READY_FOR_REVIEW', 'summary next_status must remain READY_FOR_REVIEW before human approval');
+  assert(summary.next_status === 'READY_FOR_REVIEW', 'machine summary must stop at READY_FOR_REVIEW and never infer human approval');
   assert(summary.human_acceptance_started === false, 'Human Acceptance must not be started by Integration QA');
   assert(summary.release_gate_started === false, 'Release Gate must not be started by Integration QA');
   if (expectedReviewedSha) {
@@ -91,21 +97,34 @@ for (const sliceId of Object.keys(expectedSlices)) {
   assert(offline.slices?.[sliceId]?.['qa.offline'] === 'PASS', `${sliceId} committed offline evidence must be PASS`);
 }
 
+const integrationStates = [];
 for (const [sliceId, config] of Object.entries(expectedSlices)) {
   const slice = readJson(config.file);
   assert(`${slice.id}/${slice.platform}` === sliceId, `${config.file} identity drifted`);
   assert(slice.lifecycle_status === 'FUNCTIONAL', `${sliceId} lifecycle must remain FUNCTIONAL before Human Acceptance`);
   assert(slice.blocker === null, `${sliceId} must not carry an Integration QA blocker`);
   assert(slice.visual_functional_review?.status === 'PASS', `${sliceId} Visual & Functional Review must remain PASS`);
-  assert(slice.integration_qa?.status === 'READY_FOR_REVIEW', `${sliceId} integration_qa must be READY_FOR_REVIEW`);
+  assert(['READY_FOR_REVIEW', 'PASS'].includes(slice.integration_qa?.status), `${sliceId} integration_qa must be READY_FOR_REVIEW or PASS`);
+  integrationStates.push(slice.integration_qa.status);
   assert(slice.integration_qa?.evidence_ids?.includes(systemEvidence), `${sliceId} missing system Integration QA evidence`);
   assert(slice.integration_qa?.evidence_ids?.includes(config.evidence), `${sliceId} missing scoped Integration QA evidence`);
+  assert(slice.evidence_ids?.includes(systemEvidence), `${sliceId} top-level evidence missing system Integration QA evidence`);
+  assert(slice.evidence_ids?.includes(config.evidence), `${sliceId} top-level evidence missing scoped Integration QA evidence`);
   assert(slice.human_acceptance?.status === 'PENDING', `${sliceId} Human Acceptance must remain PENDING`);
   assert(Array.isArray(slice.human_acceptance?.evidence_ids) && slice.human_acceptance.evidence_ids.length === 0, `${sliceId} Human Acceptance evidence must remain empty`);
 }
 
+const allReady = integrationStates.every((status) => status === 'READY_FOR_REVIEW');
+const allApproved = integrationStates.every((status) => status === 'PASS');
+assert(allReady || allApproved, 'all three scoped Integration QA states must advance together');
+
 const status = fs.readFileSync('.blueprint/status.yaml', 'utf8');
-assert(/\n  integration_qa:\n    status: READY_FOR_REVIEW\n    progress: 89\n/.test(status), 'global Integration QA phase must be READY_FOR_REVIEW at 89%');
+if (allApproved) {
+  assert(/\n  integration_qa:\n    status: COMPLETE\n    progress: 100\n/.test(status), 'approved global Integration QA phase must be COMPLETE at 100%');
+} else {
+  assert(/\n  integration_qa:\n    status: READY_FOR_REVIEW\n    progress: 89\n/.test(status), 'pre-approval global Integration QA phase must be READY_FOR_REVIEW at 89%');
+}
+
 for (const check of [...mandatoryChecks, 'qa.idempotency', 'qa.offline']) {
   const pattern = new RegExp(`^  ${escapeRegExp(check)}:\\n    status: PASS\\n`, 'm');
   assert(pattern.test(status), `global ${check} must be PASS`);
@@ -115,11 +134,19 @@ const scopedGateMatches = [...status.matchAll(/^  - gate: integration_qa_pass$/g
 assert(scopedGateMatches.length === 3, `expected exactly 3 Integration QA scoped gates, found ${scopedGateMatches.length}`);
 for (const [sliceId, config] of Object.entries(expectedSlices)) {
   const [scopeId, platform] = sliceId.split('/');
+  const expectedGateState = allApproved ? 'PASS' : 'READY_FOR_REVIEW';
   const gatePattern = new RegExp(
-    `  - gate: integration_qa_pass\\n    scope: interface_slice_platform\\n    scope_id: ${escapeRegExp(scopeId)}\\n    platform: ${escapeRegExp(platform)}\\n    status: READY_FOR_REVIEW\\n`,
+    `  - gate: integration_qa_pass\\n    scope: interface_slice_platform\\n    scope_id: ${escapeRegExp(scopeId)}\\n    platform: ${escapeRegExp(platform)}\\n    status: ${expectedGateState}\\n`,
   );
-  assert(gatePattern.test(status), `${sliceId} scoped Integration QA gate must be READY_FOR_REVIEW`);
+  assert(gatePattern.test(status), `${sliceId} scoped Integration QA gate must be ${expectedGateState}`);
   assert(status.includes(`- id: ${config.evidence}\n    type: integration_qa_evidence`), `${config.evidence} missing from artifact registry`);
+  if (allApproved) {
+    assert(fs.existsSync(config.approvalFile), `missing approval document ${config.approvalFile}`);
+    assert(status.includes(`- id: ${config.approvalEvidence}\n    type: manual_approval`), `${config.approvalEvidence} missing from artifact registry`);
+    const slice = readJson(config.file);
+    assert(slice.integration_qa?.evidence_ids?.includes(config.approvalEvidence), `${sliceId} integration_qa missing approval evidence`);
+    assert(slice.evidence_ids?.includes(config.approvalEvidence), `${sliceId} top-level evidence missing approval evidence`);
+  }
 }
 assert(status.includes(`- id: ${systemEvidence}\n    type: integration_qa_system_evidence`), 'system Integration QA evidence missing from artifact registry');
 assert(!/^  human_acceptance:/m.test(status), 'global Human Acceptance phase must not be started here');
@@ -133,5 +160,5 @@ const evidenceFiles = [
 ];
 for (const file of evidenceFiles) assert(fs.existsSync(file), `missing evidence document ${file}`);
 
-console.log('Integration QA ready-state validation PASS');
+console.log(`Integration QA state validation PASS (${allApproved ? 'APPROVED' : 'READY_FOR_REVIEW'})`);
 console.log(`Validated slices: ${Object.keys(expectedSlices).join(', ')}`);
