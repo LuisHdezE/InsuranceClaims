@@ -59,8 +59,8 @@ function validateSummary(summary, expectedReviewedSha = null) {
   assert(summary.scope === 'interface_slice_platform', 'summary scope must be interface_slice_platform');
   assert(summary.platform === 'web', 'summary platform must be web');
   assert(summary.next_status === 'READY_FOR_REVIEW', 'machine summary must stop at READY_FOR_REVIEW and never infer human approval');
-  assert(summary.human_acceptance_started === false, 'Human Acceptance must not be started by Integration QA');
-  assert(summary.release_gate_started === false, 'Release Gate must not be started by Integration QA');
+  assert(summary.human_acceptance_started === false, 'immutable Integration QA machine evidence must preserve that Human Acceptance had not started at evidence time');
+  assert(summary.release_gate_started === false, 'immutable Integration QA machine evidence must preserve that Release Gate had not started at evidence time');
   if (expectedReviewedSha) {
     assert(summary.reviewed_commit === expectedReviewedSha, `runtime reviewed_commit ${summary.reviewed_commit} does not match ${expectedReviewedSha}`);
   }
@@ -98,10 +98,13 @@ for (const sliceId of Object.keys(expectedSlices)) {
 }
 
 const integrationStates = [];
+const acceptanceStates = [];
+const lifecycleStates = [];
 for (const [sliceId, config] of Object.entries(expectedSlices)) {
   const slice = readJson(config.file);
   assert(`${slice.id}/${slice.platform}` === sliceId, `${config.file} identity drifted`);
   assert(['FUNCTIONAL', 'ACCEPTED'].includes(slice.lifecycle_status), `${sliceId} lifecycle must be FUNCTIONAL or ACCEPTED after Integration QA`);
+  lifecycleStates.push(slice.lifecycle_status);
   assert(slice.blocker === null, `${sliceId} must not carry an Integration QA blocker`);
   assert(slice.visual_functional_review?.status === 'PASS', `${sliceId} Visual & Functional Review must remain PASS`);
   assert(['READY_FOR_REVIEW', 'PASS'].includes(slice.integration_qa?.status), `${sliceId} integration_qa must be READY_FOR_REVIEW or PASS`);
@@ -111,6 +114,7 @@ for (const [sliceId, config] of Object.entries(expectedSlices)) {
   assert(slice.evidence_ids?.includes(systemEvidence), `${sliceId} top-level evidence missing system Integration QA evidence`);
   assert(slice.evidence_ids?.includes(config.evidence), `${sliceId} top-level evidence missing scoped Integration QA evidence`);
   assert(['PENDING', 'APPROVED'].includes(slice.human_acceptance?.status), `${sliceId} Human Acceptance must be PENDING or APPROVED`);
+  acceptanceStates.push(slice.human_acceptance.status);
   if (slice.lifecycle_status === 'FUNCTIONAL') {
     assert(slice.human_acceptance.status === 'PENDING', `${sliceId} FUNCTIONAL lifecycle requires pending Human Acceptance`);
   } else {
@@ -154,8 +158,28 @@ for (const [sliceId, config] of Object.entries(expectedSlices)) {
   }
 }
 assert(status.includes(`- id: ${systemEvidence}\n    type: integration_qa_system_evidence`), 'system Integration QA evidence missing from artifact registry');
-assert(!/^  human_acceptance:/m.test(status), 'global Human Acceptance phase must not be started here');
-assert(!/^  release_gate:/m.test(status), 'global Release Gate phase must not be started here');
+assert(!/^  human_acceptance:/m.test(status), 'Blueprint 0.5.2 must not invent a global Human Acceptance phase');
+
+const releaseGateOccurrences = [...status.matchAll(/^  release_gate:$/gm)].length;
+assert([0, 2].includes(releaseGateOccurrences), `Release Gate must be absent or represented by phase+project gate, found ${releaseGateOccurrences}`);
+if (releaseGateOccurrences === 2) {
+  assert(allApproved, 'Release Gate cannot start before all Integration QA scoped gates PASS');
+  assert(lifecycleStates.every((value) => value === 'ACCEPTED'), 'Release Gate requires all committed slices ACCEPTED');
+  assert(acceptanceStates.every((value) => value === 'APPROVED'), 'Release Gate requires explicit Human Acceptance for all committed slices');
+  const phaseReady = /\n  release_gate:\n    status: READY_FOR_REVIEW\n    progress: 80\n/.test(status);
+  const phasePass = /\n  release_gate:\n    status: COMPLETE\n    progress: 100\n/.test(status);
+  const gateReady = /\n  release_gate:\n    status: READY_FOR_REVIEW\n    evaluated_at: '[^']+'\n/.test(status);
+  const gatePass = /\n  release_gate:\n    status: PASS\n    evaluated_at: '[^']+'\n/.test(status);
+  assert((phaseReady && gateReady) || (phasePass && gatePass), 'downstream Release Gate states must progress coherently');
+  for (const releaseCheck of [
+    'release.functional_slices_accepted',
+    'release.security_accepted',
+    'release.documentation',
+    'release.backup_restore',
+  ]) {
+    assert(new RegExp(`^  ${escapeRegExp(releaseCheck)}:\\n    status: PASS\\n`, 'm').test(status), `${releaseCheck} must be PASS once Release Gate starts`);
+  }
+}
 
 const evidenceFiles = [
   'documentation/integration-qa/INTEGRATION_QA_WEB_SYSTEM_EVIDENCE.md',
@@ -167,3 +191,4 @@ for (const file of evidenceFiles) assert(fs.existsSync(file), `missing evidence 
 
 console.log(`Integration QA state validation PASS (${allApproved ? 'APPROVED' : 'READY_FOR_REVIEW'})`);
 console.log(`Validated slices: ${Object.keys(expectedSlices).join(', ')}`);
+console.log(`Release Gate downstream state: ${releaseGateOccurrences === 2 ? 'STARTED_VALID' : 'NOT_STARTED'}`);
