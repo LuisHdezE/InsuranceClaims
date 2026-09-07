@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { HERO_DATA_URI } from '../assets/heroAsset';
 import { PublicIcon, type PublicIconName } from '../components/PublicIcon';
 import { PublicShell } from '../components/PublicShell';
 
@@ -36,7 +37,7 @@ export function HomePage() {
         <section className="landing-hero" aria-labelledby="landing-title">
           <img
             className="landing-hero-photo"
-            src="/insurance-claims-home-hero-v2.jpg"
+            src={HERO_DATA_URI}
             alt="Familia junto a un vehículo en un entorno natural"
           />
           <div className="container-shell landing-hero-inner">
