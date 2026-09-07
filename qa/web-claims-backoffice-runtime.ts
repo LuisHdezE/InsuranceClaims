@@ -10,6 +10,7 @@ import {
   transitionClaimStatus,
   verifyPolicyVehicle,
 } from '../apps/web/src/api/claims';
+import { completeClaimTask, listClaimTasks, listTasks } from '../apps/web/src/api/tasks';
 import type { ApiFailure, ClaimDraft } from '../apps/web/src/api/types';
 
 const baseURL = process.env.QA_BASE_URL ?? 'http://127.0.0.1:3000';
@@ -65,6 +66,41 @@ assert.ok(detail.data.allowedTransitions.includes('UNDER_REVIEW'));
 assert.equal(detail.data.evidence.length, 1);
 assert.ok(detail.requestId);
 
+const claimTasks = await listClaimTasks(summary.claimId, token, client);
+assert.equal(claimTasks.data.length, 2, 'claim with evidence must project CLAIM_REVIEW and EVIDENCE_REVIEW exactly once');
+assert.deepEqual(
+  [...claimTasks.data.map((task) => task.type)].sort(),
+  ['CLAIM_REVIEW', 'EVIDENCE_REVIEW'],
+);
+assert.ok(claimTasks.data.every((task) => task.status === 'OPEN'));
+assert.ok(claimTasks.requestId);
+
+const openTasks = await listTasks({ page: 1, pageSize: 100, status: 'OPEN' }, token, client);
+const createdClaimTasks = openTasks.data.items.filter((task) => task.claimId === summary.claimId);
+assert.equal(createdClaimTasks.length, 2);
+assert.ok(openTasks.requestId);
+
+const evidenceTask = claimTasks.data.find((task) => task.type === 'EVIDENCE_REVIEW');
+assert.ok(evidenceTask);
+const completedTask = await completeClaimTask(evidenceTask.taskId, 'OPEN', token, client);
+assert.equal(completedTask.data.status, 'COMPLETED');
+assert.ok(completedTask.data.completedAt);
+assert.equal(completedTask.data.completedById, authenticated.data.operator.id);
+assert.ok(completedTask.requestId);
+
+let staleTaskConflict = false;
+try {
+  await completeClaimTask(evidenceTask.taskId, 'OPEN', token, client);
+} catch (error) {
+  const failure = error as ApiFailure;
+  staleTaskConflict = failure.problem?.status === 409 && failure.problem?.code === 'TASK_STATE_CONFLICT';
+  assert.ok(failure.requestId);
+}
+assert.equal(staleTaskConflict, true, 'stale ClaimTask completion must produce TASK_STATE_CONFLICT');
+
+const detailAfterTask = await getClaimDetail(summary.claimId, token, client);
+assert.equal(detailAfterTask.data.status, 'RECEIVED', 'task completion must not mutate Claim lifecycle state');
+
 const downloaded = await downloadClaimEvidence(summary.claimId, detail.data.evidence[0].evidenceId, token, client);
 assert.ok(downloaded.data.bytes.byteLength > 0);
 assert.equal(downloaded.data.mediaType, 'image/png');
@@ -72,7 +108,7 @@ assert.ok(downloaded.requestId);
 const evidenceDownloadProtected = true;
 
 const transitioned = await transitionClaimStatus(summary.claimId, {
-  expectedFromStatus: detail.data.status,
+  expectedFromStatus: detailAfterTask.data.status,
   toStatus: 'UNDER_REVIEW',
 }, token, client);
 assert.equal(transitioned.data.fromStatus, 'RECEIVED');
@@ -100,12 +136,22 @@ assert.ok(refreshed.data.auditEvents.some((event) => event.eventCode === 'CLAIM_
 
 console.log(JSON.stringify({
   event: 'BACKOFFICE_RUNTIME_PASS',
-  operationIds: ['authenticateOperator', 'listClaims', 'getClaimDetail', 'downloadClaimEvidence', 'transitionClaimStatus'],
+  operationIds: [
+    'authenticateOperator', 'listClaims', 'getClaimDetail', 'downloadClaimEvidence', 'transitionClaimStatus',
+    'listTasks', 'listClaimTasks', 'completeClaimTask',
+  ],
   tokenLifetimeSeconds: authenticated.data.expiresIn,
   protectedReadRejectedWithoutValidToken,
   evidenceDownloadProtected,
+  projectedClaimTasks: claimTasks.data.length,
+  taskCompletionCommitted: completedTask.data.status === 'COMPLETED',
+  staleTaskConflict,
+  claimStateIndependentFromTask: detailAfterTask.data.status === 'RECEIVED',
   transitionCommitted,
   staleTransitionConflict,
   authoritativeRefreshStatus: refreshed.data.status,
-  requestIdObserved: Boolean(authenticated.requestId && claims.requestId && detail.requestId && transitioned.requestId && refreshed.requestId),
+  requestIdObserved: Boolean(
+    authenticated.requestId && claims.requestId && detail.requestId && claimTasks.requestId && openTasks.requestId
+    && completedTask.requestId && downloaded.requestId && transitioned.requestId && refreshed.requestId
+  ),
 }));
