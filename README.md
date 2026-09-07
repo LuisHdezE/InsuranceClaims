@@ -265,4 +265,6 @@ All business data is synthetic/demo data, and legacy coexistence is simulated by
 
 ## Release documentation
 
+**Release candidate scope:** the governed MVP candidate covered the three accepted web slices and supporting platform described above. That candidate later received explicit human Release Gate approval, and the downstream Operations lifecycle was completed; the final machine-readable state is preserved in [`.blueprint/status.yaml`](.blueprint/status.yaml).
+
 The governed MVP release posture, recoverability proof and limitations are documented in [`documentation/release/RELEASE_READINESS.md`](documentation/release/RELEASE_READINESS.md). Operations evidence is documented in [`documentation/operations/OPERATIONS_OBSERVABILITY_EVIDENCE.md`](documentation/operations/OPERATIONS_OBSERVABILITY_EVIDENCE.md).
