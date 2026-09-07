@@ -10,6 +10,7 @@ import {
   ClaimTaskStateConflictError,
   type ClaimTaskProps,
   type ClaimTaskStatus,
+  type ClaimTaskType,
 } from '@insurance/domain/claim-task';
 
 export type ClaimTaskApplicationErrorCode = 'TASK_NOT_FOUND' | 'TASK_STATE_CONFLICT';
@@ -31,6 +32,7 @@ export interface ClaimTaskRepository {
     page: number;
     pageSize: number;
     status?: ClaimTaskStatus;
+    type?: ClaimTaskType;
     claimId?: string;
   }): Promise<{ items: ClaimTaskProps[]; totalItems: number }>;
   getById(taskId: string): Promise<ClaimTaskProps | null>;
@@ -114,14 +116,14 @@ export class ClaimTasksApplication {
     }
   }
 
-  async listTasks(input: { page?: number; pageSize?: number; status?: ClaimTaskStatus; claimId?: string }, actor?: ActorContext) {
+  async listTasks(input: { page?: number; pageSize?: number; status?: ClaimTaskStatus; type?: ClaimTaskType; claimId?: string }, actor?: ActorContext) {
     requirePermission(actor, 'claims.backoffice.read');
     const page = input.page ?? 1;
     const pageSize = input.pageSize ?? 50;
     if (!Number.isInteger(page) || page < 1 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
       throw new ApplicationError('VALIDATION_ERROR', 'Invalid task pagination parameters.');
     }
-    const result = await this.deps.tasks.list({ page, pageSize, status: input.status, claimId: input.claimId });
+    const result = await this.deps.tasks.list({ page, pageSize, status: input.status, type: input.type, claimId: input.claimId });
     const items = await Promise.all(result.items.map(async (task) => taskProjection(task, await this.deps.claims.getById(task.claimId))));
     return {
       items,

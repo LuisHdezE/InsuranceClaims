@@ -26,8 +26,13 @@ export function OperatorTasksPage() {
   const [failure, setFailure] = useState<ApiFailure | null>(null);
 
   const tasksQuery = useQuery({
-    queryKey: ['operator', 'tasks', status || 'ALL'],
-    queryFn: () => listTasks({ page: 1, pageSize: 100, status: status || undefined }, session!.accessToken),
+    queryKey: ['operator', 'tasks', status || 'ALL', type || 'ALL_TYPES'],
+    queryFn: () => listTasks({
+      page: 1,
+      pageSize: 100,
+      status: status || undefined,
+      type: type || undefined,
+    }, session!.accessToken),
     enabled: Boolean(session),
   });
 
@@ -53,15 +58,14 @@ export function OperatorTasksPage() {
     },
   });
 
-  const allVisibleStatusTasks = tasksQuery.data?.data.items ?? [];
+  const serverFilteredTasks = tasksQuery.data?.data.items ?? [];
   const normalizedSearch = search.trim().toLocaleLowerCase('es');
-  const tasks = useMemo(() => allVisibleStatusTasks.filter((task) => {
-    if (type && task.type !== type) return false;
+  const tasks = useMemo(() => serverFilteredTasks.filter((task) => {
     if (!normalizedSearch) return true;
     return [task.title, task.trackingCode, task.policyReference, task.vehicleReference, task.type]
       .filter(Boolean)
       .some((value) => String(value).toLocaleLowerCase('es').includes(normalizedSearch));
-  }), [allVisibleStatusTasks, normalizedSearch, type]);
+  }), [serverFilteredTasks, normalizedSearch]);
 
   if (!session) return null;
 
@@ -69,10 +73,10 @@ export function OperatorTasksPage() {
   const todayKey = dateKey(now);
   const weekStart = new Date(now);
   weekStart.setDate(now.getDate() - 7);
-  const openCount = allVisibleStatusTasks.filter((task) => task.status === 'OPEN').length;
-  const highCount = allVisibleStatusTasks.filter((task) => task.status === 'OPEN' && task.priority === 'HIGH').length;
-  const dueToday = allVisibleStatusTasks.filter((task) => task.status === 'OPEN' && task.dueAt && dateKey(new Date(task.dueAt)) === todayKey).length;
-  const completedThisWeek = allVisibleStatusTasks.filter((task) => task.status === 'COMPLETED' && task.completedAt && new Date(task.completedAt) >= weekStart).length;
+  const openCount = serverFilteredTasks.filter((task) => task.status === 'OPEN').length;
+  const highCount = serverFilteredTasks.filter((task) => task.status === 'OPEN' && task.priority === 'HIGH').length;
+  const dueToday = serverFilteredTasks.filter((task) => task.status === 'OPEN' && task.dueAt && dateKey(new Date(task.dueAt)) === todayKey).length;
+  const completedThisWeek = serverFilteredTasks.filter((task) => task.status === 'COMPLETED' && task.completedAt && new Date(task.completedAt) >= weekStart).length;
 
   return (
     <OperatorShell>

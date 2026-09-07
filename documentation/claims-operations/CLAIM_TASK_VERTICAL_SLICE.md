@@ -58,7 +58,10 @@ Optional query:
 - `page`: integer >= 1, default 1
 - `pageSize`: integer 1..100, default 50
 - `status`: `OPEN | COMPLETED`
+- `type`: `CLAIM_REVIEW | EVIDENCE_REVIEW | MISSING_DOCUMENT_FOLLOWUP | CUSTOMER_FOLLOWUP | CLOSURE_REVIEW`
 - `claimId`: UUID
+
+`status`, `type` and `claimId` are server-side filters. Dashboard counters that need an exact task-family total use `totalItems` from a filtered query rather than counting only the first loaded page.
 
 Response:
 
@@ -135,11 +138,13 @@ Forward and rollback SQL for this increment are versioned under `prisma/migratio
 - [ ] Idempotent Claim replay produces no duplicate tasks.
 - [ ] Unauthorized task reads/writes are rejected.
 - [ ] Task listing returns Claim context needed by the operational UI.
+- [ ] Task status/type/claim filters execute server-side and return exact `totalItems`.
 - [ ] Completion persists `COMPLETED`, `completedAt` and `completedById`.
 - [ ] Stale completion returns HTTP 409.
 - [ ] Claim status is unchanged by task completion.
 - [ ] Memory tests and PostgreSQL runtime exercise the same Application contract.
 - [ ] Architecture checker covers the new REST boundary.
+- [ ] Claim Detail and Tasks Workspace remain responsive without horizontal page overflow.
 
 ## Explicit non-goals
 

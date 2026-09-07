@@ -80,9 +80,19 @@
 .ops-task-status.is-completed { background: #e8f6ee; color: #147245; }
 .ops-done-mark { color: var(--ops-green); font-size: 9px; font-weight: 900; }
 
-.ops-claim-tasks-card { grid-column: 1 / -1; min-height: 0; }
-.ops-claim-task-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.ops-claim-tasks-card {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+}
+.ops-claim-task-list { width: 100%; max-width: 100%; min-width: 0; list-style: none; margin: 0; padding: 0; display: grid; }
 .ops-claim-task-list li {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 62px;
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr) auto auto;
@@ -90,12 +100,16 @@
   align-items: center;
   padding: 9px 0;
   border-top: 1px solid #e8eef3;
+  box-sizing: border-box;
 }
 .ops-claim-task-list li:first-child { border-top: 0; }
 .ops-claim-task-list li.is-completed { opacity: .72; }
 .ops-task-check { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #eef8fb; color: var(--ops-cyan); font-size: 15px; font-weight: 900; }
 .ops-claim-task-list li.is-completed .ops-task-check { background: #e8f6ee; color: var(--ops-green); }
-.ops-task-main-copy { display: grid; gap: 2px; min-width: 0; }
+.ops-task-main-copy { display: grid; gap: 2px; min-width: 0; max-width: 100%; }
+.ops-task-main-copy strong,
+.ops-task-main-copy span,
+.ops-task-main-copy small { overflow-wrap: anywhere; word-break: break-word; }
 .ops-task-main-copy strong { font-size: 10px; }
 .ops-task-main-copy span { color: #405b78; font-size: 9px; }
 .ops-task-main-copy small { color: var(--ops-muted); font-size: 8px; }
@@ -122,13 +136,15 @@
   .ops-task-table tr { margin-bottom: 12px; border: 1px solid var(--ops-border); border-radius: 10px; overflow: hidden; }
   .ops-task-table td { display: grid; grid-template-columns: 105px minmax(0, 1fr); gap: 8px; border-top: 1px solid #edf2f5; }
   .ops-task-table td:first-child { border-top: 0; }
-  .ops-task-table td::before { content: attr(data-label); color: var(--ops-muted); font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
+  .ops-task-table td::before { content: attr(data-label); font-weight: 900; color: var(--ops-muted); font-size: 8px; text-transform: uppercase; letter-spacing: .04em; }
+  .ops-claim-tasks-card { grid-column: 1; }
   .ops-claim-task-list li { grid-template-columns: 28px minmax(0, 1fr) auto; }
-  .ops-claim-task-list button { grid-column: 2; justify-self: start; }
+  .ops-claim-task-list button { grid-column: 2; justify-self: start; max-width: 100%; }
 }
 
 @media (max-width: 480px) {
   .ops-task-kpis { grid-template-columns: 1fr; }
   .ops-claim-task-list li { grid-template-columns: 28px minmax(0, 1fr); }
-  .ops-claim-task-list .ops-task-status { grid-column: 2; justify-self: start; }
+  .ops-claim-task-list .ops-task-status { grid-column: 2; justify-self: start; max-width: 100%; }
+  .ops-claim-task-list button { grid-column: 2; max-width: 100%; }
 }

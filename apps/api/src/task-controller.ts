@@ -6,6 +6,13 @@ import { RateLimitService, callerIp } from './transport.js';
 
 const uuidSchema = z.string().uuid();
 const taskStatusSchema = z.enum(['OPEN', 'COMPLETED']);
+const taskTypeSchema = z.enum([
+  'CLAIM_REVIEW',
+  'EVIDENCE_REVIEW',
+  'MISSING_DOCUMENT_FOLLOWUP',
+  'CUSTOMER_FOLLOWUP',
+  'CLOSURE_REVIEW',
+]);
 const completeTaskSchema = z.object({ expectedStatus: taskStatusSchema });
 
 @Controller('api/v1/operator')
@@ -27,6 +34,7 @@ export class OperatorTasksController {
       page: z.coerce.number().int().min(1).optional(),
       pageSize: z.coerce.number().int().min(1).max(100).optional(),
       status: taskStatusSchema.optional(),
+      type: taskTypeSchema.optional(),
       claimId: uuidSchema.optional(),
     }).parse(query);
     return this.runtime.tasks.listTasks(parsed, req.actor);

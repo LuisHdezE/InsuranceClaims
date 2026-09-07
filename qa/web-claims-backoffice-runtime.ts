@@ -80,6 +80,12 @@ const createdClaimTasks = openTasks.data.items.filter((task) => task.claimId ===
 assert.equal(createdClaimTasks.length, 2);
 assert.ok(openTasks.requestId);
 
+const evidenceTasks = await listTasks({ page: 1, pageSize: 100, status: 'OPEN', type: 'EVIDENCE_REVIEW' }, token, client);
+const createdEvidenceTasks = evidenceTasks.data.items.filter((task) => task.claimId === summary.claimId);
+assert.equal(createdEvidenceTasks.length, 1, 'server-side type filter must return the evidence task for this Claim');
+assert.ok(evidenceTasks.data.items.every((task) => task.type === 'EVIDENCE_REVIEW'));
+assert.ok(evidenceTasks.requestId);
+
 const evidenceTask = claimTasks.data.find((task) => task.type === 'EVIDENCE_REVIEW');
 assert.ok(evidenceTask);
 const completedTask = await completeClaimTask(evidenceTask.taskId, 'OPEN', token, client);
@@ -144,6 +150,7 @@ console.log(JSON.stringify({
   protectedReadRejectedWithoutValidToken,
   evidenceDownloadProtected,
   projectedClaimTasks: claimTasks.data.length,
+  serverSideTaskTypeFilter: createdEvidenceTasks.length === 1,
   taskCompletionCommitted: completedTask.data.status === 'COMPLETED',
   staleTaskConflict,
   claimStateIndependentFromTask: detailAfterTask.data.status === 'RECEIVED',
@@ -152,6 +159,6 @@ console.log(JSON.stringify({
   authoritativeRefreshStatus: refreshed.data.status,
   requestIdObserved: Boolean(
     authenticated.requestId && claims.requestId && detail.requestId && claimTasks.requestId && openTasks.requestId
-    && completedTask.requestId && downloaded.requestId && transitioned.requestId && refreshed.requestId
+    && evidenceTasks.requestId && completedTask.requestId && downloaded.requestId && transitioned.requestId && refreshed.requestId
   ),
 }));

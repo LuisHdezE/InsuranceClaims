@@ -24,11 +24,20 @@ export function OperatorDashboardPage() {
   });
   const tasksQuery = useQuery({
     queryKey: ['operator', 'tasks', 'dashboard-open'],
-    queryFn: () => listTasks({ page: 1, pageSize: 100, status: 'OPEN' }, session!.accessToken),
+    queryFn: () => listTasks({ page: 1, pageSize: 5, status: 'OPEN' }, session!.accessToken),
+    enabled: Boolean(session),
+  });
+  const evidenceTasksQuery = useQuery({
+    queryKey: ['operator', 'tasks', 'dashboard-evidence-open'],
+    queryFn: () => listTasks({ page: 1, pageSize: 1, status: 'OPEN', type: 'EVIDENCE_REVIEW' }, session!.accessToken),
     enabled: Boolean(session),
   });
 
-  const failure = (queries.find((query) => query.error)?.error ?? tasksQuery.error) as ApiFailure | undefined;
+  const failure = (
+    queries.find((query) => query.error)?.error
+    ?? tasksQuery.error
+    ?? evidenceTasksQuery.error
+  ) as ApiFailure | undefined;
   useEffect(() => {
     if (failure?.problem?.status === 401) signOut();
   }, [failure, signOut]);
@@ -42,7 +51,7 @@ export function OperatorDashboardPage() {
   const open = counts.RECEIVED + counts.UNDER_REVIEW + counts.OBSERVED + counts.APPROVED + counts.IN_REPAIR;
   const inManagement = counts.UNDER_REVIEW + counts.APPROVED + counts.IN_REPAIR;
   const tasks = tasksQuery.data?.data.items ?? [];
-  const evidencePending = tasks.filter((task) => task.type === 'EVIDENCE_REVIEW').length;
+  const evidencePending = evidenceTasksQuery.data?.data.totalItems ?? 0;
   const stages = [
     { label: 'Reportados', value: counts.RECEIVED, tone: 'navy' },
     { label: 'En gestión', value: inManagement, tone: 'cyan' },
@@ -51,8 +60,8 @@ export function OperatorDashboardPage() {
   ] as const;
   const maxStage = Math.max(1, ...stages.map((stage) => stage.value));
   const received = queries[0]?.data?.data.items ?? [];
-  const loading = queries.some((query) => query.isLoading) || tasksQuery.isLoading;
-  const fetching = queries.some((query) => query.isFetching) || tasksQuery.isFetching;
+  const loading = queries.some((query) => query.isLoading) || tasksQuery.isLoading || evidenceTasksQuery.isLoading;
+  const fetching = queries.some((query) => query.isFetching) || tasksQuery.isFetching || evidenceTasksQuery.isFetching;
 
   return (
     <OperatorShell>
@@ -67,7 +76,11 @@ export function OperatorDashboardPage() {
             className="ops-refresh-button"
             type="button"
             disabled={fetching}
-            onClick={() => void Promise.all([...queries.map((query) => query.refetch()), tasksQuery.refetch()])}
+            onClick={() => void Promise.all([
+              ...queries.map((query) => query.refetch()),
+              tasksQuery.refetch(),
+              evidenceTasksQuery.refetch(),
+            ])}
           >
             {fetching ? 'Actualizando…' : 'Actualizar'}
           </button>
@@ -122,7 +135,7 @@ export function OperatorDashboardPage() {
               <div className="ops-compact-empty">No hay tareas abiertas.</div>
             ) : (
               <ul className="ops-action-list">
-                {tasks.slice(0, 5).map((task) => <TaskActionItem task={task} key={task.taskId} />)}
+                {tasks.map((task) => <TaskActionItem task={task} key={task.taskId} />)}
               </ul>
             )}
           </div>

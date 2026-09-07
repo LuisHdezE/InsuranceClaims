@@ -3,6 +3,7 @@ import {
   ClaimTaskStateConflictError,
   type ClaimTaskProps,
   type ClaimTaskStatus,
+  type ClaimTaskType,
 } from '@insurance/domain/claim-task';
 
 function clone<T>(value: T): T { return structuredClone(value); }
@@ -21,9 +22,10 @@ export class MemoryClaimTaskStore implements ClaimTaskRepository {
     return clone(task);
   }
 
-  async list(input: { page: number; pageSize: number; status?: ClaimTaskStatus; claimId?: string }) {
+  async list(input: { page: number; pageSize: number; status?: ClaimTaskStatus; type?: ClaimTaskType; claimId?: string }) {
     const all = [...this.tasks.values()]
       .filter((task) => !input.status || task.status === input.status)
+      .filter((task) => !input.type || task.type === input.type)
       .filter((task) => !input.claimId || task.claimId === input.claimId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     const start = (input.page - 1) * input.pageSize;
@@ -117,10 +119,11 @@ export class PrismaClaimTaskStore implements ClaimTaskRepository {
     }
   }
 
-  async list(input: { page: number; pageSize: number; status?: ClaimTaskStatus; claimId?: string }) {
+  async list(input: { page: number; pageSize: number; status?: ClaimTaskStatus; type?: ClaimTaskType; claimId?: string }) {
     let query = this.db.orm.public.ClaimTask.orderBy((task: any) => task.createdAt.desc());
     const where: Record<string, string> = {};
     if (input.status) where.status = input.status;
+    if (input.type) where.type = input.type;
     if (input.claimId) where.claimId = input.claimId;
     if (Object.keys(where).length) query = query.where(where);
     const rows = await query.all();
