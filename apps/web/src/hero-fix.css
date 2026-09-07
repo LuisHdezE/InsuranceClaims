@@ -4,9 +4,17 @@
 }
 
 .landing-hero-photo {
+  position: absolute;
   z-index: 0;
-  background-image: url('/insurance-claims-home-hero-v2.jpg');
-  background-position: center 45%;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 39%;
+  width: 61%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 45%;
 }
 
 .landing-hero-inner {
@@ -15,13 +23,19 @@
 
 @media (max-width: 1180px) {
   .landing-hero-photo {
-    inset: 0 0 0 35%;
+    left: 35%;
+    width: 65%;
   }
 }
 
 @media (max-width: 900px) {
   .landing-hero-photo {
-    inset: 295px 0 0 0;
-    background-position: center 46%;
+    top: 295px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    object-position: center 46%;
   }
 }
