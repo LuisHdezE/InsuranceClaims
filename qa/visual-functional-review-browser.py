@@ -233,6 +233,25 @@ def console_errors() -> list[str]:
     return errors
 
 
+def find_claim_detail_link(tracking_code: str):
+    """Resolve the claim detail action from either the evolved Kanban or legacy list view."""
+    card_xpath = (
+        "//a[contains(concat(' ', normalize-space(@class), ' '), ' ops-claim-card ')][.//strong[normalize-space()="
+        f"{json.dumps(tracking_code, ensure_ascii=False)}]]"
+    )
+    cards = driver.find_elements(By.XPATH, card_xpath)
+    if cards:
+        return cards[0]
+
+    rows = driver.find_elements(
+        By.XPATH,
+        f"//tr[.//strong[normalize-space()={json.dumps(tracking_code, ensure_ascii=False)}]]",
+    )
+    if rows:
+        return rows[0].find_element(By.LINK_TEXT, "Ver detalle")
+    return False
+
+
 try:
     # --- Digital Claim Intake: real rendered UI + API-backed claim creation ---
     set_viewport(1440, 1000)
@@ -338,7 +357,7 @@ try:
         f"Accessibility audit: {audit_accessibility()}",
     ])
 
-    # --- Claims Backoffice: protected route + real operator session + list/detail ---
+    # --- Claims Backoffice: protected route + real operator session + workspace/detail ---
     visit("/operator/claims")
     wait_path("/operator/login")
     wait_text("Acceso de operadores")
@@ -357,12 +376,7 @@ try:
     assert_no_horizontal_overflow()
     capture(backoffice, "backoffice-03-claims-mobile.png", 390, 844)
 
-    row = wait.until(
-        EC.presence_of_element_located(
-            (By.XPATH, f"//tr[.//strong[normalize-space()={json.dumps(tracking_code)}]]")
-        )
-    )
-    detail_link = row.find_element(By.LINK_TEXT, "Ver detalle")
+    detail_link = wait.until(lambda d: find_claim_detail_link(tracking_code))
     driver.execute_script("arguments[0].click()", detail_link)
     wait.until(lambda d: "/operator/claims/" in d.current_url)
     wait_text("Información del siniestro")
@@ -390,7 +404,7 @@ try:
     })
     backoffice["observations"].extend([
         "Operator login establishes the approved short-lived in-memory session and unlocks the protected route.",
-        "Claims list and detail render the claim created through the public UI, proving end-user/business-data continuity through the real API.",
+        "Claims workspace and detail render the claim created through the public UI, proving end-user/business-data continuity through the real API.",
         "Backoffice remains operationally distinct from public marketing treatment while retaining FAR identity tokens.",
         "Mobile claims/detail views remain within viewport without horizontal page overflow.",
         f"Accessibility audit: {audit_accessibility()}",
