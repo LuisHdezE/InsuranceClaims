@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.5.0",
+  "review_type": "integration_qa_offline",
+  "reviewed_commit": "7828b6220500a6d7a8cdb5c1815dbbd06f49ea06",
+  "transport_simulation": "Chrome DevTools Network.setBlockedURLs on the SPA /api transport",
+  "slices": {
+    "digital-claim-intake/web": {
+      "qa.offline": "PASS",
+      "observation": "Verification fails closed and never substitutes authoritative API data while the SPA API transport is unavailable."
+    },
+    "customer-claim-tracking/web": {
+      "qa.offline": "PASS",
+      "observation": "Tracking lookup exposes the network state without fabricating a claim projection."
+    },
+    "claims-backoffice/web": {
+      "qa.offline": "PASS",
+      "observation": "Protected claims refresh fails closed and explicitly refuses to present cached data as authoritative."
+    }
+  }
+}
