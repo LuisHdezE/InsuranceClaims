@@ -1,0 +1,130 @@
+name: Reconcile Release Gate Ready
+
+on:
+  push:
+    branches:
+      - blueprint/release-gate
+    paths:
+      - .github/workflows/reconcile-release-gate-ready.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: blueprint/release-gate
+          fetch-depth: 0
+      - name: Reconcile Release Gate candidate state
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.blueprint/status.yaml')
+          text = path.read_text(encoding='utf-8')
+
+          def replace_once(old, new, label):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one anchor, found {count}')
+              text = text.replace(old, new, 1)
+
+          if '  release_gate:\n' in text or '  release.functional_slices_accepted:\n' in text or 'EVD-RELEASE-GATE-001' in text:
+              raise SystemExit('Release Gate candidate state already appears in status.yaml')
+
+          replace_once(
+              "updated_at: '2026-09-06T23:15:34-03:00'",
+              "updated_at: '2026-09-06T23:57:03-03:00'",
+              'updated_at',
+          )
+
+          phase_anchor = """  integration_qa:
+    status: COMPLETE
+    progress: 100
+    note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web all passed Integration QA after exact-head real-dependency validation and explicit human approval on 2026-09-06.
+checks:
+"""
+          phase_replacement = """  integration_qa:
+    status: COMPLETE
+    progress: 100
+    note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web all passed Integration QA after exact-head real-dependency validation and explicit human approval on 2026-09-06.
+  release_gate:
+    status: READY_FOR_REVIEW
+    progress: 80
+    note: All four applicable Release Gate checks passed on exact machine-tested candidate 22ae0618cf865a8c940a2c9c3c243a1830cd4d97; explicit human Release Gate approval remains pending.
+checks:
+"""
+          replace_once(phase_anchor, phase_replacement, 'release phase')
+
+          checks = """  release.functional_slices_accepted:
+    status: PASS
+    verification: evidence
+    note: The committed release scope is exactly the three web slices, all lifecycle ACCEPTED with DoD, V&F, Integration QA and Human Acceptance prerequisites complete.
+    evidence_ids: [EVD-RELEASE-GATE-001]
+  release.security_accepted:
+    status: PASS
+    verification: evidence
+    note: Approved security/threat and runtime security evidence remains valid; exact-head production dependency audit reports zero vulnerabilities.
+    evidence_ids: [EVD-RELEASE-GATE-001]
+  release.documentation:
+    status: PASS
+    verification: evidence
+    note: Release scope, setup, verification, runtime, limitations, security aggregation, rollback posture and decision boundary are versioned and reproducible.
+    evidence_ids: [EVD-RELEASE-GATE-001]
+  release.backup_restore:
+    status: PASS
+    verification: evidence
+    note: PostgreSQL 18 pg_dump/pg_restore proof restored six authoritative tables and verified synthetic claim, audit and idempotency sentinels in a distinct database.
+    evidence_ids: [EVD-RELEASE-GATE-001]
+"""
+          replace_once('gates:\n', checks + 'gates:\n', 'release checks')
+
+          gate_anchor = """  design_system_ready:
+    status: PASS
+    evaluated_at: '2026-09-06T00:39:18-03:00'
+    note: Explicit human Design System Ready approval recorded after revised FAR identity/logo validation and exact-head success of Design System, Interface Inventory and full API regressions.
+    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-SYSTEM-VALIDATION-001, EVD-DESIGN-LOGO-001, EVD-DESIGN-LANDING-REFERENCE-001, EVD-DESIGN-SYSTEM-READY-APPROVAL-001]
+functional_slices:
+"""
+          gate_replacement = """  design_system_ready:
+    status: PASS
+    evaluated_at: '2026-09-06T00:39:18-03:00'
+    note: Explicit human Design System Ready approval recorded after revised FAR identity/logo validation and exact-head success of Design System, Interface Inventory and full API regressions.
+    evidence_ids: [EVD-DESIGN-SYSTEM-001, EVD-DESIGN-TOKENS-001, EVD-DESIGN-SYSTEM-EVIDENCE-001, EVD-DESIGN-LOGO-001, EVD-DESIGN-LANDING-REFERENCE-001, EVD-DESIGN-SYSTEM-READY-APPROVAL-001]
+  release_gate:
+    status: READY_FOR_REVIEW
+    evaluated_at: '2026-09-06T23:57:03-03:00'
+    note: Machine Release Gate evidence is complete on run 34077824586; human Release Gate decision remains pending and cannot be inferred by CI.
+    evidence_ids: [EVD-RELEASE-GATE-001]
+functional_slices:
+"""
+          replace_once(gate_anchor, gate_replacement, 'project release gate')
+
+          artifact = """
+  - id: EVD-RELEASE-GATE-001
+    type: release_gate_evidence
+    value: documentation/release/RELEASE_GATE_EVIDENCE.md
+"""
+          text = text.rstrip() + '\n' + artifact.lstrip('\n')
+
+          if '\n  operations_maintenance:' in text or '\n  operations:' in text:
+              raise SystemExit('Operations must not be started while Release Gate awaits human approval')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Validate and commit reconciled checkpoint
+        run: |
+          git diff --check
+          grep -A3 '^  release_gate:' .blueprint/status.yaml | head -n4
+          grep -A4 '^  release.functional_slices_accepted:' .blueprint/status.yaml
+          grep -A4 '^  release.backup_restore:' .blueprint/status.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .blueprint/status.yaml
+          git rm .github/workflows/reconcile-release-gate-ready.yml
+          git commit -m "chore(blueprint): mark Release Gate ready for review"
+          git push origin HEAD:blueprint/release-gate
