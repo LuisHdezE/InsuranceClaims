@@ -11,6 +11,7 @@ import './tracking.css';
 import './backoffice.css';
 import './claims-operations.css';
 import './claims-operations-detail.css';
+import './claims-tasks.css';
 import './public-refresh.css';
 import './hero-fix.css';
 
