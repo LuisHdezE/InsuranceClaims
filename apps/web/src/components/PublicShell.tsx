@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { PublicIcon } from './PublicIcon';
 import '../public-refresh.css';
+import '../public-refresh-fixes.css';
 
 export function PublicShell({ children }: { children: ReactNode }) {
   return (
@@ -9,12 +10,12 @@ export function PublicShell({ children }: { children: ReactNode }) {
       <header className="site-header refreshed-header">
         <div className="container-shell refreshed-header-row">
           <Link className="refreshed-brand" to="/" aria-label="Ir al inicio">
-            <img className="brand-logo" src="/far-seguros-logo.svg" alt="FAR Seguros" />
+            <img className="brand-logo" src="/far-demo-wordmark.svg" alt="FAR Seguros" />
           </Link>
 
           <nav className="refreshed-nav" aria-label="Navegación principal">
             <Link className="is-active" to="/">Inicio</Link>
-            <span className="nav-reference" aria-disabled="true">Productos <span aria-hidden="true">⌄</span></span>
+            <span className="nav-reference" aria-disabled="true" title="Referencia visual fuera del alcance funcional">Productos</span>
             <Link to="/claims/new/verify">Siniestros</Link>
             <Link to="/claims/track">Reclamos</Link>
             <a href="#contacto">Contacto</a>
@@ -35,7 +36,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
       <footer className="site-footer refreshed-footer" id="contacto">
         <div className="container-shell refreshed-footer-main">
           <div className="footer-brand-block">
-            <img src="/far-seguros-logo.svg" alt="" aria-hidden="true" />
+            <img src="/far-demo-wordmark.svg" alt="" aria-hidden="true" />
             <p><strong>Caso técnico no oficial.</strong> Modernización demostrativa con datos exclusivamente sintéticos.</p>
           </div>
 
