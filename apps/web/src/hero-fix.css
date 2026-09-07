@@ -1,0 +1,27 @@
+.landing-hero::before {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.landing-hero-photo {
+  z-index: 0;
+  background-image: url('/insurance-claims-home-hero-v2.jpg');
+  background-position: center 45%;
+}
+
+.landing-hero-inner {
+  z-index: 2;
+}
+
+@media (max-width: 1180px) {
+  .landing-hero-photo {
+    inset: 0 0 0 35%;
+  }
+}
+
+@media (max-width: 900px) {
+  .landing-hero-photo {
+    inset: 295px 0 0 0;
+    background-position: center 46%;
+  }
+}
