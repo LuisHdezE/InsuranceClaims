@@ -5,6 +5,8 @@ const ACCEPTED_BASELINE = 'ba7f519f36567b142604e213f50e13de4732348d';
 const RELEASE_EVIDENCE = 'EVD-RELEASE-GATE-001';
 const APPROVAL_EVIDENCE = 'EVD-RELEASE-GATE-APPROVAL-001';
 const APPROVAL_FILE = 'documentation/release/RELEASE_GATE_APPROVAL.md';
+const OPERATIONS_EVIDENCE = 'EVD-OPERATIONS-OBSERVABILITY-001';
+const OPERATIONS_EVIDENCE_FILE = 'documentation/operations/OPERATIONS_OBSERVABILITY_EVIDENCE.md';
 
 function fail(message) {
   throw new Error(`Release Gate state validation failed: ${message}`);
@@ -81,17 +83,29 @@ if (gateReady) {
   assert(status.includes(APPROVAL_EVIDENCE), 'approved gate must bind manual approval evidence');
 }
 
-for (const forbidden of [
-  /^  operations_maintenance:/m,
-  /^  operations:/m,
-  /^  - gate: operations/m,
-]) {
-  assert(!forbidden.test(status), 'Operations & Maintenance must not be auto-started by Release Gate');
+const operationsComplete = /\n  operations:\n    status: COMPLETE\n    progress: 100\n/.test(status);
+const operationsCheck = /\n  operations\.observability:\n    status: PASS\n    verification: evidence\n/.test(status);
+const operationsArtifact = status.includes(`- id: ${OPERATIONS_EVIDENCE}\n    type: operations_observability_evidence\n    value: ${OPERATIONS_EVIDENCE_FILE}`);
+
+if (gateReady) {
+  assert(!operationsComplete, 'Operations cannot start before Release Gate PASS');
+  assert(!operationsCheck, 'operations.observability cannot PASS before Release Gate PASS');
+  assert(!operationsArtifact, 'Operations evidence cannot be registered before Release Gate PASS');
+} else if (operationsComplete) {
+  assert(operationsCheck, 'completed Operations requires operations.observability PASS');
+  assert(operationsArtifact, 'completed Operations requires registered observability evidence');
+  assert(fs.existsSync(OPERATIONS_EVIDENCE_FILE), 'completed Operations requires observability evidence file');
+  assert(!/^  operations_gate:/m.test(status), 'Blueprint 0.5.2 defines no separate Operations gate');
+  assert(!/^  - gate: operations/m.test(status), 'Blueprint 0.5.2 defines no scoped Operations gate');
+} else {
+  assert(!operationsCheck, 'operations.observability should not be recorded before Operations begins');
+  assert(!operationsArtifact, 'Operations artifact should not be registered before Operations begins');
 }
 
 for (const temporary of [
   '.github/workflows/reconcile-release-gate-ready.yml',
   '.github/workflows/reconcile-release-gate-approval.yml',
+  '.github/workflows/reconcile-operations-state.yml',
 ]) {
   assert(!fs.existsSync(temporary), `temporary workflow still present: ${temporary}`);
 }
@@ -111,9 +125,17 @@ const allowedExact = new Set([
   '.github/workflows/release-gate-evidence.yml',
   '.github/workflows/release-gate-ready.yml',
 ]);
+const allowedOperations = new Set([
+  'qa/operations-observability.mjs',
+  'scripts/validate-operations-state.mjs',
+  '.github/workflows/operations-observability.yml',
+  '.github/workflows/operations-state.yml',
+]);
 for (const path of changed) {
-  const allowed = allowedExact.has(path) || path.startsWith('documentation/release/');
-  assert(allowed, `non-release/product drift detected since accepted baseline: ${path}`);
+  const releaseAllowed = allowedExact.has(path) || path.startsWith('documentation/release/');
+  const operationsAllowed = gateApproved && operationsComplete
+    && (allowedOperations.has(path) || path.startsWith('documentation/operations/'));
+  assert(releaseAllowed || operationsAllowed, `non-release/product drift detected since accepted baseline: ${path}`);
 }
 
 console.log(JSON.stringify({
@@ -123,6 +145,7 @@ console.log(JSON.stringify({
   slices: expectedSlices.map(([identity]) => identity),
   humanReleaseDecision: gateApproved ? 'APPROVED' : 'PENDING',
   productDrift: false,
+  downstreamOperations: operationsComplete ? 'COMPLETE' : 'NOT_STARTED',
   downstreamGuardrailMaintenance: [
     'scripts/validate-human-acceptance.mjs',
     'scripts/validate-integration-qa-ready.mjs',
