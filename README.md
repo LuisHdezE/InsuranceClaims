@@ -14,6 +14,7 @@
 
 | | |
 |---|---|
+| **MVP version** | **0.1.0** |
 | **Delivery model** | GREENFIELD modernization MVP with simulated legacy coexistence |
 | **Blueprint** | Software Development Blueprint **0.5.2**, full lifecycle completed |
 | **Architecture** | Clean Architecture + Ports & Adapters |
@@ -63,6 +64,10 @@ The supporting platform also includes:
 Additional desktop/mobile and error-state captures are versioned under [`documentation/visual-functional-review/generated/assets`](documentation/visual-functional-review/generated/assets).
 
 ## Architecture
+
+<p align="center">
+  <img src="documentation/portfolio/architecture-overview.svg" alt="Insurance Claims Legacy Modernization architecture overview" width="100%">
+</p>
 
 ```mermaid
 flowchart LR
@@ -262,6 +267,12 @@ It does **not** claim:
 - production object storage or regulatory retention policy.
 
 All business data is synthetic/demo data, and legacy coexistence is simulated by design.
+
+## Portfolio artifacts
+
+- [Technical case study](documentation/portfolio/CASE_STUDY.md)
+- [MVP v0.1.0 release notes](documentation/portfolio/RELEASE_NOTES_v0.1.0.md)
+- [Architecture overview graphic](documentation/portfolio/architecture-overview.svg)
 
 ## Release documentation
 
