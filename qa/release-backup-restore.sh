@@ -62,9 +62,22 @@ SELECT 'CLAIM_CREATED', '2026-09-06T20:00:00Z', 'ANONYMOUS', 'CLAIM', id::text,
 FROM claim_row;
 SQL
 
-pg_dump -Fc --no-owner --no-privileges -d "${SOURCE_DB}" -f "${DUMP_FILE}"
+POSTGRES_CONTAINER_ID="${POSTGRES_CONTAINER_ID:-$(docker ps --filter ancestor=postgres:18 --format '{{.ID}}' | head -n1)}"
+if [[ -z "${POSTGRES_CONTAINER_ID}" ]]; then
+  echo "PostgreSQL 18 service container was not found; cannot prove version-matched dump/restore." >&2
+  exit 1
+fi
+
+# GitHub's Ubuntu image may ship an older PostgreSQL client. Use the PostgreSQL 18
+# binaries from the running service container so pg_dump/pg_restore match the server.
+docker exec -e PGPASSWORD="${PGPASSWORD}" "${POSTGRES_CONTAINER_ID}" \
+  pg_dump -h 127.0.0.1 -p 5432 -U "${PGUSER}" \
+  -Fc --no-owner --no-privileges -d "${SOURCE_DB}" > "${DUMP_FILE}"
+
 createdb "${RESTORE_DB}"
-pg_restore --no-owner --no-privileges --exit-on-error -d "${RESTORE_DB}" "${DUMP_FILE}" >/dev/null
+cat "${DUMP_FILE}" | docker exec -i -e PGPASSWORD="${PGPASSWORD}" "${POSTGRES_CONTAINER_ID}" \
+  pg_restore -h 127.0.0.1 -p 5432 -U "${PGUSER}" \
+  --no-owner --no-privileges --exit-on-error -d "${RESTORE_DB}" >/dev/null
 
 TABLES=(operators claims claim_status_history claim_evidence idempotency_records audit_events)
 for table in "${TABLES[@]}"; do
@@ -94,4 +107,4 @@ idempotency_sentinel="$(psql -At -d "${RESTORE_DB}" -c "SELECT scope || '|' || s
   exit 1
 }
 
-echo "RELEASE_BACKUP_RESTORE_PASS source=${SOURCE_DB} restore=${RESTORE_DB} tables=${#TABLES[@]}"
+echo "RELEASE_BACKUP_RESTORE_PASS source=${SOURCE_DB} restore=${RESTORE_DB} tables=${#TABLES[@]} pg_tools=postgres:18"
