@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-06T22:56:00-03:00'
+updated_at: '2026-09-06T23:15:34-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -64,7 +64,7 @@ phases:
   functional_interface_slice:
     status: COMPLETE
     progress: 100
-    note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web are all FUNCTIONAL after explicit human Functional Slice Ready approvals and exact reviewed-head validation.
+    note: digital-claim-intake/web, customer-claim-tracking/web and claims-backoffice/web are all ACCEPTED after explicit Human Acceptance with Functional DoD, Visual & Functional Review and Integration QA already PASS.
   visual_functional_review:
     status: COMPLETE
     progress: 100
@@ -945,3 +945,12 @@ artifacts:
   - id: EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001
     type: manual_approval
     value: documentation/integration-qa/CLAIMS_BACKOFFICE_WEB_APPROVAL.md
+  - id: EVD-HUMAN-ACCEPTANCE-INTAKE-WEB-001
+    type: manual_approval
+    value: documentation/human-acceptance/DIGITAL_CLAIM_INTAKE_WEB_APPROVAL.md
+  - id: EVD-HUMAN-ACCEPTANCE-TRACKING-WEB-001
+    type: manual_approval
+    value: documentation/human-acceptance/CUSTOMER_CLAIM_TRACKING_WEB_APPROVAL.md
+  - id: EVD-HUMAN-ACCEPTANCE-BACKOFFICE-WEB-001
+    type: manual_approval
+    value: documentation/human-acceptance/CLAIMS_BACKOFFICE_WEB_APPROVAL.md

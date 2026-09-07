@@ -101,7 +101,7 @@ const integrationStates = [];
 for (const [sliceId, config] of Object.entries(expectedSlices)) {
   const slice = readJson(config.file);
   assert(`${slice.id}/${slice.platform}` === sliceId, `${config.file} identity drifted`);
-  assert(slice.lifecycle_status === 'FUNCTIONAL', `${sliceId} lifecycle must remain FUNCTIONAL before Human Acceptance`);
+  assert(['FUNCTIONAL', 'ACCEPTED'].includes(slice.lifecycle_status), `${sliceId} lifecycle must be FUNCTIONAL or ACCEPTED after Integration QA`);
   assert(slice.blocker === null, `${sliceId} must not carry an Integration QA blocker`);
   assert(slice.visual_functional_review?.status === 'PASS', `${sliceId} Visual & Functional Review must remain PASS`);
   assert(['READY_FOR_REVIEW', 'PASS'].includes(slice.integration_qa?.status), `${sliceId} integration_qa must be READY_FOR_REVIEW or PASS`);
@@ -110,8 +110,13 @@ for (const [sliceId, config] of Object.entries(expectedSlices)) {
   assert(slice.integration_qa?.evidence_ids?.includes(config.evidence), `${sliceId} missing scoped Integration QA evidence`);
   assert(slice.evidence_ids?.includes(systemEvidence), `${sliceId} top-level evidence missing system Integration QA evidence`);
   assert(slice.evidence_ids?.includes(config.evidence), `${sliceId} top-level evidence missing scoped Integration QA evidence`);
-  assert(slice.human_acceptance?.status === 'PENDING', `${sliceId} Human Acceptance must remain PENDING`);
-  assert(Array.isArray(slice.human_acceptance?.evidence_ids) && slice.human_acceptance.evidence_ids.length === 0, `${sliceId} Human Acceptance evidence must remain empty`);
+  assert(['PENDING', 'APPROVED'].includes(slice.human_acceptance?.status), `${sliceId} Human Acceptance must be PENDING or APPROVED`);
+  if (slice.lifecycle_status === 'FUNCTIONAL') {
+    assert(slice.human_acceptance.status === 'PENDING', `${sliceId} FUNCTIONAL lifecycle requires pending Human Acceptance`);
+  } else {
+    assert(slice.human_acceptance.status === 'APPROVED', `${sliceId} ACCEPTED lifecycle requires approved Human Acceptance`);
+    assert((slice.human_acceptance.evidence_ids ?? []).length > 0, `${sliceId} ACCEPTED lifecycle requires Human Acceptance evidence`);
+  }
 }
 
 const allReady = integrationStates.every((status) => status === 'READY_FOR_REVIEW');

@@ -24,7 +24,7 @@
     "artifact": ".blueprint/client-architecture/claims-backoffice.web.json",
     "gate_status": "PASS"
   },
-  "lifecycle_status": "FUNCTIONAL",
+  "lifecycle_status": "ACCEPTED",
   "blocker": null,
   "definition_of_done": {
     "status": "PASS",
@@ -67,8 +67,10 @@
     ]
   },
   "human_acceptance": {
-    "status": "PENDING",
-    "evidence_ids": []
+    "status": "APPROVED",
+    "evidence_ids": [
+      "EVD-HUMAN-ACCEPTANCE-BACKOFFICE-WEB-001"
+    ]
   },
   "evidence_ids": [
     "EVD-FUNCTIONAL-BACKOFFICE-WEB-001",
@@ -78,6 +80,7 @@
     "EVD-VFR-BACKOFFICE-WEB-APPROVAL-001",
     "EVD-INTEGRATION-QA-WEB-SYSTEM-001",
     "EVD-INTEGRATION-QA-BACKOFFICE-WEB-001",
-    "EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001"
+    "EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001",
+    "EVD-HUMAN-ACCEPTANCE-BACKOFFICE-WEB-001"
   ]
 }

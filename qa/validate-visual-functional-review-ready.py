@@ -138,14 +138,14 @@ for slice_id, contract in EXPECTED_SLICES.items():
     else:
         if integration_state not in {'PENDING', 'READY_FOR_REVIEW', 'PASS'}:
             fail(f'{slice_id} approved VFR has invalid downstream Integration QA state {integration_state!r}')
-        if acceptance_state not in {'PENDING', 'PASS'}:
+        if acceptance_state not in {'PENDING', 'APPROVED'}:
             fail(f'{slice_id} approved VFR has invalid Human Acceptance state {acceptance_state!r}')
         if integration_state != 'PASS' and acceptance_state != 'PENDING':
             fail(f'{slice_id} Human Acceptance cannot pass before Integration QA passes')
-        if lifecycle == 'ACCEPTED' and not (integration_state == 'PASS' and acceptance_state == 'PASS'):
-            fail(f'{slice_id} ACCEPTED lifecycle requires PASS Integration QA and Human Acceptance')
-        if lifecycle == 'FUNCTIONAL' and acceptance_state == 'PASS':
-            fail(f'{slice_id} Human Acceptance PASS requires lifecycle ACCEPTED')
+        if lifecycle == 'ACCEPTED' and not (integration_state == 'PASS' and acceptance_state == 'APPROVED'):
+            fail(f'{slice_id} ACCEPTED lifecycle requires PASS Integration QA and APPROVED Human Acceptance')
+        if lifecycle == 'FUNCTIONAL' and acceptance_state == 'APPROVED':
+            fail(f'{slice_id} Human Acceptance APPROVED requires lifecycle ACCEPTED')
 
     if not contract['doc'].is_file():
         fail(f'{slice_id} scoped evidence document is missing')
@@ -214,6 +214,6 @@ print(json.dumps({
     'slices': list(EXPECTED_SLICES),
     'human_review_complete': human_approved,
     'integration_qa_started': any(state != 'PENDING' for state in integration_states),
-    'human_acceptance_complete': all(state == 'PASS' for state in acceptance_states),
+    'human_acceptance_complete': all(state == 'APPROVED' for state in acceptance_states),
     'lifecycle_states': sorted(lifecycle_states),
 }, sort_keys=True))

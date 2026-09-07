@@ -20,7 +20,7 @@ assert(JSON.stringify(slice.inventory_ids) === JSON.stringify(expectedIds), 'tra
 assert(JSON.stringify(slice.api_binding.operation_ids) === JSON.stringify(expectedOps), 'tracking slice must bind only trackClaim');
 assert(slice.api_binding.revision === 'api-v1-r1', 'tracking slice must bind api-v1-r1');
 assert(slice.client_architecture.gate_status === 'PASS', 'Client Architecture gate must remain PASS');
-assert(['IN_PROGRESS', 'FUNCTIONAL'].includes(slice.lifecycle_status), 'tracking lifecycle must be IN_PROGRESS until human gate PASS, then FUNCTIONAL');
+assert(['IN_PROGRESS', 'FUNCTIONAL', 'ACCEPTED'].includes(slice.lifecycle_status), 'tracking lifecycle must progress only through IN_PROGRESS, FUNCTIONAL or ACCEPTED');
 
 const inventoryItems = new Map(inventory.items.map((item) => [item.id, item]));
 for (const id of expectedIds) {
