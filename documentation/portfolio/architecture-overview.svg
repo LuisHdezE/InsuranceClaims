@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Insurance Claims Legacy Modernization architecture overview</title>
+  <desc id="desc">Clean Architecture and Ports and Adapters overview showing React and MCP presentation boundaries flowing through Application and Domain toward infrastructure adapters, PostgreSQL, private evidence storage, and the simulated legacy service.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 z" fill="#64748b"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <linearGradient id="header" x1="0" x2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="#f8fafc"/>
+  <rect x="0" y="0" width="1600" height="128" fill="url(#header)"/>
+
+  <text x="80" y="62" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700" fill="#ffffff">Insurance Claims Legacy Modernization</text>
+  <text x="80" y="98" font-family="Inter, Arial, sans-serif" font-size="19" fill="#cbd5e1">Clean Architecture + Ports &amp; Adapters • GREENFIELD MVP • Legacy coexistence SIMULATED</text>
+
+  <!-- Presentation -->
+  <text x="80" y="185" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#334155">PRESENTATION</text>
+
+  <g filter="url(#shadow)">
+    <rect x="80" y="215" rx="20" ry="20" width="300" height="130" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="110" y="265" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#0f172a">React 19 Web</text>
+    <text x="110" y="300" font-family="Inter, Arial, sans-serif" font-size="17" fill="#475569">Customer + operator UI</text>
+    <text x="110" y="327" font-family="Inter, Arial, sans-serif" font-size="15" fill="#64748b">REST /api/v1 only</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="80" y="390" rx="20" ry="20" width="300" height="130" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="110" y="440" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#0f172a">MCP Tool</text>
+    <text x="110" y="475" font-family="Inter, Arial, sans-serif" font-size="17" fill="#475569">Read-only claim status</text>
+    <text x="110" y="502" font-family="Inter, Arial, sans-serif" font-size="15" fill="#64748b">Separate presentation boundary</text>
+  </g>
+
+  <!-- API/MCP presentation adapters -->
+  <g filter="url(#shadow)">
+    <rect x="470" y="215" rx="20" ry="20" width="300" height="130" fill="#eef2ff" stroke="#a5b4fc"/>
+    <text x="500" y="265" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="700" fill="#312e81">NestJS REST</text>
+    <text x="500" y="299" font-family="Inter, Arial, sans-serif" font-size="17" fill="#4338ca">Presentation Adapter</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="470" y="390" rx="20" ry="20" width="300" height="130" fill="#eef2ff" stroke="#a5b4fc"/>
+    <text x="500" y="440" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="700" fill="#312e81">MCP Presentation</text>
+    <text x="500" y="474" font-family="Inter, Arial, sans-serif" font-size="17" fill="#4338ca">Application entry point</text>
+  </g>
+
+  <!-- Core -->
+  <text x="860" y="185" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#334155">APPLICATION CORE</text>
+
+  <g filter="url(#shadow)">
+    <rect x="860" y="215" rx="22" ry="22" width="310" height="305" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="2"/>
+    <text x="895" y="268" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="700" fill="#065f46">Application Layer</text>
+    <text x="895" y="304" font-family="Inter, Arial, sans-serif" font-size="17" fill="#047857">Use cases • orchestration</text>
+
+    <rect x="895" y="335" rx="14" ry="14" width="240" height="62" fill="#ffffff" stroke="#a7f3d0"/>
+    <text x="920" y="374" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="700" fill="#065f46">Domain</text>
+
+    <rect x="895" y="420" rx="14" ry="14" width="240" height="62" fill="#ffffff" stroke="#a7f3d0"/>
+    <text x="920" y="459" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="700" fill="#065f46">Application Ports</text>
+  </g>
+
+  <!-- Infrastructure -->
+  <text x="1250" y="185" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#334155">INFRASTRUCTURE</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1250" y="215" rx="22" ry="22" width="270" height="305" fill="#fff7ed" stroke="#fdba74" stroke-width="2"/>
+    <text x="1280" y="266" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="700" fill="#9a3412">Adapters</text>
+    <text x="1280" y="300" font-family="Inter, Arial, sans-serif" font-size="16" fill="#c2410c">Implement application ports</text>
+
+    <text x="1280" y="355" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#7c2d12">PostgreSQL 18</text>
+    <text x="1280" y="389" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#7c2d12">Evidence Storage</text>
+    <text x="1280" y="423" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#7c2d12">Legacy Adapter</text>
+    <text x="1280" y="457" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#7c2d12">Audit / Idempotency</text>
+  </g>
+
+  <!-- Arrows -->
+  <line x1="380" y1="280" x2="470" y2="280" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+  <line x1="380" y1="455" x2="470" y2="455" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+  <line x1="770" y1="280" x2="860" y2="320" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+  <line x1="770" y1="455" x2="860" y2="415" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+  <line x1="1170" y1="365" x2="1250" y2="365" stroke="#64748b" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#arrow)"/>
+
+  <!-- External systems -->
+  <g filter="url(#shadow)">
+    <rect x="285" y="640" rx="18" ry="18" width="300" height="120" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="315" y="688" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a">PostgreSQL 18</text>
+    <text x="315" y="722" font-family="Inter, Arial, sans-serif" font-size="16" fill="#475569">Modern workflow authority</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="650" y="640" rx="18" ry="18" width="300" height="120" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="680" y="688" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a">Private Evidence</text>
+    <text x="680" y="722" font-family="Inter, Arial, sans-serif" font-size="16" fill="#475569">Synthetic files via port</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1015" y="640" rx="18" ry="18" width="380" height="120" fill="#fff1f2" stroke="#fda4af"/>
+    <text x="1045" y="688" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#9f1239">Simulated Legacy HTTP</text>
+    <text x="1045" y="722" font-family="Inter, Arial, sans-serif" font-size="16" fill="#be123c">Synthetic eligibility only</text>
+  </g>
+
+  <line x1="1335" y1="520" x2="1220" y2="640" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="1365" y1="520" x2="800" y2="640" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="1395" y1="520" x2="450" y2="640" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- Boundary note -->
+  <rect x="80" y="806" rx="14" ry="14" width="1440" height="54" fill="#e2e8f0"/>
+  <text x="110" y="840" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#334155">Forbidden shortcuts:</text>
+  <text x="300" y="840" font-family="Inter, Arial, sans-serif" font-size="18" fill="#475569">React → PostgreSQL  •  React → Legacy  •  MCP → PostgreSQL</text>
+</svg>
