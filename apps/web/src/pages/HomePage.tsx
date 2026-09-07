@@ -34,7 +34,11 @@ export function HomePage() {
     <PublicShell>
       <main className="landing-home">
         <section className="landing-hero" aria-labelledby="landing-title">
-          <div className="landing-hero-photo" role="img" aria-label="Familia junto a un vehículo en un entorno natural" />
+          <img
+            className="landing-hero-photo"
+            src="/insurance-claims-home-hero-v2.jpg"
+            alt="Familia junto a un vehículo en un entorno natural"
+          />
           <div className="container-shell landing-hero-inner">
             <div className="landing-hero-copy">
               <span className="landing-kicker">SEGUROS DE VEHÍCULOS</span>
