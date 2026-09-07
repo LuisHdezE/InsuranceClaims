@@ -57,6 +57,7 @@ export function HomePage() {
                   <span aria-hidden="true">›</span>
                 </Link>
               </div>
+              <Link className="landing-track-link" to="/claims/track">¿Ya reportaste? Dar seguimiento <span aria-hidden="true">→</span></Link>
             </div>
             <div className="landing-trust-badge">
               <PublicIcon kind="shield" />
