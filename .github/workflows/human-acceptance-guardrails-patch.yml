@@ -1,0 +1,67 @@
+name: Patch Human Acceptance Guardrails
+
+on:
+  push:
+    branches:
+      - blueprint/human-acceptance-web
+    paths:
+      - .github/workflows/human-acceptance-guardrails-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: blueprint/human-acceptance-web
+          fetch-depth: 0
+      - name: Make historical validators downstream-aware
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'scripts/validate-functional-slice-digital-claim-intake.mjs': [
+                  ("assert(['IN_PROGRESS', 'FUNCTIONAL'].includes(slice.lifecycle_status), 'slice lifecycle must remain IN_PROGRESS until human gate PASS, then FUNCTIONAL');", "assert(['IN_PROGRESS', 'FUNCTIONAL', 'ACCEPTED'].includes(slice.lifecycle_status), 'slice lifecycle must progress only through IN_PROGRESS, FUNCTIONAL or ACCEPTED');"),
+              ],
+              'scripts/validate-functional-slice-customer-claim-tracking.mjs': [
+                  ("assert(['IN_PROGRESS', 'FUNCTIONAL'].includes(slice.lifecycle_status), 'tracking lifecycle must be IN_PROGRESS until human gate PASS, then FUNCTIONAL');", "assert(['IN_PROGRESS', 'FUNCTIONAL', 'ACCEPTED'].includes(slice.lifecycle_status), 'tracking lifecycle must progress only through IN_PROGRESS, FUNCTIONAL or ACCEPTED');"),
+              ],
+              'scripts/validate-functional-slice-claims-backoffice.mjs': [
+                  ("assert(['IN_PROGRESS', 'FUNCTIONAL'].includes(slice.lifecycle_status), 'backoffice lifecycle must remain IN_PROGRESS until human gate PASS');", "assert(['IN_PROGRESS', 'FUNCTIONAL', 'ACCEPTED'].includes(slice.lifecycle_status), 'backoffice lifecycle must progress only through IN_PROGRESS, FUNCTIONAL or ACCEPTED');"),
+              ],
+              'scripts/validate-integration-qa-ready.mjs': [
+                  ("  assert(slice.lifecycle_status === 'FUNCTIONAL', `${sliceId} lifecycle must remain FUNCTIONAL before Human Acceptance`);", "  assert(['FUNCTIONAL', 'ACCEPTED'].includes(slice.lifecycle_status), `${sliceId} lifecycle must be FUNCTIONAL or ACCEPTED after Integration QA`);"),
+                  ("  assert(slice.human_acceptance?.status === 'PENDING', `${sliceId} Human Acceptance must remain PENDING`);\n  assert(Array.isArray(slice.human_acceptance?.evidence_ids) && slice.human_acceptance.evidence_ids.length === 0, `${sliceId} Human Acceptance evidence must remain empty`);", "  assert(['PENDING', 'APPROVED'].includes(slice.human_acceptance?.status), `${sliceId} Human Acceptance must be PENDING or APPROVED`);\n  if (slice.lifecycle_status === 'FUNCTIONAL') {\n    assert(slice.human_acceptance.status === 'PENDING', `${sliceId} FUNCTIONAL lifecycle requires pending Human Acceptance`);\n  } else {\n    assert(slice.human_acceptance.status === 'APPROVED', `${sliceId} ACCEPTED lifecycle requires approved Human Acceptance`);\n    assert((slice.human_acceptance.evidence_ids ?? []).length > 0, `${sliceId} ACCEPTED lifecycle requires Human Acceptance evidence`);\n  }"),
+              ],
+              'qa/validate-visual-functional-review-ready.py': [
+                  ("        if acceptance_state not in {'PENDING', 'PASS'}:", "        if acceptance_state not in {'PENDING', 'APPROVED'}:"),
+                  ("        if integration_state != 'PASS' and acceptance_state != 'PENDING':", "        if integration_state != 'PASS' and acceptance_state != 'PENDING':"),
+                  ("        if lifecycle == 'ACCEPTED' and not (integration_state == 'PASS' and acceptance_state == 'PASS'):", "        if lifecycle == 'ACCEPTED' and not (integration_state == 'PASS' and acceptance_state == 'APPROVED'):"),
+                  ("            fail(f'{slice_id} ACCEPTED lifecycle requires PASS Integration QA and Human Acceptance')", "            fail(f'{slice_id} ACCEPTED lifecycle requires PASS Integration QA and APPROVED Human Acceptance')"),
+                  ("        if lifecycle == 'FUNCTIONAL' and acceptance_state == 'PASS':", "        if lifecycle == 'FUNCTIONAL' and acceptance_state == 'APPROVED':"),
+                  ("            fail(f'{slice_id} Human Acceptance PASS requires lifecycle ACCEPTED')", "            fail(f'{slice_id} Human Acceptance APPROVED requires lifecycle ACCEPTED')"),
+                  ("    'human_acceptance_complete': all(state == 'PASS' for state in acceptance_states),", "    'human_acceptance_complete': all(state == 'APPROVED' for state in acceptance_states),"),
+              ],
+          }
+
+          for file_name, pairs in replacements.items():
+              path = Path(file_name)
+              text = path.read_text(encoding='utf-8')
+              for old, new in pairs:
+                  if text.count(old) != 1:
+                      raise SystemExit(f'{file_name}: expected exactly one anchor {old!r}, found {text.count(old)}')
+                  text = text.replace(old, new, 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit validator progression support
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/validate-functional-slice-digital-claim-intake.mjs scripts/validate-functional-slice-customer-claim-tracking.mjs scripts/validate-functional-slice-claims-backoffice.mjs scripts/validate-integration-qa-ready.mjs qa/validate-visual-functional-review-ready.py
+          git diff --cached --check
+          git commit -m "fix(qa): make validators acceptance-aware"
+          git push origin HEAD:blueprint/human-acceptance-web
