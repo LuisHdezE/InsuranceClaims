@@ -211,7 +211,7 @@ def public_visual_contract() -> dict[str, Any]:
     if not logo.get_attribute("src").endswith("/far-demo-wordmark-v2.svg"):
         raise AssertionError("Public approved demo wordmark binding is missing")
     body_text = driver.find_element(By.TAG_NAME, "body").text
-    if "Caso técnico no oficial" not in body_text or "Sin afiliación con FAR Seguros" not in body_text:
+    if "Caso técnico no oficial" not in body_text or "No oficial · Sin afiliación" not in body_text:
         raise AssertionError("Case-study disclosure is not visible")
     primary = driver.find_element(By.CSS_SELECTOR, ".btn-primary")
     primary_bg = driver.execute_script("return getComputedStyle(arguments[0]).backgroundColor", primary)
