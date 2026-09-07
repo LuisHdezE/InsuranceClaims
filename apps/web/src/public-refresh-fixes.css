@@ -67,8 +67,167 @@
   opacity: .78;
 }
 
+/* Compact vertical rhythm: keep the landing dense without changing structure. */
+.refreshed-header-row,
+.refreshed-nav {
+  min-height: 68px;
+}
+
+.refreshed-nav a.is-active::after {
+  bottom: 13px;
+}
+
+.client-area-btn {
+  min-height: 40px;
+}
+
+.landing-hero,
+.landing-hero-inner {
+  min-height: 395px;
+}
+
+.landing-hero-copy {
+  padding-top: 40px;
+  padding-bottom: 42px;
+}
+
+.landing-actions {
+  margin-top: 20px;
+}
+
+.landing-quick {
+  margin-top: -12px;
+  padding-bottom: 18px;
+}
+
+.landing-quick-card {
+  min-height: 96px;
+  padding: 12px 13px;
+  border-radius: 16px;
+  grid-template-columns: 44px minmax(0, 1fr) 12px;
+  gap: 10px;
+}
+
+.landing-quick-icon {
+  width: 44px;
+  height: 44px;
+}
+
+.landing-quick-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.landing-quick-copy {
+  gap: 3px;
+}
+
+.landing-benefits {
+  padding: 20px 0;
+}
+
+.landing-benefits-grid {
+  gap: 34px;
+}
+
+.landing-benefit-items {
+  gap: 18px;
+}
+
+.landing-benefit {
+  grid-template-columns: 58px 1fr;
+  gap: 12px;
+}
+
+.landing-benefit-icon {
+  width: 58px;
+  height: 58px;
+}
+
+.landing-benefit-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.landing-process {
+  padding: 18px 0 20px;
+}
+
+.landing-process-grid {
+  gap: 28px;
+}
+
+.landing-step-items {
+  gap: 16px;
+}
+
+.landing-step {
+  min-height: 72px;
+  grid-template-columns: 32px 52px 1fr;
+  gap: 9px;
+}
+
+.landing-step-number {
+  width: 30px;
+  height: 30px;
+  margin-top: 13px;
+}
+
+.landing-step-icon {
+  width: 52px;
+  height: 52px;
+}
+
+.landing-step-icon svg {
+  width: 25px;
+  height: 25px;
+}
+
+.landing-step-arrow {
+  top: 24px;
+}
+
+.refreshed-footer-main {
+  min-height: 122px;
+  padding-top: 14px;
+  padding-bottom: 12px;
+}
+
+.footer-brand-block p {
+  margin-top: 7px;
+}
+
+.refreshed-footer-legal {
+  min-height: 34px;
+}
+
+@media (max-width: 1180px) {
+  .landing-quick {
+    padding-top: 12px;
+  }
+}
+
 @media (max-width: 900px) {
   .public-refresh-shell .brand-logo {
     width: 170px;
+  }
+
+  .refreshed-header-row {
+    min-height: 64px;
+  }
+
+  .landing-hero,
+  .landing-hero-inner {
+    min-height: 610px;
+  }
+
+  .landing-hero-copy {
+    padding-top: 32px;
+  }
+
+  .landing-benefits,
+  .landing-process {
+    padding-top: 18px;
+    padding-bottom: 18px;
   }
 }
