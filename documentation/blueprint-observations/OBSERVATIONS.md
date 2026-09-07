@@ -118,19 +118,19 @@ Blueprint version:
 0.5.2
 
 Phase:
-Post-MVP / Operations maintenance
+Post-MVP / closed-lifecycle maintenance
 
 Finding:
-The consumer-local final Operations state validator correctly freezes product/API drift after the approved Release Gate baseline, but its original allowlist had no category for post-MVP non-product portfolio or governance documentation. As a result, the first Portfolio Hardening README-only candidate in PR #22 was rejected as product/API drift even though no application, package, API contract or runtime file changed.
+The consumer-local final lifecycle validators correctly freeze product/API drift after the approved baselines, but their original allowlists had no explicit category for post-MVP non-product portfolio or governance documentation. This caused Portfolio Hardening documentation to be classified as product drift even though no application, package, API contract or runtime file changed.
 
 Evidence:
-PR #22 candidate `d740e16675b531ca15532b40def4bd986833d919` failed Operations State workflow run `34127897527` with `product/API drift detected after Release Gate merge: README.md`. The failure originated in `scripts/validate-operations-state.mjs`, whose post-Release allowlist originally accepted only Operations state/evidence files.
+PR #22 candidate `d740e16675b531ca15532b40def4bd986833d919` failed Operations State workflow run `34127897527` with `product/API drift detected after Release Gate merge: README.md`. After narrowly reconciling the Operations guard, candidate `6d816b9bffd7010a96a6f177469c0d010735183a` passed Operations State but Release Gate Ready State run `34128185845` then failed with `non-release/product drift detected since accepted baseline: documentation/blueprint-observations/OBSERVATIONS.md`. Both failures originated in consumer-local post-baseline path allowlists rather than product behavior.
 
 Impact:
 LOW
 
 Consumer handling:
-Keep the drift guard fail-closed for product/runtime/API paths while narrowly allowing `README.md`, `documentation/portfolio/**` and `documentation/blueprint-observations/**` as post-MVP non-product maintenance.
+Keep all lifecycle drift guards fail-closed for product/runtime/API paths while narrowly allowing `README.md`, `documentation/portfolio/**` and `documentation/blueprint-observations/**` only as appropriate after Release Gate and Operations are already complete. The Release Gate guard permits the new documentation prefixes only when both lifecycle states are closed.
 
 Potential improvement:
 When this observation is evaluated after portfolio closure, consider whether Blueprint guidance or consumer validator templates should distinguish product/API/runtime drift from post-lifecycle documentation maintenance so that lifecycle closure remains strict without freezing portfolio and governance documentation.
