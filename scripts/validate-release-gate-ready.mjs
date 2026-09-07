@@ -131,11 +131,23 @@ const allowedOperations = new Set([
   '.github/workflows/operations-observability.yml',
   '.github/workflows/operations-state.yml',
 ]);
+const allowedPostMvpDocumentationPrefixes = [
+  'documentation/portfolio/',
+  'documentation/blueprint-observations/',
+];
 for (const path of changed) {
   const releaseAllowed = allowedExact.has(path) || path.startsWith('documentation/release/');
   const operationsAllowed = gateApproved && operationsComplete
     && (allowedOperations.has(path) || path.startsWith('documentation/operations/'));
-  assert(releaseAllowed || operationsAllowed, `non-release/product drift detected since accepted baseline: ${path}`);
+  // Portfolio/governance documentation is only permitted after both the Release
+  // Gate and Operations lifecycle are already complete. Product/API/runtime paths
+  // remain outside this allowlist and continue to fail closed.
+  const postMvpDocumentationAllowed = gateApproved && operationsComplete
+    && allowedPostMvpDocumentationPrefixes.some((prefix) => path.startsWith(prefix));
+  assert(
+    releaseAllowed || operationsAllowed || postMvpDocumentationAllowed,
+    `non-release/product drift detected since accepted baseline: ${path}`,
+  );
 }
 
 console.log(JSON.stringify({

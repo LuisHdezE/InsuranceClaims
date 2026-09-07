@@ -78,9 +78,20 @@ const allowedExact = new Set([
   'scripts/validate-release-gate-ready.mjs',
   '.github/workflows/operations-observability.yml',
   '.github/workflows/operations-state.yml',
+  'README.md',
 ]);
+const allowedDocumentationPrefixes = [
+  'documentation/operations/',
+  'documentation/portfolio/',
+  'documentation/blueprint-observations/',
+];
 for (const path of changed) {
-  const allowed = allowedExact.has(path) || path.startsWith('documentation/operations/');
+  // Post-MVP portfolio/governance documentation is non-product maintenance. Keep
+  // this allowlist narrow so application, package, API contract and runtime drift
+  // continue to fail closed after the approved Release Gate baseline.
+  const allowed =
+    allowedExact.has(path) ||
+    allowedDocumentationPrefixes.some((prefix) => path.startsWith(prefix));
   assert(allowed, `product/API drift detected after Release Gate merge: ${path}`);
 }
 
