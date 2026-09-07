@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 595" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="title desc">
+  <title id="title">Familia junto a un vehículo</title>
+  <desc id="desc">Escena sintética para la demostración técnica de seguros de vehículos</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a9dcff"/>
+      <stop offset="1" stop-color="#eef8ff"/>
+    </linearGradient>
+    <linearGradient id="mount" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8eb6c7"/>
+      <stop offset="1" stop-color="#6c8d99"/>
+    </linearGradient>
+    <linearGradient id="car" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fdfefe"/>
+      <stop offset="0.55" stop-color="#d7e7ef"/>
+      <stop offset="1" stop-color="#9fb5c2"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="595" fill="url(#sky)"/>
+  <path d="M0 270 L190 155 L325 242 L505 125 L690 245 L835 145 L1020 245 L1210 120 L1400 235 L1600 160 L1600 360 L0 360 Z" fill="url(#mount)" opacity=".7"/>
+  <path d="M0 315 C240 260 420 315 610 288 C850 252 1060 308 1600 250 L1600 420 L0 420 Z" fill="#71956d" opacity=".72"/>
+  <ellipse cx="980" cy="500" rx="580" ry="70" fill="#6b7d85" opacity=".18" filter="url(#soft)"/>
+  <g transform="translate(420 235)">
+    <path d="M40 200 C90 95 225 40 430 40 H710 C825 40 915 90 970 200 L1010 300 H0 Z" fill="url(#car)" stroke="#6d8795" stroke-width="8"/>
+    <path d="M245 58 H695 C770 58 820 93 862 150 H178 C205 105 224 78 245 58 Z" fill="#9ed5ea" opacity=".82" stroke="#688693" stroke-width="6"/>
+    <path d="M78 205 H940" stroke="#577180" stroke-width="8" opacity=".55"/>
+    <rect x="38" y="228" width="220" height="58" rx="16" fill="#d5e4ea"/>
+    <rect x="752" y="228" width="220" height="58" rx="16" fill="#d5e4ea"/>
+    <circle cx="190" cy="302" r="58" fill="#364954"/>
+    <circle cx="190" cy="302" r="27" fill="#aebec7"/>
+    <circle cx="820" cy="302" r="58" fill="#364954"/>
+    <circle cx="820" cy="302" r="27" fill="#aebec7"/>
+  </g>
+  <g transform="translate(1010 55)">
+    <circle cx="95" cy="76" r="53" fill="#d6a17f"/>
+    <path d="M52 66 C58 2 138 -1 151 69 C132 47 70 43 52 66 Z" fill="#3c2d2a"/>
+    <path d="M35 137 C52 113 75 105 96 105 C135 105 165 122 181 154 L210 363 H0 L14 178 C17 160 23 146 35 137 Z" fill="#78a7c3"/>
+    <rect x="77" y="121" width="40" height="115" rx="14" fill="#eef4f7"/>
+    <path d="M12 195 C-32 245 -25 312 18 335" fill="none" stroke="#d6a17f" stroke-width="27" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(1190 95)">
+    <circle cx="76" cy="70" r="47" fill="#ddb091"/>
+    <path d="M31 68 C36 8 119 3 124 79 C105 55 56 51 31 68 Z" fill="#6b4b3d"/>
+    <path d="M23 124 C52 105 97 106 128 132 L170 327 H0 L6 158 C7 142 12 132 23 124 Z" fill="#d9c7bd"/>
+  </g>
+  <g transform="translate(1178 255)">
+    <circle cx="82" cy="56" r="40" fill="#d5a080"/>
+    <path d="M46 50 C52 4 118 5 121 61 C103 42 66 38 46 50 Z" fill="#6a493b"/>
+    <path d="M22 103 C45 88 105 87 131 108 L156 270 H0 L8 130 C9 118 14 109 22 103 Z" fill="#6ea2c1"/>
+    <path d="M52 116 H105 V252 H52 Z" fill="#e7f1f5" opacity=".9"/>
+  </g>
+</svg>
