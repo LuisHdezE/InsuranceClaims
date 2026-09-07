@@ -46,10 +46,9 @@ export function HomePage() {
                 Una experiencia moderna para reportar y seguir un siniestro con claridad, trazabilidad y datos exclusivamente sintéticos.
               </p>
               <div className="landing-actions">
-                <span className="landing-btn landing-btn-primary" aria-disabled="true">
+                <span className="landing-btn landing-btn-primary landing-reference-control" aria-disabled="true">
                   <PublicIcon kind="car" />
                   Cotiza tu seguro
-                  <span aria-hidden="true">›</span>
                 </span>
                 <Link className="landing-btn landing-btn-secondary" to="/claims/new/verify">
                   <PublicIcon kind="document" />
@@ -77,7 +76,7 @@ export function HomePage() {
                     <strong>{card.title}</strong>
                     <small>{card.copy}</small>
                   </span>
-                  <span className="landing-chevron" aria-hidden="true">›</span>
+                  {card.route && <span className="landing-chevron" aria-hidden="true">›</span>}
                 </>
               );
 
