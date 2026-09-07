@@ -9,6 +9,7 @@ import { TrackingFlowProvider } from './flow/TrackingFlowContext';
 import './styles.css';
 import './tracking.css';
 import './backoffice.css';
+import './claims-operations.css';
 import './public-refresh.css';
 import './hero-fix.css';
 
