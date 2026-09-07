@@ -112,7 +112,7 @@ assert(pkg.dependencies.zod === '4.5.4', 'Zod baseline drift');
 assert(pkg.devDependencies?.tailwindcss, 'Tailwind CSS must remain present');
 
 assert(design.identity.logo_required === true, 'approved FAR identity requires logo');
-assert(read('apps/web/src/components/PublicShell.tsx').includes('/far-seguros-logo.svg'), 'public shell must use approved logo asset');
+assert(read('apps/web/src/components/PublicShell.tsx').includes('/far-demo-wordmark-v2.svg'), 'public shell must use the approved demo wordmark asset');
 assert(styles.includes('#00bed8'), 'web styling must preserve FAR primary cyan token');
 assert(styles.includes('#fef200'), 'web styling must preserve FAR yellow accent token');
 
