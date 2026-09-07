@@ -84,7 +84,7 @@ jobs:
               '    note: PostgreSQL 18 pg_dump/pg_restore proof restored six authoritative tables and verified synthetic claim, audit and idempotency sentinels in a distinct database.\n'
               '    evidence_ids: [EVD-RELEASE-GATE-001]\n'
           )
-          replace_once('gates:\n', checks + 'gates:\n', 'release checks')
+          replace_once('\ngates:\n', '\n' + checks + 'gates:\n', 'release checks')
 
           gate_anchor = (
               '  design_system_ready:\n'
