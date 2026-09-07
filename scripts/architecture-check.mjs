@@ -1,5 +1,5 @@
 import { readFile, readdir } from 'node:fs/promises';
-import { join, relative } from 'node:path';
+import { join } from 'node:path';
 
 const root = process.cwd();
 const violations = [];
@@ -29,8 +29,8 @@ for (const file of applicationFiles) {
   const source = await readFile(join(root, file), 'utf8');
   rejectImports(file, importSpecifiers(source), ['@nestjs', '@prisma', '@modelcontextprotocol', '@insurance/infrastructure', 'node:fs', 'node:http', 'express', 'argon2', 'jose']);
 }
-const controllerFiles = ['apps/api/src/controllers.ts', 'apps/api/src/auth.guard.ts', 'apps/api/src/transport.ts'];
-for (const file of controllerFiles) {
+const apiBoundaryFiles = ['apps/api/src/controllers.ts', 'apps/api/src/task-controller.ts', 'apps/api/src/auth.guard.ts', 'apps/api/src/transport.ts'];
+for (const file of apiBoundaryFiles) {
   const source = await readFile(join(root, file), 'utf8');
   rejectImports(file, importSpecifiers(source), ['@prisma', '@insurance/infrastructure']);
 }

@@ -14,7 +14,10 @@
     "resolveJsonModule": true,
     "paths": {
       "@insurance/domain": ["./packages/domain/src/index.ts"],
+      "@insurance/domain/claim-task": ["./packages/domain/src/claim-task.ts"],
       "@insurance/application": ["./packages/application/src/index.ts"],
+      "@insurance/application/claim-tasks": ["./packages/application/src/claim-tasks.ts"],
+      "@insurance/application/claims-operations": ["./packages/application/src/claims-operations.ts"],
       "@insurance/infrastructure": ["./packages/infrastructure/src/index.ts"]
     },
     "types": ["node"]

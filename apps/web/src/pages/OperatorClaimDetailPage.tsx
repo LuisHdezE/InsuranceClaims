@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { downloadClaimEvidence, getClaimDetail, transitionClaimStatus } from '../api/claims';
 import type { ApiFailure, ClaimStatus, EvidenceMetadata, OperatorClaimDetailResponse } from '../api/types';
+import { ClaimTasksPanel } from '../components/ClaimTasksPanel';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
@@ -125,7 +126,7 @@ export function OperatorClaimDetailPage() {
               <section className="ops-panel ops-work-card" aria-labelledby="transition-title">
                 <div className="ops-panel-heading">
                   <div>
-                    <span className="ops-kicker">Trabajo pendiente</span>
+                    <span className="ops-kicker">Decisión de negocio</span>
                     <h2 id="transition-title">Estado y siguiente decisión</h2>
                   </div>
                   <span className={`status-badge status-${detail.status.toLowerCase()}`}>{detail.status}</span>
@@ -137,9 +138,9 @@ export function OperatorClaimDetailPage() {
                   <div><span>Actualizado</span><strong>{formatDate(detail.updatedAt)}</strong></div>
                 </div>
 
-                <div className="ops-task-contract-note">
-                  <strong>ClaimTask aún no está materializado.</strong>
-                  <span>No se muestran responsables, prioridades ni vencimientos ficticios. Ese panel se activará cuando exista su contrato persistente.</span>
+                <div className="ops-task-contract-note is-live">
+                  <strong>Trabajo y ciclo de vida están separados.</strong>
+                  <span>Las tareas operativas se gestionan debajo. Una tarea completada no cambia automáticamente el estado autoritativo del Claim.</span>
                 </div>
 
                 <form className="ops-transition-form" onSubmit={(event) => {
@@ -161,6 +162,8 @@ export function OperatorClaimDetailPage() {
                 </form>
                 <div className="operator-concurrency-note">`allowedTransitions` proviene del servidor. Se envía `expectedFromStatus = {detail.status}`; un 409 refresca el detalle antes de una nueva decisión.</div>
               </section>
+
+              <ClaimTasksPanel claimId={claimId} />
 
               <section className="ops-panel ops-evidence-card" aria-labelledby="evidence-title">
                 <div className="ops-panel-heading">

@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { listClaims } from '../api/claims';
-import type { ApiFailure, ClaimStatus, ClaimSummary } from '../api/types';
+import { listTasks } from '../api/tasks';
+import type { ClaimTaskProjection } from '../api/task-types';
+import type { ApiFailure, ClaimStatus } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
+import { taskTypeLabel } from '../components/ClaimTasksPanel';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 const STATUS_ORDER: ClaimStatus[] = ['RECEIVED', 'UNDER_REVIEW', 'OBSERVED', 'APPROVED', 'IN_REPAIR', 'CLOSED'];
@@ -19,8 +22,22 @@ export function OperatorDashboardPage() {
       enabled: Boolean(session),
     })),
   });
+  const tasksQuery = useQuery({
+    queryKey: ['operator', 'tasks', 'dashboard-open'],
+    queryFn: () => listTasks({ page: 1, pageSize: 5, status: 'OPEN' }, session!.accessToken),
+    enabled: Boolean(session),
+  });
+  const evidenceTasksQuery = useQuery({
+    queryKey: ['operator', 'tasks', 'dashboard-evidence-open'],
+    queryFn: () => listTasks({ page: 1, pageSize: 1, status: 'OPEN', type: 'EVIDENCE_REVIEW' }, session!.accessToken),
+    enabled: Boolean(session),
+  });
 
-  const failure = queries.find((query) => query.error)?.error as ApiFailure | undefined;
+  const failure = (
+    queries.find((query) => query.error)?.error
+    ?? tasksQuery.error
+    ?? evidenceTasksQuery.error
+  ) as ApiFailure | undefined;
   useEffect(() => {
     if (failure?.problem?.status === 401) signOut();
   }, [failure, signOut]);
@@ -33,6 +50,8 @@ export function OperatorDashboardPage() {
 
   const open = counts.RECEIVED + counts.UNDER_REVIEW + counts.OBSERVED + counts.APPROVED + counts.IN_REPAIR;
   const inManagement = counts.UNDER_REVIEW + counts.APPROVED + counts.IN_REPAIR;
+  const tasks = tasksQuery.data?.data.items ?? [];
+  const evidencePending = evidenceTasksQuery.data?.data.totalItems ?? 0;
   const stages = [
     { label: 'Reportados', value: counts.RECEIVED, tone: 'navy' },
     { label: 'En gestión', value: inManagement, tone: 'cyan' },
@@ -40,9 +59,9 @@ export function OperatorDashboardPage() {
     { label: 'Resueltos', value: counts.CLOSED, tone: 'green' },
   ] as const;
   const maxStage = Math.max(1, ...stages.map((stage) => stage.value));
-  const observed = queries[2]?.data?.data.items ?? [];
   const received = queries[0]?.data?.data.items ?? [];
-  const loading = queries.some((query) => query.isLoading);
+  const loading = queries.some((query) => query.isLoading) || tasksQuery.isLoading || evidenceTasksQuery.isLoading;
+  const fetching = queries.some((query) => query.isFetching) || tasksQuery.isFetching || evidenceTasksQuery.isFetching;
 
   return (
     <OperatorShell>
@@ -51,15 +70,19 @@ export function OperatorDashboardPage() {
           <div>
             <span className="ops-kicker">Operaciones</span>
             <h1>Dashboard</h1>
-            <p>Vista autoritativa del estado de los siniestros. Los valores se calculan desde la API, sin métricas decorativas.</p>
+            <p>Claims y trabajo operativo derivados de las APIs autoritativas. No se muestran métricas decorativas ni SLA inventados.</p>
           </div>
           <button
             className="ops-refresh-button"
             type="button"
-            disabled={queries.some((query) => query.isFetching)}
-            onClick={() => void Promise.all(queries.map((query) => query.refetch()))}
+            disabled={fetching}
+            onClick={() => void Promise.all([
+              ...queries.map((query) => query.refetch()),
+              tasksQuery.refetch(),
+              evidenceTasksQuery.refetch(),
+            ])}
           >
-            {queries.some((query) => query.isFetching) ? 'Actualizando…' : 'Actualizar'}
+            {fetching ? 'Actualizando…' : 'Actualizar'}
           </button>
         </div>
 
@@ -67,11 +90,11 @@ export function OperatorDashboardPage() {
         {loading && <div className="ops-panel ops-loading" role="status">Cargando panorama operacional…</div>}
 
         <section className="ops-kpi-grid" aria-label="Resumen operacional">
-          <KpiCard label="Abiertos" value={open} tone="blue" hint="Todos los estados no cerrados" />
-          <KpiCard label="Reportados" value={counts.RECEIVED} tone="cyan" hint="Estado RECEIVED" />
-          <KpiCard label="En gestión" value={inManagement} tone="violet" hint="Revisión, aprobados y reparación" />
-          <KpiCard label="Requiere info" value={counts.OBSERVED} tone="yellow" hint="Estado OBSERVED" />
-          <KpiCard label="Resueltos" value={counts.CLOSED} tone="green" hint="Estado CLOSED" />
+          <KpiCard label="Claims abiertos" value={open} tone="blue" hint="Estados de Claim no cerrados" />
+          <KpiCard label="Tareas abiertas" value={tasksQuery.data?.data.totalItems ?? 0} tone="cyan" hint="ClaimTask en estado OPEN" />
+          <KpiCard label="Evidencia pendiente" value={evidencePending} tone="violet" hint="EVIDENCE_REVIEW abiertas" />
+          <KpiCard label="Requiere info" value={counts.OBSERVED} tone="yellow" hint="Claims en OBSERVED" />
+          <KpiCard label="Resueltos" value={counts.CLOSED} tone="green" hint="Claims en CLOSED" />
         </section>
 
         <section className="ops-dashboard-grid">
@@ -103,15 +126,16 @@ export function OperatorDashboardPage() {
           <div className="ops-panel ops-action-panel">
             <div className="ops-panel-heading">
               <div>
-                <h2>Requiere información</h2>
-                <p>Siniestros OBSERVED que necesitan volver al flujo de revisión.</p>
+                <h2>Requiere acción</h2>
+                <p>Tareas abiertas creadas por las reglas operacionales del caso técnico.</p>
               </div>
+              <Link to="/operator/tasks">Abrir Tasks →</Link>
             </div>
-            {observed.length === 0 ? (
-              <div className="ops-compact-empty">No hay siniestros observados en esta página del API.</div>
+            {tasks.length === 0 ? (
+              <div className="ops-compact-empty">No hay tareas abiertas.</div>
             ) : (
               <ul className="ops-action-list">
-                {observed.slice(0, 5).map((claim) => <ClaimActionItem claim={claim} key={claim.claimId} />)}
+                {tasks.map((task) => <TaskActionItem task={task} key={task.taskId} />)}
               </ul>
             )}
           </div>
@@ -120,7 +144,7 @@ export function OperatorDashboardPage() {
         <section className="ops-panel ops-activity-panel">
           <div className="ops-panel-heading">
             <div>
-              <h2>Reportados</h2>
+              <h2>Reportados recientemente</h2>
               <p>Vista rápida de siniestros actualmente en RECEIVED.</p>
             </div>
             <Link to="/operator/claims">Ver workspace →</Link>
@@ -160,16 +184,16 @@ function KpiCard({ label, value, tone, hint }: { label: string; value: number; t
   );
 }
 
-function ClaimActionItem({ claim }: { claim: ClaimSummary }) {
+function TaskActionItem({ task }: { task: ClaimTaskProjection }) {
   return (
     <li>
-      <Link to={`/operator/claims/${claim.claimId}`}>
+      <Link to={`/operator/claims/${task.claimId}`}>
         <span className="ops-action-mark" aria-hidden="true">!</span>
         <span className="ops-action-copy">
-          <strong>{claim.trackingCode}</strong>
-          <small>{claim.policyReference} · {claim.vehicleReference}</small>
+          <strong>{task.title}</strong>
+          <small>{task.trackingCode ?? task.claimId.slice(0, 8)} · {taskTypeLabel(task.type)}</small>
         </span>
-        <span className="status-badge status-observed">Observado</span>
+        <span className={`ops-priority is-${task.priority.toLowerCase()}`}>{task.priority === 'HIGH' ? 'Alta' : 'Normal'}</span>
         <span aria-hidden="true">›</span>
       </Link>
     </li>

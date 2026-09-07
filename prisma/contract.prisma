@@ -41,6 +41,38 @@ enum IdempotencyStatus {
   FAILED_RETRYABLE
 }
 
+enum ClaimTaskType {
+  @@type("pg/text@1")
+  CLAIM_REVIEW
+  EVIDENCE_REVIEW
+  MISSING_DOCUMENT_FOLLOWUP
+  CUSTOMER_FOLLOWUP
+  CLOSURE_REVIEW
+}
+
+enum ClaimTaskStatus {
+  @@type("pg/text@1")
+  OPEN
+  COMPLETED
+}
+
+enum ClaimTaskPriority {
+  @@type("pg/text@1")
+  NORMAL
+  HIGH
+}
+
+enum ClaimTaskQueue {
+  @@type("pg/text@1")
+  CLAIMS
+}
+
+enum ClaimTaskActorType {
+  @@type("pg/text@1")
+  SYSTEM
+  OPERATOR
+}
+
 model Operator {
   id           Uuid         @id @default(uuid())
   login        String       @unique
@@ -70,6 +102,7 @@ model Claim {
   history               ClaimStatusHistory[]
   evidence              ClaimEvidence[]
   idempotencyRecords    IdempotencyRecord[]
+  tasks                 ClaimTask[]
 
   @@index([status])
   @@index([createdAt])
@@ -104,6 +137,31 @@ model ClaimEvidence {
 
   @@index([claimId])
   @@map("claim_evidence")
+}
+
+model ClaimTask {
+  id                 Uuid               @id @default(uuid())
+  claimId            Uuid               @map("claim_id")
+  type               ClaimTaskType
+  title              String
+  status             ClaimTaskStatus
+  priority           ClaimTaskPriority
+  queue              ClaimTaskQueue
+  assignedOperatorId Uuid?              @map("assigned_operator_id")
+  dueAt              DateTime?          @map("due_at")
+  createdByType      ClaimTaskActorType @map("created_by_type")
+  createdById        Uuid?              @map("created_by_id")
+  sourceKey          String?            @unique @map("source_key")
+  correlationId      String?            @map("correlation_id")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  completedAt        DateTime?          @map("completed_at")
+  completedById      Uuid?              @map("completed_by_id")
+  claim              Claim              @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId, status, createdAt])
+  @@index([status, dueAt])
+  @@index([assignedOperatorId, status])
+  @@map("claim_tasks")
 }
 
 model IdempotencyRecord {
