@@ -109,3 +109,31 @@ After the MVP, evaluate whether Blueprint should define a technology-neutral sch
 
 Disposition:
 DEFERRED_UNTIL_MVP_COMPLETE
+
+---
+
+## OBS-005
+
+Blueprint version:
+0.5.2
+
+Phase:
+Post-MVP / Operations maintenance
+
+Finding:
+The consumer-local final Operations state validator correctly freezes product/API drift after the approved Release Gate baseline, but its original allowlist had no category for post-MVP non-product portfolio or governance documentation. As a result, the first Portfolio Hardening README-only candidate in PR #22 was rejected as product/API drift even though no application, package, API contract or runtime file changed.
+
+Evidence:
+PR #22 candidate `d740e16675b531ca15532b40def4bd986833d919` failed Operations State workflow run `34127897527` with `product/API drift detected after Release Gate merge: README.md`. The failure originated in `scripts/validate-operations-state.mjs`, whose post-Release allowlist originally accepted only Operations state/evidence files.
+
+Impact:
+LOW
+
+Consumer handling:
+Keep the drift guard fail-closed for product/runtime/API paths while narrowly allowing `README.md`, `documentation/portfolio/**` and `documentation/blueprint-observations/**` as post-MVP non-product maintenance.
+
+Potential improvement:
+When this observation is evaluated after portfolio closure, consider whether Blueprint guidance or consumer validator templates should distinguish product/API/runtime drift from post-lifecycle documentation maintenance so that lifecycle closure remains strict without freezing portfolio and governance documentation.
+
+Disposition:
+DEFERRED_UNTIL_PORTFOLIO_COMPLETE
