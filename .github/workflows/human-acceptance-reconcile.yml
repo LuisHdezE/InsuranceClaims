@@ -42,20 +42,8 @@ jobs:
                   raise SystemExit(f'Expected exactly one checkpoint anchor: {old!r}')
               text = text.replace(old, new, 1)
 
-          artifact_anchor = """  - id: EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001
-    type: manual_approval
-    value: documentation/integration-qa/CLAIMS_BACKOFFICE_WEB_APPROVAL.md
-"""
-          artifact_append = artifact_anchor + """  - id: EVD-HUMAN-ACCEPTANCE-INTAKE-WEB-001
-    type: manual_approval
-    value: documentation/human-acceptance/DIGITAL_CLAIM_INTAKE_WEB_APPROVAL.md
-  - id: EVD-HUMAN-ACCEPTANCE-TRACKING-WEB-001
-    type: manual_approval
-    value: documentation/human-acceptance/CUSTOMER_CLAIM_TRACKING_WEB_APPROVAL.md
-  - id: EVD-HUMAN-ACCEPTANCE-BACKOFFICE-WEB-001
-    type: manual_approval
-    value: documentation/human-acceptance/CLAIMS_BACKOFFICE_WEB_APPROVAL.md
-"""
+          artifact_anchor = "  - id: EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001\n    type: manual_approval\n    value: documentation/integration-qa/CLAIMS_BACKOFFICE_WEB_APPROVAL.md\n"
+          artifact_append = artifact_anchor + "  - id: EVD-HUMAN-ACCEPTANCE-INTAKE-WEB-001\n    type: manual_approval\n    value: documentation/human-acceptance/DIGITAL_CLAIM_INTAKE_WEB_APPROVAL.md\n  - id: EVD-HUMAN-ACCEPTANCE-TRACKING-WEB-001\n    type: manual_approval\n    value: documentation/human-acceptance/CUSTOMER_CLAIM_TRACKING_WEB_APPROVAL.md\n  - id: EVD-HUMAN-ACCEPTANCE-BACKOFFICE-WEB-001\n    type: manual_approval\n    value: documentation/human-acceptance/CLAIMS_BACKOFFICE_WEB_APPROVAL.md\n"
           if text.count(artifact_anchor) != 1:
               raise SystemExit('Expected exactly one Integration QA approval artifact anchor')
           if 'EVD-HUMAN-ACCEPTANCE-INTAKE-WEB-001' in text:
