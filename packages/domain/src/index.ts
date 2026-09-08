@@ -97,3 +97,5 @@ export class Claim {
     return { fromStatus, toStatus };
   }
 }
+
+export * from './pipeline-work-item.js';
