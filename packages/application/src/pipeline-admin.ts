@@ -149,18 +149,20 @@ function normalizeStages(stages: readonly PipelineStageContent[]): PipelineStage
     throw new PipelineAdminApplicationError('VALIDATION_ERROR', 'A pipeline version must contain between 1 and 50 stages.');
   }
 
-  const normalized = stages.map((stage) => {
+  const normalized: PipelineStageContent[] = stages.map((stage) => {
     const stageKey = validateKey('stageKey', stage.stageKey, STAGE_KEY_PATTERN);
     const displayName = boundedText('stage.displayName', stage.displayName, 160);
     if (!Number.isInteger(stage.sortOrder) || stage.sortOrder < 1 || stage.sortOrder > 1000) {
       throw new PipelineAdminApplicationError('VALIDATION_ERROR', 'stage.sortOrder must be an integer between 1 and 1000.');
     }
 
-    const reportingFlags = stage.reportingFlags ?? {};
-    const entries = Object.entries(reportingFlags);
+    const rawFlags = stage.reportingFlags ?? {};
+    const entries = Object.entries(rawFlags);
     if (entries.length > 20 || entries.some(([key, value]) => !REPORTING_FLAG_PATTERN.test(key) || typeof value !== 'boolean')) {
       throw new PipelineAdminApplicationError('VALIDATION_ERROR', 'reportingFlags must be a bounded boolean flag object.');
     }
+    const reportingFlags: Record<string, boolean> = {};
+    for (const [key, value] of entries) reportingFlags[key] = value as boolean;
 
     const allowedNextStageKeys = [...(stage.allowedNextStageKeys ?? [])].map((key) => validateKey('allowedNextStageKey', key, STAGE_KEY_PATTERN));
     if (new Set(allowedNextStageKeys).size !== allowedNextStageKeys.length) {
@@ -171,7 +173,7 @@ function normalizeStages(stages: readonly PipelineStageContent[]): PipelineStage
       stageKey,
       displayName,
       sortOrder: stage.sortOrder,
-      reportingFlags: Object.fromEntries(entries),
+      reportingFlags,
       allowedNextStageKeys,
     };
   });
