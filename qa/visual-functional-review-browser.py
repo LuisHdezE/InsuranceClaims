@@ -26,7 +26,7 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 ASSET_DIR.mkdir(parents=True, exist_ok=True)
 
 PNG_1X1 = base64.b64decode(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zx9sAAAAASUVORK5CYII="
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC0lEQVR42mP8/x8AAusB9Y9Zx9sAAAAASUVORK5CYII="
 )
 fixture_path = Path(".runtime/visual-review-proof.png")
 fixture_path.parent.mkdir(parents=True, exist_ok=True)
@@ -156,11 +156,37 @@ def capture(entry: dict[str, Any], filename: str, width: int, height: int) -> No
 
 
 def assert_no_horizontal_overflow() -> None:
-    overflow = driver.execute_script(
-        "return document.documentElement.scrollWidth - document.documentElement.clientWidth"
+    metrics = driver.execute_script(
+        """
+        const root = document.documentElement;
+        const viewport = root.clientWidth;
+        const scrollWidth = root.scrollWidth;
+        const offenders = Array.from(document.querySelectorAll('body *'))
+          .map((el) => {
+            const rect = el.getBoundingClientRect();
+            return {
+              tag: el.tagName,
+              id: el.id || null,
+              classes: typeof el.className === 'string' ? el.className : '',
+              left: Math.round(rect.left * 100) / 100,
+              right: Math.round(rect.right * 100) / 100,
+              width: Math.round(rect.width * 100) / 100,
+              overflowRight: Math.round(Math.max(0, rect.right - viewport) * 100) / 100,
+              overflowLeft: Math.round(Math.max(0, -rect.left) * 100) / 100,
+            };
+          })
+          .filter((item) => item.overflowRight > 2 || item.overflowLeft > 2)
+          .sort((a, b) => Math.max(b.overflowRight, b.overflowLeft) - Math.max(a.overflowRight, a.overflowLeft))
+          .slice(0, 12);
+        return { viewport, scrollWidth, overflow: scrollWidth - viewport, offenders };
+        """
     )
-    if overflow > 2:
-        raise AssertionError(f"Horizontal page overflow detected: {overflow}px")
+    if metrics["overflow"] > 2:
+        raise AssertionError(
+            "Horizontal page overflow detected: "
+            f"{metrics['overflow']}px; viewport={metrics['viewport']}px; "
+            f"scrollWidth={metrics['scrollWidth']}px; offenders={json.dumps(metrics['offenders'], ensure_ascii=False)}"
+        )
 
 
 def audit_accessibility() -> dict[str, Any]:
