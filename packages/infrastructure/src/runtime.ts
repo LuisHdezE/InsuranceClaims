@@ -4,6 +4,7 @@ import type { Contract } from '../../../prisma/contract.d.ts';
 import contractJson from '../../../prisma/contract.json' with { type: 'json' };
 import { type AccessTokenPort, type ApplicationDependencies } from '@insurance/application';
 import { ClaimTasksApplication } from '@insurance/application/claim-tasks';
+import { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
 import { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
 import {
   Argon2PasswordHasher,
@@ -24,6 +25,7 @@ import { MemoryClaimTaskStore, PrismaClaimTaskStore } from './task-store.js';
 export interface RuntimeContext {
   application: ClaimsOperationsApplication;
   tasks: ClaimTasksApplication;
+  timeline: ClaimTimelineApplication;
   accessTokens: AccessTokenPort;
 }
 
@@ -34,9 +36,14 @@ function applicationsFrom(deps: ApplicationDependencies, taskStore: MemoryClaimT
     clock: deps.clock,
     ids: deps.ids,
   });
+  const timeline = new ClaimTimelineApplication({
+    claims: deps.claims,
+    tasks: taskStore,
+  });
   return {
     application: new ClaimsOperationsApplication(deps, tasks),
     tasks,
+    timeline,
     accessTokens: deps.accessTokens,
   };
 }

@@ -102,6 +102,12 @@ export class OperatorClaimsController {
     return this.runtime.application.listClaims(parsed, req.actor);
   }
 
+  @Get(':claimId/timeline')
+  async timeline(@Param('claimId') claimIdRaw: string, @Req() req: any) {
+    this.rate(req, 'claim-timeline-read', 120);
+    return this.runtime.timeline.listClaimTimeline(uuidSchema.parse(claimIdRaw), req.actor);
+  }
+
   @Get(':claimId')
   async detail(@Param('claimId') claimIdRaw: string, @Req() req: any) {
     this.rate(req, 'claim-read', 120);

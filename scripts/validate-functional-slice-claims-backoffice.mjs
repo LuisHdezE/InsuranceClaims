@@ -80,9 +80,23 @@ for (const fn of ['getClaimDetail', 'downloadClaimEvidence', 'transitionClaimSta
 assert(detail.includes('detail.allowedTransitions.map'), 'transition options must come only from server allowedTransitions');
 assert(detail.includes('expectedFromStatus: detail.status'), 'transition must send mandatory expectedFromStatus from authoritative detail');
 assert(detail.includes("failure.problem?.status === 409"), '409 conflict recovery missing');
-assert(detail.includes('await claimQuery.refetch()'), '409 conflict must refetch authoritative detail before a new decision');
+assert(detail.includes('claimQuery.refetch()'), '409 conflict must refetch authoritative detail before a new decision');
+assert(detail.includes("queryKey: ['operator', 'claim', claimId, 'timeline']"), 'Claim mutations must invalidate the operational timeline projection');
 assert(detail.includes('URL.revokeObjectURL'), 'evidence object URL must be released after download');
 assert(detail.includes('auditEvents'), 'authorized claim detail must preserve approved audit-event projection');
+assert(detail.includes('ClaimTimelinePanel'), 'Claim Detail must render the operational timeline through its dedicated presentation component');
+
+const timelineApi = read('apps/web/src/api/timeline.ts');
+assert(timelineApi.includes('export async function getClaimTimeline'), 'operational timeline API client missing');
+assert(timelineApi.includes('/api/v1/operator/claims/${encodeURIComponent(claimId)}/timeline'), 'timeline client must use the canonical protected REST route');
+assert(timelineApi.includes('Authorization: `Bearer ${accessToken}`'), 'timeline client must preserve bearer authentication');
+assert(!timelineApi.includes('/legacy/') && !timelineApi.includes('/mcp'), 'timeline client must not bypass REST boundary');
+
+const timelinePanel = read('apps/web/src/components/ClaimTimelinePanel.tsx');
+for (const label of ['Siniestro reportado', 'Evidencia registrada', 'Cambio de estado', 'Tarea creada', 'Tarea completada']) {
+  assert(timelinePanel.includes(label), `operational timeline label missing: ${label}`);
+}
+assert(timelinePanel.includes('getClaimTimeline'), 'timeline panel must consume server-composed operational projection');
 
 const errors = read('apps/web/src/components/OperatorApiErrorNotice.tsx');
 for (const status of [401, 403, 404, 409, 422, 429]) assert(errors.includes(`case ${status}:`), `operator error state ${status} missing`);
@@ -94,6 +108,7 @@ const styles = read('apps/web/src/backoffice.css');
 assert(styles.includes('@media (max-width: 900px)'), 'backoffice tablet/mobile responsive contract missing');
 assert(styles.includes('@media (max-width: 720px)'), 'claims table mobile card transformation missing');
 assert(read('apps/web/src/styles.css').includes(':focus-visible'), 'visible keyboard focus contract missing');
+assert(read('apps/web/src/claims-timeline.css').includes('@media (max-width: 420px)'), 'operational timeline mobile contract missing');
 
 const sourceRoot = path.join(root, 'apps/web/src');
 const sourceFiles = [];
@@ -118,7 +133,7 @@ const errorTests = read('apps/web/src/components/OperatorApiErrorNotice.test.ts'
 assert(errorTests.includes('authoritative refresh conflict'), 'backoffice 409 unit coverage missing');
 assert(errorTests.includes('authorization server-authoritative'), 'backoffice 403 unit coverage missing');
 const runtimeQa = read('qa/web-claims-backoffice-runtime.ts');
-for (const marker of ['BACKOFFICE_RUNTIME_PASS', 'protectedReadRejectedWithoutValidToken', 'evidenceDownloadProtected', 'staleTransitionConflict', 'transitionCommitted']) {
+for (const marker of ['BACKOFFICE_RUNTIME_PASS', 'protectedReadRejectedWithoutValidToken', 'evidenceDownloadProtected', 'staleTransitionConflict', 'transitionCommitted', 'timelineTaskCompletionProjected', 'timelineStatusChangeProjected', 'timelineAuditSeparated']) {
   assert(runtimeQa.includes(marker), `runtime QA marker missing: ${marker}`);
 }
 
@@ -132,5 +147,6 @@ console.log(JSON.stringify({
   tokenStorage: 'memory-only',
   idempotency: 'N/A',
   concurrencyGuard: 'expectedFromStatus',
+  postMvpProjection: 'claim-operations-timeline',
   explicitApiErrorStates: [401, 403, 404, 409, 422, 429, 'network'],
 }));
