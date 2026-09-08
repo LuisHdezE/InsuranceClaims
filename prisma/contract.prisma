@@ -99,6 +99,29 @@ enum ClaimTaskCancellationReason {
   CREATED_IN_ERROR
 }
 
+enum PipelineConsumerType {
+  @@type("pg/text@1")
+  CLAIM
+  RENEWAL
+  COLLECTION
+}
+
+enum PipelineVersionStatus {
+  @@type("pg/text@1")
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+enum PipelineActorType {
+  @@type("pg/text@1")
+  SYSTEM
+  OPERATOR
+  SUPERVISOR
+  ADMINISTRATOR
+  AUTOMATION
+}
+
 model Operator {
   id           Uuid         @id @default(uuid())
   login        String       @unique
@@ -219,6 +242,84 @@ model ClaimTaskHistory {
 
   @@index([taskId, occurredAt])
   @@map("claim_task_history")
+}
+
+model PipelineDefinition {
+  id              Uuid                 @id @default(uuid())
+  pipelineKey     String               @unique @map("pipeline_key")
+  consumerType    PipelineConsumerType @map("consumer_type")
+  displayName     String               @map("display_name")
+  enabled         Boolean              @default(false)
+  activeVersionId Uuid?                @map("active_version_id")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @default(now()) @map("updated_at")
+  version         Int                  @default(1)
+
+  @@map("pipeline_definitions")
+}
+
+model PipelineVersion {
+  id                   Uuid                  @id @default(uuid())
+  pipelineDefinitionId Uuid                  @map("pipeline_definition_id")
+  versionNumber        Int                   @map("version_number")
+  status               PipelineVersionStatus
+  createdByType        PipelineActorType     @map("created_by_type")
+  createdById          Uuid?                 @map("created_by_id")
+  sourceClassification String                @map("source_classification")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  activatedAt          DateTime?             @map("activated_at")
+  retiredAt            DateTime?             @map("retired_at")
+
+  @@unique([pipelineDefinitionId, versionNumber], map: "pipeline_versions_definition_version_key")
+  @@map("pipeline_versions")
+}
+
+model PipelineStage {
+  id                   Uuid     @id @default(uuid())
+  pipelineVersionId    Uuid     @map("pipeline_version_id")
+  stageKey             String   @map("stage_key")
+  displayName          String   @map("display_name")
+  sortOrder            Int      @map("sort_order")
+  reportingFlags       Json     @map("reporting_flags")
+  allowedNextStageKeys Json     @map("allowed_next_stage_keys")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  @@unique([pipelineVersionId, stageKey], map: "pipeline_stages_version_stage_key")
+  @@unique([pipelineVersionId, sortOrder], map: "pipeline_stages_version_sort_key")
+  @@map("pipeline_stages")
+}
+
+model PipelineWorkItem {
+  id                   Uuid                 @id @default(uuid())
+  consumerType         PipelineConsumerType @map("consumer_type")
+  consumerId           Uuid                 @map("consumer_id")
+  pipelineDefinitionId Uuid                 @map("pipeline_definition_id")
+  pipelineVersionId    Uuid                 @map("pipeline_version_id")
+  currentStageId       Uuid                 @map("current_stage_id")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @default(now()) @map("updated_at")
+  version              Int                  @default(1)
+
+  @@unique([consumerType, consumerId, pipelineDefinitionId], map: "pipeline_work_items_consumer_definition_key")
+  @@index([consumerType, currentStageId], map: "pipeline_work_items_consumer_stage_idx")
+  @@index([pipelineDefinitionId, currentStageId], map: "pipeline_work_items_definition_stage_idx")
+  @@index([consumerType, consumerId], map: "pipeline_work_items_consumer_identity_idx")
+  @@map("pipeline_work_items")
+}
+
+model PipelineWorkItemHistory {
+  id                Uuid              @id @default(uuid())
+  workItemId        Uuid              @map("work_item_id")
+  fromStageId       Uuid?             @map("from_stage_id")
+  toStageId         Uuid              @map("to_stage_id")
+  pipelineVersionId Uuid              @map("pipeline_version_id")
+  actorType         PipelineActorType @map("actor_type")
+  actorId           Uuid?             @map("actor_id")
+  correlationId     String?           @map("correlation_id")
+  occurredAt        DateTime          @map("occurred_at")
+
+  @@index([workItemId, occurredAt], map: "pipeline_work_item_history_item_occurred_idx")
+  @@map("pipeline_work_item_history")
 }
 
 model IdempotencyRecord {

@@ -17,6 +17,7 @@
       "@insurance/domain/claim-task": ["./packages/domain/src/claim-task.ts"],
       "@insurance/application": ["./packages/application/src/index.ts"],
       "@insurance/application/claim-evidence-attention": ["./packages/application/src/claim-evidence-attention.ts"],
+      "@insurance/application/claim-pipeline": ["./packages/application/src/claim-pipeline.ts"],
       "@insurance/application/claim-tasks": ["./packages/application/src/claim-tasks.ts"],
       "@insurance/application/claim-timeline": ["./packages/application/src/claim-timeline.ts"],
       "@insurance/application/claims-operations": ["./packages/application/src/claims-operations.ts"],

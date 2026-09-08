@@ -4,6 +4,7 @@ import type { Contract } from '../../../prisma/contract.d.ts';
 import contractJson from '../../../prisma/contract.json' with { type: 'json' };
 import { type AccessTokenPort, type ApplicationDependencies } from '@insurance/application';
 import { ClaimEvidenceAttentionApplication } from '@insurance/application/claim-evidence-attention';
+import { ClaimPipelineApplication } from '@insurance/application/claim-pipeline';
 import { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 import { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
 import { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
@@ -20,23 +21,35 @@ import {
   SystemClock,
 } from './adapters.js';
 import { MemoryWorkflowStore } from './memory.js';
+import { MemoryPipelineStore, PrismaPipelineStore } from './pipeline-store.js';
 import { PrismaWorkflowStore } from './prisma-store.js';
 import { MemoryClaimTaskStore, PrismaClaimTaskStore } from './task-store.js';
 
 export interface RuntimeContext {
   application: ClaimsOperationsApplication;
   tasks: ClaimTasksApplication;
+  pipeline: ClaimPipelineApplication;
   timeline: ClaimTimelineApplication;
   evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;
 }
 
-function applicationsFrom(deps: ApplicationDependencies, taskStore: MemoryClaimTaskStore | PrismaClaimTaskStore): RuntimeContext {
+function applicationsFrom(
+  deps: ApplicationDependencies,
+  taskStore: MemoryClaimTaskStore | PrismaClaimTaskStore,
+  pipelineStore: MemoryPipelineStore | PrismaPipelineStore,
+): RuntimeContext {
   const tasks = new ClaimTasksApplication({
     claims: deps.claims,
     tasks: taskStore,
     idempotency: deps.idempotency,
     hash: deps.hash,
+    clock: deps.clock,
+    ids: deps.ids,
+  });
+  const pipeline = new ClaimPipelineApplication({
+    claims: deps.claims,
+    pipelines: pipelineStore,
     clock: deps.clock,
     ids: deps.ids,
   });
@@ -49,8 +62,9 @@ function applicationsFrom(deps: ApplicationDependencies, taskStore: MemoryClaimT
     tasks: taskStore,
   });
   return {
-    application: new ClaimsOperationsApplication(deps, tasks),
+    application: new ClaimsOperationsApplication(deps, tasks, pipeline),
     tasks,
+    pipeline,
     timeline,
     evidenceAttention,
     accessTokens: deps.accessTokens,
@@ -63,9 +77,17 @@ export async function createMemoryRuntime(options: {
   staffJwtAudience?: string;
   operatorLogin?: string;
   operatorPassword?: string;
-} = {}): Promise<RuntimeContext & { store: MemoryWorkflowStore; taskStore: MemoryClaimTaskStore; evidenceStorage: MemoryEvidenceStorage }> {
+} = {}): Promise<RuntimeContext & {
+  store: MemoryWorkflowStore;
+  taskStore: MemoryClaimTaskStore;
+  pipelineStore: MemoryPipelineStore;
+  evidenceStorage: MemoryEvidenceStorage;
+}> {
   const store = new MemoryWorkflowStore();
   const taskStore = new MemoryClaimTaskStore();
+  const pipelineStore = new MemoryPipelineStore(async (event) => {
+    await store.append(event as any);
+  });
   const evidenceStorage = new MemoryEvidenceStorage();
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(
@@ -85,10 +107,14 @@ export async function createMemoryRuntime(options: {
     idempotency: store, transactions: store, operators: store, passwordHasher, accessTokens,
     clock: new SystemClock(), ids: new SecureIdGenerator(), hash: new Sha256HashAdapter(), logger: new JsonConsoleLogger(),
   };
-  return { ...applicationsFrom(deps, taskStore), store, taskStore, evidenceStorage };
+  return { ...applicationsFrom(deps, taskStore, pipelineStore), store, taskStore, pipelineStore, evidenceStorage };
 }
 
-export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = process.env): Promise<RuntimeContext & { store: PrismaWorkflowStore; taskStore: PrismaClaimTaskStore }> {
+export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = process.env): Promise<RuntimeContext & {
+  store: PrismaWorkflowStore;
+  taskStore: PrismaClaimTaskStore;
+  pipelineStore: PrismaPipelineStore;
+}> {
   const databaseUrl = env.DATABASE_URL;
   const legacyUrl = env.LEGACY_SIMULATOR_URL;
   const staffJwtSecret = env.STAFF_JWT_SECRET ?? env.JWT_SECRET;
@@ -100,6 +126,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const db = postgres<Contract>({ contractJson, url: databaseUrl });
   const store = new PrismaWorkflowStore(db);
   const taskStore = new PrismaClaimTaskStore(db);
+  const pipelineStore = new PrismaPipelineStore(db);
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(staffJwtSecret, staffJwtIssuer, staffJwtAudience);
   const deps: ApplicationDependencies = {
@@ -108,5 +135,5 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
     idempotency: store, transactions: store, operators: store, passwordHasher, accessTokens,
     clock: new SystemClock(), ids: new SecureIdGenerator(), hash: new Sha256HashAdapter(), logger: new JsonConsoleLogger(),
   };
-  return { ...applicationsFrom(deps, taskStore), store, taskStore };
+  return { ...applicationsFrom(deps, taskStore, pipelineStore), store, taskStore, pipelineStore };
 }
