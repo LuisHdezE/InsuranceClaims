@@ -37,17 +37,111 @@ export class ApplicationError extends Error {
   }
 }
 
+export const STAFF_ROLES = ['CLAIMS_OPERATOR', 'CLAIMS_SUPERVISOR', 'PLATFORM_ADMIN'] as const;
+export type StaffRole = (typeof STAFF_ROLES)[number];
+export type StaffActorType = 'OPERATOR' | 'SUPERVISOR' | 'ADMINISTRATOR';
+
 export type Permission =
   | 'claims.intake.create'
   | 'claims.tracking.read'
   | 'claims.backoffice.read'
   | 'claims.backoffice.transition'
-  | 'claims.mcp.status.read';
+  | 'claims.mcp.status.read'
+  | 'claims.tasks.read'
+  | 'claims.tasks.manage'
+  | 'claims.pipeline.read'
+  | 'claims.pipeline.transition'
+  | 'claims.analytics.read'
+  | 'communications.read'
+  | 'communications.send'
+  | 'customers.read'
+  | 'policies.read'
+  | 'portal.self.read'
+  | 'portal.self.evidence.create'
+  | 'pipelines.admin'
+  | 'custom_fields.admin'
+  | 'automations.admin'
+  | 'imports.execute'
+  | 'renewals.read'
+  | 'renewals.manage'
+  | 'collections.read'
+  | 'collections.manage'
+  | 'bulk.execute'
+  | 'integration.events.ingest'
+  | 'communications.admin'
+  | 'guidance.admin'
+  | 'operations.integration.read'
+  | 'operations.dead_letters.read'
+  | 'operations.dead_letters.manage';
+
+const STAFF_ROLE_PERMISSIONS: Readonly<Record<StaffRole, readonly Permission[]>> = {
+  CLAIMS_OPERATOR: [
+    'claims.backoffice.read',
+    'claims.backoffice.transition',
+    'claims.tasks.read',
+    'claims.tasks.manage',
+    'claims.pipeline.read',
+    'claims.pipeline.transition',
+    'communications.read',
+    'communications.send',
+    'customers.read',
+    'policies.read',
+    'renewals.read',
+    'renewals.manage',
+    'collections.read',
+    'collections.manage',
+  ],
+  CLAIMS_SUPERVISOR: [
+    'claims.backoffice.read',
+    'claims.backoffice.transition',
+    'claims.tasks.read',
+    'claims.tasks.manage',
+    'claims.pipeline.read',
+    'claims.pipeline.transition',
+    'claims.analytics.read',
+    'communications.read',
+    'communications.send',
+    'customers.read',
+    'policies.read',
+    'renewals.read',
+    'renewals.manage',
+    'collections.read',
+    'collections.manage',
+    'bulk.execute',
+  ],
+  PLATFORM_ADMIN: [
+    'claims.analytics.read',
+    'pipelines.admin',
+    'communications.admin',
+    'automations.admin',
+    'guidance.admin',
+    'custom_fields.admin',
+    'imports.execute',
+    'operations.integration.read',
+    'operations.dead_letters.read',
+    'operations.dead_letters.manage',
+  ],
+};
+
+export function isStaffRole(value: unknown): value is StaffRole {
+  return typeof value === 'string' && (STAFF_ROLES as readonly string[]).includes(value);
+}
+
+export function permissionsForRole(role: StaffRole): readonly Permission[] {
+  return STAFF_ROLE_PERMISSIONS[role];
+}
+
+export function actorTypeForStaffRole(role: StaffRole): StaffActorType {
+  if (role === 'CLAIMS_SUPERVISOR') return 'SUPERVISOR';
+  if (role === 'PLATFORM_ADMIN') return 'ADMINISTRATOR';
+  return 'OPERATOR';
+}
 
 export interface ActorContext {
   operatorId: string;
   login: string;
-  role: 'CLAIMS_OPERATOR';
+  role: StaffRole;
+  context: 'staff';
   permissions: readonly Permission[];
 }
 
@@ -87,7 +181,7 @@ export interface HistoryRecord {
   claimId: string;
   fromStatus: ClaimStatus | null;
   toStatus: ClaimStatus;
-  actorType: 'SYSTEM' | 'OPERATOR';
+  actorType: 'SYSTEM' | StaffActorType;
   actorId: string | null;
   occurredAt: Date;
 }
@@ -117,7 +211,7 @@ export interface AuditEventRecord {
   id: string;
   eventCode: 'AUTH_LOGIN_SUCCEEDED' | 'AUTH_LOGIN_FAILED' | 'CLAIM_CREATED' | 'CLAIM_STATE_TRANSITIONED';
   occurredAt: Date;
-  actorType: 'ANONYMOUS' | 'CUSTOMER_PUBLIC' | 'OPERATOR';
+  actorType: 'ANONYMOUS' | 'CUSTOMER_PUBLIC' | StaffActorType;
   actorId: string | null;
   targetType: string | null;
   targetId: string | null;
@@ -163,7 +257,7 @@ export interface OperatorRecord {
   id: string;
   login: string;
   passwordHash: string;
-  role: 'CLAIMS_OPERATOR';
+  role: StaffRole;
   isActive: boolean;
 }
 export interface OperatorRepository {
@@ -222,12 +316,6 @@ function requirePermission(actor: ActorContext | undefined, permission: Permissi
   if (!actor) throw new ApplicationError('AUTHENTICATION_REQUIRED', 'Authentication is required.');
   if (!actor.permissions.includes(permission)) throw new ApplicationError('FORBIDDEN', 'The caller is not authorized for this operation.');
   return actor;
-}
-
-export function permissionsForRole(role: 'CLAIMS_OPERATOR'): readonly Permission[] {
-  return role === 'CLAIMS_OPERATOR'
-    ? ['claims.backoffice.read', 'claims.backoffice.transition']
-    : [];
 }
 
 export class ClaimsApplication {
@@ -395,7 +483,18 @@ export class ClaimsApplication {
       throw new ApplicationError('INVALID_CREDENTIALS', 'Invalid credentials.');
     }
     try {
-      await this.deps.audits.append({ id: this.deps.ids.uuid(), eventCode: 'AUTH_LOGIN_SUCCEEDED', occurredAt: this.deps.clock.now(), actorType: 'OPERATOR', actorId: operator.id, targetType: 'AUTH_SESSION', targetId: operator.id, outcome: 'SUCCESS', requestId: context.requestId ?? null, metadata: { mechanism: 'JWT_ACCESS_TOKEN' } });
+      await this.deps.audits.append({
+        id: this.deps.ids.uuid(),
+        eventCode: 'AUTH_LOGIN_SUCCEEDED',
+        occurredAt: this.deps.clock.now(),
+        actorType: actorTypeForStaffRole(operator.role),
+        actorId: operator.id,
+        targetType: 'AUTH_SESSION',
+        targetId: operator.id,
+        outcome: 'SUCCESS',
+        requestId: context.requestId ?? null,
+        metadata: { mechanism: 'JWT_ACCESS_TOKEN', role: operator.role, context: 'staff' },
+      });
     } catch {
       throw new ApplicationError('AUTHENTICATION_TEMPORARILY_UNAVAILABLE', 'Authentication cannot complete safely at this time.');
     }
@@ -468,9 +567,10 @@ export class ClaimsApplication {
         const aggregate = Claim.rehydrate(detail.claim);
         const transition = aggregate.transition(input.toStatus as ClaimStatus, input.expectedFromStatus as ClaimStatus, at);
         const snapshot = aggregate.snapshot();
-        const history: HistoryRecord = { historyId: this.deps.ids.uuid(), claimId: input.claimId, fromStatus: transition.fromStatus, toStatus: transition.toStatus, actorType: 'OPERATOR', actorId: authenticated.operatorId, occurredAt: at };
+        const staffActorType = actorTypeForStaffRole(authenticated.role);
+        const history: HistoryRecord = { historyId: this.deps.ids.uuid(), claimId: input.claimId, fromStatus: transition.fromStatus, toStatus: transition.toStatus, actorType: staffActorType, actorId: authenticated.operatorId, occurredAt: at };
         await tx.claims.applyTransition(snapshot, history);
-        await tx.audits.append({ id: this.deps.ids.uuid(), eventCode: 'CLAIM_STATE_TRANSITIONED', occurredAt: at, actorType: 'OPERATOR', actorId: authenticated.operatorId, targetType: 'CLAIM', targetId: input.claimId, outcome: 'SUCCESS', requestId: context.requestId ?? null, metadata: { fromStatus: transition.fromStatus, toStatus: transition.toStatus } });
+        await tx.audits.append({ id: this.deps.ids.uuid(), eventCode: 'CLAIM_STATE_TRANSITIONED', occurredAt: at, actorType: staffActorType, actorId: authenticated.operatorId, targetType: 'CLAIM', targetId: input.claimId, outcome: 'SUCCESS', requestId: context.requestId ?? null, metadata: { fromStatus: transition.fromStatus, toStatus: transition.toStatus, role: authenticated.role } });
         return { claimId: snapshot.id, fromStatus: transition.fromStatus, toStatus: transition.toStatus, status: snapshot.status, allowedTransitions: [...allowedTransitionsFor(snapshot.status)], transitionedAt: at.toISOString() };
       });
     } catch (error) {

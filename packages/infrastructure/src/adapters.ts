@@ -4,6 +4,7 @@ import { basename, join } from 'node:path';
 import argon2 from 'argon2';
 import { SignJWT, jwtVerify } from 'jose';
 import {
+  isStaffRole,
   permissionsForRole,
   type AccessTokenPort,
   type ActorContext,
@@ -53,15 +54,24 @@ export class Argon2PasswordHasher implements PasswordHasherPort {
 
 export class JwtAccessTokenAdapter implements AccessTokenPort {
   private readonly secret: Uint8Array;
-  constructor(secret: string) {
-    if (secret.length < 32) throw new Error('JWT_SECRET must contain at least 32 characters.');
+
+  constructor(
+    secret: string,
+    private readonly issuer = 'insurance-claims-staff',
+    private readonly audience = 'insurance-claims-staff-api',
+  ) {
+    if (secret.length < 32) throw new Error('Staff JWT secret must contain at least 32 characters.');
+    if (!issuer.trim()) throw new Error('Staff JWT issuer is required.');
+    if (!audience.trim()) throw new Error('Staff JWT audience is required.');
     this.secret = new TextEncoder().encode(secret);
   }
 
   async issue(operator: Pick<OperatorRecord, 'id' | 'login' | 'role'>, expiresInSeconds: number): Promise<string> {
-    return new SignJWT({ login: operator.login, role: operator.role })
+    return new SignJWT({ login: operator.login, role: operator.role, context: 'staff' })
       .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
       .setSubject(operator.id)
+      .setIssuer(this.issuer)
+      .setAudience(this.audience)
       .setIssuedAt()
       .setExpirationTime(`${expiresInSeconds}s`)
       .sign(this.secret);
@@ -69,13 +79,18 @@ export class JwtAccessTokenAdapter implements AccessTokenPort {
 
   async verify(token: string): Promise<ActorContext | null> {
     try {
-      const { payload } = await jwtVerify(token, this.secret, { algorithms: ['HS256'] });
-      if (!payload.sub || payload.role !== 'CLAIMS_OPERATOR' || typeof payload.login !== 'string') return null;
+      const { payload } = await jwtVerify(token, this.secret, {
+        algorithms: ['HS256'],
+        issuer: this.issuer,
+        audience: this.audience,
+      });
+      if (!payload.sub || !isStaffRole(payload.role) || payload.context !== 'staff' || typeof payload.login !== 'string') return null;
       return {
         operatorId: payload.sub,
         login: payload.login,
-        role: 'CLAIMS_OPERATOR',
-        permissions: permissionsForRole('CLAIMS_OPERATOR'),
+        role: payload.role,
+        context: 'staff',
+        permissions: permissionsForRole(payload.role),
       };
     } catch {
       return null;

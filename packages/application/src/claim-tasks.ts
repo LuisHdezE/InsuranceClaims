@@ -1,5 +1,6 @@
 import {
   ApplicationError,
+  actorTypeForStaffRole,
   type ActorContext,
   type ClaimRepository,
   type ClockPort,
@@ -7,6 +8,7 @@ import {
   type IdGeneratorPort,
   type IdempotencyPort,
   type IdempotencyRecord,
+  type Permission,
   type RequestContext,
 } from './index.js';
 import {
@@ -89,18 +91,17 @@ export interface ClaimTasksDependencies {
   ids: IdGeneratorPort;
 }
 
-/**
- * R3 changes the public permission names for tasks. The staff RBAC expansion is
- * delivered in the next cross-cutting increment. Until that lands, the
- * historical operator grants remain the compatibility proof for this vertical.
- */
 function requireTaskPermission(actor: ActorContext | undefined, mode: 'read' | 'manage'): ActorContext {
   if (!actor) throw new ApplicationError('AUTHENTICATION_REQUIRED', 'Authentication is required.');
-  const compatibilityPermission = mode === 'read' ? 'claims.backoffice.read' : 'claims.backoffice.transition';
-  if (!actor.permissions.includes(compatibilityPermission)) {
+  const permission: Permission = mode === 'read' ? 'claims.tasks.read' : 'claims.tasks.manage';
+  if (!actor.permissions.includes(permission)) {
     throw new ApplicationError('FORBIDDEN', 'The caller is not authorized for this operation.');
   }
   return actor;
+}
+
+function taskActorType(actor: ActorContext): ClaimTaskActorType {
+  return actorTypeForStaffRole(actor.role);
 }
 
 function requireText(name: string, value: string, max: number): string {
@@ -337,6 +338,7 @@ export class ClaimTasksApplication {
     }
 
     try {
+      const actorType = taskActorType(authenticated);
       const task = ClaimTask.create({
         id: this.deps.ids.uuid(),
         claimId: input.claimId,
@@ -347,7 +349,7 @@ export class ClaimTasksApplication {
         queue: input.queue ?? 'CLAIMS',
         assignedOperatorId: input.assignedOperatorId ?? null,
         dueAt,
-        createdByType: 'OPERATOR',
+        createdByType: actorType,
         createdById: authenticated.operatorId,
         sourceKey: `http:createClaimTask:${keyHash}`,
         correlationId: context.requestId ?? null,
@@ -365,11 +367,11 @@ export class ClaimTasksApplication {
         newPriority: snapshot.priority,
         previousDueAt: null,
         newDueAt: snapshot.dueAt,
-        actorType: 'OPERATOR',
+        actorType,
         actorId: authenticated.operatorId,
         correlationId: context.requestId ?? null,
         occurredAt: now,
-        metadata: null,
+        metadata: { role: authenticated.role },
       }, this.deps.ids));
       const response = taskProjection(persisted, claim);
       await this.deps.idempotency.complete(scope, keyHash, input.claimId, response);
@@ -417,11 +419,11 @@ export class ClaimTasksApplication {
         newPriority: snapshot.priority,
         previousDueAt: record.dueAt,
         newDueAt: snapshot.dueAt,
-        actorType: 'OPERATOR',
+        actorType: taskActorType(authenticated),
         actorId: authenticated.operatorId,
         correlationId: context.requestId ?? null,
         occurredAt: snapshot.updatedAt,
-        metadata: null,
+        metadata: { role: authenticated.role },
       }, this.deps.ids);
       await this.deps.tasks.update(snapshot, input.expectedVersion, entry);
       return taskProjection(snapshot, await this.deps.claims.getById(snapshot.claimId));
@@ -449,11 +451,11 @@ export class ClaimTasksApplication {
         newPriority: snapshot.priority,
         previousDueAt: record.dueAt,
         newDueAt: snapshot.dueAt,
-        actorType: 'OPERATOR',
+        actorType: taskActorType(authenticated),
         actorId: authenticated.operatorId,
         correlationId: context.requestId ?? null,
         occurredAt: snapshot.updatedAt,
-        metadata: null,
+        metadata: { role: authenticated.role },
       }, this.deps.ids));
       return taskProjection(snapshot, await this.deps.claims.getById(snapshot.claimId));
     } catch (error) {
@@ -480,11 +482,11 @@ export class ClaimTasksApplication {
         newPriority: snapshot.priority,
         previousDueAt: record.dueAt,
         newDueAt: snapshot.dueAt,
-        actorType: 'OPERATOR',
+        actorType: taskActorType(authenticated),
         actorId: authenticated.operatorId,
         correlationId: context.requestId ?? null,
         occurredAt: snapshot.updatedAt,
-        metadata: { reason: input.reason },
+        metadata: { reason: input.reason, role: authenticated.role },
       }, this.deps.ids));
       return taskProjection(snapshot, await this.deps.claims.getById(snapshot.claimId));
     } catch (error) {

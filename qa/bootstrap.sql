@@ -13,7 +13,7 @@ CREATE TABLE operators (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   login text NOT NULL UNIQUE,
   password_hash text NOT NULL,
-  role text NOT NULL CHECK (role = 'CLAIMS_OPERATOR'),
+  role text NOT NULL CHECK (role IN ('CLAIMS_OPERATOR','CLAIMS_SUPERVISOR','PLATFORM_ADMIN')),
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -42,7 +42,7 @@ CREATE TABLE claim_status_history (
   claim_id uuid NOT NULL REFERENCES claims(id) ON DELETE CASCADE,
   from_status text NULL CHECK (from_status IS NULL OR from_status IN ('RECEIVED','UNDER_REVIEW','OBSERVED','APPROVED','IN_REPAIR','CLOSED')),
   to_status text NOT NULL CHECK (to_status IN ('RECEIVED','UNDER_REVIEW','OBSERVED','APPROVED','IN_REPAIR','CLOSED')),
-  actor_type text NOT NULL CHECK (actor_type IN ('SYSTEM','OPERATOR')),
+  actor_type text NOT NULL CHECK (actor_type IN ('SYSTEM','OPERATOR','SUPERVISOR','ADMINISTRATOR')),
   actor_id uuid NULL REFERENCES operators(id) ON DELETE SET NULL,
   occurred_at timestamptz NOT NULL
 );
@@ -126,7 +126,7 @@ CREATE TABLE audit_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   event_code text NOT NULL,
   occurred_at timestamptz NOT NULL,
-  actor_type text NOT NULL CHECK (actor_type IN ('ANONYMOUS','CUSTOMER_PUBLIC','OPERATOR')),
+  actor_type text NOT NULL CHECK (actor_type IN ('ANONYMOUS','CUSTOMER_PUBLIC','OPERATOR','SUPERVISOR','ADMINISTRATOR')),
   actor_id text NULL,
   target_type text NULL,
   target_id text NULL,
