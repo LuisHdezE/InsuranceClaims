@@ -158,6 +158,20 @@
   .ops-evidence-list li { grid-template-columns: 34px minmax(0, 1fr); padding: 8px 0; }
   .ops-evidence-list button { grid-column: 2; justify-self: start; }
 
+  .ops-detail-identity,
+  .ops-detail-identity h1,
+  .ops-detail-identity > span,
+  .ops-work-card .operator-concurrency-note,
+  .ops-audit-details summary,
+  .ops-audit-details summary span {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .ops-detail-identity h1 { line-height: 1.05; }
+  .ops-audit-details summary { flex-wrap: wrap; gap: 6px 10px; }
+
   .ops-audit-table-wrap { overflow: visible; contain: layout inline-size paint; }
   .ops-audit-table,
   .ops-audit-table tbody,
