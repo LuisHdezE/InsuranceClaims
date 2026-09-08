@@ -35,6 +35,8 @@ function applicationsFrom(deps: ApplicationDependencies, taskStore: MemoryClaimT
   const tasks = new ClaimTasksApplication({
     claims: deps.claims,
     tasks: taskStore,
+    idempotency: deps.idempotency,
+    hash: deps.hash,
     clock: deps.clock,
     ids: deps.ids,
   });
