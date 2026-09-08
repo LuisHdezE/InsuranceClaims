@@ -5,12 +5,14 @@ import {
 } from './index.js';
 import { ClaimPipelineApplication } from './claim-pipeline.js';
 import { ClaimTasksApplication } from './claim-tasks.js';
+import { ClaimsOperationalQueryApplication } from './claims-operational-query.js';
 
 export class ClaimsOperationsApplication extends ClaimsApplication {
   constructor(
     private readonly operationsDeps: ApplicationDependencies,
     private readonly taskApplication: ClaimTasksApplication,
     private readonly pipelineApplication: ClaimPipelineApplication,
+    private readonly operationalQueries: ClaimsOperationalQueryApplication,
   ) {
     super(operationsDeps);
   }
@@ -58,5 +60,19 @@ export class ClaimsOperationsApplication extends ClaimsApplication {
       });
     }
     return result;
+  }
+
+  override async listClaims(
+    input: Parameters<ClaimsOperationalQueryApplication['listClaims']>[0],
+    actor?: Parameters<ClaimsOperationalQueryApplication['listClaims']>[1],
+  ) {
+    return this.operationalQueries.listClaims(input, actor);
+  }
+
+  async getClaimsOperationalMetrics(
+    input: Parameters<ClaimsOperationalQueryApplication['getClaimsOperationalMetrics']>[0],
+    actor?: Parameters<ClaimsOperationalQueryApplication['getClaimsOperationalMetrics']>[1],
+  ) {
+    return this.operationalQueries.getClaimsOperationalMetrics(input, actor);
   }
 }

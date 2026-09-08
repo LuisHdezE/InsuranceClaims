@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { z } from 'zod';
+import { CLAIMS_OPERATIONAL_SORTS } from '@insurance/application/claims-operational-query';
 import { API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
 import { RateLimitService, callerIp } from './transport.js';
@@ -15,6 +16,9 @@ const loginSchema = z.object({ login: z.string().trim().min(1).max(160), passwor
 const statusSchema = z.enum(['RECEIVED', 'UNDER_REVIEW', 'OBSERVED', 'APPROVED', 'IN_REPAIR', 'CLOSED']);
 const transitionSchema = z.object({ expectedFromStatus: statusSchema, toStatus: statusSchema });
 const uuidSchema = z.string().uuid();
+const operationalStageSchema = z.string().trim().min(1).max(80).regex(/^[A-Za-z0-9._-]+$/);
+const operationalSearchSchema = z.string().trim().min(1).max(120);
+const operationalSortSchema = z.enum(CLAIMS_OPERATIONAL_SORTS);
 
 @Controller('api/v1/public')
 export class PublicClaimsController {
@@ -98,6 +102,9 @@ export class OperatorClaimsController {
       page: z.coerce.number().int().min(1).optional(),
       pageSize: z.coerce.number().int().min(1).max(100).optional(),
       status: statusSchema.optional(),
+      stage: operationalStageSchema.optional(),
+      search: operationalSearchSchema.optional(),
+      sort: operationalSortSchema.optional(),
     }).parse(query);
     return this.runtime.application.listClaims(parsed, req.actor);
   }
