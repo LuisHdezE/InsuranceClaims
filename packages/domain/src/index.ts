@@ -51,6 +51,8 @@ export interface ClaimProps {
   trackingCode: string;
   policyReference: string;
   vehicleReference: string;
+  customerId?: string | null;
+  policyId?: string | null;
   verifiedCustomerLabel: string | null;
   eventType: string;
   occurredAt: Date;
@@ -99,3 +101,4 @@ export class Claim {
 }
 
 export * from './pipeline-work-item.js';
+export * from './customer-policy.js';

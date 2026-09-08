@@ -135,11 +135,64 @@ model Operator {
   @@map("operators")
 }
 
+model Customer {
+  id          Uuid     @id @default(uuid())
+  customerRef String   @unique @map("customer_ref")
+  displayName String   @map("display_name")
+  status      String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @map("updated_at")
+  version     Int      @default(1)
+  policies    Policy[]
+  claims      Claim[]
+
+  @@index([status], map: "customers_status_idx")
+  @@map("customers")
+}
+
+model Policy {
+  id                    Uuid          @id @default(uuid())
+  customerId            Uuid          @map("customer_id")
+  policyReference       String        @unique @map("policy_reference")
+  legacyPolicyReference String        @map("legacy_policy_reference")
+  insurerReference      String?       @map("insurer_reference")
+  recordStatus          String        @map("record_status")
+  operationalMetadata   Json          @map("operational_metadata")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @default(now()) @map("updated_at")
+  version               Int           @default(1)
+  customer              Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  assets                PolicyAsset[]
+  claims                Claim[]
+
+  @@index([customerId, recordStatus], map: "policies_customer_status_idx")
+  @@index([legacyPolicyReference], map: "policies_legacy_reference_idx")
+  @@map("policies")
+}
+
+model PolicyAsset {
+  id                   Uuid     @id @default(uuid())
+  policyId             Uuid     @map("policy_id")
+  assetType            String   @map("asset_type")
+  assetReference       String   @map("asset_reference")
+  legacyAssetReference String   @map("legacy_asset_reference")
+  metadata             Json
+  createdAt            DateTime @default(now()) @map("created_at")
+  policy               Policy   @relation(fields: [policyId], references: [id], onDelete: Restrict)
+
+  @@unique([policyId, assetReference], map: "policy_assets_policy_asset_key")
+  @@unique([policyId, legacyAssetReference], map: "policy_assets_policy_legacy_asset_key")
+  @@index([legacyAssetReference], map: "policy_assets_legacy_reference_idx")
+  @@map("policy_assets")
+}
+
 model Claim {
   id                    Uuid        @id @default(uuid())
   trackingCode          String      @unique @map("tracking_code")
   policyReference       String      @map("policy_reference")
   vehicleReference      String      @map("vehicle_reference")
+  customerId            Uuid?       @map("customer_id")
+  policyId              Uuid?       @map("policy_id")
   verifiedCustomerLabel String?     @map("verified_customer_label")
   eventType             String      @map("event_type")
   occurredAt            DateTime    @map("occurred_at")
@@ -148,6 +201,8 @@ model Claim {
   status                ClaimStatus
   createdAt             DateTime    @default(now()) @map("created_at")
   updatedAt             DateTime    @default(now()) @map("updated_at")
+  customer              Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  policy                Policy?     @relation(fields: [policyId], references: [id], onDelete: SetNull)
   history               ClaimStatusHistory[]
   evidence              ClaimEvidence[]
   idempotencyRecords    IdempotencyRecord[]
@@ -156,6 +211,8 @@ model Claim {
   @@index([status])
   @@index([createdAt])
   @@index([policyReference, trackingCode])
+  @@index([customerId, createdAt], map: "claims_customer_created_idx")
+  @@index([policyId, createdAt], map: "claims_policy_created_idx")
   @@map("claims")
 }
 
