@@ -6,6 +6,8 @@ on:
     paths:
       - qa/claims-operations-increment-review.py
       - documentation/claims-operations/CLAIMS_OPERATIONS_INCREMENT_REVIEW.md
+      - apps/web/src/components/OperatorShell.tsx
+      - apps/web/src/operator-shell-disclosure.css
       - .github/workflows/claims-operations-increment-review.yml
 
 permissions:
