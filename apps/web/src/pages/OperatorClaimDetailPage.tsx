@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import { downloadClaimEvidence, getClaimDetail, transitionClaimStatus } from '../api/claims';
-import type { ApiFailure, ClaimStatus, EvidenceMetadata, OperatorClaimDetailResponse } from '../api/types';
+import { getClaimDetail, transitionClaimStatus } from '../api/claims';
+import type { ApiFailure, ClaimStatus, OperatorClaimDetailResponse } from '../api/types';
+import { ClaimEvidenceAttentionPanel } from '../components/ClaimEvidenceAttentionPanel';
 import { ClaimTasksPanel } from '../components/ClaimTasksPanel';
 import { ClaimTimelinePanel } from '../components/ClaimTimelinePanel';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
@@ -15,8 +16,6 @@ export function OperatorClaimDetailPage() {
   const { session, signOut } = useOperatorSession();
   const [selectedTransition, setSelectedTransition] = useState<ClaimStatus | ''>('');
   const [transitionFailure, setTransitionFailure] = useState<ApiFailure | null>(null);
-  const [evidenceFailure, setEvidenceFailure] = useState<ApiFailure | null>(null);
-  const [downloadingEvidenceId, setDownloadingEvidenceId] = useState<string | null>(null);
 
   const claimQuery = useQuery({
     queryKey: ['operator', 'claim', claimId],
@@ -61,29 +60,6 @@ export function OperatorClaimDetailPage() {
   if (!session) return null;
   const detail = claimQuery.data?.data;
 
-  const downloadEvidence = async (evidence: EvidenceMetadata) => {
-    setDownloadingEvidenceId(evidence.evidenceId);
-    setEvidenceFailure(null);
-    try {
-      const result = await downloadClaimEvidence(claimId, evidence.evidenceId, session.accessToken);
-      const blob = new Blob([result.data.bytes], { type: result.data.mediaType });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = result.data.filename ?? evidence.displayFilename ?? `evidence-${evidence.evidenceId}`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      const failure = error as ApiFailure;
-      setEvidenceFailure(failure);
-      if (failure.problem?.status === 401) signOut();
-    } finally {
-      setDownloadingEvidenceId(null);
-    }
-  };
-
   return (
     <OperatorShell>
       <main className="operator-main ops-main">
@@ -102,6 +78,7 @@ export function OperatorClaimDetailPage() {
                 void Promise.all([
                   claimQuery.refetch(),
                   queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'timeline'] }),
+                  queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'evidence-attention'] }),
                 ]);
               }}
               onPrimaryTransition={(toStatus) => {
@@ -174,34 +151,7 @@ export function OperatorClaimDetailPage() {
               </section>
 
               <ClaimTasksPanel claimId={claimId} />
-
-              <section className="ops-panel ops-evidence-card" aria-labelledby="evidence-title">
-                <div className="ops-panel-heading">
-                  <div><span className="ops-kicker">Protegido</span><h2 id="evidence-title">Evidencia protegida</h2></div>
-                  <span className="ops-count-pill">{detail.evidence.length} archivo(s)</span>
-                </div>
-                {evidenceFailure && <OperatorApiErrorNotice failure={evidenceFailure} />}
-                {detail.evidence.length === 0 ? (
-                  <div className="ops-compact-empty">No hay evidencia asociada a este siniestro.</div>
-                ) : (
-                  <ul className="ops-evidence-list">
-                    {detail.evidence.map((evidence) => (
-                      <li key={evidence.evidenceId}>
-                        <span className={`ops-file-icon ${evidence.mediaType === 'application/pdf' ? 'is-pdf' : 'is-image'}`} aria-hidden="true">{evidence.mediaType === 'application/pdf' ? 'PDF' : 'IMG'}</span>
-                        <div>
-                          <strong>{evidence.displayFilename ?? 'Evidencia sin nombre'}</strong>
-                          <span>{evidence.mediaType} · {formatBytes(evidence.sizeBytes)} · {formatDate(evidence.createdAt)}</span>
-                        </div>
-                        <button type="button" disabled={downloadingEvidenceId === evidence.evidenceId} onClick={() => void downloadEvidence(evidence)}>
-                          {downloadingEvidenceId === evidence.evidenceId ? 'Descargando…' : 'Descargar'}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <div className="ops-protected-note">🔒 Acceso restringido. La evidencia solo se recupera mediante el endpoint autenticado.</div>
-              </section>
-
+              <ClaimEvidenceAttentionPanel claimId={claimId} />
               <ClaimTimelinePanel claimId={claimId} />
             </div>
 
@@ -292,11 +242,6 @@ function stageLabel(status: ClaimStatus) {
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('es-UY', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-}
-
-function formatBytes(value: number) {
-  if (value < 1024) return `${value} B`;
-  return `${(value / 1024).toFixed(1)} KiB`;
 }
 
 function statusLabel(status: ClaimStatus) {

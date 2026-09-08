@@ -1,4 +1,5 @@
 import type { AccessTokenPort } from '@insurance/application';
+import type { ClaimEvidenceAttentionApplication } from '@insurance/application/claim-evidence-attention';
 import type { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
 import type { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 import type { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
@@ -10,6 +11,7 @@ export interface ApiRuntimeContract {
   application: ClaimsOperationsApplication;
   tasks: ClaimTasksApplication;
   timeline: ClaimTimelineApplication;
+  evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;
 }
 

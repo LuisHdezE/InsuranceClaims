@@ -97,11 +97,29 @@
 .ops-timeline-dot::after { content: ""; position: absolute; top: 12px; left: 4px; width: 2px; height: 39px; background: #dce6ee; }
 .ops-detail-timeline li:last-child .ops-timeline-dot::after { display: none; }
 
-.ops-audit-details { margin-top: 14px; border: 1px solid var(--ops-border); border-radius: 12px; background: white; box-shadow: 0 8px 25px rgba(6,52,95,.04); overflow: hidden; }
+.ops-audit-details {
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 14px;
+  border: 1px solid var(--ops-border);
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 8px 25px rgba(6,52,95,.04);
+  overflow: hidden;
+}
 .ops-audit-details summary { min-height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; color: var(--ops-ink); font-size: 11px; font-weight: 900; cursor: pointer; }
 .ops-audit-details summary span { color: var(--ops-muted); font-size: 9px; font-weight: 700; }
-.ops-audit-table-wrap { overflow-x: auto; border-top: 1px solid var(--ops-border); }
-.ops-audit-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+.ops-audit-table-wrap {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  contain: inline-size;
+  border-top: 1px solid var(--ops-border);
+}
+.ops-audit-table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 9px; }
 .ops-audit-table th,
 .ops-audit-table td { padding: 9px 12px; border-bottom: 1px solid #edf2f5; text-align: left; vertical-align: top; }
 .ops-audit-table th { background: #f7fafc; color: var(--ops-muted); font-size: 8px; text-transform: uppercase; letter-spacing: .04em; }

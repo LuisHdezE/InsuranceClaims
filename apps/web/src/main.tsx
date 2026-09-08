@@ -13,6 +13,7 @@ import './claims-operations.css';
 import './claims-operations-detail.css';
 import './claims-tasks.css';
 import './claims-timeline.css';
+import './claims-evidence-attention.css';
 import './public-refresh.css';
 import './hero-fix.css';
 
