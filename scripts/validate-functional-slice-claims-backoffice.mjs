@@ -131,7 +131,7 @@ assert(styles.includes('@media (max-width: 900px)'), 'backoffice tablet/mobile r
 assert(styles.includes('@media (max-width: 720px)'), 'claims table mobile card transformation missing');
 assert(read('apps/web/src/styles.css').includes(':focus-visible'), 'visible keyboard focus contract missing');
 assert(read('apps/web/src/claims-timeline.css').includes('@media (max-width: 420px)'), 'operational timeline mobile contract missing');
-assert(read('apps/web/src/claims-evidence-attention.css').includes('@media (max-width: 420px)'), 'Evidence Attention mobile contract missing');
+assert(read('apps/web/src/claims-evidence-attention.css').includes('@media (max-width: 520px)'), 'Evidence Attention mobile contract missing');
 
 const sourceRoot = path.join(root, 'apps/web/src');
 const sourceFiles = [];
