@@ -98,25 +98,28 @@
 .ops-detail-timeline li:last-child .ops-timeline-dot::after { display: none; }
 
 .ops-audit-details {
-  min-width: 0;
-  max-width: 100%;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   margin-top: 14px;
   border: 1px solid var(--ops-border);
   border-radius: 12px;
   background: white;
   box-shadow: 0 8px 25px rgba(6,52,95,.04);
   overflow: hidden;
+  contain: layout inline-size paint;
 }
 .ops-audit-details summary { min-height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; color: var(--ops-ink); font-size: 11px; font-weight: 900; cursor: pointer; }
 .ops-audit-details summary span { color: var(--ops-muted); font-size: 9px; font-weight: 700; }
 .ops-audit-table-wrap {
   display: block;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   overscroll-behavior-x: contain;
-  contain: inline-size;
+  contain: layout inline-size paint;
   border-top: 1px solid var(--ops-border);
 }
 .ops-audit-table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 9px; }
@@ -154,4 +157,44 @@
   .ops-transition-row { grid-template-columns: 1fr; }
   .ops-evidence-list li { grid-template-columns: 34px minmax(0, 1fr); padding: 8px 0; }
   .ops-evidence-list button { grid-column: 2; justify-self: start; }
+
+  .ops-detail-identity,
+  .ops-detail-identity h1,
+  .ops-detail-identity > span,
+  .ops-work-card .operator-concurrency-note,
+  .ops-audit-details summary,
+  .ops-audit-details summary span {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .ops-detail-identity h1 { line-height: 1.05; }
+  .ops-audit-details summary { flex-wrap: wrap; gap: 6px 10px; }
+
+  .ops-audit-table-wrap { overflow: visible; contain: layout inline-size paint; }
+  .ops-audit-table,
+  .ops-audit-table tbody,
+  .ops-audit-table tr,
+  .ops-audit-table td { display: block; inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; }
+  .ops-audit-table { min-width: 0; border-collapse: separate; }
+  .ops-audit-table thead { display: none; }
+  .ops-audit-table tr { padding: 7px 0; border-bottom: 1px solid #e7eef3; }
+  .ops-audit-table tr:last-child { border-bottom: 0; }
+  .ops-audit-table td {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 8px;
+    padding: 5px 10px;
+    border: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .ops-audit-table td::before { color: var(--ops-muted); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+  .ops-audit-table td:nth-child(1)::before { content: "Fecha"; }
+  .ops-audit-table td:nth-child(2)::before { content: "Evento"; }
+  .ops-audit-table td:nth-child(3)::before { content: "Actor"; }
+  .ops-audit-table td:nth-child(4)::before { content: "Resultado"; }
+  .ops-audit-table td:nth-child(5)::before { content: "Request ID"; }
+  .ops-audit-table td:last-child { max-width: none; }
 }
