@@ -5,7 +5,7 @@
 **Delivery mode:** GREENFIELD with legacy coexistence SIMULATED  
 **Baseline main SHA:** `34b197c65d1b8b23fcd7e3bd4f20fa6d61e4d7dd`  
 **Contract:** `api-v1-r3`  
-**Status:** IMPLEMENTED_PENDING_MACHINE_VERIFICATION  
+**Status:** IMPLEMENTED_VERIFIED_PENDING_HUMAN_REVIEW  
 **Date:** 2026-09-08
 
 > Caso técnico no oficial · No oficial · Sin afiliación. Todos los pipelines, etapas, identidades, provenance values y datos de prueba son sintéticos/demo.
@@ -155,7 +155,7 @@ Activated/retires timestamps remain on immutable version records for reproducibi
 
 ## 9. Verification targets
 
-Machine verification must prove:
+Machine verification proved:
 
 1. Prisma contract emits with no schema drift;
 2. TypeScript typecheck succeeds;
@@ -178,6 +178,34 @@ Machine verification must prove:
 19. historical Claim lifecycle, task, tracking, timeline and analytics behavior do not regress;
 20. frozen `documentation/api/r3/**` artifacts remain unchanged.
 
+### 9.1 Exact-head machine evidence
+
+Verified implementation head before this evidence-only status update:
+
+- implementation head: `153a267f74e58c22c6d661cf05e2f99c8ac1fb32`;
+- API Implementation run `#278`, run ID `34260566332`: SUCCESS;
+  - Prisma contract emit: SUCCESS;
+  - TypeScript typecheck: SUCCESS;
+  - backend tests: SUCCESS;
+  - architecture conformance: SUCCESS;
+  - build: SUCCESS;
+- API QA run `#241`, run ID `34260566280`: SUCCESS;
+- OpenAPI Validation run `#261`, run ID `34260566252`: SUCCESS;
+- OpenAPI Post-MVP R2 run `#36`, run ID `34260566431`: SUCCESS;
+- Postman Contract run `#248`, run ID `34260566266`: SUCCESS;
+- Integration QA - Web Slices run `#139`, run ID `34260566269`: SUCCESS;
+- Release Gate Evidence run `#131`, run ID `34260566202`: SUCCESS;
+- Operations Observability Evidence run `#118`, run ID `34260566265`: SUCCESS;
+- Design System run `#218`, Interface Inventory run `#223`, and all three historical web functional slices: SUCCESS.
+
+Expected historical/frozen locks on the same implementation head:
+
+- Release Gate Ready State run `#124`, run ID `34260566435`: expected FAILURE because human acceptance/release readiness remains intentionally not ready;
+- Operations State run `#113`, run ID `34260566376`: expected FAILURE because the inherited release snapshot is frozen;
+- Visual Functional Review Ready - Web run `#119`, run ID `34260566206`: expected FAILURE because the historical visual-review ready-state gate remains frozen.
+
+These three failures are inherited governance locks and are not implementation regressions. They are not weakened or modified by this increment.
+
 ## 10. Governance
 
 No changes are made to:
@@ -188,6 +216,6 @@ No changes are made to:
 - Blueprint Master;
 - immutable `v0.2.0` tag/release.
 
-Machine success can move this increment only to `IMPLEMENTED_VERIFIED_PENDING_HUMAN_REVIEW`.
+Machine verification moves this increment to `IMPLEMENTED_VERIFIED_PENDING_HUMAN_REVIEW` only.
 
 It does not authorize merge, release, tagging or publication. Merge requires a separate explicit human decision from Luis.
