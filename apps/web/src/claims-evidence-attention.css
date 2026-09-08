@@ -160,32 +160,19 @@
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 420px) {
   .ops-evidence-review-summary {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .ops-evidence-attention-list li {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    grid-template-columns: 34px minmax(0, 1fr);
     gap: 8px;
-    padding: 8px 0;
-  }
-
-  .ops-evidence-attention-list .ops-file-icon {
-    flex: 0 0 32px;
-  }
-
-  .ops-evidence-attention-list .ops-evidence-file-copy {
-    flex: 1 1 0;
-    min-width: 0;
   }
 
   .ops-evidence-attention-list li > button {
-    flex: 1 0 100%;
-    width: auto;
+    grid-column: 1 / -1;
+    width: 100%;
     min-width: 0;
-    justify-self: auto;
   }
 }
