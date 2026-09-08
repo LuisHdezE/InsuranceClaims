@@ -1,0 +1,192 @@
+name: Claims Operations Increment Review
+
+on:
+  push:
+    branches: [blueprint/claims-operations-increment-review]
+    paths:
+      - qa/claims-operations-increment-review.py
+      - documentation/claims-operations/CLAIMS_OPERATIONS_INCREMENT_REVIEW.md
+      - apps/web/src/components/OperatorShell.tsx
+      - apps/web/src/operator-shell-disclosure.css
+      - .github/workflows/claims-operations-increment-review.yml
+
+permissions:
+  contents: write
+
+jobs:
+  increment-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_claims_ops_review
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_claims_ops_review"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_claims_ops_review
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-claims-operations-review
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: blueprint/claims-operations-increment-review
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install locked application dependencies
+        run: npm ci
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Typecheck and test current product
+        run: |
+          npm run typecheck
+          npm test
+          npm test --workspace=@insurance/web
+
+      - name: Verify architecture and production builds
+        run: |
+          npm run architecture:check
+          npm run build
+          npm run build --workspace=@insurance/web
+
+      - name: Prepare synthetic runtime secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=claims-ops-review-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=Claims-ops-review-$(openssl rand -hex 12)!" >> "$GITHUB_ENV"
+
+      - name: Ensure PostgreSQL client and browser runtime
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$browser_bin" ]]; then
+            echo "No supported Chrome/Chromium binary found on runner" >&2
+            exit 1
+          fi
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+          "$browser_bin" --version
+
+      - name: Bootstrap ephemeral PostgreSQL schema and seed operator
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          npx tsx qa/seed.ts
+
+      - name: Start simulated legacy API and rendered web client
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-claims-operations-review
+          npm run start:legacy > .runtime/claims-ops-review-legacy.log 2>&1 &
+          echo $! > .runtime/claims-ops-review-legacy.pid
+          npm run start:api > .runtime/claims-ops-review-api.log 2>&1 &
+          echo $! > .runtime/claims-ops-review-api.pid
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/claims-ops-review-web.log 2>&1 &
+          echo $! > .runtime/claims-ops-review-web.pid
+
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 60); do
+            api_ok=0
+            web_ok=0
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$api_ok" == "1" && "$web_ok" == "1" ]]; then exit 0; fi
+            if [[ "$attempt" == "60" ]]; then
+              cat .runtime/claims-ops-review-api.log || true
+              cat .runtime/claims-ops-review-legacy.log || true
+              cat .runtime/claims-ops-review-web.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Exercise curated Claims Operations journey and capture evidence
+        run: GITHUB_SHA="$(git rev-parse HEAD)" python qa/claims-operations-increment-review.py
+
+      - name: Validate generated increment review summary
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('documentation/claims-operations/review/generated/claims-operations-increment-review.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          summary = data['summary']
+          assert summary['machine_review_ready'] is True
+          assert summary['human_review_required'] is True
+          assert summary['next_status'] == 'READY_FOR_HUMAN_REVIEW'
+          assert summary['candidate_version'] == '0.2.0'
+          assert summary['screenshot_count'] == 12
+          assert summary['historical_mvp_evidence_preserved'] is True
+          assert data['journey']['claim_status_after_task_completion'] == 'RECEIVED'
+          assert data['journey']['claim_status_after_explicit_transition'] == 'UNDER_REVIEW'
+          assert data['journey']['evidence_pending_after'] == data['journey']['evidence_pending_before'] - 1
+          for surface in data['surfaces'].values():
+              assert surface['machine_review_ready'] is True
+              assert surface['human_review'] == 'PENDING_MANUAL'
+          print(json.dumps(summary))
+          PY
+          test "$(find documentation/claims-operations/review/generated/assets -name '*.png' | wc -l)" -eq 12
+
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          echo '=== API LOG ==='
+          tail -n 250 .runtime/claims-ops-review-api.log 2>/dev/null || true
+          echo '=== LEGACY LOG ==='
+          tail -n 200 .runtime/claims-ops-review-legacy.log 2>/dev/null || true
+          echo '=== WEB LOG ==='
+          tail -n 250 .runtime/claims-ops-review-web.log 2>/dev/null || true
+
+      - name: Commit generated increment evidence
+        shell: bash
+        run: |
+          git config user.name "MSc Luis A. Hernández Elias"
+          git config user.email "88979457+LuisHdezE@users.noreply.github.com"
+          git add documentation/claims-operations/review/generated
+          if git diff --cached --quiet; then
+            echo "No generated evidence changes"
+            exit 0
+          fi
+          git commit -m "test(claims-ops): capture 0.2.0 increment review evidence"
+          git push origin HEAD:blueprint/claims-operations-increment-review
+
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          [[ -f .runtime/claims-ops-review-web.pid ]] && kill "$(cat .runtime/claims-ops-review-web.pid)" 2>/dev/null || true
+          [[ -f .runtime/claims-ops-review-api.pid ]] && kill "$(cat .runtime/claims-ops-review-api.pid)" 2>/dev/null || true
+          [[ -f .runtime/claims-ops-review-legacy.pid ]] && kill "$(cat .runtime/claims-ops-review-legacy.pid)" 2>/dev/null || true

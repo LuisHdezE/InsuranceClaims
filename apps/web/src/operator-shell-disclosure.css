@@ -1,0 +1,15 @@
+.ops-mobile-disclosure {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .operator-header.ops-topbar .ops-topbar-title .ops-mobile-disclosure {
+    display: block;
+    max-width: 220px;
+    margin-top: 3px;
+    color: var(--ops-muted);
+    font-size: 9px;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+}

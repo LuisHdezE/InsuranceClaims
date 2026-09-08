@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
+import '../operator-shell-disclosure.css';
 
 const navItems = [
   { to: '/operator/dashboard', label: 'Dashboard', glyph: '⌂' },
@@ -45,6 +46,11 @@ export function OperatorShell({ children }: { children: ReactNode }) {
           <div className="ops-topbar-title">
             <strong>Claims Operations</strong>
             <span>Gestión operativa del caso técnico</span>
+            <small className="ops-mobile-disclosure">
+              Caso técnico no oficial · No oficial · Sin afiliación
+              <br />
+              Datos exclusivamente sintéticos.
+            </small>
           </div>
 
           <label className="ops-global-search">
