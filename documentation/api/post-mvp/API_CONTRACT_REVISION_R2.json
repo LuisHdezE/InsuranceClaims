@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "contract_revision": "api-v1-r2",
+  "previous_revision": "api-v1-r1",
+  "blueprint_version": "0.5.2",
+  "project": "LuisHdezE/InsuranceClaims",
+  "composition": {
+    "strategy": "immutable_base_plus_additions_no_overrides",
+    "base_openapi": "openapi.yaml",
+    "base_openapi_git_blob_sha1": "868fcb74f57d507dd1ef27fa24518357287dd3ff",
+    "base_inventory": "documentation/api/API_ENDPOINT_INVENTORY.json",
+    "base_inventory_git_blob_sha1": "cb71abd33b0c0237b29346225f6ee019df2de709",
+    "additions_openapi": "documentation/api/post-mvp/openapi-v1-r2-additions.yaml",
+    "additions_inventory": "documentation/api/post-mvp/API_ENDPOINT_INVENTORY_R2_ADDITIONS.json",
+    "effective_operation_count": 15,
+    "base_operation_count": 10,
+    "additive_operation_count": 5
+  },
+  "blueprint_api_impact": {
+    "artifact": ".blueprint/api-impact/API-IMPACT-001.json",
+    "canonical_schema_version": "0.5.0",
+    "canonical_schema_source": "LuisHdezE/SoftwareDevelopmentBlueprint/schemas/api-impact.schema.json",
+    "canonical_schema_git_blob_sha1": "bf3d0c3bcb0e42648a6eedbc39f6a6968531fbc0",
+    "vendored_schema_snapshot": "documentation/api/post-mvp/blueprint-api-impact.schema.json"
+  },
+  "invariants": [
+    "api-v1-r1 remains byte-for-byte immutable",
+    "r2 additions must not override any r1 method/path pair or operationId",
+    "effective r2 is the union of r1 and the additive operations in this directory",
+    "unrelated accepted v0.1.0 evidence remains preserved"
+  ]
+}
