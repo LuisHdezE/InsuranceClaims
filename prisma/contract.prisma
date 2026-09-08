@@ -13,12 +13,16 @@ enum ClaimStatus {
 enum OperatorRole {
   @@type("pg/text@1")
   CLAIMS_OPERATOR
+  CLAIMS_SUPERVISOR
+  PLATFORM_ADMIN
 }
 
 enum HistoryActorType {
   @@type("pg/text@1")
   SYSTEM
   OPERATOR
+  SUPERVISOR
+  ADMINISTRATOR
 }
 
 enum AuditActorType {
@@ -26,6 +30,8 @@ enum AuditActorType {
   ANONYMOUS
   CUSTOMER_PUBLIC
   OPERATOR
+  SUPERVISOR
+  ADMINISTRATOR
 }
 
 enum AuditOutcome {

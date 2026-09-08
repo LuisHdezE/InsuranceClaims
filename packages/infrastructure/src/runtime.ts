@@ -57,12 +57,22 @@ function applicationsFrom(deps: ApplicationDependencies, taskStore: MemoryClaimT
   };
 }
 
-export async function createMemoryRuntime(options: { jwtSecret?: string; operatorLogin?: string; operatorPassword?: string } = {}): Promise<RuntimeContext & { store: MemoryWorkflowStore; taskStore: MemoryClaimTaskStore; evidenceStorage: MemoryEvidenceStorage }> {
+export async function createMemoryRuntime(options: {
+  jwtSecret?: string;
+  staffJwtIssuer?: string;
+  staffJwtAudience?: string;
+  operatorLogin?: string;
+  operatorPassword?: string;
+} = {}): Promise<RuntimeContext & { store: MemoryWorkflowStore; taskStore: MemoryClaimTaskStore; evidenceStorage: MemoryEvidenceStorage }> {
   const store = new MemoryWorkflowStore();
   const taskStore = new MemoryClaimTaskStore();
   const evidenceStorage = new MemoryEvidenceStorage();
   const passwordHasher = new Argon2PasswordHasher();
-  const accessTokens = new JwtAccessTokenAdapter(options.jwtSecret ?? 'memory-runtime-secret-that-is-long-enough-123456');
+  const accessTokens = new JwtAccessTokenAdapter(
+    options.jwtSecret ?? 'memory-runtime-secret-that-is-long-enough-123456',
+    options.staffJwtIssuer ?? 'insurance-claims-staff',
+    options.staffJwtAudience ?? 'insurance-claims-staff-api',
+  );
   store.seedOperator({
     id: '00000000-0000-4000-8000-000000000001',
     login: (options.operatorLogin ?? 'operator@example.invalid').toLowerCase(),
@@ -81,15 +91,17 @@ export async function createMemoryRuntime(options: { jwtSecret?: string; operato
 export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = process.env): Promise<RuntimeContext & { store: PrismaWorkflowStore; taskStore: PrismaClaimTaskStore }> {
   const databaseUrl = env.DATABASE_URL;
   const legacyUrl = env.LEGACY_SIMULATOR_URL;
-  const jwtSecret = env.JWT_SECRET;
+  const staffJwtSecret = env.STAFF_JWT_SECRET ?? env.JWT_SECRET;
+  const staffJwtIssuer = env.STAFF_JWT_ISSUER ?? 'insurance-claims-staff';
+  const staffJwtAudience = env.STAFF_JWT_AUDIENCE ?? 'insurance-claims-staff-api';
   if (!databaseUrl) throw new Error('DATABASE_URL is required.');
   if (!legacyUrl) throw new Error('LEGACY_SIMULATOR_URL is required.');
-  if (!jwtSecret) throw new Error('JWT_SECRET is required.');
+  if (!staffJwtSecret) throw new Error('STAFF_JWT_SECRET (or legacy JWT_SECRET) is required.');
   const db = postgres<Contract>({ contractJson, url: databaseUrl });
   const store = new PrismaWorkflowStore(db);
   const taskStore = new PrismaClaimTaskStore(db);
   const passwordHasher = new Argon2PasswordHasher();
-  const accessTokens = new JwtAccessTokenAdapter(jwtSecret);
+  const accessTokens = new JwtAccessTokenAdapter(staffJwtSecret, staffJwtIssuer, staffJwtAudience);
   const deps: ApplicationDependencies = {
     policyVerification: new HttpPolicyVerificationAdapter(legacyUrl), claims: store,
     evidenceStorage: new LocalPrivateEvidenceStorage(env.EVIDENCE_STORAGE_DIR ?? '.runtime/evidence'), audits: store,
