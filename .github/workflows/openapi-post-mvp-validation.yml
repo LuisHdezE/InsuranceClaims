@@ -1,0 +1,41 @@
+name: OpenAPI Post-MVP R2
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-r2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Lint additive OpenAPI 3.1 contract
+        run: npx --yes @redocly/cli@2.51.2 lint --extends=spec documentation/api/post-mvp/openapi-v1-r2-additions.yaml
+
+      - name: Bundle additive contract for semantic checks
+        run: |
+          mkdir -p .runtime
+          npx --yes @redocly/cli@2.51.2 bundle \
+            documentation/api/post-mvp/openapi-v1-r2-additions.yaml \
+            --dereferenced \
+            --output .runtime/openapi-v1-r2-additions.bundle.json
+
+      - name: Validate Blueprint api-impact schema snapshot
+        run: |
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s documentation/api/post-mvp/blueprint-api-impact.schema.json \
+            -d .blueprint/api-impact/API-IMPACT-001.json
+
+      - name: Validate immutable r1 plus additive r2 composition
+        run: node scripts/validate-post-mvp-api-contract.mjs
