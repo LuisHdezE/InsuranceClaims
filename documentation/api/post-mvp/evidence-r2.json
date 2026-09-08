@@ -1,0 +1,31 @@
+{
+  "schema_version": "0.5.0",
+  "evidence": [
+    {
+      "id": "EVD-OPENAPI-R2-001",
+      "type": "openapi",
+      "value": "documentation/api/post-mvp/openapi-v1-r2-additions.yaml",
+      "description": "Additive OpenAPI 3.1 contract composing Claims Operations endpoints onto immutable api-v1-r1.",
+      "scope": {
+        "level": "api_change",
+        "id": "API-IMPACT-001",
+        "platform": "web"
+      },
+      "created_at": "2026-09-08T01:20:00Z",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-API-R2-VALIDATION-001",
+      "type": "schema_validation",
+      "value": ".github/workflows/openapi-post-mvp-validation.yml",
+      "description": "CI validates the additive OpenAPI, immutable r1 pins, operation composition and Blueprint api-impact schema.",
+      "scope": {
+        "level": "api_change",
+        "id": "API-IMPACT-001",
+        "platform": "web"
+      },
+      "created_at": "2026-09-08T01:20:00Z",
+      "producer": "automatic"
+    }
+  ]
+}
