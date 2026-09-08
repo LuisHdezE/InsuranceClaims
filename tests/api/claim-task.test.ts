@@ -6,7 +6,7 @@ import request from 'supertest';
 import { createMemoryRuntime } from '@insurance/infrastructure';
 import { ApiModule } from '../../apps/api/src/app.module.js';
 
-test('ClaimTask REST slice is protected, idempotent and independent from Claim lifecycle', async () => {
+test('ClaimTask REST slice is protected, idempotent, versioned and independent from Claim lifecycle', async () => {
   const runtime = await createMemoryRuntime();
   const app = await NestFactory.create(ApiModule.register(runtime), { logger: false });
   await app.init();
@@ -41,6 +41,7 @@ test('ClaimTask REST slice is protected, idempotent and independent from Claim l
   assert.equal(taskPage.body.totalItems, 1);
   assert.equal(taskPage.body.items[0].type, 'CLAIM_REVIEW');
   assert.equal(taskPage.body.items[0].status, 'OPEN');
+  assert.equal(taskPage.body.items[0].version, 1);
   assert.equal(taskPage.body.items[0].trackingCode, first.body.trackingCode);
 
   const claimTasks = await request(http)
@@ -56,13 +57,90 @@ test('ClaimTask REST slice is protected, idempotent and independent from Claim l
     .send({ expectedStatus: 'OPEN' })
     .expect(200);
   assert.equal(completed.body.status, 'COMPLETED');
+  assert.equal(completed.body.version, 2);
 
-  const stale = await request(http)
+  const staleComplete = await request(http)
     .post(`/api/v1/operator/tasks/${taskId}/complete`)
     .set('Authorization', bearer)
     .send({ expectedStatus: 'OPEN' })
     .expect(409);
-  assert.equal(stale.body.code, 'TASK_STATE_CONFLICT');
+  assert.equal(staleComplete.body.code, 'TASK_STATE_CONFLICT');
+
+  const createTaskKey = 'task-api-r3-create-12345678';
+  const createTaskPayload = {
+    type: 'CUSTOMER_FOLLOWUP',
+    title: 'Contactar cliente',
+    description: 'Synthetic customer follow-up.',
+    priority: 'HIGH',
+    queue: 'CLAIMS',
+    assignedOperatorId: login.body.operator.operatorId,
+    dueAt: '2026-09-10T12:00:00Z',
+  };
+
+  const created = await request(http)
+    .post(`/api/v1/operator/claims/${claimId}/tasks`)
+    .set('Authorization', bearer)
+    .set('Idempotency-Key', createTaskKey)
+    .send(createTaskPayload)
+    .expect(201);
+  assert.equal(created.body.status, 'OPEN');
+  assert.equal(created.body.version, 1);
+  assert.equal(created.body.priority, 'HIGH');
+
+  const replay = await request(http)
+    .post(`/api/v1/operator/claims/${claimId}/tasks`)
+    .set('Authorization', bearer)
+    .set('Idempotency-Key', createTaskKey)
+    .send(createTaskPayload)
+    .expect(201);
+  assert.equal(replay.headers['idempotency-replayed'], 'true');
+  assert.equal(replay.body.taskId, created.body.taskId);
+
+  const changedFingerprint = await request(http)
+    .post(`/api/v1/operator/claims/${claimId}/tasks`)
+    .set('Authorization', bearer)
+    .set('Idempotency-Key', createTaskKey)
+    .send({ ...createTaskPayload, title: 'Different title' })
+    .expect(409);
+  assert.equal(changedFingerprint.body.code, 'IDEMPOTENCY_KEY_REUSED');
+
+  const fetched = await request(http)
+    .get(`/api/v1/operator/tasks/${created.body.taskId}`)
+    .set('Authorization', bearer)
+    .expect(200);
+  assert.equal(fetched.body.taskId, created.body.taskId);
+
+  const updated = await request(http)
+    .patch(`/api/v1/operator/tasks/${created.body.taskId}`)
+    .set('Authorization', bearer)
+    .send({ expectedVersion: 1, priority: 'NORMAL', dueAt: null })
+    .expect(200);
+  assert.equal(updated.body.version, 2);
+  assert.equal(updated.body.priority, 'NORMAL');
+  assert.equal(updated.body.dueAt, null);
+
+  const staleUpdate = await request(http)
+    .patch(`/api/v1/operator/tasks/${created.body.taskId}`)
+    .set('Authorization', bearer)
+    .send({ expectedVersion: 1, priority: 'HIGH' })
+    .expect(409);
+  assert.equal(staleUpdate.body.code, 'RESOURCE_VERSION_CONFLICT');
+
+  const cancelled = await request(http)
+    .post(`/api/v1/operator/tasks/${created.body.taskId}/cancel`)
+    .set('Authorization', bearer)
+    .send({ expectedVersion: 2, reason: 'NO_LONGER_REQUIRED' })
+    .expect(200);
+  assert.equal(cancelled.body.status, 'CANCELLED');
+  assert.equal(cancelled.body.version, 3);
+  assert.equal(cancelled.body.cancellationReason, 'NO_LONGER_REQUIRED');
+
+  const filtered = await request(http)
+    .get('/api/v1/operator/tasks?status=CANCELLED&priority=NORMAL')
+    .set('Authorization', bearer)
+    .expect(200);
+  assert.equal(filtered.body.totalItems, 1);
+  assert.equal(filtered.body.items[0].taskId, created.body.taskId);
 
   const tracked = await request(http)
     .post('/api/v1/public/claim-tracking')
