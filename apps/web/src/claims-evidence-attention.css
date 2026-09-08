@@ -3,6 +3,12 @@
   box-sizing: border-box;
 }
 
+.ops-evidence-attention *,
+.ops-evidence-attention *::before,
+.ops-evidence-attention *::after {
+  box-sizing: border-box;
+}
+
 .ops-evidence-heading {
   gap: 16px;
   align-items: flex-start;
@@ -38,6 +44,7 @@
 .ops-evidence-attention-badge.is-no-evidence { background: #edf2f7; color: #536f91; }
 
 .ops-evidence-review-summary {
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
@@ -46,6 +53,7 @@
 
 .ops-evidence-review-summary > div {
   min-width: 0;
+  max-width: 100%;
   padding: 9px 10px;
   border: 1px solid #e5edf3;
   border-radius: 10px;
@@ -69,7 +77,7 @@
 
 .ops-evidence-work {
   min-width: 0;
-  box-sizing: border-box;
+  max-width: 100%;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -114,13 +122,17 @@
 .ops-evidence-attention-list li,
 .ops-evidence-file-copy {
   min-width: 0;
-  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .ops-evidence-file-copy strong,
 .ops-evidence-file-copy span {
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.ops-evidence-attention button {
+  max-width: 100%;
 }
 
 @media (max-width: 720px) {
@@ -144,6 +156,7 @@
 
   .ops-evidence-work .ops-primary-action {
     width: 100%;
+    min-width: 0;
   }
 }
 
@@ -153,11 +166,13 @@
   }
 
   .ops-evidence-attention-list li {
-    grid-template-columns: 42px minmax(0, 1fr);
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 8px;
   }
 
   .ops-evidence-attention-list li > button {
     grid-column: 1 / -1;
     width: 100%;
+    min-width: 0;
   }
 }
