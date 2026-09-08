@@ -29,6 +29,7 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'tasks'] }),
         queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'timeline'] }),
+        queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'evidence-attention'] }),
         queryClient.invalidateQueries({ queryKey: ['operator', 'tasks'] }),
       ]);
     },
