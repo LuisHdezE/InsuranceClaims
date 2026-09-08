@@ -5,7 +5,7 @@ import {
 } from './index.js';
 import type { ClaimTaskRepository } from './claim-tasks.js';
 import type { ClaimStatus } from '@insurance/domain';
-import type { ClaimTaskType } from '@insurance/domain/claim-task';
+import type { ClaimTaskActorType, ClaimTaskType } from '@insurance/domain/claim-task';
 
 export const CLAIM_TIMELINE_EVENT_TYPES = [
   'CLAIM_REPORTED',
@@ -17,7 +17,7 @@ export const CLAIM_TIMELINE_EVENT_TYPES = [
 
 export type ClaimTimelineEventType = (typeof CLAIM_TIMELINE_EVENT_TYPES)[number];
 export type ClaimTimelineSource = 'CLAIM_HISTORY' | 'CLAIM_EVIDENCE' | 'CLAIM_TASK';
-export type ClaimTimelineActorType = 'SYSTEM' | 'OPERATOR' | null;
+export type ClaimTimelineActorType = ClaimTaskActorType | null;
 
 type TimelineBase = {
   eventId: string;
@@ -126,9 +126,6 @@ export class ClaimTimelineApplication {
     }
 
     for (const evidence of detail.evidence) {
-      // Evidence is staged before the Claim transaction commits. Operationally it cannot
-      // be associated to the Claim before the Claim exists, so clamp the projection time
-      // to the Claim creation time while preserving later evidence timestamps if added.
       const associatedAt = new Date(Math.max(evidence.createdAt.getTime(), detail.claim.createdAt.getTime()));
       events.push({
         eventId: `evidence:${evidence.evidenceId}`,

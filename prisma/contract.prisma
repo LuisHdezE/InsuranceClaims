@@ -54,6 +54,7 @@ enum ClaimTaskStatus {
   @@type("pg/text@1")
   OPEN
   COMPLETED
+  CANCELLED
 }
 
 enum ClaimTaskPriority {
@@ -71,6 +72,25 @@ enum ClaimTaskActorType {
   @@type("pg/text@1")
   SYSTEM
   OPERATOR
+  SUPERVISOR
+  ADMINISTRATOR
+  AUTOMATION
+}
+
+enum ClaimTaskHistoryEventType {
+  @@type("pg/text@1")
+  CREATED
+  ASSIGNED
+  UPDATED
+  COMPLETED
+  CANCELLED
+}
+
+enum ClaimTaskCancellationReason {
+  @@type("pg/text@1")
+  NO_LONGER_REQUIRED
+  DUPLICATE
+  CREATED_IN_ERROR
 }
 
 model Operator {
@@ -140,28 +160,59 @@ model ClaimEvidence {
 }
 
 model ClaimTask {
-  id                 Uuid               @id @default(uuid())
-  claimId            Uuid               @map("claim_id")
+  id                 Uuid                        @id @default(uuid())
+  claimId            Uuid                        @map("claim_id")
   type               ClaimTaskType
   title              String
+  description        String?
   status             ClaimTaskStatus
   priority           ClaimTaskPriority
   queue              ClaimTaskQueue
-  assignedOperatorId Uuid?              @map("assigned_operator_id")
-  dueAt              DateTime?          @map("due_at")
-  createdByType      ClaimTaskActorType @map("created_by_type")
-  createdById        Uuid?              @map("created_by_id")
-  sourceKey          String?            @unique @map("source_key")
-  correlationId      String?            @map("correlation_id")
-  createdAt          DateTime           @default(now()) @map("created_at")
-  completedAt        DateTime?          @map("completed_at")
-  completedById      Uuid?              @map("completed_by_id")
-  claim              Claim              @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  assignedOperatorId Uuid?                       @map("assigned_operator_id")
+  dueAt              DateTime?                   @map("due_at")
+  createdByType      ClaimTaskActorType          @map("created_by_type")
+  createdById        Uuid?                       @map("created_by_id")
+  sourceKey          String?                     @unique @map("source_key")
+  correlationId      String?                     @map("correlation_id")
+  version            Int                         @default(1)
+  createdAt          DateTime                    @default(now()) @map("created_at")
+  updatedAt          DateTime                    @default(now()) @map("updated_at")
+  completedAt        DateTime?                   @map("completed_at")
+  completedById      Uuid?                       @map("completed_by_id")
+  cancelledAt        DateTime?                   @map("cancelled_at")
+  cancelledById      Uuid?                       @map("cancelled_by_id")
+  cancellationReason ClaimTaskCancellationReason? @map("cancellation_reason")
+  claim              Claim                       @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  taskHistory        ClaimTaskHistory[]
 
   @@index([claimId, status, createdAt])
   @@index([status, dueAt])
   @@index([assignedOperatorId, status])
+  @@index([priority, status])
   @@map("claim_tasks")
+}
+
+model ClaimTaskHistory {
+  id                         Uuid                      @id @default(uuid())
+  taskId                     Uuid                      @map("task_id")
+  eventType                  ClaimTaskHistoryEventType @map("event_type")
+  fromStatus                 ClaimTaskStatus?          @map("from_status")
+  toStatus                   ClaimTaskStatus?          @map("to_status")
+  previousAssignedOperatorId Uuid?                     @map("previous_assigned_operator_id")
+  newAssignedOperatorId      Uuid?                     @map("new_assigned_operator_id")
+  previousPriority           ClaimTaskPriority?        @map("previous_priority")
+  newPriority                ClaimTaskPriority?        @map("new_priority")
+  previousDueAt              DateTime?                 @map("previous_due_at")
+  newDueAt                   DateTime?                 @map("new_due_at")
+  actorType                  ClaimTaskActorType        @map("actor_type")
+  actorId                    Uuid?                     @map("actor_id")
+  correlationId              String?                   @map("correlation_id")
+  occurredAt                 DateTime                  @map("occurred_at")
+  metadata                   Json?
+  task                       ClaimTask                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, occurredAt])
+  @@map("claim_task_history")
 }
 
 model IdempotencyRecord {
