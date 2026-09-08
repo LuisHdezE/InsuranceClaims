@@ -1,1 +1,11 @@
-{"name":"@insurance/infrastructure","version":"0.1.0","private":true,"type":"module","exports":"./src/index.ts","dependencies":{"@insurance/domain":"0.1.0","@insurance/application":"0.1.0"}}
+{
+  "name": "@insurance/infrastructure",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@insurance/domain": "0.2.0",
+    "@insurance/application": "0.2.0"
+  }
+}
