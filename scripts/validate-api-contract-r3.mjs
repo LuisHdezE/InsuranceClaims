@@ -86,7 +86,7 @@ for (const id of impact.evidence_ids) assert(/^EVD-[A-Z0-9][A-Z0-9._-]*$/.test(i
 for (const marker of [
   '**90 REST operations**',
   'AUTHENTICATION_CONTEXT_MISMATCH',
-  'X-Integration-Signature',
+  'X-Event-Signature',
   'API-IMPACT-002',
   'API Implementation',
   'OpenAPI Formalization & Validation'
