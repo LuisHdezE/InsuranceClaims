@@ -1,0 +1,410 @@
+openapi: 3.1.0
+info:
+  title: Insurance Claims Operations API - api-v1-r2 additive contract
+  version: 1.1.0
+  description: >-
+    Additive post-MVP OpenAPI surface for Claims Operations. This document composes
+    with the immutable root openapi.yaml (api-v1-r1); it does not replace or rewrite
+    the accepted MVP contract.
+servers:
+  - url: http://localhost:3000
+    description: Local demo API
+tags:
+  - name: Operator claims
+    description: JWT-protected claim operations added after the MVP baseline.
+  - name: Operator tasks
+    description: JWT-protected operational task queries and completion.
+paths:
+  /api/v1/operator/tasks:
+    get:
+      operationId: listTasks
+      summary: List operational claim tasks
+      tags: [Operator tasks]
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/ClaimTaskStatus' }
+        - name: type
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/ClaimTaskType' }
+        - name: claimId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+      x-permission-intent: claims.backoffice.read
+      x-rate-limit: 120 requests/minute/operator
+      x-durable-audit: not_required
+      x-product-increment: claims-operations-experience
+      x-interfaces: [WEB-011, WEB-012]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Page of operational tasks.
+          headers: { X-Request-Id: { $ref: '#/components/headers/XRequestId' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClaimTasksPageResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/v1/operator/claims/{claimId}/tasks:
+    get:
+      operationId: listClaimTasks
+      summary: List operational tasks for one claim
+      tags: [Operator tasks]
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/ClaimId'
+      x-permission-intent: claims.backoffice.read
+      x-rate-limit: 120 requests/minute/operator
+      x-durable-audit: not_required
+      x-product-increment: claims-operations-experience
+      x-interfaces: [WEB-010]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Operational tasks for the claim.
+          headers: { X-Request-Id: { $ref: '#/components/headers/XRequestId' } }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ClaimTaskProjection' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/v1/operator/tasks/{taskId}/complete:
+    post:
+      operationId: completeClaimTask
+      summary: Complete an operational claim task with optimistic state guard
+      tags: [Operator tasks]
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/TaskId'
+      x-permission-intent: claims.backoffice.transition
+      x-rate-limit: 60 requests/minute/operator
+      x-durable-audit: not_required; durable task state is persisted in claim_tasks
+      x-product-increment: claims-operations-experience
+      x-interfaces: [WEB-010, WEB-012]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompleteClaimTaskRequest' }
+      responses:
+        '200':
+          description: Task completed.
+          headers: { X-Request-Id: { $ref: '#/components/headers/XRequestId' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClaimTaskProjection' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/v1/operator/claims/{claimId}/timeline:
+    get:
+      operationId: getClaimTimeline
+      summary: Get the operational claim timeline projection
+      tags: [Operator claims]
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/ClaimId'
+      x-permission-intent: claims.backoffice.read
+      x-rate-limit: 120 requests/minute/operator
+      x-durable-audit: not_required
+      x-product-increment: claims-operations-experience
+      x-interfaces: [WEB-010]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Operational timeline composed from durable claim, evidence and task facts.
+          headers: { X-Request-Id: { $ref: '#/components/headers/XRequestId' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClaimTimelineResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/v1/operator/claims/{claimId}/evidence-attention:
+    get:
+      operationId: getClaimEvidenceAttention
+      summary: Get claim-level evidence review attention
+      tags: [Operator claims]
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/ClaimId'
+      x-permission-intent: claims.backoffice.read
+      x-rate-limit: 120 requests/minute/operator
+      x-durable-audit: not_required
+      x-product-increment: claims-operations-experience
+      x-interfaces: [WEB-010]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Evidence attention derived from durable evidence and EVIDENCE_REVIEW tasks.
+          headers: { X-Request-Id: { $ref: '#/components/headers/XRequestId' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClaimEvidenceAttentionResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    RequestId:
+      $ref: ../../../openapi.yaml#/components/parameters/RequestId
+    ClaimId:
+      $ref: ../../../openapi.yaml#/components/parameters/ClaimId
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  headers:
+    XRequestId:
+      $ref: ../../../openapi.yaml#/components/headers/XRequestId
+    RetryAfter:
+      $ref: ../../../openapi.yaml#/components/headers/RetryAfter
+  responses:
+    Unauthorized:
+      description: Authentication required.
+      headers: { X-Request-Id: { $ref: '#/components/headers/XRequestId' } }
+      content:
+        application/problem+json:
+          schema: { $ref: '../../../openapi.yaml#/components/schemas/ProblemDetails' }
+    Forbidden:
+      description: Authenticated caller lacks permission.
+      headers: { X-Request-Id: { $ref: '#/components/headers/XRequestId' } }
+      content:
+        application/problem+json:
+          schema: { $ref: '../../../openapi.yaml#/components/schemas/ProblemDetails' }
+    NotFound:
+      description: Claim or task not found.
+      headers: { X-Request-Id: { $ref: '#/components/headers/XRequestId' } }
+      content:
+        application/problem+json:
+          schema: { $ref: '../../../openapi.yaml#/components/schemas/ProblemDetails' }
+    Conflict:
+      description: Optimistic state guard detected stale task state.
+      headers: { X-Request-Id: { $ref: '#/components/headers/XRequestId' } }
+      content:
+        application/problem+json:
+          schema: { $ref: '../../../openapi.yaml#/components/schemas/ProblemDetails' }
+    ValidationError:
+      description: Invalid identifier, query parameter or request body.
+      headers: { X-Request-Id: { $ref: '#/components/headers/XRequestId' } }
+      content:
+        application/problem+json:
+          schema: { $ref: '../../../openapi.yaml#/components/schemas/ProblemDetails' }
+    RateLimited:
+      description: Rate limit exceeded.
+      headers:
+        X-Request-Id: { $ref: '#/components/headers/XRequestId' }
+        Retry-After: { $ref: '#/components/headers/RetryAfter' }
+      content:
+        application/problem+json:
+          schema: { $ref: '../../../openapi.yaml#/components/schemas/ProblemDetails' }
+  schemas:
+    ClaimTaskStatus:
+      type: string
+      enum: [OPEN, COMPLETED]
+    ClaimTaskType:
+      type: string
+      enum: [CLAIM_REVIEW, EVIDENCE_REVIEW, MISSING_DOCUMENT_FOLLOWUP, CUSTOMER_FOLLOWUP, CLOSURE_REVIEW]
+    ClaimTaskPriority:
+      type: string
+      enum: [NORMAL, HIGH]
+    ClaimTaskQueue:
+      type: string
+      enum: [CLAIMS]
+    ClaimTaskProjection:
+      type: object
+      additionalProperties: false
+      required: [taskId, claimId, trackingCode, policyReference, vehicleReference, type, title, status, priority, queue, assignedOperatorId, dueAt, createdByType, createdById, correlationId, createdAt, completedAt, completedById]
+      properties:
+        taskId: { type: string, format: uuid }
+        claimId: { type: string, format: uuid }
+        trackingCode: { type: [string, 'null'] }
+        policyReference: { type: [string, 'null'] }
+        vehicleReference: { type: [string, 'null'] }
+        type: { $ref: '#/components/schemas/ClaimTaskType' }
+        title: { type: string }
+        status: { $ref: '#/components/schemas/ClaimTaskStatus' }
+        priority: { $ref: '#/components/schemas/ClaimTaskPriority' }
+        queue: { $ref: '#/components/schemas/ClaimTaskQueue' }
+        assignedOperatorId: { type: [string, 'null'], format: uuid }
+        dueAt: { type: [string, 'null'], format: date-time }
+        createdByType: { type: string, enum: [SYSTEM, OPERATOR] }
+        createdById: { type: [string, 'null'], format: uuid }
+        correlationId: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+        completedAt: { type: [string, 'null'], format: date-time }
+        completedById: { type: [string, 'null'], format: uuid }
+    ClaimTasksPageResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, totalItems, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ClaimTaskProjection' }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 1 }
+    CompleteClaimTaskRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedStatus]
+      properties:
+        expectedStatus: { $ref: '#/components/schemas/ClaimTaskStatus' }
+    TimelineBase:
+      type: object
+      required: [eventId, eventType, source, occurredAt, actorType, actorId]
+      properties:
+        eventId: { type: string }
+        eventType: { type: string }
+        source: { type: string, enum: [CLAIM_HISTORY, CLAIM_EVIDENCE, CLAIM_TASK] }
+        occurredAt: { type: string, format: date-time }
+        actorType: { type: [string, 'null'], enum: [SYSTEM, OPERATOR, null] }
+        actorId: { type: [string, 'null'], format: uuid }
+    ClaimReportedTimelineEvent:
+      allOf:
+        - { $ref: '#/components/schemas/TimelineBase' }
+        - type: object
+          required: [eventType, status]
+          properties:
+            eventType: { const: CLAIM_REPORTED }
+            status: { $ref: '../../../openapi.yaml#/components/schemas/ClaimStatus' }
+    EvidenceAddedTimelineEvent:
+      allOf:
+        - { $ref: '#/components/schemas/TimelineBase' }
+        - type: object
+          required: [eventType, evidenceId, displayFilename, mediaType]
+          properties:
+            eventType: { const: EVIDENCE_ADDED }
+            evidenceId: { type: string, format: uuid }
+            displayFilename: { type: [string, 'null'] }
+            mediaType: { type: string }
+    StatusChangedTimelineEvent:
+      allOf:
+        - { $ref: '#/components/schemas/TimelineBase' }
+        - type: object
+          required: [eventType, fromStatus, toStatus]
+          properties:
+            eventType: { const: STATUS_CHANGED }
+            fromStatus: { $ref: '../../../openapi.yaml#/components/schemas/ClaimStatus' }
+            toStatus: { $ref: '../../../openapi.yaml#/components/schemas/ClaimStatus' }
+    TaskCreatedTimelineEvent:
+      allOf:
+        - { $ref: '#/components/schemas/TimelineBase' }
+        - type: object
+          required: [eventType, taskId, taskType, taskTitle]
+          properties:
+            eventType: { const: TASK_CREATED }
+            taskId: { type: string, format: uuid }
+            taskType: { $ref: '#/components/schemas/ClaimTaskType' }
+            taskTitle: { type: string }
+    TaskCompletedTimelineEvent:
+      allOf:
+        - { $ref: '#/components/schemas/TimelineBase' }
+        - type: object
+          required: [eventType, taskId, taskType, taskTitle]
+          properties:
+            eventType: { const: TASK_COMPLETED }
+            taskId: { type: string, format: uuid }
+            taskType: { $ref: '#/components/schemas/ClaimTaskType' }
+            taskTitle: { type: string }
+    ClaimTimelineEvent:
+      oneOf:
+        - { $ref: '#/components/schemas/ClaimReportedTimelineEvent' }
+        - { $ref: '#/components/schemas/EvidenceAddedTimelineEvent' }
+        - { $ref: '#/components/schemas/StatusChangedTimelineEvent' }
+        - { $ref: '#/components/schemas/TaskCreatedTimelineEvent' }
+        - { $ref: '#/components/schemas/TaskCompletedTimelineEvent' }
+    ClaimTimelineResponse:
+      type: object
+      additionalProperties: false
+      required: [claimId, trackingCode, events, totalItems]
+      properties:
+        claimId: { type: string, format: uuid }
+        trackingCode: { type: string }
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/ClaimTimelineEvent' }
+        totalItems: { type: integer, minimum: 0 }
+    EvidenceAttentionState:
+      type: string
+      enum: [NO_EVIDENCE, AVAILABLE, PENDING_REVIEW, REVIEWED]
+    EvidenceAttentionItem:
+      type: object
+      additionalProperties: false
+      required: [evidenceId, mediaType, sizeBytes, displayFilename, createdAt]
+      properties:
+        evidenceId: { type: string, format: uuid }
+        mediaType: { type: string }
+        sizeBytes: { type: integer, minimum: 0 }
+        displayFilename: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+    EvidenceReviewTask:
+      type: object
+      additionalProperties: false
+      required: [taskId, title, status, priority, assignedOperatorId, createdAt, completedAt, completedById]
+      properties:
+        taskId: { type: string, format: uuid }
+        title: { type: string }
+        status: { $ref: '#/components/schemas/ClaimTaskStatus' }
+        priority: { $ref: '#/components/schemas/ClaimTaskPriority' }
+        assignedOperatorId: { type: [string, 'null'], format: uuid }
+        createdAt: { type: string, format: date-time }
+        completedAt: { type: [string, 'null'], format: date-time }
+        completedById: { type: [string, 'null'], format: uuid }
+    ClaimEvidenceAttentionResponse:
+      type: object
+      additionalProperties: false
+      required: [claimId, trackingCode, attentionState, evidenceCount, evidence, reviewTasks, openReviewTaskCount, completedReviewTaskCount]
+      properties:
+        claimId: { type: string, format: uuid }
+        trackingCode: { type: string }
+        attentionState: { $ref: '#/components/schemas/EvidenceAttentionState' }
+        evidenceCount: { type: integer, minimum: 0 }
+        evidence:
+          type: array
+          items: { $ref: '#/components/schemas/EvidenceAttentionItem' }
+        reviewTasks:
+          type: array
+          items: { $ref: '#/components/schemas/EvidenceReviewTask' }
+        openReviewTaskCount: { type: integer, minimum: 0 }
+        completedReviewTaskCount: { type: integer, minimum: 0 }
