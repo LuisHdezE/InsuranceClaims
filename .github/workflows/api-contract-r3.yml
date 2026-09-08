@@ -1,0 +1,50 @@
+name: API Contract R3
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'documentation/api/r3/**'
+      - '.blueprint/api-impact/API-IMPACT-002.json'
+      - 'scripts/validate-api-contract-r3.mjs'
+      - '.github/workflows/api-contract-r3.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-r3-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Guard R3 contract-only scope
+        shell: bash
+        run: |
+          git fetch origin main --depth=1
+          changed="$(git diff --name-only origin/main...HEAD)"
+          printf '%s\n' "$changed"
+          disallowed="$(printf '%s\n' "$changed" | grep -Ev '^(documentation/api/r3/|\.blueprint/api-impact/API-IMPACT-002\.json$|scripts/validate-api-contract-r3\.mjs$|\.github/workflows/api-contract-r3\.yml$)' || true)"
+          if [ -n "$disallowed" ]; then
+            echo "Disallowed files in API Contract R3 gate:"
+            printf '%s\n' "$disallowed"
+            exit 1
+          fi
+
+      - name: Validate Blueprint API impact schema
+        run: |
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s documentation/api/post-mvp/blueprint-api-impact.schema.json \
+            -d .blueprint/api-impact/API-IMPACT-002.json
+
+      - name: Validate API Contract R3 invariants and traceability
+        run: node scripts/validate-api-contract-r3.mjs
