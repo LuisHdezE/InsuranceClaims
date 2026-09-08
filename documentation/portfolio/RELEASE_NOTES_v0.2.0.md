@@ -4,14 +4,17 @@
 
 - Project version: `0.2.0`
 - Historical baseline: `0.1.0`
-- Intended annotated Git tag after governed publication approval: `v0.2.0`
+- Annotated Git tag: `v0.2.0`
 - Release name: `Insurance Claims Legacy Modernization — Claims Operations Experience v0.2.0`
+- Release status: `RELEASED`
+- Release commit: `9265417849f398f5d1efa56b7cd8ff365b950dbb`
+- Tag object: `1a946e7fc4a20d20b97876826e6a699ec8412f28`
+- Published at: `2026-09-08T04:09:58Z`
 - Blueprint consumer baseline: `0.5.2`
 - Delivery model: `GREENFIELD` modernization with legacy coexistence `SIMULATED`
 - Post-MVP API contract: `api-v1-r2`
-- Release formalization status in this PR: `CANDIDATE`
 
-> Publication note: this PR formalizes project/package version `0.2.0`; it does not create a Git tag or GitHub Release. Publication must target the verified `main` commit after explicit human approval.
+> Publication completed after the separate human-governed publication gate. The annotated tag `v0.2.0` resolves exactly to the approved release commit and the GitHub Release is published from that tag.
 
 ## What changed since 0.1.0
 
@@ -132,15 +135,17 @@ This is a portfolio technical case study. All business data are synthetic/demo d
 - [Release formalization evidence](../release/CLAIMS_OPERATIONS_RELEASE_0.2.0.md)
 - [Historical v0.1.0 release notes](RELEASE_NOTES_v0.1.0.md)
 
-## Publication governance
+## Publication record
 
-After the formalization PR is merged:
+- Formalization PR: `#32`
+- Formalization merge commit: `9265417849f398f5d1efa56b7cd8ff365b950dbb`
+- Annotated tag: `v0.2.0`
+- Tag object SHA: `1a946e7fc4a20d20b97876826e6a699ec8412f28`
+- Tag target commit: `9265417849f398f5d1efa56b7cd8ff365b950dbb`
+- GitHub Release ID: `384441015`
+- Published at: `2026-09-08T04:09:58Z`
+- Release page: [v0.2.0](https://github.com/LuisHdezE/InsuranceClaims/releases/tag/v0.2.0)
+- Draft: `false`
+- Prerelease: `false`
 
-1. verify the resulting `main` SHA;
-2. verify there are no unexpected open PRs or unexplained current CI failures;
-3. obtain the required explicit human publication approval;
-4. create annotated tag `v0.2.0` from that exact verified commit;
-5. verify the tag resolves to that commit;
-6. create the GitHub Release targeting exactly `v0.2.0` using this file as its release-note source.
-
-The tag and GitHub Release are deliberately outside this PR and remain human-gated actions.
+The publication gate is complete. The tag is the immutable release pointer for `0.2.0`; subsequent documentation corrections must not move or recreate it.
