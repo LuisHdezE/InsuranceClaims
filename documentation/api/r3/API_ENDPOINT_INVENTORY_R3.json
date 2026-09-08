@@ -1,0 +1,216 @@
+{
+  "contract_revision": "api-v1-r3",
+  "previous_revision": "api-v1-r2",
+  "blueprint_version": "0.5.2",
+  "project": "LuisHdezE/InsuranceClaims",
+  "mode": "greenfield",
+  "legacy_coexistence": "SIMULATED",
+  "base_path": "/api/v1",
+  "effective_operation_count": 90,
+  "inherited_operation_count": 15,
+  "new_operation_count": 75,
+  "changed_existing_operation_count": 7,
+  "request_id_header": "X-Request-Id",
+  "problem_media_type": "application/problem+json",
+  "operation_tuple_fields": [
+    "operationId", "method", "path", "authentication", "permission", "request_schema", "success_contract", "requirements", "use_cases", "audit", "idempotency", "concurrency"
+  ],
+  "auth_contract": {
+    "staff": {"scheme":"Bearer JWT","lifetime_seconds":900,"roles":["CLAIMS_OPERATOR","CLAIMS_SUPERVISOR","PLATFORM_ADMIN"],"context":"staff","refresh_tokens":false,"logout_endpoint":false},
+    "customer": {"scheme":"Bearer JWT","lifetime_seconds":1800,"role":"CUSTOMER_PORTAL_USER","context":"customer","refresh_tokens":false,"logout_endpoint":false},
+    "integration": {"scheme":"HMAC-SHA256","headers":["X-Integration-Key","X-Event-Id","X-Event-Timestamp","X-Event-Signature"],"timestamp":"Unix epoch seconds","clock_skew_seconds":300,"canonical":"<timestamp>\n<eventId>\n<SHA256(rawBody)>","signature_encoding":"lowercase hex"}
+  },
+  "pagination": {"style":"page/pageSize","default_page":1,"default_page_size":25,"max_page_size":100,"deterministic_tiebreaker":"resource id"},
+  "role_grants": {
+    "CLAIMS_OPERATOR": ["claims.backoffice.read","claims.backoffice.transition","claims.tasks.read","claims.tasks.manage","claims.pipeline.read","claims.pipeline.transition","communications.read","communications.send","customers.read","policies.read","renewals.read","renewals.manage","collections.read","collections.manage"],
+    "CLAIMS_SUPERVISOR": ["claims.backoffice.read","claims.backoffice.transition","claims.tasks.read","claims.tasks.manage","claims.pipeline.read","claims.pipeline.transition","claims.analytics.read","communications.read","communications.send","customers.read","policies.read","renewals.read","renewals.manage","collections.read","collections.manage","bulk.execute"],
+    "PLATFORM_ADMIN": ["claims.analytics.read","pipelines.admin","communications.admin","automations.admin","guidance.admin","custom_fields.admin","imports.execute","operations.integration.read","operations.dead_letters.read","operations.dead_letters.manage"],
+    "CUSTOMER_PORTAL_USER": ["portal.self.read","portal.self.evidence.create"],
+    "EXTERNAL_INTEGRATION": ["integration.events.ingest"]
+  },
+  "families": [
+    {
+      "id": "historical-r1-r2",
+      "operations": [
+        ["verifyPolicyVehicle","POST","/api/v1/public/policy-verifications","anonymous","claims.intake.create","PolicyVehicleVerificationRequest","200:PolicyVehicleVerificationResponse",["FR-001","FR-002"],["UC-001"],null,"none",null],
+        ["createClaim","POST","/api/v1/public/claims","anonymous","claims.intake.create","CreateClaimRequest multipart","201:CreateClaimResponse",["FR-002","FR-003","FR-004","FR-005","FR-006"],["UC-002"],"CLAIM_CREATED","Idempotency-Key required; historical 24h behavior",null],
+        ["trackClaim","POST","/api/v1/public/claim-tracking","anonymous","claims.tracking.read","TrackClaimRequest","200:CustomerClaimStatusResponse",["FR-007","FR-008"],["UC-003"],null,"none",null],
+        ["authenticateOperator","POST","/api/v1/operator/auth/login","anonymous_credentials",null,"OperatorLoginRequest","200:StaffLoginResponse",["FR-009"],["UC-004"],"AUTH_LOGIN_SUCCEEDED | AUTH_LOGIN_FAILED","none",null],
+        ["listClaims","GET","/api/v1/operator/claims","staff_jwt","claims.backoffice.read",null,"200:ClaimsPageResponse",["FR-010","FR-020","FR-022"],["UC-005","UC-R3-001"],null,"n/a",null],
+        ["getClaimDetail","GET","/api/v1/operator/claims/{claimId}","staff_jwt","claims.backoffice.read",null,"200:OperatorClaimDetailResponse",["FR-011","FR-020","FR-036","FR-037"],["UC-005","UC-R3-007"],null,"n/a",null],
+        ["downloadClaimEvidence","GET","/api/v1/operator/claims/{claimId}/evidence/{evidenceId}","staff_jwt","claims.backoffice.read",null,"200:binary evidence",["FR-011"],["UC-005"],null,"n/a",null],
+        ["transitionClaimStatus","POST","/api/v1/operator/claims/{claimId}/transitions","staff_jwt","claims.backoffice.transition","TransitionClaimStatusRequest","200:TransitionClaimStatusResponse",["FR-012","FR-013"],["UC-006"],"CLAIM_STATE_TRANSITIONED","none","expectedFromStatus required"],
+        ["getLiveness","GET","/health/live","anonymous",null,null,"200:HealthResponse",["FR-019"],["UC-008"],null,"n/a",null],
+        ["getReadiness","GET","/health/ready","anonymous",null,null,"200:HealthResponse",["FR-019"],["UC-008"],null,"n/a",null],
+        ["listTasks","GET","/api/v1/operator/tasks","staff_jwt","claims.tasks.read",null,"200:ClaimTasksPageResponse",["FR-023"],["UC-R3-002"],null,"n/a",null],
+        ["listClaimTasks","GET","/api/v1/operator/claims/{claimId}/tasks","staff_jwt","claims.tasks.read",null,"200:ClaimTaskProjection[]",["FR-023"],["UC-R3-002"],null,"n/a",null],
+        ["completeClaimTask","POST","/api/v1/operator/tasks/{taskId}/complete","staff_jwt","claims.tasks.manage","CompleteClaimTaskRequest","200:ClaimTaskProjection",["FR-023"],["UC-R3-002"],"CLAIM_TASK_COMPLETED","none","historical expectedStatus required + persisted optimistic check"],
+        ["getClaimTimeline","GET","/api/v1/operator/claims/{claimId}/timeline","staff_jwt","claims.backoffice.read",null,"200:ClaimTimelineResponse",["FR-024"],["UC-R3-002","UC-R3-007"],null,"n/a",null],
+        ["getClaimEvidenceAttention","GET","/api/v1/operator/claims/{claimId}/evidence-attention","staff_jwt","claims.backoffice.read",null,"200:ClaimEvidenceAttentionResponse",["FR-025"],["UC-R3-003"],null,"n/a",null]
+      ]
+    },
+    {
+      "id": "claims-work",
+      "operations": [
+        ["moveClaimOperationalStage","POST","/api/v1/operator/claims/{claimId}/operational-transitions","staff_jwt","claims.pipeline.transition","MoveOperationalStageRequest","200:PipelineWorkItemResponse",["FR-020","FR-021"],["UC-R3-001"],"PIPELINE_STAGE_MOVED","none","expectedVersion required"],
+        ["createClaimTask","POST","/api/v1/operator/claims/{claimId}/tasks","staff_jwt","claims.tasks.manage","CreateClaimTaskRequest","201:ClaimTaskProjection",["FR-023"],["UC-R3-002"],"CLAIM_TASK_CREATED (+ CLAIM_TASK_ASSIGNED)","Idempotency-Key required","none"],
+        ["getClaimTask","GET","/api/v1/operator/tasks/{taskId}","staff_jwt","claims.tasks.read",null,"200:ClaimTaskProjection",["FR-023"],["UC-R3-002"],null,"n/a",null],
+        ["updateClaimTask","PATCH","/api/v1/operator/tasks/{taskId}","staff_jwt","claims.tasks.manage","UpdateClaimTaskRequest","200:ClaimTaskProjection",["FR-023"],["UC-R3-002"],"CLAIM_TASK_ASSIGNED and/or CLAIM_TASK_UPDATED","none","expectedVersion required"],
+        ["cancelClaimTask","POST","/api/v1/operator/tasks/{taskId}/cancel","staff_jwt","claims.tasks.manage","CancelClaimTaskRequest","200:ClaimTaskProjection",["FR-023"],["UC-R3-002"],"CLAIM_TASK_CANCELLED","none","expectedVersion required"],
+        ["getClaimsOperationalMetrics","GET","/api/v1/operator/analytics/claims","staff_jwt","claims.analytics.read",null,"200:ClaimsOperationalMetricsResponse",["FR-025"],["UC-R3-003"],null,"n/a",null]
+      ]
+    },
+    {
+      "id": "pipeline-admin",
+      "operations": [
+        ["listPipelines","GET","/api/v1/admin/pipelines","staff_jwt","pipelines.admin",null,"200:PipelineDefinitionResponsePageResponse",["FR-026","FR-028","FR-050"],["UC-R3-012"],null,"n/a",null],
+        ["getPipeline","GET","/api/v1/admin/pipelines/{definitionId}","staff_jwt","pipelines.admin",null,"200:PipelineDefinitionResponse",["FR-026","FR-028","FR-050"],["UC-R3-012"],null,"n/a",null],
+        ["createPipeline","POST","/api/v1/admin/pipelines","staff_jwt","pipelines.admin","CreatePipelineRequest","201:PipelineDefinitionResponse",["FR-026","FR-028","FR-050"],["UC-R3-012"],"PIPELINE_VERSION_CREATED","none","definition key unique; initial DRAFT v1"],
+        ["createPipelineVersion","POST","/api/v1/admin/pipelines/{definitionId}/versions","staff_jwt","pipelines.admin","CreatePipelineVersionRequest","201:PipelineDefinitionResponse",["FR-026","FR-028","FR-050"],["UC-R3-012"],"PIPELINE_VERSION_CREATED","none","expectedDefinitionVersion required"],
+        ["activatePipelineVersion","POST","/api/v1/admin/pipelines/{definitionId}/versions/{versionId}/activate","staff_jwt","pipelines.admin","ActivatePipelineVersionRequest","200:PipelineDefinitionResponse",["FR-026","FR-028","FR-050"],["UC-R3-012"],"PIPELINE_VERSION_ACTIVATED","none","expectedDefinitionVersion required"],
+        ["updatePipelineState","PATCH","/api/v1/admin/pipelines/{definitionId}","staff_jwt","pipelines.admin","UpdatePipelineStateRequest","200:PipelineDefinitionResponse",["FR-026","FR-028","FR-050"],["UC-R3-012"],"PIPELINE_VERSION_RETIRED when disabling active definition","none","expectedDefinitionVersion required"]
+      ]
+    },
+    {
+      "id": "communication-template-admin",
+      "operations": [
+        ["listCommunicationTemplates","GET","/api/v1/admin/communication-templates","staff_jwt","communications.admin",null,"200:CommunicationTemplateDefinitionResponsePageResponse",["FR-029","FR-050"],["UC-R3-012"],null,"n/a",null],
+        ["getCommunicationTemplate","GET","/api/v1/admin/communication-templates/{definitionId}","staff_jwt","communications.admin",null,"200:CommunicationTemplateDefinitionResponse",["FR-029","FR-050"],["UC-R3-012"],null,"n/a",null],
+        ["createCommunicationTemplate","POST","/api/v1/admin/communication-templates","staff_jwt","communications.admin","CreateCommunicationTemplateRequest","201:CommunicationTemplateDefinitionResponse",["FR-029","FR-050"],["UC-R3-012"],"COMM_TEMPLATE_VERSION_CREATED","none","initial DRAFT v1"],
+        ["createCommunicationTemplateVersion","POST","/api/v1/admin/communication-templates/{definitionId}/versions","staff_jwt","communications.admin","CreateCommunicationTemplateVersionRequest","201:CommunicationTemplateDefinitionResponse",["FR-029","FR-050"],["UC-R3-012"],"COMM_TEMPLATE_VERSION_CREATED","none","expectedDefinitionVersion required"],
+        ["activateCommunicationTemplateVersion","POST","/api/v1/admin/communication-templates/{definitionId}/versions/{versionId}/activate","staff_jwt","communications.admin","ActivateCommunicationTemplateVersionRequest","200:CommunicationTemplateDefinitionResponse",["FR-029","FR-050"],["UC-R3-012"],"COMM_TEMPLATE_VERSION_ACTIVATED","none","expectedDefinitionVersion required"],
+        ["updateCommunicationTemplateState","PATCH","/api/v1/admin/communication-templates/{definitionId}","staff_jwt","communications.admin","UpdateCommunicationTemplateStateRequest","200:CommunicationTemplateDefinitionResponse",["FR-029","FR-050"],["UC-R3-012"],"COMM_TEMPLATE_VERSION_RETIRED when disabling active definition","none","expectedDefinitionVersion required"]
+      ]
+    },
+    {
+      "id": "communications",
+      "operations": [
+        ["requestCommunication","POST","/api/v1/operator/communications","staff_jwt","communications.send","RequestCommunicationRequest","202:CommunicationResponse",["FR-030","FR-031"],["UC-R3-004"],"COMMUNICATION_REQUESTED","Idempotency-Key required",null],
+        ["listCommunications","GET","/api/v1/operator/communications","staff_jwt","communications.read",null,"200:CommunicationsPageResponse",["FR-031","FR-036"],["UC-R3-004","UC-R3-007"],null,"n/a",null],
+        ["getCommunication","GET","/api/v1/operator/communications/{communicationId}","staff_jwt","communications.read",null,"200:CommunicationResponse",["FR-031"],["UC-R3-004"],null,"n/a",null]
+      ]
+    },
+    {
+      "id": "integration",
+      "operations": [
+        ["ingestIntegrationEvent","POST","/api/v1/integrations/events","hmac_sha256","integration.events.ingest","InboundIntegrationEventRequest","202:InboundEventAcceptedResponse",["FR-032","FR-033"],["UC-R3-005"],"INBOUND_EVENT_ACCEPTED","X-Integration-Key + X-Event-Id replay identity",null],
+        ["getIntegrationEventStatus","GET","/api/v1/admin/integration-events/{eventId}","staff_jwt","operations.integration.read",null,"200:InboundEventStatusResponse",["FR-033","FR-052"],["UC-R3-005"],null,"n/a",null]
+      ]
+    },
+    {
+      "id": "automation-admin",
+      "operations": [
+        ["listAutomations","GET","/api/v1/admin/automations","staff_jwt","automations.admin",null,"200:AutomationDefinitionResponsePageResponse",["FR-034","FR-035","FR-050"],["UC-R3-012"],null,"n/a",null],
+        ["getAutomation","GET","/api/v1/admin/automations/{definitionId}","staff_jwt","automations.admin",null,"200:AutomationDefinitionResponse",["FR-034","FR-035","FR-050"],["UC-R3-012"],null,"n/a",null],
+        ["createAutomation","POST","/api/v1/admin/automations","staff_jwt","automations.admin","CreateAutomationRequest","201:AutomationDefinitionResponse",["FR-034","FR-035","FR-050"],["UC-R3-012"],"AUTOMATION_VERSION_CREATED","none","initial DRAFT v1"],
+        ["createAutomationVersion","POST","/api/v1/admin/automations/{definitionId}/versions","staff_jwt","automations.admin","CreateAutomationVersionRequest","201:AutomationDefinitionResponse",["FR-034","FR-035","FR-050"],["UC-R3-012"],"AUTOMATION_VERSION_CREATED","none","expectedDefinitionVersion required"],
+        ["activateAutomationVersion","POST","/api/v1/admin/automations/{definitionId}/versions/{versionId}/activate","staff_jwt","automations.admin","ActivateAutomationVersionRequest","200:AutomationDefinitionResponse",["FR-034","FR-035","FR-050"],["UC-R3-012"],"AUTOMATION_VERSION_ACTIVATED","none","expectedDefinitionVersion required"],
+        ["updateAutomationState","PATCH","/api/v1/admin/automations/{definitionId}","staff_jwt","automations.admin","UpdateAutomationStateRequest","200:AutomationDefinitionResponse",["FR-034","FR-035","FR-050"],["UC-R3-012"],"AUTOMATION_VERSION_DISABLED when disabling active definition","none","expectedDefinitionVersion required"]
+      ]
+    },
+    {
+      "id": "customer-policy-360",
+      "operations": [
+        ["listCustomers","GET","/api/v1/operator/customers","staff_jwt","customers.read",null,"200:CustomersPageResponse",["FR-036"],["UC-R3-007"],null,"n/a",null],
+        ["getCustomer","GET","/api/v1/operator/customers/{customerId}","staff_jwt","customers.read",null,"200:Customer360Response",["FR-036"],["UC-R3-007"],null,"n/a",null],
+        ["listPolicies","GET","/api/v1/operator/policies","staff_jwt","policies.read",null,"200:PoliciesPageResponse",["FR-037"],["UC-R3-007"],null,"n/a",null],
+        ["getPolicy","GET","/api/v1/operator/policies/{policyId}","staff_jwt","policies.read",null,"200:Policy360Response",["FR-037"],["UC-R3-007"],null,"n/a",null]
+      ]
+    },
+    {
+      "id": "guidance-admin",
+      "operations": [
+        ["listGuidances","GET","/api/v1/admin/guidance","staff_jwt","guidance.admin",null,"200:InsurerGuidanceDefinitionResponsePageResponse",["FR-038","FR-050"],["UC-R3-012"],null,"n/a",null],
+        ["getGuidance","GET","/api/v1/admin/guidance/{definitionId}","staff_jwt","guidance.admin",null,"200:InsurerGuidanceDefinitionResponse",["FR-038","FR-050"],["UC-R3-012"],null,"n/a",null],
+        ["createGuidance","POST","/api/v1/admin/guidance","staff_jwt","guidance.admin","CreateGuidanceRequest","201:InsurerGuidanceDefinitionResponse",["FR-038","FR-050"],["UC-R3-012"],"INSURER_GUIDANCE_VERSION_CREATED","none","initial DRAFT v1"],
+        ["createGuidanceVersion","POST","/api/v1/admin/guidance/{definitionId}/versions","staff_jwt","guidance.admin","CreateGuidanceVersionRequest","201:InsurerGuidanceDefinitionResponse",["FR-038","FR-050"],["UC-R3-012"],"INSURER_GUIDANCE_VERSION_CREATED","none","expectedDefinitionVersion required"],
+        ["activateGuidanceVersion","POST","/api/v1/admin/guidance/{definitionId}/versions/{versionId}/activate","staff_jwt","guidance.admin","ActivateGuidanceVersionRequest","200:InsurerGuidanceDefinitionResponse",["FR-038","FR-050"],["UC-R3-012"],"INSURER_GUIDANCE_VERSION_ACTIVATED","none","expectedDefinitionVersion required"],
+        ["updateGuidanceState","PATCH","/api/v1/admin/guidance/{definitionId}","staff_jwt","guidance.admin","UpdateGuidanceStateRequest","200:InsurerGuidanceDefinitionResponse",["FR-038","FR-050"],["UC-R3-012"],"INSURER_GUIDANCE_VERSION_RETIRED when disabling active definition","none","expectedDefinitionVersion required"]
+      ]
+    },
+    {
+      "id": "customer-portal",
+      "operations": [
+        ["authenticateCustomer","POST","/api/v1/portal/auth/login","anonymous_credentials",null,"CustomerLoginRequest","200:CustomerLoginResponse",["FR-039"],["UC-R3-008"],"CUSTOMER_AUTH_LOGIN_SUCCEEDED | CUSTOMER_AUTH_LOGIN_FAILED","none",null],
+        ["getPortalSelf","GET","/api/v1/portal/me","customer_jwt","portal.self.read",null,"200:PortalCustomerSelfResponse",["FR-040"],["UC-R3-008"],null,"n/a",null],
+        ["listPortalPolicies","GET","/api/v1/portal/policies","customer_jwt","portal.self.read",null,"200:PortalPoliciesPageResponse",["FR-040"],["UC-R3-008"],null,"n/a",null],
+        ["listPortalClaims","GET","/api/v1/portal/claims","customer_jwt","portal.self.read",null,"200:PortalClaimsPageResponse",["FR-040"],["UC-R3-008"],null,"n/a",null],
+        ["getPortalClaimDetail","GET","/api/v1/portal/claims/{claimId}","customer_jwt","portal.self.read",null,"200:PortalClaimDetailResponse",["FR-024","FR-038","FR-040"],["UC-R3-008"],null,"n/a",null],
+        ["uploadPortalClaimEvidence","POST","/api/v1/portal/claims/{claimId}/evidence","customer_jwt","portal.self.evidence.create","PortalEvidenceUploadRequest multipart","201:PortalEvidenceUploadResponse",["FR-041"],["UC-R3-008"],"CUSTOMER_EVIDENCE_ADDED","Idempotency-Key required",null],
+        ["listPortalCommunications","GET","/api/v1/portal/communications","customer_jwt","portal.self.read",null,"200:PortalCommunicationsPageResponse",["FR-031","FR-040"],["UC-R3-008"],null,"n/a",null]
+      ]
+    },
+    {
+      "id": "imports",
+      "operations": [
+        ["listImportJobs","GET","/api/v1/admin/import-jobs","staff_jwt","imports.execute",null,"200:ImportJobsPageResponse",["FR-042","FR-043"],["UC-R3-009"],null,"n/a",null],
+        ["createImportJob","POST","/api/v1/admin/import-jobs","staff_jwt","imports.execute","CreateImportJobRequest multipart","201:ImportJobResponse",["FR-042"],["UC-R3-009"],"IMPORT_JOB_CREATED","Idempotency-Key required",null],
+        ["getImportJob","GET","/api/v1/admin/import-jobs/{importJobId}","staff_jwt","imports.execute",null,"200:ImportJobResponse",["FR-042","FR-043"],["UC-R3-009"],null,"n/a",null],
+        ["previewImportJob","POST","/api/v1/admin/import-jobs/{importJobId}/preview","staff_jwt","imports.execute","PreviewImportJobRequest","200:ImportJobResponse",["FR-042","FR-043"],["UC-R3-009"],null,"none","expectedVersion required"],
+        ["updateImportMapping","PUT","/api/v1/admin/import-jobs/{importJobId}/mapping","staff_jwt","imports.execute","UpdateImportMappingRequest","200:ImportJobResponse",["FR-042","FR-043"],["UC-R3-009"],null,"none","expectedVersion required"],
+        ["validateImportJob","POST","/api/v1/admin/import-jobs/{importJobId}/validate","staff_jwt","imports.execute","ValidateImportJobRequest","200:ImportJobResponse",["FR-042","FR-043"],["UC-R3-009"],null,"none","expectedVersion required"],
+        ["dryRunImportJob","POST","/api/v1/admin/import-jobs/{importJobId}/dry-run","staff_jwt","imports.execute","DryRunImportJobRequest","200:ImportJobResponse",["FR-042","FR-043"],["UC-R3-009"],"IMPORT_DRY_RUN_COMPLETED","none","expectedVersion required"],
+        ["commitImportJob","POST","/api/v1/admin/import-jobs/{importJobId}/commit","staff_jwt","imports.execute","CommitImportJobRequest","202:ImportJobResponse",["FR-042","FR-043"],["UC-R3-009"],"IMPORT_COMMIT_REQUESTED; terminal outcome audit async","Idempotency-Key required","expectedVersion required; DRY_RUN_READY"],
+        ["listImportJobRows","GET","/api/v1/admin/import-jobs/{importJobId}/rows","staff_jwt","imports.execute",null,"200:ImportJobRowsPageResponse",["FR-043"],["UC-R3-009"],null,"n/a",null]
+      ]
+    },
+    {
+      "id": "renewals",
+      "operations": [
+        ["listRenewalCases","GET","/api/v1/operator/renewals","staff_jwt","renewals.read",null,"200:RenewalCasesPageResponse",["FR-044","FR-045"],["UC-R3-010"],null,"n/a",null],
+        ["getRenewalCase","GET","/api/v1/operator/renewals/{renewalId}","staff_jwt","renewals.read",null,"200:RenewalCaseResponse",["FR-044","FR-045"],["UC-R3-010"],null,"n/a",null],
+        ["transitionRenewalCase","POST","/api/v1/operator/renewals/{renewalId}/transitions","staff_jwt","renewals.manage","TransitionRenewalCaseRequest","200:RenewalCaseResponse",["FR-045"],["UC-R3-010"],"RENEWAL_CASE_COMPLETED | RENEWAL_CASE_CANCELLED","none","expectedVersion required"],
+        ["moveRenewalOperationalStage","POST","/api/v1/operator/renewals/{renewalId}/operational-transitions","staff_jwt","renewals.manage","MoveOperationalStageRequest","200:PipelineWorkItemResponse",["FR-026","FR-027","FR-045"],["UC-R3-010"],"PIPELINE_STAGE_MOVED","none","expectedVersion required"]
+      ]
+    },
+    {
+      "id": "collections",
+      "operations": [
+        ["listCollectionCases","GET","/api/v1/operator/collections","staff_jwt","collections.read",null,"200:CollectionCasesPageResponse",["FR-046","FR-047"],["UC-R3-011"],null,"n/a",null],
+        ["getCollectionCase","GET","/api/v1/operator/collections/{collectionId}","staff_jwt","collections.read",null,"200:CollectionCaseResponse",["FR-046","FR-047"],["UC-R3-011"],null,"n/a",null],
+        ["transitionCollectionCase","POST","/api/v1/operator/collections/{collectionId}/transitions","staff_jwt","collections.manage","TransitionCollectionCaseRequest","200:CollectionCaseResponse",["FR-047"],["UC-R3-011"],"COLLECTION_CASE_COMPLETED | COLLECTION_CASE_CANCELLED","none","expectedVersion required"],
+        ["moveCollectionOperationalStage","POST","/api/v1/operator/collections/{collectionId}/operational-transitions","staff_jwt","collections.manage","MoveOperationalStageRequest","200:PipelineWorkItemResponse",["FR-026","FR-027","FR-047"],["UC-R3-011"],"PIPELINE_STAGE_MOVED","none","expectedVersion required"],
+        ["updateCollectionPaymentState","PATCH","/api/v1/operator/collections/{collectionId}/payment-state","staff_jwt","collections.manage","UpdateCollectionPaymentStateRequest","200:CollectionCaseResponse",["FR-046","FR-047"],["UC-R3-011"],"COLLECTION_PAYMENT_STATE_CHANGED","none","expectedVersion + server verification required"]
+      ]
+    },
+    {
+      "id": "custom-field-admin",
+      "operations": [
+        ["listCustomFields","GET","/api/v1/admin/custom-fields","staff_jwt","custom_fields.admin",null,"200:CustomFieldDefinitionResponsePageResponse",["FR-048","FR-050"],["UC-R3-012"],null,"n/a",null],
+        ["getCustomField","GET","/api/v1/admin/custom-fields/{definitionId}","staff_jwt","custom_fields.admin",null,"200:CustomFieldDefinitionResponse",["FR-048","FR-050"],["UC-R3-012"],null,"n/a",null],
+        ["createCustomField","POST","/api/v1/admin/custom-fields","staff_jwt","custom_fields.admin","CreateCustomFieldRequest","201:CustomFieldDefinitionResponse",["FR-048","FR-050"],["UC-R3-012"],"CUSTOM_FIELD_VERSION_CREATED","none","initial DRAFT v1"],
+        ["createCustomFieldVersion","POST","/api/v1/admin/custom-fields/{definitionId}/versions","staff_jwt","custom_fields.admin","CreateCustomFieldVersionRequest","201:CustomFieldDefinitionResponse",["FR-048","FR-050"],["UC-R3-012"],"CUSTOM_FIELD_VERSION_CREATED","none","expectedDefinitionVersion required"],
+        ["activateCustomFieldVersion","POST","/api/v1/admin/custom-fields/{definitionId}/versions/{versionId}/activate","staff_jwt","custom_fields.admin","ActivateCustomFieldVersionRequest","200:CustomFieldDefinitionResponse",["FR-048","FR-050"],["UC-R3-012"],"CUSTOM_FIELD_VERSION_ACTIVATED","none","expectedDefinitionVersion required"],
+        ["updateCustomFieldState","PATCH","/api/v1/admin/custom-fields/{definitionId}","staff_jwt","custom_fields.admin","UpdateCustomFieldStateRequest","200:CustomFieldDefinitionResponse",["FR-048","FR-050"],["UC-R3-012"],"CUSTOM_FIELD_VERSION_RETIRED when disabling active definition","none","expectedDefinitionVersion required"]
+      ]
+    },
+    {
+      "id": "bulk",
+      "operations": [
+        ["executeBulkOperation","POST","/api/v1/operator/bulk-actions","staff_jwt","bulk.execute","ExecuteBulkOperationRequest","200:BulkOperationResponse",["FR-049"],["UC-R3-013"],"BULK_OPERATION_REQUESTED + BULK_OPERATION_COMPLETED","Idempotency-Key required","per-item expected version where action requires it"]
+      ]
+    },
+    {
+      "id": "dead-letter",
+      "operations": [
+        ["listDeadLetters","GET","/api/v1/admin/dead-letters","staff_jwt","operations.dead_letters.read",null,"200:DeadLettersPageResponse",["FR-052"],["UC-R3-005","UC-R3-006"],null,"n/a",null],
+        ["getDeadLetter","GET","/api/v1/admin/dead-letters/{deadLetterId}","staff_jwt","operations.dead_letters.read",null,"200:DeadLetterResponse",["FR-052"],["UC-R3-005","UC-R3-006"],null,"n/a",null],
+        ["requeueDeadLetter","POST","/api/v1/admin/dead-letters/{deadLetterId}/requeue","staff_jwt","operations.dead_letters.manage","RequeueDeadLetterRequest","202:DeadLetterResponse",["FR-051","FR-052"],["UC-R3-005","UC-R3-006"],"DEAD_LETTER_REQUEUED","none","expectedVersion required"],
+        ["resolveDeadLetter","POST","/api/v1/admin/dead-letters/{deadLetterId}/resolve","staff_jwt","operations.dead_letters.manage","ResolveDeadLetterRequest","200:DeadLetterResponse",["FR-052"],["UC-R3-005","UC-R3-006"],"DEAD_LETTER_RESOLVED","none","expectedVersion required"]
+      ]
+    }
+  ],
+  "idempotency_matrix": {
+    "createClaim": "historical Idempotency-Key contract; 24h",
+    "createClaimTask": "Idempotency-Key required; 24h",
+    "requestCommunication": "Idempotency-Key required; 24h",
+    "uploadPortalClaimEvidence": "Idempotency-Key required; 24h",
+    "createImportJob": "Idempotency-Key required; 24h",
+    "commitImportJob": "Idempotency-Key + expectedVersion; 24h",
+    "executeBulkOperation": "Idempotency-Key required; 24h",
+    "ingestIntegrationEvent": "integration-key + X-Event-Id replay identity; demo replay record target 30d"
+  },
+  "changed_existing_operation_ids": ["authenticateOperator","listClaims","getClaimDetail","listTasks","listClaimTasks","completeClaimTask","getClaimTimeline"],
+  "traceability_assertion": "Every FR-020..FR-052 is linked by one or more operations; historical FR-001..FR-019 remain incorporated by inherited operations and requirements artifacts.",
+  "change_impact": {"change_id":"API-IMPACT-002","classification":"platform_cross_cutting","revalidation_policy":"platform","preserve_unrelated_evidence":true}
+}
