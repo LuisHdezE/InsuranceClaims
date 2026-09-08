@@ -16,7 +16,7 @@ const taskTypeSchema = z.enum([
 const taskPrioritySchema = z.enum(['NORMAL', 'HIGH']);
 const taskQueueSchema = z.enum(['CLAIMS']);
 const cancellationReasonSchema = z.enum(['NO_LONGER_REQUIRED', 'DUPLICATE', 'CREATED_IN_ERROR']);
-const completeTaskSchema = z.object({ expectedStatus: taskStatusSchema });
+const completeTaskSchema = z.object({ expectedStatus: z.literal('OPEN') });
 const createTaskSchema = z.object({
   type: taskTypeSchema,
   title: z.string().trim().min(1).max(160),
