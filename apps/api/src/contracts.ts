@@ -4,6 +4,8 @@ import type { ClaimPipelineApplication } from '@insurance/application/claim-pipe
 import type { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
 import type { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 import type { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
+import type { CommunicationTemplateAdminApplication } from '@insurance/application/communication-template-admin';
+import type { CommunicationsApplication } from '@insurance/application/communications';
 import type { CustomerPolicyApplication } from '@insurance/application/customer-policy';
 import type { PipelineAdminApplication } from '@insurance/application/pipeline-admin';
 
@@ -16,6 +18,8 @@ export interface ApiRuntimeContract {
   pipeline: ClaimPipelineApplication;
   pipelineAdmin: PipelineAdminApplication;
   customerPolicy: CustomerPolicyApplication;
+  communicationTemplates: CommunicationTemplateAdminApplication;
+  communications: CommunicationsApplication;
   timeline: ClaimTimelineApplication;
   evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;

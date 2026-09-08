@@ -102,3 +102,4 @@ export class Claim {
 
 export * from './pipeline-work-item.js';
 export * from './customer-policy.js';
+export * from './communication.js';

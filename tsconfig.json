@@ -22,6 +22,8 @@
       "@insurance/application/claim-timeline": ["./packages/application/src/claim-timeline.ts"],
       "@insurance/application/claims-operations": ["./packages/application/src/claims-operations.ts"],
       "@insurance/application/claims-operational-query": ["./packages/application/src/claims-operational-query.ts"],
+      "@insurance/application/communication-template-admin": ["./packages/application/src/communication-template-admin.ts"],
+      "@insurance/application/communications": ["./packages/application/src/communications.ts"],
       "@insurance/application/customer-policy": ["./packages/application/src/customer-policy.ts"],
       "@insurance/application/pipeline-admin": ["./packages/application/src/pipeline-admin.ts"],
       "@insurance/infrastructure": ["./packages/infrastructure/src/index.ts"]

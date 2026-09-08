@@ -1,4 +1,5 @@
 export * from './adapters.js';
+export * from './communication-store.js';
 export * from './customer-policy-store.js';
 export * from './memory.js';
 export * from './pipeline-store.js';
