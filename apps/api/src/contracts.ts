@@ -4,6 +4,7 @@ import type { ClaimPipelineApplication } from '@insurance/application/claim-pipe
 import type { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
 import type { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 import type { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
+import type { PipelineAdminApplication } from '@insurance/application/pipeline-admin';
 
 export const API_RUNTIME = Symbol('API_RUNTIME');
 export const ACCESS_TOKENS = Symbol('ACCESS_TOKENS');
@@ -12,6 +13,7 @@ export interface ApiRuntimeContract {
   application: ClaimsOperationsApplication;
   tasks: ClaimTasksApplication;
   pipeline: ClaimPipelineApplication;
+  pipelineAdmin: PipelineAdminApplication;
   timeline: ClaimTimelineApplication;
   evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;

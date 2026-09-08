@@ -4,6 +4,7 @@ import { ACCESS_TOKENS, API_RUNTIME, type ApiRuntimeContract } from './contracts
 import { JwtAuthGuard } from './auth.guard.js';
 import { OperatorClaimsAnalyticsController } from './claims-analytics-controller.js';
 import { HealthController, OperatorAuthController, OperatorClaimsController, PublicClaimsController } from './controllers.js';
+import { PipelineAdminController } from './pipeline-admin-controller.js';
 import { OperatorClaimPipelineController } from './pipeline-controller.js';
 import { OperatorTasksController } from './task-controller.js';
 import { ProblemDetailsFilter, RateLimitService, RequestIdMiddleware } from './transport.js';
@@ -19,6 +20,7 @@ export class ApiModule implements NestModule {
         OperatorClaimsController,
         OperatorClaimsAnalyticsController,
         OperatorClaimPipelineController,
+        PipelineAdminController,
         OperatorTasksController,
         HealthController,
       ],

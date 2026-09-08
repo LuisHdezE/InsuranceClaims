@@ -22,6 +22,7 @@
       "@insurance/application/claim-timeline": ["./packages/application/src/claim-timeline.ts"],
       "@insurance/application/claims-operations": ["./packages/application/src/claims-operations.ts"],
       "@insurance/application/claims-operational-query": ["./packages/application/src/claims-operational-query.ts"],
+      "@insurance/application/pipeline-admin": ["./packages/application/src/pipeline-admin.ts"],
       "@insurance/infrastructure": ["./packages/infrastructure/src/index.ts"]
     },
     "types": ["node"]
