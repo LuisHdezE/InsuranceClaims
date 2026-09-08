@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.0.0",
+  "review_type": "claims_operations_experience_increment",
+  "candidate_version": "0.2.0",
+  "baseline_version": "0.1.0",
+  "reviewed_commit": "d47f6e00d4f9647047321c6830466f6cf2349205",
+  "generated_at": "2026-09-08T02:43:04Z",
+  "browser": {
+    "name": "chrome",
+    "version": "152.0.7977.64"
+  },
+  "journey": {
+    "tracking_code_present": true,
+    "claim_status_after_explicit_transition": "UNDER_REVIEW",
+    "evidence_pending_before": 1,
+    "evidence_pending_after": 0,
+    "tasks_open_before": 2,
+    "tasks_open_after": 1,
+    "claim_status_after_task_completion": "RECEIVED",
+    "public_tracking_after_transition": "UNDER_REVIEW"
+  },
+  "surfaces": {
+    "public-home-continuity": {
+      "surface_id": "public-home-continuity",
+      "route": "/",
+      "inventory_targets": [
+        "public landing"
+      ],
+      "checks": {
+        "hero_rendered": "PASS",
+        "responsive": "PASS",
+        "accessibility": "PASS"
+      },
+      "screenshots": [
+        "documentation/claims-operations/review/generated/assets/00-home-desktop.png",
+        "documentation/claims-operations/review/generated/assets/01-home-mobile.png"
+      ],
+      "observations": [
+        "Embedded hero rendered at 1200×446.",
+        "Accessibility: {'h1_count': 1, 'unlabeled_controls': 0, 'images_without_alt': 0}"
+      ],
+      "machine_review_ready": true,
+      "human_review": "PENDING_MANUAL"
+    },
+    "operations-dashboard": {
+      "surface_id": "operations-dashboard",
+      "route": "/operator/dashboard",
+      "inventory_targets": [
+        "WEB-011"
+      ],
+      "checks": {
+        "authoritative_data": "PASS",
+        "responsive": "PASS",
+        "accessibility": "PASS",
+        "task_projection_refresh": "PASS"
+      },
+      "screenshots": [
+        "documentation/claims-operations/review/generated/assets/02-dashboard-desktop.png",
+        "documentation/claims-operations/review/generated/assets/03-dashboard-mobile.png"
+      ],
+      "observations": [
+        "Before evidence review: evidence_pending=1, open_tasks=2.",
+        "Accessibility: {'h1_count': 1, 'unlabeled_controls': 0, 'images_without_alt': 0}",
+        "After evidence review: evidence_pending=0, open_tasks=1."
+      ],
+      "machine_review_ready": true,
+      "human_review": "PENDING_MANUAL"
+    },
+    "claims-workspace": {
+      "surface_id": "claims-workspace",
+      "route": "/operator/claims",
+      "inventory_targets": [
+        "WEB-009 evolution"
+      ],
+      "checks": {
+        "kanban_projection": "PASS",
+        "responsive": "PASS",
+        "accessibility": "PASS"
+      },
+      "screenshots": [
+        "documentation/claims-operations/review/generated/assets/04-claims-kanban-desktop.png",
+        "documentation/claims-operations/review/generated/assets/05-claims-kanban-mobile.png"
+      ],
+      "observations": [
+        "Authoritative RECEIVED Claim appears in the Reportados projection.",
+        "Accessibility: {'h1_count': 1, 'unlabeled_controls': 0, 'images_without_alt': 0}"
+      ],
+      "machine_review_ready": true,
+      "human_review": "PENDING_MANUAL"
+    },
+    "claim-operations-detail": {
+      "surface_id": "claim-operations-detail",
+      "route": "/operator/claims/:claimId",
+      "inventory_targets": [
+        "WEB-010 evolution"
+      ],
+      "checks": {
+        "tasks_evidence_timeline": "PASS",
+        "responsive": "PASS",
+        "accessibility": "PASS",
+        "task_lifecycle_separation": "PASS",
+        "explicit_lifecycle_transition": "PASS"
+      },
+      "screenshots": [
+        "documentation/claims-operations/review/generated/assets/06-claim-detail-desktop.png",
+        "documentation/claims-operations/review/generated/assets/07-claim-detail-mobile.png",
+        "documentation/claims-operations/review/generated/assets/08-claim-detail-reviewed-desktop.png"
+      ],
+      "observations": [
+        "Accessibility: {'h1_count': 1, 'unlabeled_controls': 0, 'images_without_alt': 0}",
+        "EVIDENCE_REVIEW completed while authoritative Claim status remained RECEIVED."
+      ],
+      "machine_review_ready": true,
+      "human_review": "PENDING_MANUAL"
+    },
+    "tasks-workspace": {
+      "surface_id": "tasks-workspace",
+      "route": "/operator/tasks",
+      "inventory_targets": [
+        "WEB-012"
+      ],
+      "checks": {
+        "real_task_queue": "PASS",
+        "responsive": "PASS",
+        "accessibility": "PASS"
+      },
+      "screenshots": [
+        "documentation/claims-operations/review/generated/assets/09-tasks-desktop.png",
+        "documentation/claims-operations/review/generated/assets/10-tasks-mobile.png"
+      ],
+      "observations": [
+        "After evidence review completion, the remaining Claim review task stays OPEN.",
+        "Accessibility: {'h1_count': 1, 'unlabeled_controls': 0, 'images_without_alt': 0}"
+      ],
+      "machine_review_ready": true,
+      "human_review": "PENDING_MANUAL"
+    },
+    "public-tracking-continuity": {
+      "surface_id": "public-tracking-continuity",
+      "route": "/claims/track",
+      "inventory_targets": [
+        "WEB-006",
+        "WEB-007"
+      ],
+      "checks": {
+        "customer_safe_projection": "PASS",
+        "accessibility": "PASS"
+      },
+      "screenshots": [
+        "documentation/claims-operations/review/generated/assets/11-public-tracking-after-transition.png"
+      ],
+      "observations": [
+        "Public tracking reflects UNDER_REVIEW without internal task/audit leakage.",
+        "Accessibility: {'h1_count': 1, 'unlabeled_controls': 0, 'images_without_alt': 0}"
+      ],
+      "machine_review_ready": true,
+      "human_review": "PENDING_MANUAL"
+    }
+  },
+  "summary": {
+    "machine_review_ready": true,
+    "human_review_required": true,
+    "next_status": "READY_FOR_HUMAN_REVIEW",
+    "candidate_version": "0.2.0",
+    "screenshot_count": 12,
+    "historical_mvp_evidence_preserved": true
+  }
+}
