@@ -157,4 +157,30 @@
   .ops-transition-row { grid-template-columns: 1fr; }
   .ops-evidence-list li { grid-template-columns: 34px minmax(0, 1fr); padding: 8px 0; }
   .ops-evidence-list button { grid-column: 2; justify-self: start; }
+
+  .ops-audit-table-wrap { overflow: visible; contain: layout inline-size paint; }
+  .ops-audit-table,
+  .ops-audit-table tbody,
+  .ops-audit-table tr,
+  .ops-audit-table td { display: block; inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; }
+  .ops-audit-table { min-width: 0; border-collapse: separate; }
+  .ops-audit-table thead { display: none; }
+  .ops-audit-table tr { padding: 7px 0; border-bottom: 1px solid #e7eef3; }
+  .ops-audit-table tr:last-child { border-bottom: 0; }
+  .ops-audit-table td {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 8px;
+    padding: 5px 10px;
+    border: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .ops-audit-table td::before { color: var(--ops-muted); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+  .ops-audit-table td:nth-child(1)::before { content: "Fecha"; }
+  .ops-audit-table td:nth-child(2)::before { content: "Evento"; }
+  .ops-audit-table td:nth-child(3)::before { content: "Actor"; }
+  .ops-audit-table td:nth-child(4)::before { content: "Resultado"; }
+  .ops-audit-table td:nth-child(5)::before { content: "Request ID"; }
+  .ops-audit-table td:last-child { max-width: none; }
 }
