@@ -98,25 +98,28 @@
 .ops-detail-timeline li:last-child .ops-timeline-dot::after { display: none; }
 
 .ops-audit-details {
-  min-width: 0;
-  max-width: 100%;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   margin-top: 14px;
   border: 1px solid var(--ops-border);
   border-radius: 12px;
   background: white;
   box-shadow: 0 8px 25px rgba(6,52,95,.04);
   overflow: hidden;
+  contain: layout inline-size paint;
 }
 .ops-audit-details summary { min-height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; color: var(--ops-ink); font-size: 11px; font-weight: 900; cursor: pointer; }
 .ops-audit-details summary span { color: var(--ops-muted); font-size: 9px; font-weight: 700; }
 .ops-audit-table-wrap {
   display: block;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   overscroll-behavior-x: contain;
-  contain: inline-size;
+  contain: layout inline-size paint;
   border-top: 1px solid var(--ops-border);
 }
 .ops-audit-table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 9px; }
