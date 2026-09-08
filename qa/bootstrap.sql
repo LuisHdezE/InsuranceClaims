@@ -12,6 +12,9 @@ DROP TABLE IF EXISTS claim_evidence CASCADE;
 DROP TABLE IF EXISTS idempotency_records CASCADE;
 DROP TABLE IF EXISTS audit_events CASCADE;
 DROP TABLE IF EXISTS claims CASCADE;
+DROP TABLE IF EXISTS policy_assets CASCADE;
+DROP TABLE IF EXISTS policies CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
 DROP TABLE IF EXISTS operators CASCADE;
 
 CREATE TABLE operators (
@@ -24,11 +27,59 @@ CREATE TABLE operators (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE customers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_ref varchar(80) NOT NULL UNIQUE,
+  display_name varchar(160) NOT NULL,
+  status varchar(30) NOT NULL CHECK (status IN ('ACTIVE','INACTIVE')),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  version integer NOT NULL DEFAULT 1 CHECK (version >= 1),
+  CONSTRAINT customers_ref_nonempty CHECK (length(btrim(customer_ref)) > 0),
+  CONSTRAINT customers_display_name_nonempty CHECK (length(btrim(display_name)) > 0)
+);
+CREATE INDEX customers_status_idx ON customers(status);
+
+CREATE TABLE policies (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id uuid NOT NULL REFERENCES customers(id) ON DELETE RESTRICT,
+  policy_reference varchar(80) NOT NULL UNIQUE,
+  legacy_policy_reference varchar(80) NOT NULL,
+  insurer_reference varchar(80) NULL,
+  record_status varchar(30) NOT NULL CHECK (record_status IN ('ACTIVE','INACTIVE')),
+  operational_metadata jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(operational_metadata) = 'object'),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  version integer NOT NULL DEFAULT 1 CHECK (version >= 1),
+  CONSTRAINT policies_reference_nonempty CHECK (length(btrim(policy_reference)) > 0),
+  CONSTRAINT policies_legacy_reference_nonempty CHECK (length(btrim(legacy_policy_reference)) > 0)
+);
+CREATE INDEX policies_customer_status_idx ON policies(customer_id, record_status);
+CREATE INDEX policies_legacy_reference_idx ON policies(legacy_policy_reference);
+
+CREATE TABLE policy_assets (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  policy_id uuid NOT NULL REFERENCES policies(id) ON DELETE RESTRICT,
+  asset_type varchar(40) NOT NULL,
+  asset_reference varchar(80) NOT NULL,
+  legacy_asset_reference varchar(80) NOT NULL,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(metadata) = 'object'),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT policy_assets_type_nonempty CHECK (length(btrim(asset_type)) > 0),
+  CONSTRAINT policy_assets_reference_nonempty CHECK (length(btrim(asset_reference)) > 0),
+  CONSTRAINT policy_assets_legacy_reference_nonempty CHECK (length(btrim(legacy_asset_reference)) > 0),
+  CONSTRAINT policy_assets_policy_asset_key UNIQUE(policy_id, asset_reference),
+  CONSTRAINT policy_assets_policy_legacy_asset_key UNIQUE(policy_id, legacy_asset_reference)
+);
+CREATE INDEX policy_assets_legacy_reference_idx ON policy_assets(legacy_asset_reference);
+
 CREATE TABLE claims (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   tracking_code text NOT NULL UNIQUE,
   policy_reference text NOT NULL,
   vehicle_reference text NOT NULL,
+  customer_id uuid NULL REFERENCES customers(id) ON DELETE SET NULL,
+  policy_id uuid NULL REFERENCES policies(id) ON DELETE SET NULL,
   verified_customer_label text NULL,
   event_type text NOT NULL,
   occurred_at timestamptz NOT NULL,
@@ -41,6 +92,8 @@ CREATE TABLE claims (
 CREATE INDEX claims_status_idx ON claims(status);
 CREATE INDEX claims_created_at_idx ON claims(created_at);
 CREATE INDEX claims_policy_tracking_idx ON claims(policy_reference, tracking_code);
+CREATE INDEX claims_customer_created_idx ON claims(customer_id, created_at);
+CREATE INDEX claims_policy_created_idx ON claims(policy_id, created_at);
 
 CREATE TABLE claim_status_history (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

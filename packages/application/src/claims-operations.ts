@@ -69,6 +69,19 @@ export class ClaimsOperationsApplication extends ClaimsApplication {
     return this.operationalQueries.listClaims(input, actor);
   }
 
+  override async getClaimDetail(
+    claimId: string,
+    actor?: Parameters<ClaimsApplication['getClaimDetail']>[1],
+  ) {
+    const base = await super.getClaimDetail(claimId, actor);
+    const detail = await this.operationsDeps.claims.getById(claimId);
+    return {
+      ...base,
+      customerId: detail?.claim.customerId ?? null,
+      policyId: detail?.claim.policyId ?? null,
+    };
+  }
+
   async getClaimsOperationalMetrics(
     input: Parameters<ClaimsOperationalQueryApplication['getClaimsOperationalMetrics']>[0],
     actor?: Parameters<ClaimsOperationalQueryApplication['getClaimsOperationalMetrics']>[1],

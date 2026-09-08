@@ -31,6 +31,7 @@ function toAppDate(value: any): Date {
 function claimRow(row: any): ClaimProps {
   return {
     id: row.id, trackingCode: row.trackingCode, policyReference: row.policyReference, vehicleReference: row.vehicleReference,
+    customerId: row.customerId ?? null, policyId: row.policyId ?? null,
     verifiedCustomerLabel: row.verifiedCustomerLabel ?? null, eventType: row.eventType, occurredAt: toAppDate(row.occurredAt),
     locationText: row.locationText, description: row.description, status: row.status as ClaimStatus,
     createdAt: toAppDate(row.createdAt), updatedAt: toAppDate(row.updatedAt),
@@ -52,6 +53,7 @@ export class PrismaWorkflowStore implements ClaimRepository, AuditPort, Idempote
   async create(claim: ClaimProps, evidence: EvidenceRecord[], initialHistory: HistoryRecord): Promise<void> {
     await this.db.orm.public.Claim.create({
       id: claim.id, trackingCode: claim.trackingCode, policyReference: claim.policyReference, vehicleReference: claim.vehicleReference,
+      customerId: claim.customerId ?? null, policyId: claim.policyId ?? null,
       verifiedCustomerLabel: claim.verifiedCustomerLabel, eventType: claim.eventType, occurredAt: toDbInstant(claim.occurredAt),
       locationText: claim.locationText, description: claim.description, status: claim.status,
       createdAt: toDbInstant(claim.createdAt), updatedAt: toDbInstant(claim.updatedAt),
