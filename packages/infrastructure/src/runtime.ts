@@ -8,6 +8,7 @@ import { ClaimPipelineApplication } from '@insurance/application/claim-pipeline'
 import { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 import { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
 import { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
+import { ClaimsOperationalQueryApplication } from '@insurance/application/claims-operational-query';
 import {
   Argon2PasswordHasher,
   HttpPolicyVerificationAdapter,
@@ -61,8 +62,14 @@ function applicationsFrom(
     claims: deps.claims,
     tasks: taskStore,
   });
+  const operationalQueries = new ClaimsOperationalQueryApplication({
+    claims: deps.claims,
+    tasks: taskStore,
+    pipelines: pipelineStore,
+    clock: deps.clock,
+  });
   return {
-    application: new ClaimsOperationsApplication(deps, tasks, pipeline),
+    application: new ClaimsOperationsApplication(deps, tasks, pipeline, operationalQueries),
     tasks,
     pipeline,
     timeline,

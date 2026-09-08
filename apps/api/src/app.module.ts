@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, type DynamicModule, type NestModule } from 
 import { APP_FILTER } from '@nestjs/core';
 import { ACCESS_TOKENS, API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
+import { OperatorClaimsAnalyticsController } from './claims-analytics-controller.js';
 import { HealthController, OperatorAuthController, OperatorClaimsController, PublicClaimsController } from './controllers.js';
 import { OperatorClaimPipelineController } from './pipeline-controller.js';
 import { OperatorTasksController } from './task-controller.js';
@@ -12,7 +13,15 @@ export class ApiModule implements NestModule {
   static register(runtime: ApiRuntimeContract): DynamicModule {
     return {
       module: ApiModule,
-      controllers: [PublicClaimsController, OperatorAuthController, OperatorClaimsController, OperatorClaimPipelineController, OperatorTasksController, HealthController],
+      controllers: [
+        PublicClaimsController,
+        OperatorAuthController,
+        OperatorClaimsController,
+        OperatorClaimsAnalyticsController,
+        OperatorClaimPipelineController,
+        OperatorTasksController,
+        HealthController,
+      ],
       providers: [
         { provide: API_RUNTIME, useValue: runtime },
         { provide: ACCESS_TOKENS, useValue: runtime.accessTokens },
