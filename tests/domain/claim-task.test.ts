@@ -66,6 +66,34 @@ test('ClaimTask update uses optimistic versioning and records assignment priorit
   );
 });
 
+test('ClaimTask update preserves omitted optional fields while explicit null clears them', () => {
+  const task = createTask();
+  task.update(1, {
+    assignedOperatorId: '00000000-0000-4000-8000-000000000001',
+    dueAt: new Date('2026-09-10T12:00:00Z'),
+  }, new Date('2026-09-08T09:00:00Z'));
+
+  task.update(2, {
+    assignedOperatorId: undefined,
+    priority: 'HIGH',
+    dueAt: undefined,
+  }, new Date('2026-09-08T09:01:00Z'));
+
+  let snapshot = task.snapshot();
+  assert.equal(snapshot.assignedOperatorId, '00000000-0000-4000-8000-000000000001');
+  assert.equal(snapshot.dueAt?.toISOString(), '2026-09-10T12:00:00.000Z');
+  assert.equal(snapshot.priority, 'HIGH');
+
+  task.update(3, {
+    assignedOperatorId: null,
+    dueAt: null,
+  }, new Date('2026-09-08T09:02:00Z'));
+
+  snapshot = task.snapshot();
+  assert.equal(snapshot.assignedOperatorId, null);
+  assert.equal(snapshot.dueAt, null);
+});
+
 test('ClaimTask cancellation is terminal and guarded by expected version', () => {
   const task = createTask();
   task.cancel(1, '00000000-0000-4000-8000-000000000001', 'NO_LONGER_REQUIRED', new Date('2026-09-08T10:00:00Z'));

@@ -104,10 +104,10 @@ export class ClaimTask {
 
   update(expectedVersion: number, changes: ClaimTaskMutableFields, at: Date): void {
     this.assertMutable(expectedVersion);
-    if (Object.hasOwn(changes, 'assignedOperatorId')) this.props.assignedOperatorId = changes.assignedOperatorId ?? null;
+    if (changes.assignedOperatorId !== undefined) this.props.assignedOperatorId = changes.assignedOperatorId;
     if (changes.queue !== undefined) this.props.queue = changes.queue;
     if (changes.priority !== undefined) this.props.priority = changes.priority;
-    if (Object.hasOwn(changes, 'dueAt')) this.props.dueAt = changes.dueAt ?? null;
+    if (changes.dueAt !== undefined) this.props.dueAt = changes.dueAt;
     this.bump(at);
   }
 
