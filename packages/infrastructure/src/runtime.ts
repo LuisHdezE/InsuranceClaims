@@ -3,6 +3,7 @@ import postgres from '@prisma/orm-postgres/runtime';
 import type { Contract } from '../../../prisma/contract.d.ts';
 import contractJson from '../../../prisma/contract.json' with { type: 'json' };
 import { type AccessTokenPort, type ApplicationDependencies } from '@insurance/application';
+import { ClaimEvidenceAttentionApplication } from '@insurance/application/claim-evidence-attention';
 import { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 import { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
 import { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
@@ -26,6 +27,7 @@ export interface RuntimeContext {
   application: ClaimsOperationsApplication;
   tasks: ClaimTasksApplication;
   timeline: ClaimTimelineApplication;
+  evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;
 }
 
@@ -40,10 +42,15 @@ function applicationsFrom(deps: ApplicationDependencies, taskStore: MemoryClaimT
     claims: deps.claims,
     tasks: taskStore,
   });
+  const evidenceAttention = new ClaimEvidenceAttentionApplication({
+    claims: deps.claims,
+    tasks: taskStore,
+  });
   return {
     application: new ClaimsOperationsApplication(deps, tasks),
     tasks,
     timeline,
+    evidenceAttention,
     accessTokens: deps.accessTokens,
   };
 }
