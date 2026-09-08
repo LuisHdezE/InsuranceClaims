@@ -4,7 +4,7 @@ import base64
 import json
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -55,7 +55,7 @@ results: dict[str, Any] = {
     "candidate_version": "0.2.0",
     "baseline_version": "0.1.0",
     "reviewed_commit": os.environ.get("GITHUB_SHA"),
-    "generated_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+    "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
     "browser": {
         "name": driver.capabilities.get("browserName"),
         "version": driver.capabilities.get("browserVersion"),
@@ -87,6 +87,7 @@ tracking = surface("public-tracking-continuity", "/claims/track", ["WEB-006", "W
 
 
 def visit(path: str) -> None:
+    """Full navigation. Use only before operator authentication or after leaving operator scope."""
     driver.get(f"{WEB_BASE_URL}{path}")
     wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
 
@@ -133,6 +134,23 @@ def click_button(label: str) -> None:
     driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", button)
     time.sleep(0.15)
     driver.execute_script("arguments[0].click();", button)
+
+
+def click_nav(label: str, path: str) -> None:
+    """Navigate through React Router without reloading the in-memory operator session."""
+    link = wait.until(
+        EC.element_to_be_clickable(
+            (By.XPATH, f"//a[contains(@class,'ops-nav-link')][.//span[normalize-space()={json.dumps(label, ensure_ascii=False)}]]")
+        )
+    )
+    driver.execute_script("arguments[0].click();", link)
+    wait_path(path)
+
+
+def click_element(element) -> None:
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", element)
+    time.sleep(0.1)
+    driver.execute_script("arguments[0].click();", element)
 
 
 def set_viewport(width: int, height: int) -> None:
@@ -252,6 +270,13 @@ def kpi_value(label: str) -> int:
     return int(value)
 
 
+def open_claim_detail(tracking_code: str) -> None:
+    wait_text(tracking_code)
+    detail_link = wait.until(lambda d: find_claim_detail_link(tracking_code))
+    click_element(detail_link)
+    wait.until(lambda d: "/operator/claims/" in d.current_url and not d.current_url.endswith("/operator/claims"))
+
+
 try:
     # 1. Public landing continuity and embedded hero asset.
     visit("/")
@@ -303,7 +328,7 @@ try:
         raise AssertionError("Created Claim did not expose tracking code")
     results["journey"]["tracking_code_present"] = True
 
-    # 3. Protected operator login.
+    # 3. Protected operator login. Full navigation is allowed until authentication exists.
     visit("/operator/claims")
     wait_path("/operator/login")
     wait_text("Acceso de operadores")
@@ -311,9 +336,10 @@ try:
     set_input("operator-password", OPERATOR_PASSWORD)
     click_button("Ingresar")
     wait_path("/operator/claims")
+    wait_text("Gestión de siniestros")
 
-    # 4. Operations Dashboard before review completion.
-    visit("/operator/dashboard")
+    # 4. Operations Dashboard before review completion. SPA navigation preserves in-memory session.
+    click_nav("Dashboard", "/operator/dashboard")
     wait_text("Dashboard")
     wait_text(tracking_code)
     wait_text("Evidencia pendiente")
@@ -334,7 +360,7 @@ try:
     dashboard["observations"].append(f"Accessibility: {audit_accessibility()}")
 
     # 5. Claims Kanban projection.
-    visit("/operator/claims")
+    click_nav("Claims", "/operator/claims")
     wait_text("Gestión de siniestros")
     wait_text("Reportados")
     wait_text("En gestión")
@@ -349,12 +375,7 @@ try:
     claims["observations"].append("Authoritative RECEIVED Claim appears in the Reportados projection.")
     claims["observations"].append(f"Accessibility: {audit_accessibility()}")
 
-    detail_link = wait.until(lambda d: find_claim_detail_link(tracking_code))
-    detail_href = detail_link.get_attribute("href")
-    if not detail_href:
-        raise AssertionError("Claim card did not expose detail href")
-    driver.get(detail_href)
-    wait.until(lambda d: "/operator/claims/" in d.current_url)
+    open_claim_detail(tracking_code)
 
     # 6. Claim Operations Detail before review completion.
     wait_text(tracking_code)
@@ -385,8 +406,8 @@ try:
     detail["checks"]["task_lifecycle_separation"] = "PASS"
     detail["observations"].append("EVIDENCE_REVIEW completed while authoritative Claim status remained RECEIVED.")
 
-    # 8. Dashboard must derive the reduced evidence-attention count from real task data.
-    visit("/operator/dashboard")
+    # 8. Dashboard derives reduced evidence attention from real task state.
+    click_nav("Dashboard", "/operator/dashboard")
     wait_text("Dashboard")
     evidence_pending_after = kpi_value("Evidencia pendiente")
     tasks_open_after = kpi_value("Tareas abiertas")
@@ -403,8 +424,8 @@ try:
         f"After evidence review: evidence_pending={evidence_pending_after}, open_tasks={tasks_open_after}."
     )
 
-    # 9. Tasks Workspace must show remaining real work for the same Claim.
-    visit("/operator/tasks")
+    # 9. Tasks Workspace shows remaining real work for the same Claim.
+    click_nav("Tasks", "/operator/tasks")
     wait_text("Tareas operativas")
     wait_text("Cola de trabajo")
     wait_text(tracking_code)
@@ -416,9 +437,9 @@ try:
     tasks["observations"].append("After evidence review completion, the remaining Claim review task stays OPEN.")
     tasks["observations"].append(f"Accessibility: {audit_accessibility()}")
 
-    # 10. Only an explicit Claim transition changes lifecycle state.
-    driver.get(detail_href)
-    wait_text(tracking_code)
+    # 10. Return through SPA navigation. Only explicit Claim transition changes lifecycle state.
+    click_nav("Claims", "/operator/claims")
+    open_claim_detail(tracking_code)
     wait_text("Iniciar revisión")
     click_button("▷ Iniciar revisión")
     wait.until(
@@ -429,7 +450,7 @@ try:
     results["journey"]["claim_status_after_explicit_transition"] = "UNDER_REVIEW"
     detail["checks"]["explicit_lifecycle_transition"] = "PASS"
 
-    # 11. Public tracking remains separate and customer-safe, but reflects the authorized lifecycle transition.
+    # 11. Public tracking can reload because operator session is no longer needed.
     visit("/claims/track")
     wait_text("Consulta el estado de tu reporte")
     set_input("trackingCode", tracking_code)
