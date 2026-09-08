@@ -10,6 +10,7 @@ import {
   transitionClaimStatus,
   verifyPolicyVehicle,
 } from '../apps/web/src/api/claims';
+import { getClaimEvidenceAttention } from '../apps/web/src/api/evidence-attention';
 import { completeClaimTask, listClaimTasks, listTasks } from '../apps/web/src/api/tasks';
 import { getClaimTimeline } from '../apps/web/src/api/timeline';
 import type { ApiFailure, ClaimDraft } from '../apps/web/src/api/types';
@@ -76,6 +77,14 @@ assert.deepEqual(
 assert.ok(claimTasks.data.every((task) => task.status === 'OPEN'));
 assert.ok(claimTasks.requestId);
 
+const initialEvidenceAttention = await getClaimEvidenceAttention(summary.claimId, token, client);
+assert.equal(initialEvidenceAttention.data.attentionState, 'PENDING_REVIEW');
+assert.equal(initialEvidenceAttention.data.evidenceCount, 1);
+assert.equal(initialEvidenceAttention.data.openReviewTaskCount, 1);
+assert.equal(initialEvidenceAttention.data.reviewTasks.length, 1);
+assert.equal(initialEvidenceAttention.data.reviewTasks[0]?.status, 'OPEN');
+assert.ok(initialEvidenceAttention.requestId);
+
 const initialTimeline = await getClaimTimeline(summary.claimId, token, client);
 assert.deepEqual(
   initialTimeline.data.events.map((event) => event.eventType),
@@ -103,6 +112,13 @@ assert.equal(completedTask.data.status, 'COMPLETED');
 assert.ok(completedTask.data.completedAt);
 assert.equal(completedTask.data.completedById, authenticated.data.operator.id);
 assert.ok(completedTask.requestId);
+
+const reviewedEvidenceAttention = await getClaimEvidenceAttention(summary.claimId, token, client);
+assert.equal(reviewedEvidenceAttention.data.attentionState, 'REVIEWED');
+assert.equal(reviewedEvidenceAttention.data.openReviewTaskCount, 0);
+assert.equal(reviewedEvidenceAttention.data.completedReviewTaskCount, 1);
+assert.equal(reviewedEvidenceAttention.data.reviewTasks[0]?.status, 'COMPLETED');
+assert.ok(reviewedEvidenceAttention.requestId);
 
 const timelineAfterTask = await getClaimTimeline(summary.claimId, token, client);
 assert.equal(timelineAfterTask.data.events.filter((event) => event.eventType === 'TASK_COMPLETED').length, 1);
@@ -163,12 +179,15 @@ console.log(JSON.stringify({
   event: 'BACKOFFICE_RUNTIME_PASS',
   operationIds: [
     'authenticateOperator', 'listClaims', 'getClaimDetail', 'downloadClaimEvidence', 'transitionClaimStatus',
-    'listTasks', 'listClaimTasks', 'completeClaimTask', 'getClaimTimeline',
+    'listTasks', 'listClaimTasks', 'completeClaimTask', 'getClaimTimeline', 'getClaimEvidenceAttention',
   ],
   tokenLifetimeSeconds: authenticated.data.expiresIn,
   protectedReadRejectedWithoutValidToken,
   evidenceDownloadProtected,
   projectedClaimTasks: claimTasks.data.length,
+  initialEvidenceAttention: initialEvidenceAttention.data.attentionState,
+  reviewedEvidenceAttention: reviewedEvidenceAttention.data.attentionState,
+  evidenceAttentionClaimStateIndependent: detailAfterTask.data.status === 'RECEIVED',
   initialTimelineEvents: initialTimeline.data.totalItems,
   timelineTaskCompletionProjected: timelineAfterTask.data.events.some((event) => event.eventType === 'TASK_COMPLETED'),
   timelineStatusChangeProjected: Boolean(statusChange),
@@ -181,8 +200,9 @@ console.log(JSON.stringify({
   staleTransitionConflict,
   authoritativeRefreshStatus: refreshed.data.status,
   requestIdObserved: Boolean(
-    authenticated.requestId && claims.requestId && detail.requestId && claimTasks.requestId && initialTimeline.requestId
-    && openTasks.requestId && evidenceTasks.requestId && completedTask.requestId && timelineAfterTask.requestId
+    authenticated.requestId && claims.requestId && detail.requestId && claimTasks.requestId
+    && initialEvidenceAttention.requestId && initialTimeline.requestId && openTasks.requestId && evidenceTasks.requestId
+    && completedTask.requestId && reviewedEvidenceAttention.requestId && timelineAfterTask.requestId
     && downloaded.requestId && transitioned.requestId && timelineAfterTransition.requestId && refreshed.requestId
   ),
 }));
