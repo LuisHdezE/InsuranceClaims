@@ -1,5 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+DROP TABLE IF EXISTS claim_task_history CASCADE;
 DROP TABLE IF EXISTS claim_tasks CASCADE;
 DROP TABLE IF EXISTS claim_status_history CASCADE;
 DROP TABLE IF EXISTS claim_evidence CASCADE;
@@ -63,22 +64,49 @@ CREATE TABLE claim_tasks (
   claim_id uuid NOT NULL REFERENCES claims(id) ON DELETE CASCADE,
   type text NOT NULL CHECK (type IN ('CLAIM_REVIEW','EVIDENCE_REVIEW','MISSING_DOCUMENT_FOLLOWUP','CUSTOMER_FOLLOWUP','CLOSURE_REVIEW')),
   title text NOT NULL,
-  status text NOT NULL CHECK (status IN ('OPEN','COMPLETED')),
+  description text NULL,
+  status text NOT NULL CHECK (status IN ('OPEN','COMPLETED','CANCELLED')),
   priority text NOT NULL CHECK (priority IN ('NORMAL','HIGH')),
   queue text NOT NULL CHECK (queue = 'CLAIMS'),
   assigned_operator_id uuid NULL,
   due_at timestamptz NULL,
-  created_by_type text NOT NULL CHECK (created_by_type IN ('SYSTEM','OPERATOR')),
+  created_by_type text NOT NULL CHECK (created_by_type IN ('SYSTEM','OPERATOR','SUPERVISOR','ADMINISTRATOR','AUTOMATION')),
   created_by_id uuid NULL,
   source_key text NULL UNIQUE,
   correlation_id text NULL,
+  version integer NOT NULL DEFAULT 1,
   created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
   completed_at timestamptz NULL,
-  completed_by_id uuid NULL
+  completed_by_id uuid NULL,
+  cancelled_at timestamptz NULL,
+  cancelled_by_id uuid NULL,
+  cancellation_reason text NULL CHECK (cancellation_reason IS NULL OR cancellation_reason IN ('NO_LONGER_REQUIRED','DUPLICATE','CREATED_IN_ERROR'))
 );
 CREATE INDEX claim_tasks_claim_status_created_idx ON claim_tasks(claim_id, status, created_at);
 CREATE INDEX claim_tasks_status_due_idx ON claim_tasks(status, due_at);
 CREATE INDEX claim_tasks_assignee_status_idx ON claim_tasks(assigned_operator_id, status);
+CREATE INDEX claim_tasks_priority_status_idx ON claim_tasks(priority, status);
+
+CREATE TABLE claim_task_history (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  task_id uuid NOT NULL REFERENCES claim_tasks(id) ON DELETE CASCADE,
+  event_type text NOT NULL CHECK (event_type IN ('CREATED','ASSIGNED','UPDATED','COMPLETED','CANCELLED')),
+  from_status text NULL CHECK (from_status IS NULL OR from_status IN ('OPEN','COMPLETED','CANCELLED')),
+  to_status text NULL CHECK (to_status IS NULL OR to_status IN ('OPEN','COMPLETED','CANCELLED')),
+  previous_assigned_operator_id uuid NULL,
+  new_assigned_operator_id uuid NULL,
+  previous_priority text NULL CHECK (previous_priority IS NULL OR previous_priority IN ('NORMAL','HIGH')),
+  new_priority text NULL CHECK (new_priority IS NULL OR new_priority IN ('NORMAL','HIGH')),
+  previous_due_at timestamptz NULL,
+  new_due_at timestamptz NULL,
+  actor_type text NOT NULL CHECK (actor_type IN ('SYSTEM','OPERATOR','SUPERVISOR','ADMINISTRATOR','AUTOMATION')),
+  actor_id uuid NULL,
+  correlation_id text NULL,
+  occurred_at timestamptz NOT NULL,
+  metadata jsonb NULL
+);
+CREATE INDEX claim_task_history_task_occurred_idx ON claim_task_history(task_id, occurred_at);
 
 CREATE TABLE idempotency_records (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
