@@ -1,0 +1,33 @@
+{
+  "schema_version": "0.5.0",
+  "change_id": "API-IMPACT-001",
+  "previous_revision": "api-v1-r1",
+  "new_revision": "api-v1-r2",
+  "classification": "platform_cross_cutting",
+  "changed_operation_ids": [
+    "listTasks",
+    "listClaimTasks",
+    "completeClaimTask",
+    "getClaimTimeline",
+    "getClaimEvidenceAttention"
+  ],
+  "changed_contract_areas": [
+    "authorization",
+    "versioning",
+    "data_schema",
+    "other"
+  ],
+  "affected_slices": [
+    {
+      "id": "claims-backoffice",
+      "platform": "web"
+    }
+  ],
+  "revalidation_policy": "platform",
+  "preserve_unrelated_evidence": true,
+  "evidence_ids": [
+    "EVD-OPENAPI-R2-001",
+    "EVD-API-R2-VALIDATION-001"
+  ],
+  "note": "Additive post-MVP operator API surface for Claims Operations. Revalidate the web platform while preserving unrelated accepted v0.1.0 evidence."
+}
