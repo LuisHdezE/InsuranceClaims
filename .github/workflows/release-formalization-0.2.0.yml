@@ -1,0 +1,73 @@
+name: Claims Operations Release Formalization 0.2.0
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'apps/**/package.json'
+      - 'packages/**/package.json'
+      - 'documentation/release/CLAIMS_OPERATIONS_RELEASE_0.2.0.md'
+      - 'documentation/portfolio/RELEASE_NOTES_v0.2.0.md'
+      - 'scripts/validate-release-formalization-0.2.0.mjs'
+      - '.github/workflows/release-formalization-0.2.0.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'apps/**/package.json'
+      - 'packages/**/package.json'
+      - 'documentation/release/CLAIMS_OPERATIONS_RELEASE_0.2.0.md'
+      - 'documentation/portfolio/RELEASE_NOTES_v0.2.0.md'
+      - 'scripts/validate-release-formalization-0.2.0.mjs'
+      - '.github/workflows/release-formalization-0.2.0.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-release-formalization:
+    name: Release Formalization 0.2.0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Verify package-lock reproducibility
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Validate release identity and governed evidence chain
+        run: node scripts/validate-release-formalization-0.2.0.mjs
+
+      - name: Verify historical v0.1.0 evidence is unchanged
+        shell: bash
+        env:
+          HISTORICAL_BASELINE_SHA: 531828a18babaca563c83dd76df56b725d6105f0
+        run: |
+          set -euo pipefail
+          git cat-file -e "${HISTORICAL_BASELINE_SHA}^{commit}"
+          git diff --exit-code "${HISTORICAL_BASELINE_SHA}" -- \
+            .blueprint/project.yaml \
+            .blueprint/status.yaml \
+            .blueprint/ui/interface-inventory.json \
+            openapi.yaml \
+            documentation/api/API_CONTRACT.md \
+            documentation/api/API_ENDPOINT_INVENTORY.json \
+            documentation/release/RELEASE_READINESS.md \
+            documentation/release/RELEASE_GATE_EVIDENCE.md \
+            documentation/release/RELEASE_GATE_APPROVAL.md \
+            documentation/operations \
+            documentation/visual-functional-review \
+            documentation/portfolio/RELEASE_NOTES_v0.1.0.md
+          echo 'Historical v0.1.0 evidence preservation: PASS'
