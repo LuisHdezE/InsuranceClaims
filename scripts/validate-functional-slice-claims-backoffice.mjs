@@ -76,15 +76,16 @@ assert(list.includes('filtered') || list.includes('filtro'), 'claims list must e
 assert(list.includes('status-badge'), 'claims list must present textual status badges');
 
 const detail = read('apps/web/src/pages/OperatorClaimDetailPage.tsx');
-for (const fn of ['getClaimDetail', 'downloadClaimEvidence', 'transitionClaimStatus']) assert(detail.includes(fn), `claim detail must use ${fn}`);
+for (const fn of ['getClaimDetail', 'transitionClaimStatus']) assert(detail.includes(fn), `claim detail must use ${fn}`);
 assert(detail.includes('detail.allowedTransitions.map'), 'transition options must come only from server allowedTransitions');
 assert(detail.includes('expectedFromStatus: detail.status'), 'transition must send mandatory expectedFromStatus from authoritative detail');
 assert(detail.includes("failure.problem?.status === 409"), '409 conflict recovery missing');
 assert(detail.includes('claimQuery.refetch()'), '409 conflict must refetch authoritative detail before a new decision');
 assert(detail.includes("queryKey: ['operator', 'claim', claimId, 'timeline']"), 'Claim mutations must invalidate the operational timeline projection');
-assert(detail.includes('URL.revokeObjectURL'), 'evidence object URL must be released after download');
+assert(detail.includes("queryKey: ['operator', 'claim', claimId, 'evidence-attention']"), 'manual Claim refresh must also refresh Evidence Attention');
 assert(detail.includes('auditEvents'), 'authorized claim detail must preserve approved audit-event projection');
 assert(detail.includes('ClaimTimelinePanel'), 'Claim Detail must render the operational timeline through its dedicated presentation component');
+assert(detail.includes('ClaimEvidenceAttentionPanel'), 'Claim Detail must render Evidence Attention through its dedicated presentation component');
 
 const timelineApi = read('apps/web/src/api/timeline.ts');
 assert(timelineApi.includes('export async function getClaimTimeline'), 'operational timeline API client missing');
@@ -98,6 +99,27 @@ for (const label of ['Siniestro reportado', 'Evidencia registrada', 'Cambio de e
 }
 assert(timelinePanel.includes('getClaimTimeline'), 'timeline panel must consume server-composed operational projection');
 
+const evidenceApi = read('apps/web/src/api/evidence-attention.ts');
+assert(evidenceApi.includes('export async function getClaimEvidenceAttention'), 'Evidence Attention API client missing');
+assert(evidenceApi.includes('/api/v1/operator/claims/${encodeURIComponent(claimId)}/evidence-attention'), 'Evidence Attention client must use canonical protected REST route');
+assert(evidenceApi.includes('Authorization: `Bearer ${accessToken}`'), 'Evidence Attention client must preserve bearer authentication');
+assert(!evidenceApi.includes('/legacy/') && !evidenceApi.includes('/mcp'), 'Evidence Attention client must not bypass REST boundary');
+
+const evidencePanel = read('apps/web/src/components/ClaimEvidenceAttentionPanel.tsx');
+for (const label of ['Revisión de evidencia', 'Pendiente de revisión', 'Revisión completada', 'Completar revisión']) {
+  assert(evidencePanel.includes(label), `Evidence Attention UI label missing: ${label}`);
+}
+assert(evidencePanel.includes('getClaimEvidenceAttention'), 'Evidence panel must consume server-composed Evidence Attention projection');
+assert(evidencePanel.includes('downloadClaimEvidence'), 'Evidence panel must preserve protected evidence download');
+assert(evidencePanel.includes('completeClaimTask'), 'Evidence review completion must use authoritative ClaimTask command');
+assert(evidencePanel.includes('URL.revokeObjectURL'), 'evidence object URL must be released after download');
+assert(evidencePanel.includes("queryKey: ['operator', 'claim', claimId, 'tasks']"), 'Evidence completion must invalidate Claim tasks');
+assert(evidencePanel.includes("queryKey: ['operator', 'claim', claimId, 'timeline']"), 'Evidence completion must invalidate operational timeline');
+assert(evidencePanel.includes('no cambia el estado autoritativo del Claim'), 'Evidence panel must communicate Claim lifecycle independence');
+
+const taskPanel = read('apps/web/src/components/ClaimTasksPanel.tsx');
+assert(taskPanel.includes("queryKey: ['operator', 'claim', claimId, 'evidence-attention']"), 'ClaimTask completion must invalidate Evidence Attention projection');
+
 const errors = read('apps/web/src/components/OperatorApiErrorNotice.tsx');
 for (const status of [401, 403, 404, 409, 422, 429]) assert(errors.includes(`case ${status}:`), `operator error state ${status} missing`);
 assert(errors.includes('failure.network'), 'operator offline/network presentation missing');
@@ -109,6 +131,7 @@ assert(styles.includes('@media (max-width: 900px)'), 'backoffice tablet/mobile r
 assert(styles.includes('@media (max-width: 720px)'), 'claims table mobile card transformation missing');
 assert(read('apps/web/src/styles.css').includes(':focus-visible'), 'visible keyboard focus contract missing');
 assert(read('apps/web/src/claims-timeline.css').includes('@media (max-width: 420px)'), 'operational timeline mobile contract missing');
+assert(read('apps/web/src/claims-evidence-attention.css').includes('@media (max-width: 420px)'), 'Evidence Attention mobile contract missing');
 
 const sourceRoot = path.join(root, 'apps/web/src');
 const sourceFiles = [];
@@ -133,7 +156,11 @@ const errorTests = read('apps/web/src/components/OperatorApiErrorNotice.test.ts'
 assert(errorTests.includes('authoritative refresh conflict'), 'backoffice 409 unit coverage missing');
 assert(errorTests.includes('authorization server-authoritative'), 'backoffice 403 unit coverage missing');
 const runtimeQa = read('qa/web-claims-backoffice-runtime.ts');
-for (const marker of ['BACKOFFICE_RUNTIME_PASS', 'protectedReadRejectedWithoutValidToken', 'evidenceDownloadProtected', 'staleTransitionConflict', 'transitionCommitted', 'timelineTaskCompletionProjected', 'timelineStatusChangeProjected', 'timelineAuditSeparated']) {
+for (const marker of [
+  'BACKOFFICE_RUNTIME_PASS', 'protectedReadRejectedWithoutValidToken', 'evidenceDownloadProtected',
+  'staleTransitionConflict', 'transitionCommitted', 'timelineTaskCompletionProjected', 'timelineStatusChangeProjected',
+  'timelineAuditSeparated', 'initialEvidenceAttention', 'reviewedEvidenceAttention', 'evidenceAttentionClaimStateIndependent',
+]) {
   assert(runtimeQa.includes(marker), `runtime QA marker missing: ${marker}`);
 }
 
@@ -147,6 +174,6 @@ console.log(JSON.stringify({
   tokenStorage: 'memory-only',
   idempotency: 'N/A',
   concurrencyGuard: 'expectedFromStatus',
-  postMvpProjection: 'claim-operations-timeline',
+  postMvpProjection: 'claim-operations-timeline+evidence-attention',
   explicitApiErrorStates: [401, 403, 404, 409, 422, 429, 'network'],
 }));
