@@ -73,7 +73,7 @@ test('ClaimTask REST slice is protected, idempotent, versioned and independent f
     description: 'Synthetic customer follow-up.',
     priority: 'HIGH',
     queue: 'CLAIMS',
-    assignedOperatorId: login.body.operator.operatorId,
+    assignedOperatorId: login.body.operator.id,
     dueAt: '2026-09-10T12:00:00Z',
   };
 
