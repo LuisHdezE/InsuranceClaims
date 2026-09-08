@@ -1,9 +1,16 @@
+import { randomUUID } from 'node:crypto';
 import type {
   PipelineDefinitionRecord,
   PipelineMovementAuditRecord,
   PipelineWorkItemHistoryRecord,
   PipelineWorkItemRepository,
 } from '@insurance/application/claim-pipeline';
+import type {
+  PipelineAdminAuditRecord,
+  PipelineAdminMutationResult,
+  PipelineAdminRepository,
+  PipelineAdminVersionRecord,
+} from '@insurance/application/pipeline-admin';
 import {
   PipelineWorkItemVersionConflictError,
   type PipelineConsumerType,
@@ -14,21 +21,62 @@ import {
 
 function clone<T>(value: T): T { return structuredClone(value); }
 
-function configurationKey(consumerType: PipelineConsumerType): string {
-  return consumerType;
-}
-
 function workItemKey(consumerType: PipelineConsumerType, consumerId: string): string {
   return `${consumerType}:${consumerId}`;
 }
 
-export class MemoryPipelineStore implements PipelineWorkItemRepository {
-  private readonly activeDefinitions = new Map<string, PipelineDefinitionRecord>();
-  private readonly versions = new Map<string, PipelineVersionDefinition>();
+function toRuntimeVersion(
+  record: PipelineAdminVersionRecord,
+  consumerType: PipelineConsumerType,
+  existing?: PipelineVersionDefinition,
+): PipelineVersionDefinition {
+  const existingIds = new Map(existing?.stages.map((stage) => [stage.key, stage.id]) ?? []);
+  return {
+    id: record.id,
+    definitionId: record.definitionId,
+    consumerType,
+    versionNumber: record.versionNumber,
+    status: record.status,
+    stages: record.stages.map((stage) => ({
+      id: existingIds.get(stage.stageKey) ?? randomUUID(),
+      key: stage.stageKey,
+      displayName: stage.displayName,
+      sortOrder: stage.sortOrder,
+      allowedNextStageKeys: [...stage.allowedNextStageKeys],
+    })),
+  };
+}
+
+function seededAdminVersion(version: PipelineVersionDefinition, createdAt: Date): PipelineAdminVersionRecord {
+  return {
+    id: version.id,
+    definitionId: version.definitionId,
+    versionNumber: version.versionNumber,
+    status: version.status,
+    createdByType: 'SYSTEM',
+    createdById: null,
+    sourceClassification: 'SYNTHETIC_TEST_SEED',
+    createdAt,
+    activatedAt: version.status === 'ACTIVE' ? createdAt : null,
+    retiredAt: version.status === 'RETIRED' ? createdAt : null,
+    stages: version.stages.map((stage) => ({
+      stageKey: stage.key,
+      displayName: stage.displayName,
+      sortOrder: stage.sortOrder,
+      reportingFlags: {},
+      allowedNextStageKeys: [...stage.allowedNextStageKeys],
+    })),
+  };
+}
+
+export class MemoryPipelineStore implements PipelineWorkItemRepository, PipelineAdminRepository {
+  private readonly definitions = new Map<string, PipelineDefinitionRecord>();
+  private readonly adminVersions = new Map<string, PipelineAdminVersionRecord>();
+  private readonly runtimeVersions = new Map<string, PipelineVersionDefinition>();
   private readonly workItems = new Map<string, PipelineWorkItemProps>();
   private readonly history: PipelineWorkItemHistoryRecord[] = [];
 
-  constructor(private readonly auditWriter?: (audit: PipelineMovementAuditRecord) => Promise<void>) {}
+  constructor(private readonly auditWriter?: (audit: PipelineMovementAuditRecord | PipelineAdminAuditRecord) => Promise<void>) {}
 
   seedActivePipeline(input: { definition: PipelineDefinitionRecord; version: PipelineVersionDefinition }): void {
     if (!input.definition.enabled || input.definition.activeVersionId !== input.version.id || input.version.status !== 'ACTIVE') {
@@ -37,23 +85,31 @@ export class MemoryPipelineStore implements PipelineWorkItemRepository {
     if (input.definition.id !== input.version.definitionId || input.definition.consumerType !== input.version.consumerType) {
       throw new Error('Synthetic pipeline seed definition/version mismatch.');
     }
-    this.activeDefinitions.set(configurationKey(input.definition.consumerType), clone(input.definition));
-    this.versions.set(input.version.id, clone(input.version));
+    this.definitions.set(input.definition.id, clone(input.definition));
+    this.runtimeVersions.set(input.version.id, clone(input.version));
+    this.adminVersions.set(input.version.id, seededAdminVersion(input.version, input.definition.createdAt));
   }
 
   seedPinnedVersion(version: PipelineVersionDefinition): void {
-    this.versions.set(version.id, clone(version));
+    this.runtimeVersions.set(version.id, clone(version));
+    const definition = this.definitions.get(version.definitionId);
+    if (definition && !this.adminVersions.has(version.id)) {
+      this.adminVersions.set(version.id, seededAdminVersion(version, definition.createdAt));
+    }
   }
 
   async findActiveVersionForConsumer(consumerType: PipelineConsumerType): Promise<PipelineVersionDefinition | null> {
-    const definition = this.activeDefinitions.get(configurationKey(consumerType));
-    if (!definition?.activeVersionId) return null;
-    const version = this.versions.get(definition.activeVersionId);
+    const eligible = [...this.definitions.values()].filter((definition) =>
+      definition.consumerType === consumerType && definition.enabled && definition.activeVersionId,
+    );
+    if (eligible.length === 0) return null;
+    if (eligible.length > 1) throw new Error(`Multiple enabled active pipelines exist for consumer ${consumerType}.`);
+    const version = this.runtimeVersions.get(eligible[0]!.activeVersionId!);
     return version ? clone(version) : null;
   }
 
   async findVersion(versionId: string): Promise<PipelineVersionDefinition | null> {
-    const version = this.versions.get(versionId);
+    const version = this.runtimeVersions.get(versionId);
     return version ? clone(version) : null;
   }
 
@@ -90,6 +146,153 @@ export class MemoryPipelineStore implements PipelineWorkItemRepository {
 
   async listHistory(workItemId: string): Promise<PipelineWorkItemHistoryRecord[]> {
     return clone(this.history.filter((entry) => entry.workItemId === workItemId).sort((a, b) => a.occurredAt.getTime() - b.occurredAt.getTime()));
+  }
+
+  async listDefinitions(input: { page: number; pageSize: number }) {
+    const all = [...this.definitions.values()].sort((a, b) => a.key.localeCompare(b.key) || a.id.localeCompare(b.id));
+    const offset = (input.page - 1) * input.pageSize;
+    return { items: clone(all.slice(offset, offset + input.pageSize)), totalItems: all.length };
+  }
+
+  async getDefinition(definitionId: string): Promise<PipelineDefinitionRecord | null> {
+    const definition = this.definitions.get(definitionId);
+    return definition ? clone(definition) : null;
+  }
+
+  async findDefinitionByKey(key: string): Promise<PipelineDefinitionRecord | null> {
+    const definition = [...this.definitions.values()].find((item) => item.key === key);
+    return definition ? clone(definition) : null;
+  }
+
+  async listVersions(definitionId: string): Promise<PipelineAdminVersionRecord[]> {
+    return clone([...this.adminVersions.values()]
+      .filter((version) => version.definitionId === definitionId)
+      .sort((a, b) => a.versionNumber - b.versionNumber || a.id.localeCompare(b.id)));
+  }
+
+  async getVersion(versionId: string): Promise<PipelineAdminVersionRecord | null> {
+    const version = this.adminVersions.get(versionId);
+    return version ? clone(version) : null;
+  }
+
+  async createDefinition(input: {
+    definition: PipelineDefinitionRecord;
+    version: PipelineAdminVersionRecord;
+    audit: PipelineAdminAuditRecord;
+  }): Promise<void> {
+    if ([...this.definitions.values()].some((definition) => definition.key === input.definition.key)) {
+      throw new Error('Pipeline definition key already exists.');
+    }
+    this.definitions.set(input.definition.id, clone(input.definition));
+    this.adminVersions.set(input.version.id, clone(input.version));
+    this.runtimeVersions.set(input.version.id, toRuntimeVersion(input.version, input.definition.consumerType));
+    if (this.auditWriter) await this.auditWriter(clone(input.audit));
+  }
+
+  async createVersion(input: {
+    definitionId: string;
+    expectedDefinitionVersion: number;
+    definitionUpdatedAt: Date;
+    version: PipelineAdminVersionRecord;
+    audit: PipelineAdminAuditRecord;
+  }): Promise<PipelineAdminMutationResult> {
+    const definition = this.definitions.get(input.definitionId);
+    if (!definition || definition.version !== input.expectedDefinitionVersion) return { outcome: 'STALE' };
+    const updated = { ...definition, version: definition.version + 1, updatedAt: input.definitionUpdatedAt };
+    this.definitions.set(updated.id, clone(updated));
+    this.adminVersions.set(input.version.id, clone(input.version));
+    this.runtimeVersions.set(input.version.id, toRuntimeVersion(input.version, definition.consumerType));
+    if (this.auditWriter) await this.auditWriter(clone(input.audit));
+    return { outcome: 'UPDATED', definition: clone(updated) };
+  }
+
+  async activateVersion(input: {
+    definitionId: string;
+    versionId: string;
+    expectedDefinitionVersion: number;
+    at: Date;
+    audit: PipelineAdminAuditRecord;
+  }): Promise<PipelineAdminMutationResult> {
+    const definition = this.definitions.get(input.definitionId);
+    if (!definition || definition.version !== input.expectedDefinitionVersion) return { outcome: 'STALE' };
+    const target = this.adminVersions.get(input.versionId);
+    if (!target || target.definitionId !== definition.id) return { outcome: 'ACTIVATION_CONFLICT' };
+    if (target.status !== 'DRAFT') return { outcome: 'NOT_DRAFT' };
+
+    if (definition.activeVersionId && definition.activeVersionId !== target.id) {
+      const previous = this.adminVersions.get(definition.activeVersionId);
+      if (previous?.status === 'ACTIVE') {
+        const retired = { ...previous, status: 'RETIRED' as const, retiredAt: input.at };
+        this.adminVersions.set(retired.id, clone(retired));
+        const runtime = this.runtimeVersions.get(retired.id);
+        if (runtime) this.runtimeVersions.set(retired.id, { ...clone(runtime), status: 'RETIRED' });
+      }
+    }
+
+    const active = { ...target, status: 'ACTIVE' as const, activatedAt: input.at, retiredAt: null };
+    this.adminVersions.set(active.id, clone(active));
+    const targetRuntime = this.runtimeVersions.get(active.id);
+    if (targetRuntime) this.runtimeVersions.set(active.id, { ...clone(targetRuntime), status: 'ACTIVE' });
+    const updated = {
+      ...definition,
+      activeVersionId: active.id,
+      version: definition.version + 1,
+      updatedAt: input.at,
+    };
+    this.definitions.set(updated.id, clone(updated));
+    if (this.auditWriter) await this.auditWriter(clone(input.audit));
+    return { outcome: 'UPDATED', definition: clone(updated) };
+  }
+
+  async updateState(input: {
+    definitionId: string;
+    enabled: boolean;
+    expectedDefinitionVersion: number;
+    at: Date;
+    retirementAudit: PipelineAdminAuditRecord | null;
+  }): Promise<PipelineAdminMutationResult> {
+    const definition = this.definitions.get(input.definitionId);
+    if (!definition || definition.version !== input.expectedDefinitionVersion) return { outcome: 'STALE' };
+
+    if (input.enabled) {
+      if (!definition.activeVersionId) return { outcome: 'ACTIVATION_CONFLICT' };
+      const active = this.adminVersions.get(definition.activeVersionId);
+      if (!active || active.status !== 'ACTIVE') return { outcome: 'ACTIVATION_CONFLICT' };
+      const conflicting = [...this.definitions.values()].some((item) =>
+        item.id !== definition.id
+        && item.consumerType === definition.consumerType
+        && item.enabled
+        && item.activeVersionId,
+      );
+      if (conflicting) return { outcome: 'ACTIVATION_CONFLICT' };
+      if (definition.enabled) return { outcome: 'UPDATED', definition: clone(definition) };
+      const updated = { ...definition, enabled: true, version: definition.version + 1, updatedAt: input.at };
+      this.definitions.set(updated.id, clone(updated));
+      return { outcome: 'UPDATED', definition: clone(updated) };
+    }
+
+    if (!definition.enabled && !definition.activeVersionId) {
+      return { outcome: 'UPDATED', definition: clone(definition) };
+    }
+    if (definition.activeVersionId) {
+      const active = this.adminVersions.get(definition.activeVersionId);
+      if (active?.status === 'ACTIVE') {
+        const retired = { ...active, status: 'RETIRED' as const, retiredAt: input.at };
+        this.adminVersions.set(retired.id, clone(retired));
+        const runtime = this.runtimeVersions.get(retired.id);
+        if (runtime) this.runtimeVersions.set(retired.id, { ...clone(runtime), status: 'RETIRED' });
+      }
+    }
+    const updated = {
+      ...definition,
+      enabled: false,
+      activeVersionId: null,
+      version: definition.version + 1,
+      updatedAt: input.at,
+    };
+    this.definitions.set(updated.id, clone(updated));
+    if (input.retirementAudit && this.auditWriter) await this.auditWriter(clone(input.retirementAudit));
+    return { outcome: 'UPDATED', definition: clone(updated) };
   }
 }
 

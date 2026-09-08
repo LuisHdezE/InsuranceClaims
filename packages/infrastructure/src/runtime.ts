@@ -9,6 +9,7 @@ import { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 import { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
 import { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
 import { ClaimsOperationalQueryApplication } from '@insurance/application/claims-operational-query';
+import { PipelineAdminApplication, type PipelineAdminRepository } from '@insurance/application/pipeline-admin';
 import {
   Argon2PasswordHasher,
   HttpPolicyVerificationAdapter,
@@ -22,6 +23,7 @@ import {
   SystemClock,
 } from './adapters.js';
 import { MemoryWorkflowStore } from './memory.js';
+import { PrismaPipelineAdminStore } from './pipeline-admin-store.js';
 import { MemoryPipelineStore, PrismaPipelineStore } from './pipeline-store.js';
 import { PrismaWorkflowStore } from './prisma-store.js';
 import { MemoryClaimTaskStore, PrismaClaimTaskStore } from './task-store.js';
@@ -30,6 +32,7 @@ export interface RuntimeContext {
   application: ClaimsOperationsApplication;
   tasks: ClaimTasksApplication;
   pipeline: ClaimPipelineApplication;
+  pipelineAdmin: PipelineAdminApplication;
   timeline: ClaimTimelineApplication;
   evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;
@@ -39,6 +42,7 @@ function applicationsFrom(
   deps: ApplicationDependencies,
   taskStore: MemoryClaimTaskStore | PrismaClaimTaskStore,
   pipelineStore: MemoryPipelineStore | PrismaPipelineStore,
+  pipelineAdminRepository: PipelineAdminRepository,
 ): RuntimeContext {
   const tasks = new ClaimTasksApplication({
     claims: deps.claims,
@@ -51,6 +55,11 @@ function applicationsFrom(
   const pipeline = new ClaimPipelineApplication({
     claims: deps.claims,
     pipelines: pipelineStore,
+    clock: deps.clock,
+    ids: deps.ids,
+  });
+  const pipelineAdmin = new PipelineAdminApplication({
+    repository: pipelineAdminRepository,
     clock: deps.clock,
     ids: deps.ids,
   });
@@ -72,6 +81,7 @@ function applicationsFrom(
     application: new ClaimsOperationsApplication(deps, tasks, pipeline, operationalQueries),
     tasks,
     pipeline,
+    pipelineAdmin,
     timeline,
     evidenceAttention,
     accessTokens: deps.accessTokens,
@@ -114,7 +124,7 @@ export async function createMemoryRuntime(options: {
     idempotency: store, transactions: store, operators: store, passwordHasher, accessTokens,
     clock: new SystemClock(), ids: new SecureIdGenerator(), hash: new Sha256HashAdapter(), logger: new JsonConsoleLogger(),
   };
-  return { ...applicationsFrom(deps, taskStore, pipelineStore), store, taskStore, pipelineStore, evidenceStorage };
+  return { ...applicationsFrom(deps, taskStore, pipelineStore, pipelineStore), store, taskStore, pipelineStore, evidenceStorage };
 }
 
 export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = process.env): Promise<RuntimeContext & {
@@ -134,6 +144,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const store = new PrismaWorkflowStore(db);
   const taskStore = new PrismaClaimTaskStore(db);
   const pipelineStore = new PrismaPipelineStore(db);
+  const pipelineAdminStore = new PrismaPipelineAdminStore(db);
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(staffJwtSecret, staffJwtIssuer, staffJwtAudience);
   const deps: ApplicationDependencies = {
@@ -142,5 +153,5 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
     idempotency: store, transactions: store, operators: store, passwordHasher, accessTokens,
     clock: new SystemClock(), ids: new SecureIdGenerator(), hash: new Sha256HashAdapter(), logger: new JsonConsoleLogger(),
   };
-  return { ...applicationsFrom(deps, taskStore, pipelineStore), store, taskStore, pipelineStore };
+  return { ...applicationsFrom(deps, taskStore, pipelineStore, pipelineAdminStore), store, taskStore, pipelineStore };
 }
