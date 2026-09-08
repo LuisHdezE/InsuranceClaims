@@ -4,7 +4,8 @@
 **Blueprint:** 0.5.2  
 **Baseline main SHA:** `303b09c5746dd545586097412b4f42170bd14664`  
 **Requirements R3:** APPROVED + MERGED via PR #35  
-**Status:** READY_FOR_REVIEW  
+**Architecture/Security/Data R3:** APPROVED on 2026-09-08  
+**Status:** APPROVED_PENDING_MERGE  
 **Date:** 2026-09-08
 
 ## 1. Purpose
@@ -17,6 +18,7 @@ The authoritative detail is in:
 2. `documentation/data/DATA_ARCHITECTURE_R3.md`
 3. `documentation/security/SECURITY_THREAT_MODEL_R3.md`
 4. `documentation/audit/AUDIT_MODEL_R3.md`
+5. `documentation/architecture/ARCHITECTURE_SECURITY_DATA_R3_READY_APPROVAL.md`
 
 Historical Architecture/Data/Security/Audit artifacts remain unchanged and continue to form the baseline.
 
@@ -57,22 +59,22 @@ Canonical Blueprint 0.5.2 requires the following checks for this phase.
 
 | Check | R3 evidence | Review status |
 |---|---|---|
-| `architecture.domain_model` | Architecture R3 §§5–6 | READY_FOR_REVIEW |
-| `architecture.decision_records` | Architecture R3 §24 | READY_FOR_REVIEW |
-| `architecture.security_model` | Security R3 §§2–18 | READY_FOR_REVIEW |
-| `architecture.threat_model` | Security R3 §19; applicable | READY_FOR_REVIEW |
-| `data.architecture` | Data R3 §§1–10 | READY_FOR_REVIEW |
-| `data.schema_migrations` | Data R3 §§11–12 | READY_FOR_REVIEW |
-| `data.authoritative_database` | Data R3 §2 | READY_FOR_REVIEW |
-| `audit.event_catalog` | Audit R3 §§4–17 | READY_FOR_REVIEW |
-| `audit.retention_policy` | Audit R3 §20 | READY_FOR_REVIEW |
-| `api.auth_strategy` | Architecture R3 §7 + Security R3 §5 | READY_FOR_REVIEW |
-| `api.error_contract` | Architecture R3 §18; RFC 9457 preserved, mapping deferred to API Contract | READY_FOR_REVIEW |
-| `api.versioning_policy` | Architecture R3 §19 | READY_FOR_REVIEW |
+| `architecture.domain_model` | Architecture R3 §§5–6 | APPROVED |
+| `architecture.decision_records` | Architecture R3 §24 | APPROVED |
+| `architecture.security_model` | Security R3 §§2–18 | APPROVED |
+| `architecture.threat_model` | Security R3 §19; applicable | APPROVED |
+| `data.architecture` | Data R3 §§1–10 | APPROVED |
+| `data.schema_migrations` | Data R3 §§11–12 | APPROVED |
+| `data.authoritative_database` | Data R3 §2 | APPROVED |
+| `audit.event_catalog` | Audit R3 §§4–17 | APPROVED |
+| `audit.retention_policy` | Audit R3 §20 | APPROVED |
+| `api.auth_strategy` | Architecture R3 §7 + Security R3 §5 | APPROVED |
+| `api.error_contract` | Architecture R3 §18; RFC 9457 preserved, mapping deferred to API Contract | APPROVED |
+| `api.versioning_policy` | Architecture R3 §19 | APPROVED |
 
-## 4. Critical invariants being approved
+## 4. Critical invariants approved
 
-Approval means accepting these architecture constraints for implementation:
+The human approval accepts these architecture constraints for implementation:
 
 1. Claim lifecycle remains server/Domain authoritative.
 2. Task completion/cancellation/reassignment never implicitly changes Claim state.
@@ -102,14 +104,14 @@ Architecture/Security/Data R3 approval does not authorize:
 - NestJS controllers;
 - Worker implementation;
 - UI implementation;
-- merge of the review PR by itself.
+- merge of PR #36 by itself.
 
 Those remain governed by the next gates.
 
-## 6. Next flow after approval and merge
+## 6. Next flow after merge
 
 ```text
-Architecture/Security/Data R3 human approval
+Architecture/Security/Data R3 human approval ✅
   -> separate PR merge approval
   -> verify merged main SHA
   -> API Contract R3 Design
@@ -123,12 +125,14 @@ Architecture/Security/Data R3 human approval
   -> impact-based API Gate/revalidation
 ```
 
-## 7. Human gate
+## 7. Human gate status
 
-Machine/document readiness is not approval.
-
-A human approval should explicitly state, for example:
+Human semantic approval was explicitly granted on 2026-09-08 with:
 
 `Apruebo Architecture Security Data Ready R3`
 
-Merge remains a separate explicit decision.
+Decision evidence is recorded in:
+
+`documentation/architecture/ARCHITECTURE_SECURITY_DATA_R3_READY_APPROVAL.md`
+
+**Merge remains a separate explicit decision.**
