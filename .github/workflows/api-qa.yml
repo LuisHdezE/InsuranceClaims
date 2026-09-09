@@ -35,6 +35,7 @@ jobs:
       QA_BASE_URL: http://127.0.0.1:3000
       QA_OPERATOR_LOGIN: qa.operator@example.invalid
       QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
       QA_CUSTOMER_LOGIN: qa.customer@example.invalid
       EVIDENCE_STORAGE_DIR: .runtime/evidence
       IMPORT_SOURCE_STORAGE_DIR: .runtime/imports
@@ -95,6 +96,9 @@ jobs:
 
       - name: Seed synthetic R3 collections scenario
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/collections-seed.sql
+
+      - name: Seed synthetic R3 bulk actions scenario
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bulk-actions-seed.sql
 
       - name: Start simulated legacy system and API
         shell: bash
@@ -286,6 +290,9 @@ jobs:
       - name: Execute R3 custom fields PostgreSQL runtime QA
         run: node qa/custom-fields-runtime-qa.mjs
 
+      - name: Execute R3 bulk actions PostgreSQL runtime QA
+        run: node qa/bulk-actions-runtime-qa.mjs
+
       - name: Verify durable audit and persistence invariants
         shell: bash
         run: |
@@ -296,6 +303,7 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/renewals-audit-assertions.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/collections-audit-assertions.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/custom-fields-audit-assertions.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bulk-actions-audit-assertions.sql
 
       - name: Classify production dependency vulnerabilities
         shell: bash

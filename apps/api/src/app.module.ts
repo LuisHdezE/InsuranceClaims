@@ -1,8 +1,10 @@
 import { MiddlewareConsumer, Module, type DynamicModule, type NestModule } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
+import { createBulkActionsApplication } from '@insurance/infrastructure';
 import { ACCESS_TOKENS, API_RUNTIME, CUSTOMER_ACCESS_TOKENS, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
 import { AutomationAdminController } from './automation-controller.js';
+import { BULK_ACTIONS, OperatorBulkActionsController } from './bulk-actions-controller.js';
 import { OperatorClaimsAnalyticsController } from './claims-analytics-controller.js';
 import { OperatorCollectionsController } from './collection-controller.js';
 import { CommunicationTemplateAdminController, OperatorCommunicationsController } from './communication-controller.js';
@@ -24,6 +26,12 @@ import { ProblemDetailsFilter, RateLimitService, RequestIdMiddleware } from './t
 @Module({})
 export class ApiModule implements NestModule {
   static register(runtime: ApiRuntimeContract): DynamicModule {
+    const workflowStore = (runtime as ApiRuntimeContract & { store?: unknown }).store;
+    if (!workflowStore) throw new Error('API runtime composition requires the workflow store.');
+    const bulkActions = createBulkActionsApplication({
+      application: runtime.application,
+      store: workflowStore as any,
+    });
     return {
       module: ApiModule,
       controllers: [
@@ -36,6 +44,7 @@ export class ApiModule implements NestModule {
         OperatorClaimPipelineController,
         OperatorRenewalsController,
         OperatorCollectionsController,
+        OperatorBulkActionsController,
         CustomerPolicyController,
         PipelineAdminController,
         AutomationAdminController,
@@ -54,6 +63,7 @@ export class ApiModule implements NestModule {
         { provide: API_RUNTIME, useValue: runtime },
         { provide: ACCESS_TOKENS, useValue: runtime.accessTokens },
         { provide: CUSTOMER_ACCESS_TOKENS, useValue: runtime.customerAccessTokens },
+        { provide: BULK_ACTIONS, useValue: bulkActions },
         RateLimitService,
         JwtAuthGuard,
         CustomerJwtAuthGuard,

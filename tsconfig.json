@@ -22,6 +22,7 @@
       "@insurance/application/async-operations": ["./packages/application/src/async-operations.ts"],
       "@insurance/application/automation-admin": ["./packages/application/src/automation-admin.ts"],
       "@insurance/application/automation-execution": ["./packages/application/src/automation-execution.ts"],
+      "@insurance/application/bulk-actions": ["./packages/application/src/bulk-actions.ts"],
       "@insurance/application/claim-evidence-attention": ["./packages/application/src/claim-evidence-attention.ts"],
       "@insurance/application/claim-pipeline": ["./packages/application/src/claim-pipeline.ts"],
       "@insurance/application/claim-tasks": ["./packages/application/src/claim-tasks.ts"],
