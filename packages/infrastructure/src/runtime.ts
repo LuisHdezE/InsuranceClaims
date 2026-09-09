@@ -29,6 +29,7 @@ import { GuidanceAdminApplication, type GuidanceAdminRepository } from '@insuran
 import type { IntegrationAuthenticatorPort } from '@insurance/application/integration-auth';
 import { IntegrationEventsApplication, type IntegrationEventRepository } from '@insurance/application/integration-events';
 import { PipelineAdminApplication, type PipelineAdminRepository } from '@insurance/application/pipeline-admin';
+import { RenewalsApplication, type RenewalCaseRepository } from '@insurance/application/renewals';
 import {
   Argon2PasswordHasher,
   HttpPolicyVerificationAdapter,
@@ -71,6 +72,7 @@ import { MemoryWorkflowStore } from './memory.js';
 import { PrismaPipelineAdminStore } from './pipeline-admin-store.js';
 import { MemoryPipelineStore, PrismaPipelineStore } from './pipeline-store.js';
 import { PrismaWorkflowStore } from './prisma-store.js';
+import { MemoryRenewalCaseStore, PrismaRenewalCaseStore } from './renewal-store.js';
 import { MemoryClaimTaskStore, PrismaClaimTaskStore } from './task-store.js';
 
 export interface RuntimeContext {
@@ -83,6 +85,7 @@ export interface RuntimeContext {
   automationExecution: AutomationExecutionApplication;
   governedImports: GovernedImportsApplication;
   guidanceAdmin: GuidanceAdminApplication;
+  renewals: RenewalsApplication;
   customerPolicy: CustomerPolicyApplication;
   customerPortal: CustomerPortalApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
@@ -127,6 +130,7 @@ function applicationsFrom(
   guidanceRepository: GuidanceAdminRepository,
   importRepository: GovernedImportRepository,
   importSourceStorage: ImportSourceStoragePort,
+  renewalRepository: RenewalCaseRepository,
   customerPolicyRepository: CustomerPolicyRepository,
   customerPortalRepository: CustomerPortalRepository,
   customerAccessTokens: CustomerAccessTokenPort,
@@ -157,6 +161,13 @@ function applicationsFrom(
   });
   const guidanceAdmin = new GuidanceAdminApplication({ repository: guidanceRepository, clock: deps.clock, ids: deps.ids });
   const customerPolicy = new CustomerPolicyApplication(customerPolicyRepository);
+  const renewals = new RenewalsApplication({
+    renewals: renewalRepository,
+    customerPolicy: customerPolicyRepository,
+    pipelines: pipelineStore,
+    clock: deps.clock,
+    ids: deps.ids,
+  });
   const customerPortal = new CustomerPortalApplication({
     repository: customerPortalRepository,
     passwordHasher: deps.passwordHasher,
@@ -187,7 +198,7 @@ function applicationsFrom(
   const operationalQueries = new ClaimsOperationalQueryApplication({ claims: deps.claims, tasks: taskStore, pipelines: pipelineStore, clock: deps.clock });
   return {
     application: new ClaimsOperationsApplication(deps, tasks, pipeline, operationalQueries),
-    tasks, pipeline, pipelineAdmin, asyncOperations, automationAdmin, automationExecution, governedImports, guidanceAdmin, customerPolicy, customerPortal,
+    tasks, pipeline, pipelineAdmin, asyncOperations, automationAdmin, automationExecution, governedImports, guidanceAdmin, renewals, customerPolicy, customerPortal,
     communicationTemplates, communications, integrations, integrationAuthenticator, timeline, evidenceAttention,
     accessTokens: deps.accessTokens,
     customerAccessTokens,
@@ -211,6 +222,7 @@ export async function createMemoryRuntime(options: {
   asyncStore: MemoryAsyncOperationsStore;
   importStore: MemoryGovernedImportStore;
   importSourceStorage: MemoryImportSourceStorage;
+  renewalStore: MemoryRenewalCaseStore;
   customerPolicyStore: MemoryCustomerPolicyStore;
   customerPortalStore: MemoryCustomerPortalStore;
   communicationStore: MemoryCommunicationStore;
@@ -226,6 +238,7 @@ export async function createMemoryRuntime(options: {
   const asyncStore = new MemoryAsyncOperationsStore();
   const importStore = new MemoryGovernedImportStore(asyncStore);
   const importSourceStorage = new MemoryImportSourceStorage();
+  const renewalStore = new MemoryRenewalCaseStore();
   const customerPolicyStore = new MemoryCustomerPolicyStore(store);
   const communicationStore = new MemoryCommunicationStore();
   const integrationStore = new MemoryIntegrationStore();
@@ -269,6 +282,7 @@ export async function createMemoryRuntime(options: {
       guidanceStore,
       importStore,
       importSourceStorage,
+      renewalStore,
       customerPolicyStore,
       customerPortalStore,
       customerAccessTokens,
@@ -276,7 +290,7 @@ export async function createMemoryRuntime(options: {
       integrationStore,
       options.integrationSecrets ?? {},
     ),
-    store, taskStore, pipelineStore, asyncStore, importStore, importSourceStorage, customerPolicyStore, customerPortalStore, communicationStore, integrationStore,
+    store, taskStore, pipelineStore, asyncStore, importStore, importSourceStorage, renewalStore, customerPolicyStore, customerPortalStore, communicationStore, integrationStore,
     automationStore, automationSchedule, guidanceStore, evidenceStorage,
   };
 }
@@ -287,6 +301,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   pipelineStore: PrismaPipelineStore;
   asyncStore: PrismaAsyncOperationsStore;
   importStore: PrismaGovernedImportStore;
+  renewalStore: PrismaRenewalCaseStore;
   customerPolicyStore: PrismaCustomerPolicyStore;
   customerPortalStore: PrismaCustomerPortalStore;
   communicationStore: PrismaCommunicationStore;
@@ -315,6 +330,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const asyncStore = new PrismaAsyncOperationsStore(db);
   const importStore = new PrismaGovernedImportStore(db);
   const importSourceStorage = new LocalPrivateImportSourceStorage(env.IMPORT_SOURCE_STORAGE_DIR ?? '.runtime/imports');
+  const renewalStore = new PrismaRenewalCaseStore(db);
   const customerPolicyStore = new PrismaCustomerPolicyStore(db);
   const communicationStore = new PrismaCommunicationStore(db);
   const integrationStore = new PrismaIntegrationStore(db);
@@ -343,6 +359,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
       guidanceStore,
       importStore,
       importSourceStorage,
+      renewalStore,
       customerPolicyStore,
       customerPortalStore,
       customerAccessTokens,
@@ -350,7 +367,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
       integrationStore,
       integrationSecrets,
     ),
-    store, taskStore, pipelineStore, asyncStore, importStore, customerPolicyStore, customerPortalStore, communicationStore, integrationStore,
+    store, taskStore, pipelineStore, asyncStore, importStore, renewalStore, customerPolicyStore, customerPortalStore, communicationStore, integrationStore,
     automationStore, guidanceStore,
   };
 }

@@ -16,6 +16,7 @@ import type { GuidanceAdminApplication } from '@insurance/application/guidance-a
 import type { IntegrationAuthenticatorPort } from '@insurance/application/integration-auth';
 import type { IntegrationEventsApplication } from '@insurance/application/integration-events';
 import type { PipelineAdminApplication } from '@insurance/application/pipeline-admin';
+import type { RenewalsApplication } from '@insurance/application/renewals';
 
 export const API_RUNTIME = Symbol('API_RUNTIME');
 export const ACCESS_TOKENS = Symbol('ACCESS_TOKENS');
@@ -31,6 +32,7 @@ export interface ApiRuntimeContract {
   automationExecution: AutomationExecutionApplication;
   governedImports: GovernedImportsApplication;
   guidanceAdmin: GuidanceAdminApplication;
+  renewals: RenewalsApplication;
   customerPolicy: CustomerPolicyApplication;
   customerPortal: CustomerPortalApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;

@@ -290,6 +290,13 @@ enum ImportCommitOutcome {
   FAILED
 }
 
+enum RenewalCaseStatus {
+  @@type("pg/text@1")
+  OPEN
+  COMPLETED
+  CANCELLED
+}
+
 model Operator {
   id           Uuid         @id @default(uuid())
   login        String       @unique
@@ -304,16 +311,17 @@ model Operator {
 }
 
 model Customer {
-  id          Uuid             @id @default(uuid())
-  customerRef String           @unique @map("customer_ref")
-  displayName String           @map("display_name")
-  status      String
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @default(now()) @map("updated_at")
-  version     Int              @default(1)
-  account     CustomerAccount?
-  policies    Policy[]
-  claims      Claim[]
+  id           Uuid             @id @default(uuid())
+  customerRef  String           @unique @map("customer_ref")
+  displayName  String           @map("display_name")
+  status       String
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @default(now()) @map("updated_at")
+  version      Int              @default(1)
+  account      CustomerAccount?
+  policies     Policy[]
+  claims       Claim[]
+  renewalCases RenewalCase[]
 
   @@index([status], map: "customers_status_idx")
   @@map("customers")
@@ -348,6 +356,7 @@ model Policy {
   customer              Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
   assets                PolicyAsset[]
   claims                Claim[]
+  renewalCases          RenewalCase[]
 
   @@index([customerId, recordStatus], map: "policies_customer_status_idx")
   @@index([legacyPolicyReference], map: "policies_legacy_reference_idx")
@@ -866,6 +875,24 @@ model SyntheticImportReference {
 
   @@index([sourceImportJobId], map: "synthetic_import_reference_job_idx")
   @@map("synthetic_import_reference_records")
+}
+
+model RenewalCase {
+  id          Uuid              @id @default(uuid())
+  customerId  Uuid              @map("customer_id")
+  policyId    Uuid              @map("policy_id")
+  status      RenewalCaseStatus
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @default(now()) @map("updated_at")
+  completedAt DateTime?         @map("completed_at")
+  cancelledAt DateTime?         @map("cancelled_at")
+  version     Int               @default(1)
+  customer    Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  policy      Policy            @relation(fields: [policyId], references: [id], onDelete: Restrict)
+
+  @@index([policyId, status], map: "renewal_cases_policy_status_idx")
+  @@index([customerId, status], map: "renewal_cases_customer_status_idx")
+  @@map("renewal_cases")
 }
 
 model IdempotencyRecord {
