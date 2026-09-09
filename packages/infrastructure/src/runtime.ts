@@ -3,6 +3,7 @@ import postgres from '@prisma/orm-postgres/runtime';
 import type { Contract } from '../../../prisma/contract.d.ts';
 import contractJson from '../../../prisma/contract.json' with { type: 'json' };
 import { type AccessTokenPort, type ApplicationDependencies } from '@insurance/application';
+import { AsyncOperationsApplication, type AsyncOperationsRepository } from '@insurance/application/async-operations';
 import { AutomationAdminApplication, type AutomationAdminRepository } from '@insurance/application/automation-admin';
 import { AutomationExecutionApplication, type AutomationExecutionRepository, type AutomationSchedulePort } from '@insurance/application/automation-execution';
 import { ClaimEvidenceAttentionApplication } from '@insurance/application/claim-evidence-attention';
@@ -29,6 +30,7 @@ import {
   Sha256HashAdapter,
   SystemClock,
 } from './adapters.js';
+import { MemoryAsyncOperationsStore, PrismaAsyncOperationsStore } from './async-store.js';
 import {
   MemoryAutomationScheduleAdapter,
   MemoryAutomationStore,
@@ -60,6 +62,7 @@ export interface RuntimeContext {
   tasks: ClaimTasksApplication;
   pipeline: ClaimPipelineApplication;
   pipelineAdmin: PipelineAdminApplication;
+  asyncOperations: AsyncOperationsApplication;
   automationAdmin: AutomationAdminApplication;
   automationExecution: AutomationExecutionApplication;
   customerPolicy: CustomerPolicyApplication;
@@ -98,6 +101,7 @@ function applicationsFrom(
   taskStore: MemoryClaimTaskStore | PrismaClaimTaskStore,
   pipelineStore: MemoryPipelineStore | PrismaPipelineStore,
   pipelineAdminRepository: PipelineAdminRepository,
+  asyncRepository: AsyncOperationsRepository,
   automationRepository: AutomationAdminRepository & AutomationExecutionRepository,
   automationScheduler: AutomationSchedulePort,
   customerPolicyRepository: CustomerPolicyRepository,
@@ -108,6 +112,7 @@ function applicationsFrom(
   const tasks = new ClaimTasksApplication({ claims: deps.claims, tasks: taskStore, idempotency: deps.idempotency, hash: deps.hash, clock: deps.clock, ids: deps.ids });
   const pipeline = new ClaimPipelineApplication({ claims: deps.claims, pipelines: pipelineStore, clock: deps.clock, ids: deps.ids });
   const pipelineAdmin = new PipelineAdminApplication({ repository: pipelineAdminRepository, clock: deps.clock, ids: deps.ids });
+  const asyncOperations = new AsyncOperationsApplication({ repository: asyncRepository, clock: deps.clock, ids: deps.ids });
   const automationAdmin = new AutomationAdminApplication({ repository: automationRepository, clock: deps.clock, ids: deps.ids });
   const automationExecution = new AutomationExecutionApplication({
     repository: automationRepository,
@@ -139,7 +144,7 @@ function applicationsFrom(
   const operationalQueries = new ClaimsOperationalQueryApplication({ claims: deps.claims, tasks: taskStore, pipelines: pipelineStore, clock: deps.clock });
   return {
     application: new ClaimsOperationsApplication(deps, tasks, pipeline, operationalQueries),
-    tasks, pipeline, pipelineAdmin, automationAdmin, automationExecution, customerPolicy, communicationTemplates, communications, integrations, integrationAuthenticator,
+    tasks, pipeline, pipelineAdmin, asyncOperations, automationAdmin, automationExecution, customerPolicy, communicationTemplates, communications, integrations, integrationAuthenticator,
     timeline, evidenceAttention,
     accessTokens: deps.accessTokens,
   };
@@ -156,6 +161,7 @@ export async function createMemoryRuntime(options: {
   store: MemoryWorkflowStore;
   taskStore: MemoryClaimTaskStore;
   pipelineStore: MemoryPipelineStore;
+  asyncStore: MemoryAsyncOperationsStore;
   customerPolicyStore: MemoryCustomerPolicyStore;
   communicationStore: MemoryCommunicationStore;
   integrationStore: MemoryIntegrationStore;
@@ -166,6 +172,7 @@ export async function createMemoryRuntime(options: {
   const store = new MemoryWorkflowStore();
   const taskStore = new MemoryClaimTaskStore();
   const pipelineStore = new MemoryPipelineStore(async (event) => { await store.append(event as any); });
+  const asyncStore = new MemoryAsyncOperationsStore();
   const customerPolicyStore = new MemoryCustomerPolicyStore(store);
   const communicationStore = new MemoryCommunicationStore();
   const integrationStore = new MemoryIntegrationStore();
@@ -196,6 +203,7 @@ export async function createMemoryRuntime(options: {
       taskStore,
       pipelineStore,
       pipelineStore,
+      asyncStore,
       automationStore,
       automationSchedule,
       customerPolicyStore,
@@ -203,7 +211,7 @@ export async function createMemoryRuntime(options: {
       integrationStore,
       options.integrationSecrets ?? {},
     ),
-    store, taskStore, pipelineStore, customerPolicyStore, communicationStore, integrationStore, automationStore, automationSchedule, evidenceStorage,
+    store, taskStore, pipelineStore, asyncStore, customerPolicyStore, communicationStore, integrationStore, automationStore, automationSchedule, evidenceStorage,
   };
 }
 
@@ -211,6 +219,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   store: PrismaWorkflowStore;
   taskStore: PrismaClaimTaskStore;
   pipelineStore: PrismaPipelineStore;
+  asyncStore: PrismaAsyncOperationsStore;
   customerPolicyStore: PrismaCustomerPolicyStore;
   communicationStore: PrismaCommunicationStore;
   integrationStore: PrismaIntegrationStore;
@@ -230,6 +239,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const taskStore = new PrismaClaimTaskStore(db);
   const pipelineStore = new PrismaPipelineStore(db);
   const pipelineAdminStore = new PrismaPipelineAdminStore(db);
+  const asyncStore = new PrismaAsyncOperationsStore(db);
   const customerPolicyStore = new PrismaCustomerPolicyStore(db);
   const communicationStore = new PrismaCommunicationStore(db);
   const integrationStore = new PrismaIntegrationStore(db);
@@ -249,6 +259,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
       taskStore,
       pipelineStore,
       pipelineAdminStore,
+      asyncStore,
       automationStore,
       automationSchedule,
       customerPolicyStore,
@@ -256,6 +267,6 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
       integrationStore,
       integrationSecrets,
     ),
-    store, taskStore, pipelineStore, customerPolicyStore, communicationStore, integrationStore, automationStore,
+    store, taskStore, pipelineStore, asyncStore, customerPolicyStore, communicationStore, integrationStore, automationStore,
   };
 }

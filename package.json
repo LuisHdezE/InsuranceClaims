@@ -18,7 +18,8 @@
     "architecture:check": "node scripts/architecture-check.mjs",
     "start:api": "tsx apps/api/src/main.ts",
     "start:mcp": "tsx apps/mcp/src/main.ts",
-    "start:legacy": "tsx apps/legacy-simulator/src/main.ts"
+    "start:legacy": "tsx apps/legacy-simulator/src/main.ts",
+    "start:worker": "tsx apps/worker/src/main.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/node": "2.0.0",

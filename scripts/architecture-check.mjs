@@ -29,11 +29,15 @@ for (const file of applicationFiles) {
   const source = await readFile(join(root, file), 'utf8');
   rejectImports(file, importSpecifiers(source), ['@nestjs', '@prisma', '@modelcontextprotocol', '@insurance/infrastructure', 'node:fs', 'node:http', 'express', 'argon2', 'jose']);
 }
-const apiBoundaryFiles = ['apps/api/src/controllers.ts', 'apps/api/src/task-controller.ts', 'apps/api/src/auth.guard.ts', 'apps/api/src/transport.ts'];
+const apiBoundaryFiles = ['apps/api/src/controllers.ts', 'apps/api/src/task-controller.ts', 'apps/api/src/auth.guard.ts', 'apps/api/src/transport.ts', 'apps/api/src/dead-letter-controller.ts'];
 for (const file of apiBoundaryFiles) {
   const source = await readFile(join(root, file), 'utf8');
   rejectImports(file, importSpecifiers(source), ['@prisma', '@insurance/infrastructure']);
 }
+const workerAdapter = await readFile(join(root, 'apps/worker/src/worker.ts'), 'utf8');
+rejectImports('apps/worker/src/worker.ts', importSpecifiers(workerAdapter), ['@prisma', '@insurance/infrastructure']);
+const workerComposition = await readFile(join(root, 'apps/worker/src/main.ts'), 'utf8');
+rejectImports('apps/worker/src/main.ts', importSpecifiers(workerComposition), ['@prisma']);
 const mcp = await readFile(join(root, 'apps/mcp/src/main.ts'), 'utf8');
 rejectImports('apps/mcp/src/main.ts', importSpecifiers(mcp), ['@prisma']);
 for (const top of ['apps', 'packages']) {
@@ -52,4 +56,4 @@ if (violations.length) {
   process.exit(1);
 }
 console.log('Architecture conformance PASS');
-console.log(`Checked ${domainFiles.length} Domain file(s), ${applicationFiles.length} Application file(s), REST Presentation, MCP Presentation and legacy DTO boundaries.`);
+console.log(`Checked ${domainFiles.length} Domain file(s), ${applicationFiles.length} Application file(s), REST Presentation, Worker adapter/composition, MCP Presentation and legacy DTO boundaries.`);
