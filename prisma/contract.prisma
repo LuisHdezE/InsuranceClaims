@@ -194,6 +194,49 @@ enum AsyncJobStatus {
   CANCELLED
 }
 
+enum AutomationVersionStatus {
+  @@type("pg/text@1")
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+enum AutomationActorType {
+  @@type("pg/text@1")
+  SYSTEM
+  ADMINISTRATOR
+  AUTOMATION
+}
+
+enum AutomationExecutionStatus {
+  @@type("pg/text@1")
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+enum AutomationActionExecutionStatus {
+  @@type("pg/text@1")
+  PENDING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+enum AutomationActionType {
+  @@type("pg/text@1")
+  CREATE_TASK
+  MOVE_OPERATIONAL_STAGE
+  REQUEST_COMMUNICATION
+  ADD_OPERATIONAL_TAG
+  NOTIFY_OPERATOR
+  PAUSE_AUTOMATION
+  UPDATE_APPROVED_FIELD
+  SCHEDULE_CHECK
+}
+
 model Operator {
   id           Uuid         @id @default(uuid())
   login        String       @unique
@@ -581,6 +624,78 @@ model AsyncJob {
   @@unique([jobType, idempotencyIdentity], map: "async_jobs_type_identity_key")
   @@index([status, availableAt], map: "async_jobs_status_available_idx")
   @@map("async_jobs")
+}
+
+model AutomationDefinition {
+  id              Uuid     @id @default(uuid())
+  ruleKey         String   @unique @map("rule_key")
+  displayName     String   @map("display_name")
+  enabled         Boolean  @default(false)
+  activeVersionId Uuid?    @map("active_version_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @map("updated_at")
+  version         Int      @default(1)
+
+  @@map("automation_definitions")
+}
+
+model AutomationVersion {
+  id                     Uuid                    @id @default(uuid())
+  automationDefinitionId Uuid                    @map("automation_definition_id")
+  versionNumber          Int                     @map("version_number")
+  status                 AutomationVersionStatus
+  triggerSchema          Json                    @map("trigger_schema")
+  conditionSchema        Json                    @map("condition_schema")
+  waitSchema             Json?                   @map("wait_schema")
+  actionList             Json                    @map("action_list")
+  sourceClassification   String                  @map("source_classification")
+  createdByType          AutomationActorType     @map("created_by_type")
+  createdById            Uuid?                   @map("created_by_id")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  activatedAt            DateTime?               @map("activated_at")
+  retiredAt              DateTime?               @map("retired_at")
+
+  @@unique([automationDefinitionId, versionNumber], map: "automation_versions_definition_version_key")
+  @@index([automationDefinitionId, status], map: "automation_versions_definition_status_idx")
+  @@map("automation_versions")
+}
+
+model AutomationExecution {
+  id                  Uuid                      @id @default(uuid())
+  automationVersionId Uuid                      @map("automation_version_id")
+  triggerIdentity     String                    @map("trigger_identity")
+  idempotencyKey      String                    @unique @map("idempotency_key")
+  contextType         String                    @map("context_type")
+  contextId           String                    @map("context_id")
+  status              AutomationExecutionStatus
+  correlationId       String?                   @map("correlation_id")
+  startedAt           DateTime                  @map("started_at")
+  completedAt         DateTime?                 @map("completed_at")
+  failureCategory     String?                   @map("failure_category")
+  version             Int                       @default(1)
+
+  @@index([status, startedAt], map: "automation_executions_status_started_idx")
+  @@index([automationVersionId, contextType, contextId], map: "automation_executions_version_context_idx")
+  @@map("automation_executions")
+}
+
+model AutomationActionExecution {
+  id                    Uuid                            @id @default(uuid())
+  automationExecutionId Uuid                            @map("automation_execution_id")
+  actionKey             String                          @map("action_key")
+  actionType            AutomationActionType            @map("action_type")
+  targetReference       String?                         @map("target_reference")
+  idempotencyKey        String                          @unique @map("idempotency_key")
+  status                AutomationActionExecutionStatus
+  attemptCount          Int                             @default(0) @map("attempt_count")
+  startedAt             DateTime?                       @map("started_at")
+  completedAt           DateTime?                       @map("completed_at")
+  failureCategory       String?                         @map("failure_category")
+  resultMetadata        Json                            @map("result_metadata")
+
+  @@unique([automationExecutionId, actionKey], map: "automation_action_executions_execution_action_key")
+  @@index([automationExecutionId, status], map: "automation_action_executions_execution_status_idx")
+  @@map("automation_action_executions")
 }
 
 model IdempotencyRecord {

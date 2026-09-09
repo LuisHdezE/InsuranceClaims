@@ -1,4 +1,5 @@
 export * from './adapters.js';
+export * from './automation-store.js';
 export * from './communication-store.js';
 export * from './customer-policy-store.js';
 export * from './integration-store.js';
