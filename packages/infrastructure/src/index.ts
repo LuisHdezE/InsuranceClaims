@@ -4,6 +4,7 @@ export * from './automation-store.js';
 export * from './collection-payment-verifier.js';
 export * from './collection-store.js';
 export * from './communication-store.js';
+export * from './custom-field-store.js';
 export * from './customer-portal-adapters.js';
 export * from './customer-portal-store.js';
 export * from './customer-policy-store.js';

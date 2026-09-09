@@ -108,3 +108,4 @@ export * from './automation.js';
 export * from './import-job.js';
 export * from './renewal-case.js';
 export * from './collection-case.js';
+export * from './custom-field.js';

@@ -7,6 +7,7 @@ import { OperatorClaimsAnalyticsController } from './claims-analytics-controller
 import { OperatorCollectionsController } from './collection-controller.js';
 import { CommunicationTemplateAdminController, OperatorCommunicationsController } from './communication-controller.js';
 import { HealthController, OperatorAuthController, OperatorClaimsController, PublicClaimsController } from './controllers.js';
+import { CustomFieldAdminController } from './custom-field-controller.js';
 import { CustomerJwtAuthGuard } from './customer-auth.guard.js';
 import { CustomerPortalAuthController, CustomerPortalController } from './customer-portal-controller.js';
 import { CustomerPolicyController } from './customer-policy-controller.js';
@@ -39,6 +40,7 @@ export class ApiModule implements NestModule {
         PipelineAdminController,
         AutomationAdminController,
         GuidanceAdminController,
+        CustomFieldAdminController,
         GovernedImportsController,
         DeadLetterAdminController,
         CommunicationTemplateAdminController,
