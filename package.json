@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
     "test": "tsx --test tests/**/*.test.ts",
+    "api:reconcile:r3": "tsx scripts/reconcile-api-r3.ts",
     "architecture:check": "node scripts/architecture-check.mjs",
     "start:api": "tsx apps/api/src/main.ts",
     "start:mcp": "tsx apps/mcp/src/main.ts",
