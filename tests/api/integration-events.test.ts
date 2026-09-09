@@ -48,7 +48,7 @@ function seedIntegration(runtime: Awaited<ReturnType<typeof createMemoryRuntime>
   });
 }
 
-async function postSigned(http: any, input: {
+function postSigned(http: any, input: {
   eventId: string;
   rawBody: string;
   timestamp?: string;
