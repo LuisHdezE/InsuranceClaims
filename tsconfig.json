@@ -16,6 +16,7 @@
       "@insurance/domain": ["./packages/domain/src/index.ts"],
       "@insurance/domain/claim-task": ["./packages/domain/src/claim-task.ts"],
       "@insurance/application": ["./packages/application/src/index.ts"],
+      "@insurance/application/async-operations": ["./packages/application/src/async-operations.ts"],
       "@insurance/application/automation-admin": ["./packages/application/src/automation-admin.ts"],
       "@insurance/application/automation-execution": ["./packages/application/src/automation-execution.ts"],
       "@insurance/application/claim-evidence-attention": ["./packages/application/src/claim-evidence-attention.ts"],
