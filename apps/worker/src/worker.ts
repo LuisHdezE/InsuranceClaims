@@ -1,12 +1,14 @@
 import type { AsyncJobProps } from '@insurance/domain';
 import type { AsyncOperationsApplication, WorkerPrincipal } from '@insurance/application/async-operations';
 import type { AutomationExecutionApplication } from '@insurance/application/automation-execution';
+import type { GovernedImportsApplication } from '@insurance/application/governed-imports';
 import type { IntegrationEventsApplication } from '@insurance/application/integration-events';
 
 export interface WorkerRuntime {
   asyncOperations: AsyncOperationsApplication;
   integrations: IntegrationEventsApplication;
   automationExecution: AutomationExecutionApplication;
+  governedImports: GovernedImportsApplication;
 }
 
 export interface WorkerTickResult {
@@ -30,7 +32,7 @@ export class DurableAsyncWorker {
     private readonly leaseSeconds = 60,
     private readonly batchSize = 25,
   ) {
-    this.principal = { context: 'system', actorId: workerId, capabilities: ['async.jobs.execute'] };
+    this.principal = { context: 'system', actorId: workerId, capabilities: ['async.jobs.execute', 'imports.commit.execute'] };
   }
 
   async tick(): Promise<WorkerTickResult> {
@@ -76,6 +78,35 @@ export class DurableAsyncWorker {
           outcome: 'FAILED',
           retryable: true,
           failureCategory: 'AUTOMATION_RESUME_FAILED',
+        }, this.principal);
+        return finished ? 'failed' : 'skipped';
+      }
+    }
+
+    if (job.jobType === 'COMMIT_IMPORT_JOB') {
+      const importJobId = stringField(job, 'importJobId');
+      if (!importJobId) return this.failUnsupportedOrMalformed(job, 'ASYNC_JOB_PAYLOAD_INVALID');
+      let leased: AsyncJobProps;
+      try {
+        leased = await this.runtime.asyncOperations.leaseJob(job, this.workerId, this.leaseSeconds, this.principal);
+      } catch (error) {
+        if ((error as { code?: string }).code === 'ASYNC_JOB_BUSY' || (error as { code?: string }).code === 'ASYNC_JOB_TERMINAL') return 'skipped';
+        throw error;
+      }
+      try {
+        const importResult = await this.runtime.governedImports.executeCommittedImport(importJobId, this.principal);
+        if (importResult.status !== 'COMPLETED' && importResult.status !== 'COMPLETED_WITH_ERRORS') {
+          throw new Error('Governed import execution did not reach a terminal commit state.');
+        }
+        const finished = await this.runtime.asyncOperations.finishJob({ job: leased, leaseOwner: this.workerId, outcome: 'SUCCEEDED' }, this.principal);
+        return finished?.status === 'SUCCEEDED' ? 'succeeded' : 'skipped';
+      } catch {
+        const finished = await this.runtime.asyncOperations.finishJob({
+          job: leased,
+          leaseOwner: this.workerId,
+          outcome: 'FAILED',
+          retryable: false,
+          failureCategory: 'IMPORT_COMMIT_EXECUTION_FAILED',
         }, this.principal);
         return finished ? 'failed' : 'skipped';
       }

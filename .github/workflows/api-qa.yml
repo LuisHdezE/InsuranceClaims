@@ -37,6 +37,7 @@ jobs:
       QA_ADMIN_LOGIN: qa.admin@example.invalid
       QA_CUSTOMER_LOGIN: qa.customer@example.invalid
       EVIDENCE_STORAGE_DIR: .runtime/evidence
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports
 
     steps:
       - uses: actions/checkout@v7
@@ -80,6 +81,7 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
 
       - name: Seed synthetic QA staff and customer portal identity
         run: npx tsx qa/seed.ts
@@ -87,7 +89,7 @@ jobs:
       - name: Start simulated legacy system and API
         shell: bash
         run: |
-          mkdir -p .runtime/evidence
+          mkdir -p .runtime/evidence .runtime/imports
           npm run start:legacy > .runtime/legacy.log 2>&1 &
           echo $! > .runtime/legacy.pid
           npm run start:api > .runtime/api.log 2>&1 &
@@ -130,12 +132,16 @@ jobs:
       - name: Execute R3 Customer Portal PostgreSQL runtime QA
         run: node qa/customer-portal-runtime-qa.mjs
 
+      - name: Execute R3 governed imports PostgreSQL runtime QA
+        run: npx tsx qa/governed-imports-runtime-qa.ts
+
       - name: Verify durable audit and persistence invariants
         shell: bash
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/audit-assertions.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/guidance-audit-assertions.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/customer-portal-audit-assertions.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/governed-imports-audit-assertions.sql
 
       - name: Classify production dependency vulnerabilities
         shell: bash

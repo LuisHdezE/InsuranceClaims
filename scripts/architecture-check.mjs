@@ -35,6 +35,7 @@ const apiBoundaryFiles = [
   'apps/api/src/auth.guard.ts',
   'apps/api/src/customer-auth.guard.ts',
   'apps/api/src/customer-portal-controller.ts',
+  'apps/api/src/import-controller.ts',
   'apps/api/src/transport.ts',
   'apps/api/src/dead-letter-controller.ts',
 ];

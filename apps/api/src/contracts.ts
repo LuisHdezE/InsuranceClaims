@@ -11,6 +11,7 @@ import type { CommunicationTemplateAdminApplication } from '@insurance/applicati
 import type { CommunicationsApplication } from '@insurance/application/communications';
 import type { CustomerPolicyApplication } from '@insurance/application/customer-policy';
 import type { CustomerAccessTokenPort, CustomerPortalApplication } from '@insurance/application/customer-portal';
+import type { GovernedImportsApplication } from '@insurance/application/governed-imports';
 import type { GuidanceAdminApplication } from '@insurance/application/guidance-admin';
 import type { IntegrationAuthenticatorPort } from '@insurance/application/integration-auth';
 import type { IntegrationEventsApplication } from '@insurance/application/integration-events';
@@ -28,6 +29,7 @@ export interface ApiRuntimeContract {
   asyncOperations: AsyncOperationsApplication;
   automationAdmin: AutomationAdminApplication;
   automationExecution: AutomationExecutionApplication;
+  governedImports: GovernedImportsApplication;
   guidanceAdmin: GuidanceAdminApplication;
   customerPolicy: CustomerPolicyApplication;
   customerPortal: CustomerPortalApplication;
