@@ -10,6 +10,7 @@ import type { ClaimTimelineApplication } from '@insurance/application/claim-time
 import type { CollectionsApplication } from '@insurance/application/collections';
 import type { CommunicationTemplateAdminApplication } from '@insurance/application/communication-template-admin';
 import type { CommunicationsApplication } from '@insurance/application/communications';
+import type { CustomFieldAdminApplication } from '@insurance/application/custom-field-admin';
 import type { CustomerPolicyApplication } from '@insurance/application/customer-policy';
 import type { CustomerAccessTokenPort, CustomerPortalApplication } from '@insurance/application/customer-portal';
 import type { GovernedImportsApplication } from '@insurance/application/governed-imports';
@@ -33,6 +34,7 @@ export interface ApiRuntimeContract {
   automationExecution: AutomationExecutionApplication;
   governedImports: GovernedImportsApplication;
   guidanceAdmin: GuidanceAdminApplication;
+  customFieldAdmin: CustomFieldAdminApplication;
   renewals: RenewalsApplication;
   collections: CollectionsApplication;
   customerPolicy: CustomerPolicyApplication;

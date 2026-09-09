@@ -810,6 +810,42 @@ model InsurerGuidanceVersion {
   @@map("insurer_guidance_versions")
 }
 
+model CustomFieldDefinition {
+  id              Uuid     @id @default(uuid())
+  fieldKey        String   @unique @map("field_key")
+  targetType      String   @map("target_type")
+  enabled         Boolean  @default(false)
+  activeVersionId Uuid?    @map("active_version_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @map("updated_at")
+  version         Int      @default(1)
+
+  @@index([targetType, enabled, fieldKey], map: "custom_field_definitions_target_enabled_idx")
+  @@map("custom_field_definitions")
+}
+
+model CustomFieldVersion {
+  id                        Uuid     @id @default(uuid())
+  customFieldDefinitionId   Uuid     @map("custom_field_definition_id")
+  versionNumber             Int      @map("version_number")
+  valueType                 String   @map("value_type")
+  displayName               String   @map("display_name")
+  validationMetadata        Json     @map("validation_metadata")
+  enumValues                Json     @map("enum_values")
+  sensitivityClassification String   @map("sensitivity_classification")
+  status                    String
+  sourceClassification      String   @map("source_classification")
+  createdByType             String   @map("created_by_type")
+  createdById               Uuid     @map("created_by_id")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  activatedAt               DateTime? @map("activated_at")
+  retiredAt                 DateTime? @map("retired_at")
+
+  @@unique([customFieldDefinitionId, versionNumber], map: "custom_field_versions_definition_version_key")
+  @@index([customFieldDefinitionId, status], map: "custom_field_versions_definition_status_idx")
+  @@map("custom_field_versions")
+}
+
 model ImportJob {
   id                    Uuid            @id @default(uuid())
   importType            String          @map("import_type")
