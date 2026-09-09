@@ -1,4 +1,6 @@
 import type { AccessTokenPort } from '@insurance/application';
+import type { AutomationAdminApplication } from '@insurance/application/automation-admin';
+import type { AutomationExecutionApplication } from '@insurance/application/automation-execution';
 import type { ClaimEvidenceAttentionApplication } from '@insurance/application/claim-evidence-attention';
 import type { ClaimPipelineApplication } from '@insurance/application/claim-pipeline';
 import type { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
@@ -19,6 +21,8 @@ export interface ApiRuntimeContract {
   tasks: ClaimTasksApplication;
   pipeline: ClaimPipelineApplication;
   pipelineAdmin: PipelineAdminApplication;
+  automationAdmin: AutomationAdminApplication;
+  automationExecution: AutomationExecutionApplication;
   customerPolicy: CustomerPolicyApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
   communications: CommunicationsApplication;

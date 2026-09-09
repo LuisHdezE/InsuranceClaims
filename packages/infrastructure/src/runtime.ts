@@ -3,6 +3,8 @@ import postgres from '@prisma/orm-postgres/runtime';
 import type { Contract } from '../../../prisma/contract.d.ts';
 import contractJson from '../../../prisma/contract.json' with { type: 'json' };
 import { type AccessTokenPort, type ApplicationDependencies } from '@insurance/application';
+import { AutomationAdminApplication, type AutomationAdminRepository } from '@insurance/application/automation-admin';
+import { AutomationExecutionApplication, type AutomationExecutionRepository, type AutomationSchedulePort } from '@insurance/application/automation-execution';
 import { ClaimEvidenceAttentionApplication } from '@insurance/application/claim-evidence-attention';
 import { ClaimPipelineApplication } from '@insurance/application/claim-pipeline';
 import { ClaimTasksApplication } from '@insurance/application/claim-tasks';
@@ -28,6 +30,13 @@ import {
   SystemClock,
 } from './adapters.js';
 import {
+  MemoryAutomationScheduleAdapter,
+  MemoryAutomationStore,
+  PrismaAutomationScheduleAdapter,
+  PrismaAutomationStore,
+  FailClosedAutomationActionExecutor,
+} from './automation-store.js';
+import {
   CommunicationContextResolver,
   MemoryCommunicationStore,
   PrismaCommunicationStore,
@@ -51,6 +60,8 @@ export interface RuntimeContext {
   tasks: ClaimTasksApplication;
   pipeline: ClaimPipelineApplication;
   pipelineAdmin: PipelineAdminApplication;
+  automationAdmin: AutomationAdminApplication;
+  automationExecution: AutomationExecutionApplication;
   customerPolicy: CustomerPolicyApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
   communications: CommunicationsApplication;
@@ -87,6 +98,8 @@ function applicationsFrom(
   taskStore: MemoryClaimTaskStore | PrismaClaimTaskStore,
   pipelineStore: MemoryPipelineStore | PrismaPipelineStore,
   pipelineAdminRepository: PipelineAdminRepository,
+  automationRepository: AutomationAdminRepository & AutomationExecutionRepository,
+  automationScheduler: AutomationSchedulePort,
   customerPolicyRepository: CustomerPolicyRepository,
   communicationRepository: CommunicationRepository & CommunicationTemplateAdminRepository,
   integrationRepository: IntegrationEventRepository,
@@ -95,6 +108,15 @@ function applicationsFrom(
   const tasks = new ClaimTasksApplication({ claims: deps.claims, tasks: taskStore, idempotency: deps.idempotency, hash: deps.hash, clock: deps.clock, ids: deps.ids });
   const pipeline = new ClaimPipelineApplication({ claims: deps.claims, pipelines: pipelineStore, clock: deps.clock, ids: deps.ids });
   const pipelineAdmin = new PipelineAdminApplication({ repository: pipelineAdminRepository, clock: deps.clock, ids: deps.ids });
+  const automationAdmin = new AutomationAdminApplication({ repository: automationRepository, clock: deps.clock, ids: deps.ids });
+  const automationExecution = new AutomationExecutionApplication({
+    repository: automationRepository,
+    actionExecutor: new FailClosedAutomationActionExecutor(),
+    scheduler: automationScheduler,
+    clock: deps.clock,
+    ids: deps.ids,
+    hash: deps.hash,
+  });
   const customerPolicy = new CustomerPolicyApplication(customerPolicyRepository);
   const communicationTemplates = new CommunicationTemplateAdminApplication({ repository: communicationRepository, clock: deps.clock, ids: deps.ids });
   const communications = new CommunicationsApplication({
@@ -117,7 +139,7 @@ function applicationsFrom(
   const operationalQueries = new ClaimsOperationalQueryApplication({ claims: deps.claims, tasks: taskStore, pipelines: pipelineStore, clock: deps.clock });
   return {
     application: new ClaimsOperationsApplication(deps, tasks, pipeline, operationalQueries),
-    tasks, pipeline, pipelineAdmin, customerPolicy, communicationTemplates, communications, integrations, integrationAuthenticator,
+    tasks, pipeline, pipelineAdmin, automationAdmin, automationExecution, customerPolicy, communicationTemplates, communications, integrations, integrationAuthenticator,
     timeline, evidenceAttention,
     accessTokens: deps.accessTokens,
   };
@@ -137,6 +159,8 @@ export async function createMemoryRuntime(options: {
   customerPolicyStore: MemoryCustomerPolicyStore;
   communicationStore: MemoryCommunicationStore;
   integrationStore: MemoryIntegrationStore;
+  automationStore: MemoryAutomationStore;
+  automationSchedule: MemoryAutomationScheduleAdapter;
   evidenceStorage: MemoryEvidenceStorage;
 }> {
   const store = new MemoryWorkflowStore();
@@ -145,6 +169,8 @@ export async function createMemoryRuntime(options: {
   const customerPolicyStore = new MemoryCustomerPolicyStore(store);
   const communicationStore = new MemoryCommunicationStore();
   const integrationStore = new MemoryIntegrationStore();
+  const automationStore = new MemoryAutomationStore();
+  const automationSchedule = new MemoryAutomationScheduleAdapter();
   const evidenceStorage = new MemoryEvidenceStorage();
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(
@@ -170,12 +196,14 @@ export async function createMemoryRuntime(options: {
       taskStore,
       pipelineStore,
       pipelineStore,
+      automationStore,
+      automationSchedule,
       customerPolicyStore,
       communicationStore,
       integrationStore,
       options.integrationSecrets ?? {},
     ),
-    store, taskStore, pipelineStore, customerPolicyStore, communicationStore, integrationStore, evidenceStorage,
+    store, taskStore, pipelineStore, customerPolicyStore, communicationStore, integrationStore, automationStore, automationSchedule, evidenceStorage,
   };
 }
 
@@ -186,6 +214,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   customerPolicyStore: PrismaCustomerPolicyStore;
   communicationStore: PrismaCommunicationStore;
   integrationStore: PrismaIntegrationStore;
+  automationStore: PrismaAutomationStore;
 }> {
   const databaseUrl = env.DATABASE_URL;
   const legacyUrl = env.LEGACY_SIMULATOR_URL;
@@ -204,6 +233,8 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const customerPolicyStore = new PrismaCustomerPolicyStore(db);
   const communicationStore = new PrismaCommunicationStore(db);
   const integrationStore = new PrismaIntegrationStore(db);
+  const automationStore = new PrismaAutomationStore(db);
+  const automationSchedule = new PrismaAutomationScheduleAdapter(db, new SecureIdGenerator(), new SystemClock());
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(staffJwtSecret, staffJwtIssuer, staffJwtAudience);
   const deps: ApplicationDependencies = {
@@ -218,11 +249,13 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
       taskStore,
       pipelineStore,
       pipelineAdminStore,
+      automationStore,
+      automationSchedule,
       customerPolicyStore,
       communicationStore,
       integrationStore,
       integrationSecrets,
     ),
-    store, taskStore, pipelineStore, customerPolicyStore, communicationStore, integrationStore,
+    store, taskStore, pipelineStore, customerPolicyStore, communicationStore, integrationStore, automationStore,
   };
 }
