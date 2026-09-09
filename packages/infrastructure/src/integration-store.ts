@@ -175,11 +175,30 @@ export class MemoryIntegrationStore implements IntegrationEventRepository {
     return { outcome: 'LEASED', event: clone(event), job: clone(job) };
   }
 
-  async finishProcessing(input: { eventId: string; jobId: string; outcome: 'PROCESSED' | 'FAILED'; failureCategory: string | null; at: Date }): Promise<InboundEventProps> {
+  async finishProcessing(input: {
+    eventId: string;
+    jobId: string;
+    expectedEventVersion: number;
+    expectedJobVersion: number;
+    leaseOwner: string;
+    outcome: 'PROCESSED' | 'FAILED';
+    failureCategory: string | null;
+    at: Date;
+  }): Promise<InboundEventProps> {
     const event = this.events.get(input.eventId);
     const job = this.jobs.get(input.jobId);
     if (!event || !job || this.jobsByEvent.get(input.eventId) !== input.jobId) throw new Error('Inbound event processing state is missing.');
-    if (event.processingStatus !== 'PROCESSING' || job.status !== 'LEASED') throw new Error('Inbound event is not leased for processing.');
+    if (
+      event.version !== input.expectedEventVersion
+      || job.version !== input.expectedJobVersion
+      || job.leaseOwner !== input.leaseOwner
+      || event.processingStatus !== 'PROCESSING'
+      || job.status !== 'LEASED'
+      || !job.leaseExpiresAt
+      || job.leaseExpiresAt.getTime() < input.at.getTime()
+    ) {
+      return clone(event);
+    }
     if (input.outcome === 'PROCESSED') {
       event.processingStatus = 'PROCESSED';
       event.processedAt = input.at;
@@ -357,46 +376,93 @@ export class PrismaIntegrationStore implements IntegrationEventRepository {
     }
   }
 
-  async finishProcessing(input: { eventId: string; jobId: string; outcome: 'PROCESSED' | 'FAILED'; failureCategory: string | null; at: Date }): Promise<InboundEventProps> {
-    return this.db.transaction(async (txDb: any) => {
-      const rawEvent = await txDb.orm.public.InboundEvent.first({ id: input.eventId });
-      const rawJob = await txDb.orm.public.AsyncJob.first({ id: input.jobId });
-      if (!rawEvent || !rawJob) throw new Error('Inbound event processing state is missing.');
-      const event = eventRow(rawEvent);
-      const job = jobRow(rawJob);
-      if (event.processingStatus !== 'PROCESSING' || job.status !== 'LEASED') throw new Error('Inbound event is not leased for processing.');
-      let eventUpdated = 0;
-      let jobUpdated = 0;
-      if (input.outcome === 'PROCESSED') {
-        eventUpdated = await txDb.orm.public.InboundEvent.where({ id: event.id, version: event.version, processingStatus: 'PROCESSING' }).updateAndCount({
-          processingStatus: 'PROCESSED', processedAt: toDbInstant(input.at), failureCategory: null, version: event.version + 1,
-        });
-        jobUpdated = await txDb.orm.public.AsyncJob.where({ id: job.id, version: job.version, status: 'LEASED' }).updateAndCount({
-          status: 'SUCCEEDED', completedAt: toDbInstant(input.at), lastFailureCategory: null,
-          leaseOwner: null, leaseExpiresAt: null, updatedAt: toDbInstant(input.at), version: job.version + 1,
-        });
-      } else {
-        const deadLetter = job.attemptCount >= job.maxAttempts;
-        const failure = input.failureCategory ?? 'PROCESSING_FAILED';
-        eventUpdated = await txDb.orm.public.InboundEvent.where({ id: event.id, version: event.version, processingStatus: 'PROCESSING' }).updateAndCount({
-          processingStatus: deadLetter ? 'DEAD_LETTER' : 'FAILED', failureCategory: failure, version: event.version + 1,
-        });
-        jobUpdated = await txDb.orm.public.AsyncJob.where({ id: job.id, version: job.version, status: 'LEASED' }).updateAndCount({
-          status: deadLetter ? 'DEAD_LETTER' : 'FAILED_RETRYABLE',
-          completedAt: deadLetter ? toDbInstant(input.at) : null,
-          lastFailureCategory: failure,
-          availableAt: toDbInstant(input.at),
-          leaseOwner: null,
-          leaseExpiresAt: null,
-          updatedAt: toDbInstant(input.at),
-          version: job.version + 1,
-        });
+  async finishProcessing(input: {
+    eventId: string;
+    jobId: string;
+    expectedEventVersion: number;
+    expectedJobVersion: number;
+    leaseOwner: string;
+    outcome: 'PROCESSED' | 'FAILED';
+    failureCategory: string | null;
+    at: Date;
+  }): Promise<InboundEventProps> {
+    try {
+      return await this.db.transaction(async (txDb: any) => {
+        const rawEvent = await txDb.orm.public.InboundEvent.first({ id: input.eventId });
+        const rawJob = await txDb.orm.public.AsyncJob.first({ id: input.jobId });
+        if (!rawEvent || !rawJob) throw new Error('Inbound event processing state is missing.');
+        const event = eventRow(rawEvent);
+        const job = jobRow(rawJob);
+        if (
+          event.version !== input.expectedEventVersion
+          || job.version !== input.expectedJobVersion
+          || job.leaseOwner !== input.leaseOwner
+          || event.processingStatus !== 'PROCESSING'
+          || job.status !== 'LEASED'
+          || !job.leaseExpiresAt
+          || job.leaseExpiresAt.getTime() < input.at.getTime()
+        ) {
+          return event;
+        }
+
+        let eventUpdated = 0;
+        let jobUpdated = 0;
+        if (input.outcome === 'PROCESSED') {
+          eventUpdated = await txDb.orm.public.InboundEvent.where({
+            id: event.id,
+            version: input.expectedEventVersion,
+            processingStatus: 'PROCESSING',
+          }).updateAndCount({
+            processingStatus: 'PROCESSED', processedAt: toDbInstant(input.at), failureCategory: null, version: input.expectedEventVersion + 1,
+          });
+          jobUpdated = await txDb.orm.public.AsyncJob.where({
+            id: job.id,
+            version: input.expectedJobVersion,
+            status: 'LEASED',
+            leaseOwner: input.leaseOwner,
+          }).updateAndCount({
+            status: 'SUCCEEDED', completedAt: toDbInstant(input.at), lastFailureCategory: null,
+            leaseOwner: null, leaseExpiresAt: null, updatedAt: toDbInstant(input.at), version: input.expectedJobVersion + 1,
+          });
+        } else {
+          const deadLetter = job.attemptCount >= job.maxAttempts;
+          const failure = input.failureCategory ?? 'PROCESSING_FAILED';
+          eventUpdated = await txDb.orm.public.InboundEvent.where({
+            id: event.id,
+            version: input.expectedEventVersion,
+            processingStatus: 'PROCESSING',
+          }).updateAndCount({
+            processingStatus: deadLetter ? 'DEAD_LETTER' : 'FAILED', failureCategory: failure, version: input.expectedEventVersion + 1,
+          });
+          jobUpdated = await txDb.orm.public.AsyncJob.where({
+            id: job.id,
+            version: input.expectedJobVersion,
+            status: 'LEASED',
+            leaseOwner: input.leaseOwner,
+          }).updateAndCount({
+            status: deadLetter ? 'DEAD_LETTER' : 'FAILED_RETRYABLE',
+            completedAt: deadLetter ? toDbInstant(input.at) : null,
+            lastFailureCategory: failure,
+            availableAt: toDbInstant(input.at),
+            leaseOwner: null,
+            leaseExpiresAt: null,
+            updatedAt: toDbInstant(input.at),
+            version: input.expectedJobVersion + 1,
+          });
+        }
+        if (eventUpdated !== 1 || jobUpdated !== 1) throw new IntegrationTransactionAbort('BUSY');
+        const changed = await txDb.orm.public.InboundEvent.first({ id: event.id });
+        if (!changed) throw new Error('Inbound event disappeared while completing processing.');
+        return eventRow(changed);
+      });
+    } catch (error) {
+      if (error instanceof IntegrationTransactionAbort) {
+        const event = await this.getEvent(input.eventId);
+        if (!event) throw new Error('Inbound event disappeared after a stale lease completion attempt.');
+        return event;
       }
-      if (eventUpdated !== 1 || jobUpdated !== 1) throw new Error('Inbound event processing state changed concurrently.');
-      const changed = await txDb.orm.public.InboundEvent.first({ id: event.id });
-      if (!changed) throw new Error('Inbound event disappeared while completing processing.');
-      return eventRow(changed);
-    });
+      throw error;
+    }
   }
 }
 
