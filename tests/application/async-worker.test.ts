@@ -40,6 +40,7 @@ function job(input: { id: string; jobType: string; payload?: Record<string, stri
 }
 
 const principal: WorkerPrincipal = { context: 'system', actorId: 'worker-test', capabilities: ['async.jobs.execute'] };
+const unexpectedImports = { executeCommittedImport: async () => { throw new Error('unexpected import dispatch'); } } as any;
 
 test('generic async leasing rejects a stale worker at lease expiry and bounds retries', async () => {
   const clock = new MutableClock(new Date('2026-09-09T04:00:00.000Z'));
@@ -80,6 +81,7 @@ test('worker resumes automation jobs through Application and marks durable job s
     asyncOperations: application,
     integrations: { processInboundEvent: async () => { throw new Error('unexpected integration dispatch'); } } as any,
     automationExecution: { resumeExecution: async () => { resumed += 1; return { status: 'SUCCEEDED' }; } } as any,
+    governedImports: unexpectedImports,
   }, 'worker-test');
 
   const result = await worker.tick();
@@ -87,6 +89,37 @@ test('worker resumes automation jobs through Application and marks durable job s
   assert.equal(result.succeeded, 1);
   assert.equal(store.snapshot(automationJob.id)?.status, 'SUCCEEDED');
   assert.equal(store.snapshot(automationJob.id)?.attemptCount, 1);
+});
+
+test('worker executes governed import commits through Application and completes the durable job', async () => {
+  const store = new MemoryAsyncOperationsStore();
+  const clock = new MutableClock(new Date('2026-09-09T04:00:00.000Z'));
+  const application = new AsyncOperationsApplication({ repository: store, clock, ids: new TestIds() });
+  const importJob = job({
+    id: '97000000-0000-4000-8000-000000000005',
+    jobType: 'COMMIT_IMPORT_JOB',
+    payload: { importJobId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' },
+  });
+  store.seedJob(importJob);
+  let importCalls = 0;
+  const worker = new DurableAsyncWorker({
+    asyncOperations: application,
+    integrations: { processInboundEvent: async () => { throw new Error('unexpected integration dispatch'); } } as any,
+    automationExecution: { resumeExecution: async () => { throw new Error('unexpected automation dispatch'); } } as any,
+    governedImports: {
+      executeCommittedImport: async (_importJobId: string, workerPrincipal: any) => {
+        importCalls += 1;
+        assert.equal(workerPrincipal.capabilities.includes('imports.commit.execute'), true);
+        return { status: 'COMPLETED_WITH_ERRORS' };
+      },
+    } as any,
+  }, 'worker-import-test');
+
+  const result = await worker.tick();
+  assert.equal(importCalls, 1);
+  assert.equal(result.succeeded, 1);
+  assert.equal(store.snapshot(importJob.id)?.status, 'SUCCEEDED');
+  assert.equal(store.snapshot(importJob.id)?.attemptCount, 1);
 });
 
 test('worker does not double-lease inbound jobs and fails closed for unknown job types', async () => {
@@ -111,6 +144,7 @@ test('worker does not double-lease inbound jobs and fails closed for unknown job
       },
     } as any,
     automationExecution: { resumeExecution: async () => { throw new Error('unexpected automation dispatch'); } } as any,
+    governedImports: unexpectedImports,
   }, 'worker-test');
 
   const result = await worker.tick();

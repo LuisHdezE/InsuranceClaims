@@ -35,12 +35,17 @@ const APP_STATUS: Readonly<Record<string, number>> = {
   IDEMPOTENCY_KEY_REUSED: 409,
   IDEMPOTENCY_IN_PROGRESS: 409,
   INTEGRATION_REPLAY_DETECTED: 409,
+  IMPORT_STATE_CONFLICT: 409,
   DEAD_LETTER_STATE_CONFLICT: 409,
   ASYNC_JOB_BUSY: 409,
   ASYNC_JOB_TERMINAL: 409,
+  IMPORT_SOURCE_TOO_LARGE: 413,
+  IMPORT_SOURCE_UNSUPPORTED: 415,
   VALIDATION_ERROR: 422,
   ASYNC_JOB_INVALID: 422,
   AUTOMATION_DEFINITION_INVALID: 422,
+  IMPORT_MAPPING_INVALID: 422,
+  IMPORT_SOURCE_INVALID: 422,
   POLICY_VEHICLE_NOT_ELIGIBLE: 422,
   EVIDENCE_VALIDATION_FAILED: 422,
   INTEGRATION_SCHEMA_INVALID: 422,
@@ -118,9 +123,12 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       classified = true;
     } else if ((exception as any)?.name === 'MulterError') {
       const multer = exception as any;
+      const importUpload = typeof req.url === 'string' && req.url.includes('/api/v1/admin/import-jobs');
       status = multer.code === 'LIMIT_FILE_SIZE' ? 413 : 422;
-      code = multer.code === 'LIMIT_FILE_SIZE' ? 'PAYLOAD_TOO_LARGE' : 'EVIDENCE_VALIDATION_FAILED';
-      detail = multer.code === 'LIMIT_FILE_SIZE' ? 'Evidence payload exceeds the transport limit.' : 'Evidence upload does not satisfy the contract.';
+      code = multer.code === 'LIMIT_FILE_SIZE' ? 'PAYLOAD_TOO_LARGE' : (importUpload ? 'IMPORT_SOURCE_INVALID' : 'EVIDENCE_VALIDATION_FAILED');
+      detail = multer.code === 'LIMIT_FILE_SIZE'
+        ? (importUpload ? 'Import source exceeds the transport limit.' : 'Evidence payload exceeds the transport limit.')
+        : (importUpload ? 'Import upload does not satisfy the contract.' : 'Evidence upload does not satisfy the contract.');
       classified = true;
     }
 

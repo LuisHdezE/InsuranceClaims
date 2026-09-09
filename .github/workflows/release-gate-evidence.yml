@@ -60,9 +60,21 @@ jobs:
       - name: Reject high or critical production dependency advisories
         run: npm audit --omit=dev --audit-level=high
       - name: Ensure PostgreSQL client tools
+        shell: bash
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
+          missing=0
+          for tool in psql createdb dropdb; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              missing=1
+            fi
+          done
+          if [[ "$missing" == "1" ]]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-client
+          fi
+          psql --version
+          createdb --version
+          dropdb --version
       - name: Prove PostgreSQL backup and restore
         run: bash qa/release-backup-restore.sh
       - name: Release Gate machine candidate summary

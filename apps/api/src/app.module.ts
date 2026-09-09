@@ -11,6 +11,7 @@ import { CustomerPortalAuthController, CustomerPortalController } from './custom
 import { CustomerPolicyController } from './customer-policy-controller.js';
 import { DeadLetterAdminController } from './dead-letter-controller.js';
 import { GuidanceAdminController } from './guidance-controller.js';
+import { GovernedImportsController } from './import-controller.js';
 import { AdminIntegrationEventsController, IntegrationEventsController } from './integration-controller.js';
 import { PipelineAdminController } from './pipeline-admin-controller.js';
 import { OperatorClaimPipelineController } from './pipeline-controller.js';
@@ -34,6 +35,7 @@ export class ApiModule implements NestModule {
         PipelineAdminController,
         AutomationAdminController,
         GuidanceAdminController,
+        GovernedImportsController,
         DeadLetterAdminController,
         CommunicationTemplateAdminController,
         OperatorCommunicationsController,

@@ -250,6 +250,46 @@ enum InsurerGuidanceActorType {
   ADMINISTRATOR
 }
 
+enum ImportJobStatus {
+  @@type("pg/text@1")
+  UPLOADED
+  PREVIEWED
+  MAPPED
+  VALIDATED
+  DRY_RUN_READY
+  COMMITTING
+  COMPLETED
+  COMPLETED_WITH_ERRORS
+  FAILED
+  CANCELLED
+}
+
+enum ImportRowValidationStatus {
+  @@type("pg/text@1")
+  PENDING
+  VALID
+  INVALID
+}
+
+enum ImportDryRunOutcome {
+  @@type("pg/text@1")
+  PENDING
+  CREATE
+  UPDATE
+  UNCHANGED
+  REJECTED
+}
+
+enum ImportCommitOutcome {
+  @@type("pg/text@1")
+  PENDING
+  CREATED
+  UPDATED
+  UNCHANGED
+  REJECTED
+  FAILED
+}
+
 model Operator {
   id           Uuid         @id @default(uuid())
   login        String       @unique
@@ -759,6 +799,73 @@ model InsurerGuidanceVersion {
   @@unique([guidanceDefinitionId, versionNumber], map: "insurer_guidance_versions_definition_version_key")
   @@index([guidanceDefinitionId, status], map: "insurer_guidance_versions_definition_status_idx")
   @@map("insurer_guidance_versions")
+}
+
+model ImportJob {
+  id                    Uuid            @id @default(uuid())
+  importType            String          @map("import_type")
+  sourceStorageKey      String          @unique @map("source_storage_key")
+  sourceMediaType       String          @map("source_media_type")
+  sourceSizeBytes       BigInt          @map("source_size_bytes")
+  sourceDisplayFilename String?         @map("source_display_filename")
+  status                ImportJobStatus
+  mappingConfiguration  Json?           @map("mapping_configuration")
+  totalRows             Int             @default(0) @map("total_rows")
+  validRows             Int             @default(0) @map("valid_rows")
+  invalidRows           Int             @default(0) @map("invalid_rows")
+  unchangedRows         Int             @default(0) @map("unchanged_rows")
+  committedRows         Int             @default(0) @map("committed_rows")
+  rejectedRows          Int             @default(0) @map("rejected_rows")
+  failedRows            Int             @default(0) @map("failed_rows")
+  createdById           Uuid            @map("created_by_id")
+  commitRequestedById   Uuid?           @map("commit_requested_by_id")
+  correlationId         String?         @map("correlation_id")
+  version               Int             @default(1)
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @default(now()) @map("updated_at")
+  startedAt             DateTime?       @map("started_at")
+  completedAt           DateTime?       @map("completed_at")
+  rows                  ImportRow[]
+
+  @@index([status, createdAt], map: "import_jobs_status_created_idx")
+  @@map("import_jobs")
+}
+
+model ImportRow {
+  id               Uuid                      @id @default(uuid())
+  importJobId      Uuid                      @map("import_job_id")
+  rowNumber        Int                       @map("row_number")
+  stagedInput      Json                      @map("staged_input")
+  normalizedInput  Json?                     @map("normalized_input")
+  validationStatus ImportRowValidationStatus @map("validation_status")
+  validationErrors Json                      @map("validation_errors")
+  dryRunOutcome    ImportDryRunOutcome       @map("dry_run_outcome")
+  commitOutcome    ImportCommitOutcome       @map("commit_outcome")
+  targetType       String?                   @map("target_type")
+  targetId         Uuid?                     @map("target_id")
+  rowFingerprint   String                    @map("row_fingerprint")
+  createdAt        DateTime                  @default(now()) @map("created_at")
+  updatedAt        DateTime                  @default(now()) @map("updated_at")
+  importJob        ImportJob                 @relation(fields: [importJobId], references: [id], onDelete: Restrict)
+
+  @@unique([importJobId, rowNumber], map: "import_rows_job_row_key")
+  @@index([importJobId, validationStatus], map: "import_rows_job_validation_idx")
+  @@map("import_rows")
+}
+
+model SyntheticImportReference {
+  id                Uuid     @id @default(uuid())
+  externalReference String   @unique @map("external_reference")
+  label             String
+  classification    String?
+  sourceImportJobId Uuid     @map("source_import_job_id")
+  sourceImportRowId Uuid     @map("source_import_row_id")
+  version           Int      @default(1)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @map("updated_at")
+
+  @@index([sourceImportJobId], map: "synthetic_import_reference_job_idx")
+  @@map("synthetic_import_reference_records")
 }
 
 model IdempotencyRecord {
