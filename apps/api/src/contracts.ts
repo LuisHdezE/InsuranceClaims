@@ -10,6 +10,7 @@ import type { ClaimTimelineApplication } from '@insurance/application/claim-time
 import type { CommunicationTemplateAdminApplication } from '@insurance/application/communication-template-admin';
 import type { CommunicationsApplication } from '@insurance/application/communications';
 import type { CustomerPolicyApplication } from '@insurance/application/customer-policy';
+import type { GuidanceAdminApplication } from '@insurance/application/guidance-admin';
 import type { IntegrationAuthenticatorPort } from '@insurance/application/integration-auth';
 import type { IntegrationEventsApplication } from '@insurance/application/integration-events';
 import type { PipelineAdminApplication } from '@insurance/application/pipeline-admin';
@@ -25,6 +26,7 @@ export interface ApiRuntimeContract {
   asyncOperations: AsyncOperationsApplication;
   automationAdmin: AutomationAdminApplication;
   automationExecution: AutomationExecutionApplication;
+  guidanceAdmin: GuidanceAdminApplication;
   customerPolicy: CustomerPolicyApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
   communications: CommunicationsApplication;
