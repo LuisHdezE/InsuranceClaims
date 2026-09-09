@@ -29,6 +29,7 @@
       "@insurance/application/communication-template-admin": ["./packages/application/src/communication-template-admin.ts"],
       "@insurance/application/communications": ["./packages/application/src/communications.ts"],
       "@insurance/application/customer-policy": ["./packages/application/src/customer-policy.ts"],
+      "@insurance/application/customer-portal": ["./packages/application/src/customer-portal.ts"],
       "@insurance/application/guidance-admin": ["./packages/application/src/guidance-admin.ts"],
       "@insurance/application/integration-auth": ["./packages/application/src/integration-auth.ts"],
       "@insurance/application/integration-events": ["./packages/application/src/integration-events.ts"],

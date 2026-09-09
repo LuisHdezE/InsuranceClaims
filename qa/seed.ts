@@ -2,9 +2,17 @@ import { Argon2PasswordHasher, createProductionRuntimeFromEnv } from '@insurance
 
 const operatorId = '00000000-0000-4000-8000-000000000099';
 const adminId = '00000000-0000-4000-8000-000000000098';
+const portalCustomerId = '91000000-0000-4000-8000-000000000001';
+const portalPolicyId = '92000000-0000-4000-8000-000000000001';
+const portalAssetId = '93000000-0000-4000-8000-000000000001';
+const portalClaimId = '94000000-0000-4000-8000-000000000001';
+const portalHistoryId = '95000000-0000-4000-8000-000000000001';
+const portalAccountId = '96000000-0000-4000-8000-000000000001';
 const login = process.env.QA_OPERATOR_LOGIN ?? 'qa.operator@example.invalid';
 const adminLogin = process.env.QA_ADMIN_LOGIN ?? 'qa.admin@example.invalid';
+const portalLogin = process.env.QA_CUSTOMER_LOGIN ?? 'qa.customer@example.invalid';
 const password = process.env.QA_OPERATOR_PASSWORD;
+const portalPassword = process.env.QA_CUSTOMER_PASSWORD;
 if (!password) throw new Error('QA_OPERATOR_PASSWORD is required for the synthetic QA seed.');
 
 const runtime = await createProductionRuntimeFromEnv();
@@ -28,5 +36,89 @@ await runtime.store.seedOperator({
   isActive: true,
 }, at);
 
-console.log(JSON.stringify({ event: 'QA_STAFF_SEEDED', operatorId, login, adminId, adminLogin }));
+let portalSeeded = false;
+if (portalPassword) {
+  const portalPasswordHash = await hasher.hash(portalPassword);
+  await runtime.customerPolicyStore.seedSyntheticCustomerPolicy({
+    customer: {
+      id: portalCustomerId,
+      customerRef: 'SYN-QA-PORTAL-CUST-001',
+      displayName: 'Synthetic QA Portal Customer',
+      status: 'ACTIVE',
+      createdAt: at,
+      updatedAt: at,
+      version: 1,
+    },
+    policy: {
+      id: portalPolicyId,
+      customerId: portalCustomerId,
+      policyReference: 'MOD-QA-PORTAL-POL-001',
+      legacyPolicyReference: 'SYN-QA-PORTAL-POL-001',
+      insurerReference: 'SYN-QA-PORTAL-INSURER-001',
+      recordStatus: 'ACTIVE',
+      operationalMetadata: { source: 'SYNTHETIC_QA_PORTAL' },
+      createdAt: at,
+      updatedAt: at,
+      version: 1,
+    },
+    assets: [{
+      id: portalAssetId,
+      policyId: portalPolicyId,
+      assetType: 'VEHICLE',
+      assetReference: 'MOD-QA-PORTAL-VEH-001',
+      legacyAssetReference: 'SYN-QA-PORTAL-VEH-001',
+      metadata: {},
+      createdAt: at,
+    }],
+  });
+
+  if (!(await runtime.store.getById(portalClaimId))) {
+    await runtime.store.create({
+      id: portalClaimId,
+      trackingCode: 'SYN-QA-PORTAL-TRACK-001',
+      policyReference: 'SYN-QA-PORTAL-POL-001',
+      vehicleReference: 'SYN-QA-PORTAL-VEH-001',
+      customerId: portalCustomerId,
+      policyId: portalPolicyId,
+      verifiedCustomerLabel: 'Synthetic QA Portal Customer',
+      eventType: 'Synthetic QA portal event',
+      occurredAt: at,
+      locationText: 'Synthetic QA portal location',
+      description: 'Synthetic QA portal claim.',
+      status: 'OBSERVED',
+      createdAt: at,
+      updatedAt: at,
+    }, [], {
+      historyId: portalHistoryId,
+      claimId: portalClaimId,
+      fromStatus: null,
+      toStatus: 'RECEIVED',
+      actorType: 'SYSTEM',
+      actorId: null,
+      occurredAt: at,
+    });
+  }
+
+  await runtime.customerPortalStore.seedSyntheticAccount({
+    id: portalAccountId,
+    customerId: portalCustomerId,
+    login: portalLogin.toLowerCase(),
+    passwordHash: portalPasswordHash,
+    isActive: true,
+    version: 1,
+    createdAt: at,
+    updatedAt: at,
+  });
+  portalSeeded = true;
+}
+
+console.log(JSON.stringify({
+  event: 'QA_IDENTITIES_SEEDED',
+  operatorId,
+  login,
+  adminId,
+  adminLogin,
+  portalSeeded,
+  ...(portalSeeded ? { portalCustomerId, portalClaimId, portalAccountId, portalLogin } : {}),
+}));
 process.exit(0);

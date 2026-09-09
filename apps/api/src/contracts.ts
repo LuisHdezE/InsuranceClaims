@@ -10,6 +10,7 @@ import type { ClaimTimelineApplication } from '@insurance/application/claim-time
 import type { CommunicationTemplateAdminApplication } from '@insurance/application/communication-template-admin';
 import type { CommunicationsApplication } from '@insurance/application/communications';
 import type { CustomerPolicyApplication } from '@insurance/application/customer-policy';
+import type { CustomerAccessTokenPort, CustomerPortalApplication } from '@insurance/application/customer-portal';
 import type { GuidanceAdminApplication } from '@insurance/application/guidance-admin';
 import type { IntegrationAuthenticatorPort } from '@insurance/application/integration-auth';
 import type { IntegrationEventsApplication } from '@insurance/application/integration-events';
@@ -17,6 +18,7 @@ import type { PipelineAdminApplication } from '@insurance/application/pipeline-a
 
 export const API_RUNTIME = Symbol('API_RUNTIME');
 export const ACCESS_TOKENS = Symbol('ACCESS_TOKENS');
+export const CUSTOMER_ACCESS_TOKENS = Symbol('CUSTOMER_ACCESS_TOKENS');
 
 export interface ApiRuntimeContract {
   application: ClaimsOperationsApplication;
@@ -28,6 +30,7 @@ export interface ApiRuntimeContract {
   automationExecution: AutomationExecutionApplication;
   guidanceAdmin: GuidanceAdminApplication;
   customerPolicy: CustomerPolicyApplication;
+  customerPortal: CustomerPortalApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
   communications: CommunicationsApplication;
   integrations: IntegrationEventsApplication;
@@ -35,11 +38,13 @@ export interface ApiRuntimeContract {
   timeline: ClaimTimelineApplication;
   evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;
+  customerAccessTokens: CustomerAccessTokenPort;
 }
 
 export interface RequestWithContext {
   requestId: string;
   actor?: import('@insurance/application').ActorContext;
+  customerActor?: import('@insurance/application/customer-portal').CustomerActorContext;
   headers: Record<string, string | string[] | undefined>;
   rawBody?: Buffer;
   ip?: string;

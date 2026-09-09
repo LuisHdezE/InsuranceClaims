@@ -68,9 +68,11 @@ jobs:
         run: npm ci
       - name: Emit Prisma 8 contract
         run: npm run contract:emit
-      - name: Prepare synthetic runtime secret
+      - name: Prepare synthetic runtime secrets
         shell: bash
-        run: echo "JWT_SECRET=web-qa-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+        run: |
+          echo "JWT_SECRET=web-qa-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=web-customer-qa-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
       - name: Ensure PostgreSQL client
         shell: bash
         run: |

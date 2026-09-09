@@ -35,6 +35,7 @@ jobs:
       QA_BASE_URL: http://127.0.0.1:3000
       QA_OPERATOR_LOGIN: qa.operator@example.invalid
       QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
       EVIDENCE_STORAGE_DIR: .runtime/evidence
 
     steps:
@@ -60,7 +61,9 @@ jobs:
         shell: bash
         run: |
           echo "JWT_SECRET=qa-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=qa-customer-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "QA_OPERATOR_PASSWORD=qa-pass-$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=qa-customer-pass-$(openssl rand -hex 24)" >> "$GITHUB_ENV"
 
       - name: Ensure PostgreSQL client
         shell: bash
@@ -76,8 +79,9 @@ jobs:
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
 
-      - name: Seed synthetic QA staff
+      - name: Seed synthetic QA staff and customer portal identity
         run: npx tsx qa/seed.ts
 
       - name: Start simulated legacy system and API
@@ -123,11 +127,15 @@ jobs:
       - name: Execute R3 insurer guidance PostgreSQL runtime QA
         run: node qa/guidance-runtime-qa.mjs
 
+      - name: Execute R3 Customer Portal PostgreSQL runtime QA
+        run: node qa/customer-portal-runtime-qa.mjs
+
       - name: Verify durable audit and persistence invariants
         shell: bash
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/audit-assertions.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/guidance-audit-assertions.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/customer-portal-audit-assertions.sql
 
       - name: Classify production dependency vulnerabilities
         shell: bash

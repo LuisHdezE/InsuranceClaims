@@ -2,6 +2,8 @@ export * from './adapters.js';
 export * from './async-store.js';
 export * from './automation-store.js';
 export * from './communication-store.js';
+export * from './customer-portal-adapters.js';
+export * from './customer-portal-store.js';
 export * from './customer-policy-store.js';
 export * from './guidance-store.js';
 export * from './integration-store.js';
