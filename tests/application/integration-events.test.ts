@@ -149,3 +149,59 @@ test('R3 integration processing becomes dead-letter after bounded failed attempt
   const adminStatus = await app.getIntegrationEventStatus(accepted.response.eventId, actor('PLATFORM_ADMIN'));
   assert.equal(adminStatus.processingStatus, 'DEAD_LETTER');
 });
+
+test('R3 integration stale worker cannot complete a lease reacquired by another worker', async () => {
+  const store = new MemoryIntegrationStore();
+  seed(store);
+  const app = new IntegrationEventsApplication(makeDependencies(store, new SimulatedInboundEventProcessor()));
+  const accepted = await app.ingestIntegrationEvent({
+    externalEventId: 'syn-event-lease-race-001',
+    eventType: 'SYNTHETIC_CUSTOMER_RESPONSE',
+    payload: { customerRef: 'SYN-CUSTOMER-LEASE', accepted: true },
+    payloadHash: 'e'.repeat(64),
+  }, principal());
+
+  const firstAt = new Date('2026-09-08T21:30:00.000Z');
+  const firstLease = await store.beginProcessing({
+    eventId: accepted.response.eventId,
+    leaseOwner: 'synthetic-worker-a',
+    at: firstAt,
+    leaseSeconds: 60,
+  });
+  assert.equal(firstLease.outcome, 'LEASED');
+  if (firstLease.outcome !== 'LEASED') return;
+
+  const secondLease = await store.beginProcessing({
+    eventId: accepted.response.eventId,
+    leaseOwner: 'synthetic-worker-b',
+    at: new Date('2026-09-08T21:31:01.000Z'),
+    leaseSeconds: 60,
+  });
+  assert.equal(secondLease.outcome, 'LEASED');
+  if (secondLease.outcome !== 'LEASED') return;
+
+  const staleCompletion = await store.finishProcessing({
+    eventId: accepted.response.eventId,
+    jobId: firstLease.job.id,
+    expectedEventVersion: firstLease.event.version,
+    expectedJobVersion: firstLease.job.version,
+    leaseOwner: 'synthetic-worker-a',
+    outcome: 'PROCESSED',
+    failureCategory: null,
+    at: new Date('2026-09-08T21:31:02.000Z'),
+  });
+  assert.equal(staleCompletion.processingStatus, 'PROCESSING');
+
+  const freshCompletion = await store.finishProcessing({
+    eventId: accepted.response.eventId,
+    jobId: secondLease.job.id,
+    expectedEventVersion: secondLease.event.version,
+    expectedJobVersion: secondLease.job.version,
+    leaseOwner: 'synthetic-worker-b',
+    outcome: 'PROCESSED',
+    failureCategory: null,
+    at: new Date('2026-09-08T21:31:03.000Z'),
+  });
+  assert.equal(freshCompletion.processingStatus, 'PROCESSED');
+  assert.ok(freshCompletion.processedAt);
+});
