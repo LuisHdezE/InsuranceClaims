@@ -122,6 +122,50 @@ enum PipelineActorType {
   AUTOMATION
 }
 
+enum CommunicationChannel {
+  @@type("pg/text@1")
+  EMAIL
+  WHATSAPP
+}
+
+enum CommunicationConfigurationStatus {
+  @@type("pg/text@1")
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+enum CommunicationActorType {
+  @@type("pg/text@1")
+  SYSTEM
+  OPERATOR
+  SUPERVISOR
+  ADMINISTRATOR
+  AUTOMATION
+}
+
+enum CommunicationStatus {
+  @@type("pg/text@1")
+  QUEUED
+  DELIVERING
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+enum CommunicationTargetType {
+  @@type("pg/text@1")
+  CLAIM
+  CUSTOMER
+}
+
+enum CommunicationAttemptOutcome {
+  @@type("pg/text@1")
+  IN_PROGRESS
+  DELIVERED
+  FAILED
+}
+
 model Operator {
   id           Uuid         @id @default(uuid())
   login        String       @unique
@@ -246,29 +290,29 @@ model ClaimEvidence {
 }
 
 model ClaimTask {
-  id                 Uuid                        @id @default(uuid())
-  claimId            Uuid                        @map("claim_id")
+  id                 Uuid                         @id @default(uuid())
+  claimId            Uuid                         @map("claim_id")
   type               ClaimTaskType
   title              String
   description        String?
   status             ClaimTaskStatus
   priority           ClaimTaskPriority
   queue              ClaimTaskQueue
-  assignedOperatorId Uuid?                       @map("assigned_operator_id")
-  dueAt              DateTime?                   @map("due_at")
-  createdByType      ClaimTaskActorType          @map("created_by_type")
-  createdById        Uuid?                       @map("created_by_id")
-  sourceKey          String?                     @unique @map("source_key")
-  correlationId      String?                     @map("correlation_id")
-  version            Int                         @default(1)
-  createdAt          DateTime                    @default(now()) @map("created_at")
-  updatedAt          DateTime                    @default(now()) @map("updated_at")
-  completedAt        DateTime?                   @map("completed_at")
-  completedById      Uuid?                       @map("completed_by_id")
-  cancelledAt        DateTime?                   @map("cancelled_at")
-  cancelledById      Uuid?                       @map("cancelled_by_id")
+  assignedOperatorId Uuid?                        @map("assigned_operator_id")
+  dueAt              DateTime?                    @map("due_at")
+  createdByType      ClaimTaskActorType           @map("created_by_type")
+  createdById        Uuid?                        @map("created_by_id")
+  sourceKey          String?                      @unique @map("source_key")
+  correlationId      String?                      @map("correlation_id")
+  version            Int                          @default(1)
+  createdAt          DateTime                     @default(now()) @map("created_at")
+  updatedAt          DateTime                     @default(now()) @map("updated_at")
+  completedAt        DateTime?                    @map("completed_at")
+  completedById      Uuid?                        @map("completed_by_id")
+  cancelledAt        DateTime?                    @map("cancelled_at")
+  cancelledById      Uuid?                        @map("cancelled_by_id")
   cancellationReason ClaimTaskCancellationReason? @map("cancellation_reason")
-  claim              Claim                       @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  claim              Claim                        @relation(fields: [claimId], references: [id], onDelete: Cascade)
   taskHistory        ClaimTaskHistory[]
 
   @@index([claimId, status, createdAt])
@@ -316,16 +360,16 @@ model PipelineDefinition {
 }
 
 model PipelineVersion {
-  id                   Uuid                  @id @default(uuid())
-  pipelineDefinitionId Uuid                  @map("pipeline_definition_id")
-  versionNumber        Int                   @map("version_number")
+  id                   Uuid              @id @default(uuid())
+  pipelineDefinitionId Uuid              @map("pipeline_definition_id")
+  versionNumber        Int               @map("version_number")
   status               PipelineVersionStatus
-  createdByType        PipelineActorType     @map("created_by_type")
-  createdById          Uuid?                 @map("created_by_id")
-  sourceClassification String                @map("source_classification")
-  createdAt            DateTime              @default(now()) @map("created_at")
-  activatedAt          DateTime?             @map("activated_at")
-  retiredAt            DateTime?             @map("retired_at")
+  createdByType        PipelineActorType @map("created_by_type")
+  createdById          Uuid?             @map("created_by_id")
+  sourceClassification String            @map("source_classification")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  activatedAt          DateTime?         @map("activated_at")
+  retiredAt            DateTime?         @map("retired_at")
 
   @@unique([pipelineDefinitionId, versionNumber], map: "pipeline_versions_definition_version_key")
   @@map("pipeline_versions")
@@ -377,6 +421,80 @@ model PipelineWorkItemHistory {
 
   @@index([workItemId, occurredAt], map: "pipeline_work_item_history_item_occurred_idx")
   @@map("pipeline_work_item_history")
+}
+
+model CommunicationTemplateDefinition {
+  id              Uuid                 @id @default(uuid())
+  templateKey     String               @unique @map("template_key")
+  channel         CommunicationChannel
+  enabled         Boolean              @default(false)
+  activeVersionId Uuid?                @map("active_version_id")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @default(now()) @map("updated_at")
+  version         Int                  @default(1)
+
+  @@map("communication_template_definitions")
+}
+
+model CommunicationTemplateVersion {
+  id                   Uuid                             @id @default(uuid())
+  templateDefinitionId Uuid                             @map("template_definition_id")
+  versionNumber        Int                              @map("version_number")
+  subject              String?
+  body                 String
+  variableSchema       Json                             @map("variable_schema")
+  status               CommunicationConfigurationStatus
+  sourceClassification String                           @map("source_classification")
+  createdByType        CommunicationActorType           @map("created_by_type")
+  createdById          Uuid?                            @map("created_by_id")
+  createdAt            DateTime                         @default(now()) @map("created_at")
+  activatedAt          DateTime?                        @map("activated_at")
+  retiredAt            DateTime?                        @map("retired_at")
+
+  @@unique([templateDefinitionId, versionNumber], map: "communication_template_versions_definition_version_key")
+  @@map("communication_template_versions")
+}
+
+model Communication {
+  id                        Uuid                    @id @default(uuid())
+  channel                   CommunicationChannel
+  templateVersionId         Uuid                    @map("template_version_id")
+  contextType               CommunicationTargetType @map("context_type")
+  contextId                 Uuid                    @map("context_id")
+  customerId                Uuid?                   @map("customer_id")
+  destinationRef            String                  @map("destination_ref")
+  variableSnapshot          Json                    @map("variable_snapshot")
+  status                    CommunicationStatus
+  requestIdempotencyKeyHash String                  @unique @map("request_idempotency_key_hash")
+  requestFingerprint        String                  @map("request_fingerprint")
+  correlationId             String?                 @map("correlation_id")
+  createdAt                 DateTime                @default(now()) @map("created_at")
+  updatedAt                 DateTime                @default(now()) @map("updated_at")
+  deliveredAt               DateTime?               @map("delivered_at")
+  failedAt                  DateTime?               @map("failed_at")
+  cancelledAt               DateTime?               @map("cancelled_at")
+  version                   Int                     @default(1)
+
+  @@index([status, createdAt], map: "communications_status_created_idx")
+  @@index([contextType, contextId, createdAt], map: "communications_context_created_idx")
+  @@index([customerId, createdAt], map: "communications_customer_created_idx")
+  @@map("communications")
+}
+
+model CommunicationAttempt {
+  id                Uuid                        @id @default(uuid())
+  communicationId   Uuid                        @map("communication_id")
+  attemptNumber     Int                         @map("attempt_number")
+  deliveryIdentity  String                      @unique @map("delivery_identity")
+  startedAt         DateTime                    @map("started_at")
+  completedAt       DateTime?                   @map("completed_at")
+  outcome           CommunicationAttemptOutcome
+  providerReference String?                     @map("provider_reference")
+  failureCategory   String?                     @map("failure_category")
+
+  @@unique([communicationId, attemptNumber], map: "communication_attempts_communication_number_key")
+  @@index([communicationId, startedAt], map: "communication_attempts_communication_started_idx")
+  @@map("communication_attempts")
 }
 
 model IdempotencyRecord {

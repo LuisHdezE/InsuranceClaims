@@ -9,6 +9,8 @@ import { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 import { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
 import { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
 import { ClaimsOperationalQueryApplication } from '@insurance/application/claims-operational-query';
+import { CommunicationTemplateAdminApplication, type CommunicationTemplateAdminRepository } from '@insurance/application/communication-template-admin';
+import { CommunicationsApplication, type CommunicationRepository } from '@insurance/application/communications';
 import { CustomerPolicyApplication, type CustomerPolicyRepository } from '@insurance/application/customer-policy';
 import { PipelineAdminApplication, type PipelineAdminRepository } from '@insurance/application/pipeline-admin';
 import {
@@ -23,6 +25,12 @@ import {
   Sha256HashAdapter,
   SystemClock,
 } from './adapters.js';
+import {
+  CommunicationContextResolver,
+  MemoryCommunicationStore,
+  PrismaCommunicationStore,
+  SimulatedCommunicationDeliveryAdapter,
+} from './communication-store.js';
 import { MemoryCustomerPolicyStore, PrismaCustomerPolicyStore } from './customer-policy-store.js';
 import { MemoryWorkflowStore } from './memory.js';
 import { PrismaPipelineAdminStore } from './pipeline-admin-store.js';
@@ -36,6 +44,8 @@ export interface RuntimeContext {
   pipeline: ClaimPipelineApplication;
   pipelineAdmin: PipelineAdminApplication;
   customerPolicy: CustomerPolicyApplication;
+  communicationTemplates: CommunicationTemplateAdminApplication;
+  communications: CommunicationsApplication;
   timeline: ClaimTimelineApplication;
   evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;
@@ -47,49 +57,27 @@ function applicationsFrom(
   pipelineStore: MemoryPipelineStore | PrismaPipelineStore,
   pipelineAdminRepository: PipelineAdminRepository,
   customerPolicyRepository: CustomerPolicyRepository,
+  communicationRepository: CommunicationRepository & CommunicationTemplateAdminRepository,
 ): RuntimeContext {
-  const tasks = new ClaimTasksApplication({
-    claims: deps.claims,
-    tasks: taskStore,
-    idempotency: deps.idempotency,
-    hash: deps.hash,
-    clock: deps.clock,
-    ids: deps.ids,
-  });
-  const pipeline = new ClaimPipelineApplication({
-    claims: deps.claims,
-    pipelines: pipelineStore,
-    clock: deps.clock,
-    ids: deps.ids,
-  });
-  const pipelineAdmin = new PipelineAdminApplication({
-    repository: pipelineAdminRepository,
-    clock: deps.clock,
-    ids: deps.ids,
-  });
+  const tasks = new ClaimTasksApplication({ claims: deps.claims, tasks: taskStore, idempotency: deps.idempotency, hash: deps.hash, clock: deps.clock, ids: deps.ids });
+  const pipeline = new ClaimPipelineApplication({ claims: deps.claims, pipelines: pipelineStore, clock: deps.clock, ids: deps.ids });
+  const pipelineAdmin = new PipelineAdminApplication({ repository: pipelineAdminRepository, clock: deps.clock, ids: deps.ids });
   const customerPolicy = new CustomerPolicyApplication(customerPolicyRepository);
-  const timeline = new ClaimTimelineApplication({
-    claims: deps.claims,
-    tasks: taskStore,
-  });
-  const evidenceAttention = new ClaimEvidenceAttentionApplication({
-    claims: deps.claims,
-    tasks: taskStore,
-  });
-  const operationalQueries = new ClaimsOperationalQueryApplication({
-    claims: deps.claims,
-    tasks: taskStore,
-    pipelines: pipelineStore,
+  const communicationTemplates = new CommunicationTemplateAdminApplication({ repository: communicationRepository, clock: deps.clock, ids: deps.ids });
+  const communications = new CommunicationsApplication({
+    repository: communicationRepository,
+    context: new CommunicationContextResolver(deps.claims, customerPolicyRepository),
+    delivery: new SimulatedCommunicationDeliveryAdapter(),
     clock: deps.clock,
+    ids: deps.ids,
+    hash: deps.hash,
   });
+  const timeline = new ClaimTimelineApplication({ claims: deps.claims, tasks: taskStore });
+  const evidenceAttention = new ClaimEvidenceAttentionApplication({ claims: deps.claims, tasks: taskStore });
+  const operationalQueries = new ClaimsOperationalQueryApplication({ claims: deps.claims, tasks: taskStore, pipelines: pipelineStore, clock: deps.clock });
   return {
     application: new ClaimsOperationsApplication(deps, tasks, pipeline, operationalQueries),
-    tasks,
-    pipeline,
-    pipelineAdmin,
-    customerPolicy,
-    timeline,
-    evidenceAttention,
+    tasks, pipeline, pipelineAdmin, customerPolicy, communicationTemplates, communications, timeline, evidenceAttention,
     accessTokens: deps.accessTokens,
   };
 }
@@ -105,14 +93,14 @@ export async function createMemoryRuntime(options: {
   taskStore: MemoryClaimTaskStore;
   pipelineStore: MemoryPipelineStore;
   customerPolicyStore: MemoryCustomerPolicyStore;
+  communicationStore: MemoryCommunicationStore;
   evidenceStorage: MemoryEvidenceStorage;
 }> {
   const store = new MemoryWorkflowStore();
   const taskStore = new MemoryClaimTaskStore();
-  const pipelineStore = new MemoryPipelineStore(async (event) => {
-    await store.append(event as any);
-  });
+  const pipelineStore = new MemoryPipelineStore(async (event) => { await store.append(event as any); });
   const customerPolicyStore = new MemoryCustomerPolicyStore(store);
+  const communicationStore = new MemoryCommunicationStore();
   const evidenceStorage = new MemoryEvidenceStorage();
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(
@@ -133,12 +121,8 @@ export async function createMemoryRuntime(options: {
     clock: new SystemClock(), ids: new SecureIdGenerator(), hash: new Sha256HashAdapter(), logger: new JsonConsoleLogger(),
   };
   return {
-    ...applicationsFrom(deps, taskStore, pipelineStore, pipelineStore, customerPolicyStore),
-    store,
-    taskStore,
-    pipelineStore,
-    customerPolicyStore,
-    evidenceStorage,
+    ...applicationsFrom(deps, taskStore, pipelineStore, pipelineStore, customerPolicyStore, communicationStore),
+    store, taskStore, pipelineStore, customerPolicyStore, communicationStore, evidenceStorage,
   };
 }
 
@@ -147,6 +131,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   taskStore: PrismaClaimTaskStore;
   pipelineStore: PrismaPipelineStore;
   customerPolicyStore: PrismaCustomerPolicyStore;
+  communicationStore: PrismaCommunicationStore;
 }> {
   const databaseUrl = env.DATABASE_URL;
   const legacyUrl = env.LEGACY_SIMULATOR_URL;
@@ -162,6 +147,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const pipelineStore = new PrismaPipelineStore(db);
   const pipelineAdminStore = new PrismaPipelineAdminStore(db);
   const customerPolicyStore = new PrismaCustomerPolicyStore(db);
+  const communicationStore = new PrismaCommunicationStore(db);
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(staffJwtSecret, staffJwtIssuer, staffJwtAudience);
   const deps: ApplicationDependencies = {
@@ -171,10 +157,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
     clock: new SystemClock(), ids: new SecureIdGenerator(), hash: new Sha256HashAdapter(), logger: new JsonConsoleLogger(),
   };
   return {
-    ...applicationsFrom(deps, taskStore, pipelineStore, pipelineAdminStore, customerPolicyStore),
-    store,
-    taskStore,
-    pipelineStore,
-    customerPolicyStore,
+    ...applicationsFrom(deps, taskStore, pipelineStore, pipelineAdminStore, customerPolicyStore, communicationStore),
+    store, taskStore, pipelineStore, customerPolicyStore, communicationStore,
   };
 }
