@@ -65,6 +65,9 @@ export interface IntegrationEventRepository {
   finishProcessing(input: {
     eventId: string;
     jobId: string;
+    expectedEventVersion: number;
+    expectedJobVersion: number;
+    leaseOwner: string;
     outcome: 'PROCESSED' | 'FAILED';
     failureCategory: string | null;
     at: Date;
@@ -200,7 +203,6 @@ export class IntegrationEventsApplication {
     if (!integration || !integration.enabled || integration.integrationKey !== principal.integrationKey || integration.keyId !== principal.keyId) {
       throw new IntegrationEventsApplicationError('AUTHENTICATION_REQUIRED', 'A valid integration identity is required.');
     }
-    validatePayload(integration.allowedEventSchemas[input.eventType], input.payload);
 
     const existing = await this.deps.repository.findEventByExternalIdentity(integration.id, input.externalEventId);
     if (existing) {
@@ -209,6 +211,8 @@ export class IntegrationEventsApplication {
       }
       return { response: acceptedResponse(existing), replayed: true };
     }
+
+    validatePayload(integration.allowedEventSchemas[input.eventType], input.payload);
 
     const now = this.deps.clock.now();
     const event: InboundEventProps = {
@@ -294,6 +298,9 @@ export class IntegrationEventsApplication {
     const finished = await this.deps.repository.finishProcessing({
       eventId,
       jobId: lease.job.id,
+      expectedEventVersion: lease.event.version,
+      expectedJobVersion: lease.job.version,
+      leaseOwner,
       outcome: result.outcome,
       failureCategory,
       at: this.deps.clock.now(),
