@@ -29,6 +29,7 @@
       "@insurance/application/claims-operational-query": ["./packages/application/src/claims-operational-query.ts"],
       "@insurance/application/communication-template-admin": ["./packages/application/src/communication-template-admin.ts"],
       "@insurance/application/communications": ["./packages/application/src/communications.ts"],
+      "@insurance/application/collections": ["./packages/application/src/collections.ts"],
       "@insurance/application/customer-policy": ["./packages/application/src/customer-policy.ts"],
       "@insurance/application/customer-portal": ["./packages/application/src/customer-portal.ts"],
       "@insurance/application/governed-imports": ["./packages/application/src/governed-imports.ts"],
