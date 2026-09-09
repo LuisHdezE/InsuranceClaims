@@ -12,6 +12,11 @@ import { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 import { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
 import { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
 import { ClaimsOperationalQueryApplication } from '@insurance/application/claims-operational-query';
+import {
+  CollectionsApplication,
+  type CollectionCaseRepository,
+  type CollectionPaymentStateVerifier,
+} from '@insurance/application/collections';
 import { CommunicationTemplateAdminApplication, type CommunicationTemplateAdminRepository } from '@insurance/application/communication-template-admin';
 import { CommunicationsApplication, type CommunicationRepository } from '@insurance/application/communications';
 import { CustomerPolicyApplication, type CustomerPolicyRepository } from '@insurance/application/customer-policy';
@@ -50,6 +55,8 @@ import {
   PrismaAutomationStore,
   FailClosedAutomationActionExecutor,
 } from './automation-store.js';
+import { ConfiguredCollectionPaymentStateVerifier } from './collection-payment-verifier.js';
+import { MemoryCollectionCaseStore, PrismaCollectionCaseStore } from './collection-store.js';
 import {
   CommunicationContextResolver,
   MemoryCommunicationStore,
@@ -86,6 +93,7 @@ export interface RuntimeContext {
   governedImports: GovernedImportsApplication;
   guidanceAdmin: GuidanceAdminApplication;
   renewals: RenewalsApplication;
+  collections: CollectionsApplication;
   customerPolicy: CustomerPolicyApplication;
   customerPortal: CustomerPortalApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
@@ -119,6 +127,24 @@ function integrationSecretsFromEnv(raw: string | undefined): Readonly<Record<str
   return result;
 }
 
+function collectionPaymentStatesFromEnv(raw: string | undefined): readonly string[] {
+  if (!raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error('COLLECTION_PAYMENT_STATE_VALUES_JSON must be valid JSON.');
+  }
+  if (!Array.isArray(parsed) || parsed.length > 100 || parsed.some((value) => typeof value !== 'string')) {
+    throw new Error('COLLECTION_PAYMENT_STATE_VALUES_JSON must be a JSON array of at most 100 strings.');
+  }
+  const normalized = parsed.map((value) => value.trim());
+  if (normalized.some((value) => !value || value.length > 80) || new Set(normalized).size !== normalized.length) {
+    throw new Error('COLLECTION_PAYMENT_STATE_VALUES_JSON contains an invalid or duplicate state value.');
+  }
+  return normalized;
+}
+
 function applicationsFrom(
   deps: ApplicationDependencies,
   taskStore: MemoryClaimTaskStore | PrismaClaimTaskStore,
@@ -131,6 +157,8 @@ function applicationsFrom(
   importRepository: GovernedImportRepository,
   importSourceStorage: ImportSourceStoragePort,
   renewalRepository: RenewalCaseRepository,
+  collectionRepository: CollectionCaseRepository,
+  collectionPaymentStateVerifier: CollectionPaymentStateVerifier,
   customerPolicyRepository: CustomerPolicyRepository,
   customerPortalRepository: CustomerPortalRepository,
   customerAccessTokens: CustomerAccessTokenPort,
@@ -168,6 +196,14 @@ function applicationsFrom(
     clock: deps.clock,
     ids: deps.ids,
   });
+  const collections = new CollectionsApplication({
+    collections: collectionRepository,
+    paymentStateVerifier: collectionPaymentStateVerifier,
+    customerPolicy: customerPolicyRepository,
+    pipelines: pipelineStore,
+    clock: deps.clock,
+    ids: deps.ids,
+  });
   const customerPortal = new CustomerPortalApplication({
     repository: customerPortalRepository,
     passwordHasher: deps.passwordHasher,
@@ -198,7 +234,7 @@ function applicationsFrom(
   const operationalQueries = new ClaimsOperationalQueryApplication({ claims: deps.claims, tasks: taskStore, pipelines: pipelineStore, clock: deps.clock });
   return {
     application: new ClaimsOperationsApplication(deps, tasks, pipeline, operationalQueries),
-    tasks, pipeline, pipelineAdmin, asyncOperations, automationAdmin, automationExecution, governedImports, guidanceAdmin, renewals, customerPolicy, customerPortal,
+    tasks, pipeline, pipelineAdmin, asyncOperations, automationAdmin, automationExecution, governedImports, guidanceAdmin, renewals, collections, customerPolicy, customerPortal,
     communicationTemplates, communications, integrations, integrationAuthenticator, timeline, evidenceAttention,
     accessTokens: deps.accessTokens,
     customerAccessTokens,
@@ -215,6 +251,7 @@ export async function createMemoryRuntime(options: {
   operatorLogin?: string;
   operatorPassword?: string;
   integrationSecrets?: Readonly<Record<string, string>>;
+  collectionPaymentStates?: readonly string[];
 } = {}): Promise<RuntimeContext & {
   store: MemoryWorkflowStore;
   taskStore: MemoryClaimTaskStore;
@@ -223,6 +260,7 @@ export async function createMemoryRuntime(options: {
   importStore: MemoryGovernedImportStore;
   importSourceStorage: MemoryImportSourceStorage;
   renewalStore: MemoryRenewalCaseStore;
+  collectionStore: MemoryCollectionCaseStore;
   customerPolicyStore: MemoryCustomerPolicyStore;
   customerPortalStore: MemoryCustomerPortalStore;
   communicationStore: MemoryCommunicationStore;
@@ -239,6 +277,8 @@ export async function createMemoryRuntime(options: {
   const importStore = new MemoryGovernedImportStore(asyncStore);
   const importSourceStorage = new MemoryImportSourceStorage();
   const renewalStore = new MemoryRenewalCaseStore();
+  const collectionStore = new MemoryCollectionCaseStore();
+  const collectionPaymentStateVerifier = new ConfiguredCollectionPaymentStateVerifier(options.collectionPaymentStates ?? []);
   const customerPolicyStore = new MemoryCustomerPolicyStore(store);
   const communicationStore = new MemoryCommunicationStore();
   const integrationStore = new MemoryIntegrationStore();
@@ -283,6 +323,8 @@ export async function createMemoryRuntime(options: {
       importStore,
       importSourceStorage,
       renewalStore,
+      collectionStore,
+      collectionPaymentStateVerifier,
       customerPolicyStore,
       customerPortalStore,
       customerAccessTokens,
@@ -290,7 +332,7 @@ export async function createMemoryRuntime(options: {
       integrationStore,
       options.integrationSecrets ?? {},
     ),
-    store, taskStore, pipelineStore, asyncStore, importStore, importSourceStorage, renewalStore, customerPolicyStore, customerPortalStore, communicationStore, integrationStore,
+    store, taskStore, pipelineStore, asyncStore, importStore, importSourceStorage, renewalStore, collectionStore, customerPolicyStore, customerPortalStore, communicationStore, integrationStore,
     automationStore, automationSchedule, guidanceStore, evidenceStorage,
   };
 }
@@ -302,6 +344,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   asyncStore: PrismaAsyncOperationsStore;
   importStore: PrismaGovernedImportStore;
   renewalStore: PrismaRenewalCaseStore;
+  collectionStore: PrismaCollectionCaseStore;
   customerPolicyStore: PrismaCustomerPolicyStore;
   customerPortalStore: PrismaCustomerPortalStore;
   communicationStore: PrismaCommunicationStore;
@@ -322,6 +365,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   if (!staffJwtSecret) throw new Error('STAFF_JWT_SECRET (or legacy JWT_SECRET) is required.');
   if (!customerJwtSecret) throw new Error('CUSTOMER_JWT_SECRET is required for the separate Customer Portal authentication context.');
   const integrationSecrets = integrationSecretsFromEnv(env.INTEGRATION_HMAC_SECRETS_JSON);
+  const collectionPaymentStates = collectionPaymentStatesFromEnv(env.COLLECTION_PAYMENT_STATE_VALUES_JSON);
   const db = postgres<Contract>({ contractJson, url: databaseUrl });
   const store = new PrismaWorkflowStore(db);
   const taskStore = new PrismaClaimTaskStore(db);
@@ -331,6 +375,8 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const importStore = new PrismaGovernedImportStore(db);
   const importSourceStorage = new LocalPrivateImportSourceStorage(env.IMPORT_SOURCE_STORAGE_DIR ?? '.runtime/imports');
   const renewalStore = new PrismaRenewalCaseStore(db);
+  const collectionStore = new PrismaCollectionCaseStore(db);
+  const collectionPaymentStateVerifier = new ConfiguredCollectionPaymentStateVerifier(collectionPaymentStates);
   const customerPolicyStore = new PrismaCustomerPolicyStore(db);
   const communicationStore = new PrismaCommunicationStore(db);
   const integrationStore = new PrismaIntegrationStore(db);
@@ -360,6 +406,8 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
       importStore,
       importSourceStorage,
       renewalStore,
+      collectionStore,
+      collectionPaymentStateVerifier,
       customerPolicyStore,
       customerPortalStore,
       customerAccessTokens,
@@ -367,7 +415,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
       integrationStore,
       integrationSecrets,
     ),
-    store, taskStore, pipelineStore, asyncStore, importStore, renewalStore, customerPolicyStore, customerPortalStore, communicationStore, integrationStore,
+    store, taskStore, pipelineStore, asyncStore, importStore, renewalStore, collectionStore, customerPolicyStore, customerPortalStore, communicationStore, integrationStore,
     automationStore, guidanceStore,
   };
 }

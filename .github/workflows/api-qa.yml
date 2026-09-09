@@ -38,6 +38,7 @@ jobs:
       QA_CUSTOMER_LOGIN: qa.customer@example.invalid
       EVIDENCE_STORAGE_DIR: .runtime/evidence
       IMPORT_SOURCE_STORAGE_DIR: .runtime/imports
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
 
     steps:
       - uses: actions/checkout@v7
@@ -83,12 +84,16 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
 
       - name: Seed synthetic QA staff and customer portal identity
         run: npx tsx qa/seed.ts
 
       - name: Seed synthetic R3 renewals scenario
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/renewals-seed.sql
+
+      - name: Seed synthetic R3 collections scenario
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/collections-seed.sql
 
       - name: Start simulated legacy system and API
         shell: bash
@@ -186,6 +191,53 @@ jobs:
       - name: Execute R3 renewals PostgreSQL runtime QA
         run: node qa/renewals-runtime-qa.mjs
 
+      - name: Restart API to isolate Collections transport rate-limit budget
+        shell: bash
+        run: |
+          terminate_tree() {
+            local pid="$1"
+            local child
+            for child in $(pgrep -P "$pid" 2>/dev/null || true); do
+              terminate_tree "$child"
+            done
+            kill -TERM "$pid" 2>/dev/null || true
+          }
+
+          if [[ -f .runtime/api.pid ]]; then
+            old_pid="$(cat .runtime/api.pid)"
+            terminate_tree "$old_pid"
+          fi
+
+          for attempt in $(seq 1 20); do
+            if ! curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "$attempt" == "20" ]]; then
+              echo 'Previous API process tree is still serving port 3000.'
+              ps -ef | grep -E 'apps/api/src/main.ts|tsx' | grep -v grep || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+          : > .runtime/api.log
+          npm run start:api > .runtime/api.log 2>&1 &
+          echo $! > .runtime/api.pid
+
+          for attempt in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000/health/live >/dev/null; then
+              break
+            fi
+            if [[ "$attempt" == "40" ]]; then
+              cat .runtime/api.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Execute R3 collections PostgreSQL runtime QA
+        run: node qa/collections-runtime-qa.mjs
+
       - name: Verify durable audit and persistence invariants
         shell: bash
         run: |
@@ -194,6 +246,7 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/customer-portal-audit-assertions.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/governed-imports-audit-assertions.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/renewals-audit-assertions.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/collections-audit-assertions.sql
 
       - name: Classify production dependency vulnerabilities
         shell: bash

@@ -895,6 +895,23 @@ model RenewalCase {
   @@map("renewal_cases")
 }
 
+model CollectionCase {
+  id           Uuid      @id @default(uuid())
+  customerId   Uuid      @map("customer_id")
+  policyId     Uuid      @map("policy_id")
+  status       String
+  paymentState String?   @map("payment_state")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @map("updated_at")
+  completedAt  DateTime? @map("completed_at")
+  cancelledAt  DateTime? @map("cancelled_at")
+  version      Int       @default(1)
+
+  @@index([policyId, status], map: "collection_cases_policy_status_idx")
+  @@index([customerId, status], map: "collection_cases_customer_status_idx")
+  @@map("collection_cases")
+}
+
 model IdempotencyRecord {
   id                 Uuid              @id @default(uuid())
   scope              String

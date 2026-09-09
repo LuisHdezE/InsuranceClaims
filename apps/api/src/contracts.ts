@@ -7,6 +7,7 @@ import type { ClaimPipelineApplication } from '@insurance/application/claim-pipe
 import type { ClaimsOperationsApplication } from '@insurance/application/claims-operations';
 import type { ClaimTasksApplication } from '@insurance/application/claim-tasks';
 import type { ClaimTimelineApplication } from '@insurance/application/claim-timeline';
+import type { CollectionsApplication } from '@insurance/application/collections';
 import type { CommunicationTemplateAdminApplication } from '@insurance/application/communication-template-admin';
 import type { CommunicationsApplication } from '@insurance/application/communications';
 import type { CustomerPolicyApplication } from '@insurance/application/customer-policy';
@@ -33,6 +34,7 @@ export interface ApiRuntimeContract {
   governedImports: GovernedImportsApplication;
   guidanceAdmin: GuidanceAdminApplication;
   renewals: RenewalsApplication;
+  collections: CollectionsApplication;
   customerPolicy: CustomerPolicyApplication;
   customerPortal: CustomerPortalApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
