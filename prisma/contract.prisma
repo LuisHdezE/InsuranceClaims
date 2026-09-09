@@ -237,6 +237,19 @@ enum AutomationActionType {
   SCHEDULE_CHECK
 }
 
+enum InsurerGuidanceVersionStatus {
+  @@type("pg/text@1")
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+enum InsurerGuidanceActorType {
+  @@type("pg/text@1")
+  SYSTEM
+  ADMINISTRATOR
+}
+
 model Operator {
   id           Uuid         @id @default(uuid())
   login        String       @unique
@@ -696,6 +709,40 @@ model AutomationActionExecution {
   @@unique([automationExecutionId, actionKey], map: "automation_action_executions_execution_action_key")
   @@index([automationExecutionId, status], map: "automation_action_executions_execution_status_idx")
   @@map("automation_action_executions")
+}
+
+model InsurerGuidanceDefinition {
+  id              Uuid     @id @default(uuid())
+  guidanceKey     String   @unique @map("guidance_key")
+  enabled         Boolean  @default(false)
+  activeVersionId Uuid?    @map("active_version_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @map("updated_at")
+  version         Int      @default(1)
+
+  @@map("insurer_guidance_definitions")
+}
+
+model InsurerGuidanceVersion {
+  id                      Uuid                         @id @default(uuid())
+  guidanceDefinitionId    Uuid                         @map("guidance_definition_id")
+  versionNumber           Int                          @map("version_number")
+  insurerContextReference String                       @map("insurer_context_reference")
+  guidanceCategory        String                       @map("guidance_category")
+  documentCategories      Json                         @map("document_categories")
+  instructions            Json
+  assistanceMetadata      Json                         @map("assistance_metadata")
+  status                  InsurerGuidanceVersionStatus
+  sourceClassification    String                       @map("source_classification")
+  createdByType           InsurerGuidanceActorType     @map("created_by_type")
+  createdById             Uuid?                        @map("created_by_id")
+  createdAt               DateTime                     @default(now()) @map("created_at")
+  activatedAt             DateTime?                    @map("activated_at")
+  retiredAt               DateTime?                    @map("retired_at")
+
+  @@unique([guidanceDefinitionId, versionNumber], map: "insurer_guidance_versions_definition_version_key")
+  @@index([guidanceDefinitionId, status], map: "insurer_guidance_versions_definition_status_idx")
+  @@map("insurer_guidance_versions")
 }
 
 model IdempotencyRecord {

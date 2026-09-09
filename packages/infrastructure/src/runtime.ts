@@ -15,6 +15,7 @@ import { ClaimsOperationalQueryApplication } from '@insurance/application/claims
 import { CommunicationTemplateAdminApplication, type CommunicationTemplateAdminRepository } from '@insurance/application/communication-template-admin';
 import { CommunicationsApplication, type CommunicationRepository } from '@insurance/application/communications';
 import { CustomerPolicyApplication, type CustomerPolicyRepository } from '@insurance/application/customer-policy';
+import { GuidanceAdminApplication, type GuidanceAdminRepository } from '@insurance/application/guidance-admin';
 import type { IntegrationAuthenticatorPort } from '@insurance/application/integration-auth';
 import { IntegrationEventsApplication, type IntegrationEventRepository } from '@insurance/application/integration-events';
 import { PipelineAdminApplication, type PipelineAdminRepository } from '@insurance/application/pipeline-admin';
@@ -45,6 +46,7 @@ import {
   SimulatedCommunicationDeliveryAdapter,
 } from './communication-store.js';
 import { MemoryCustomerPolicyStore, PrismaCustomerPolicyStore } from './customer-policy-store.js';
+import { MemoryGuidanceStore, PrismaGuidanceStore } from './guidance-store.js';
 import {
   HmacIntegrationAuthenticator,
   MemoryIntegrationStore,
@@ -65,6 +67,7 @@ export interface RuntimeContext {
   asyncOperations: AsyncOperationsApplication;
   automationAdmin: AutomationAdminApplication;
   automationExecution: AutomationExecutionApplication;
+  guidanceAdmin: GuidanceAdminApplication;
   customerPolicy: CustomerPolicyApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
   communications: CommunicationsApplication;
@@ -104,6 +107,7 @@ function applicationsFrom(
   asyncRepository: AsyncOperationsRepository,
   automationRepository: AutomationAdminRepository & AutomationExecutionRepository,
   automationScheduler: AutomationSchedulePort,
+  guidanceRepository: GuidanceAdminRepository,
   customerPolicyRepository: CustomerPolicyRepository,
   communicationRepository: CommunicationRepository & CommunicationTemplateAdminRepository,
   integrationRepository: IntegrationEventRepository,
@@ -122,6 +126,7 @@ function applicationsFrom(
     ids: deps.ids,
     hash: deps.hash,
   });
+  const guidanceAdmin = new GuidanceAdminApplication({ repository: guidanceRepository, clock: deps.clock, ids: deps.ids });
   const customerPolicy = new CustomerPolicyApplication(customerPolicyRepository);
   const communicationTemplates = new CommunicationTemplateAdminApplication({ repository: communicationRepository, clock: deps.clock, ids: deps.ids });
   const communications = new CommunicationsApplication({
@@ -144,7 +149,7 @@ function applicationsFrom(
   const operationalQueries = new ClaimsOperationalQueryApplication({ claims: deps.claims, tasks: taskStore, pipelines: pipelineStore, clock: deps.clock });
   return {
     application: new ClaimsOperationsApplication(deps, tasks, pipeline, operationalQueries),
-    tasks, pipeline, pipelineAdmin, asyncOperations, automationAdmin, automationExecution, customerPolicy, communicationTemplates, communications, integrations, integrationAuthenticator,
+    tasks, pipeline, pipelineAdmin, asyncOperations, automationAdmin, automationExecution, guidanceAdmin, customerPolicy, communicationTemplates, communications, integrations, integrationAuthenticator,
     timeline, evidenceAttention,
     accessTokens: deps.accessTokens,
   };
@@ -167,6 +172,7 @@ export async function createMemoryRuntime(options: {
   integrationStore: MemoryIntegrationStore;
   automationStore: MemoryAutomationStore;
   automationSchedule: MemoryAutomationScheduleAdapter;
+  guidanceStore: MemoryGuidanceStore;
   evidenceStorage: MemoryEvidenceStorage;
 }> {
   const store = new MemoryWorkflowStore();
@@ -178,6 +184,7 @@ export async function createMemoryRuntime(options: {
   const integrationStore = new MemoryIntegrationStore();
   const automationStore = new MemoryAutomationStore();
   const automationSchedule = new MemoryAutomationScheduleAdapter();
+  const guidanceStore = new MemoryGuidanceStore();
   const evidenceStorage = new MemoryEvidenceStorage();
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(
@@ -206,12 +213,13 @@ export async function createMemoryRuntime(options: {
       asyncStore,
       automationStore,
       automationSchedule,
+      guidanceStore,
       customerPolicyStore,
       communicationStore,
       integrationStore,
       options.integrationSecrets ?? {},
     ),
-    store, taskStore, pipelineStore, asyncStore, customerPolicyStore, communicationStore, integrationStore, automationStore, automationSchedule, evidenceStorage,
+    store, taskStore, pipelineStore, asyncStore, customerPolicyStore, communicationStore, integrationStore, automationStore, automationSchedule, guidanceStore, evidenceStorage,
   };
 }
 
@@ -224,6 +232,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   communicationStore: PrismaCommunicationStore;
   integrationStore: PrismaIntegrationStore;
   automationStore: PrismaAutomationStore;
+  guidanceStore: PrismaGuidanceStore;
 }> {
   const databaseUrl = env.DATABASE_URL;
   const legacyUrl = env.LEGACY_SIMULATOR_URL;
@@ -245,6 +254,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const integrationStore = new PrismaIntegrationStore(db);
   const automationStore = new PrismaAutomationStore(db);
   const automationSchedule = new PrismaAutomationScheduleAdapter(db, new SecureIdGenerator(), new SystemClock());
+  const guidanceStore = new PrismaGuidanceStore(db);
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(staffJwtSecret, staffJwtIssuer, staffJwtAudience);
   const deps: ApplicationDependencies = {
@@ -262,11 +272,12 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
       asyncStore,
       automationStore,
       automationSchedule,
+      guidanceStore,
       customerPolicyStore,
       communicationStore,
       integrationStore,
       integrationSecrets,
     ),
-    store, taskStore, pipelineStore, asyncStore, customerPolicyStore, communicationStore, integrationStore, automationStore,
+    store, taskStore, pipelineStore, asyncStore, customerPolicyStore, communicationStore, integrationStore, automationStore, guidanceStore,
   };
 }

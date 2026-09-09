@@ -34,6 +34,7 @@ jobs:
       PORT: '3000'
       QA_BASE_URL: http://127.0.0.1:3000
       QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
       EVIDENCE_STORAGE_DIR: .runtime/evidence
 
     steps:
@@ -71,9 +72,12 @@ jobs:
           psql --version
 
       - name: Bootstrap ephemeral PostgreSQL QA schema
-        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
 
-      - name: Seed synthetic QA operator
+      - name: Seed synthetic QA staff
         run: npx tsx qa/seed.ts
 
       - name: Start simulated legacy system and API
@@ -116,8 +120,14 @@ jobs:
       - name: Execute positive negative contract and security runtime QA
         run: node qa/runtime-qa.mjs
 
+      - name: Execute R3 insurer guidance PostgreSQL runtime QA
+        run: node qa/guidance-runtime-qa.mjs
+
       - name: Verify durable audit and persistence invariants
-        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/audit-assertions.sql
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/audit-assertions.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/guidance-audit-assertions.sql
 
       - name: Classify production dependency vulnerabilities
         shell: bash
