@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Prepare immutable R1 composition context
+        run: cp documentation/api/post-mvp/baselines/openapi-v1-r1.yaml openapi.yaml
+
       - name: Lint additive OpenAPI 3.1 contract
         run: npx --yes @redocly/cli@2.51.2 lint --extends=spec documentation/api/post-mvp/openapi-v1-r2-additions.yaml
 
@@ -37,5 +40,5 @@ jobs:
             -s documentation/api/post-mvp/blueprint-api-impact.schema.json \
             -d .blueprint/api-impact/API-IMPACT-001.json
 
-      - name: Validate immutable r1 plus additive r2 composition
+      - name: Validate immutable R1 plus additive R2 composition
         run: node scripts/validate-post-mvp-api-contract.mjs

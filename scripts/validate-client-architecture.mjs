@@ -24,20 +24,29 @@ const designPath = '.blueprint/ui/design-system.json';
 const tokensPath = '.blueprint/ui/design-tokens.json';
 const landingReference = '.blueprint/ui/references/far-public-landing-approved.md';
 const openapiPath = 'openapi.yaml';
+const openapiFragmentDir = 'openapi/r3';
 const architectureDocPath = 'documentation/client-architecture/CLIENT_ARCHITECTURE.md';
 
-for (const required of [baselinePath, ...bindingPaths, inventoryPath, designPath, tokensPath, landingReference, openapiPath, architectureDocPath]) {
+for (const required of [baselinePath, ...bindingPaths, inventoryPath, designPath, tokensPath, landingReference, openapiPath, openapiFragmentDir, architectureDocPath]) {
   assert(exists(required), `Required Client Architecture artifact missing: ${required}`);
 }
 
 const baseline = readJson(baselinePath);
 const inventory = readJson(inventoryPath);
 const design = readJson(designPath);
-const openapi = readText(openapiPath);
+const openapiRoot = readText(openapiPath);
+const openapiFragments = fs.readdirSync(path.join(root, openapiFragmentDir))
+  .filter((name) => name.endsWith('.json'))
+  .sort()
+  .map((name) => readText(path.join(openapiFragmentDir, name)));
+const openapi = [openapiRoot, ...openapiFragments].join('\n');
 const architectureDoc = readText(architectureDocPath);
 const bindings = bindingPaths.map(readJson);
+const hasOperationId = (operationId) =>
+  openapi.includes(`operationId: ${operationId}`) ||
+  openapi.includes(`"operationId":"${operationId}"`) ||
+  openapi.includes(`"operationId": "${operationId}"`);
 
-// Platform baseline contract.
 assert(baseline.schema_version === '0.5.0', 'Platform baseline schema_version must remain 0.5.0');
 assert(baseline.baseline_id === 'CLIENT-BASELINE-WEB-INSURANCE-CLAIMS', 'Unexpected platform baseline id');
 assert(baseline.project_id === 'LuisHdezE/InsuranceClaims', 'Unexpected project id');
@@ -53,7 +62,6 @@ assert(baseline.api_client.error_contract.includes('RFC 9457'), 'RFC 9457 Proble
 assert(baseline.api_client.request_id_header === 'X-Request-Id', 'Request ID header must match the approved API contract');
 assert(baseline.api_client.idempotency_header === 'Idempotency-Key', 'Idempotency header must match the approved API contract');
 
-// Auth must match the approved no-refresh MVP exactly.
 assert(baseline.auth_lifecycle.mechanism === 'bearer_jwt', 'Operator auth must use bearer JWT');
 assert(baseline.auth_lifecycle.access_credential_storage === 'memory', 'Bearer token must remain memory-only');
 assert(baseline.auth_lifecycle.refresh_credential_storage === 'not_applicable', 'Refresh credential storage must be N/A');
@@ -83,7 +91,6 @@ assert(baseline.web.build_tool === 'Vite', 'Build tool decision drift');
 assert(architectureDoc.includes('Axios'), 'Client API transport strategy must document Axios');
 assert(architectureDoc.includes('Tailwind CSS'), 'Client visual implementation must document Tailwind CSS');
 
-// Approved FAR-aligned visual contract and shared landing policy.
 assert(design.identity.logo_required === true, 'FAR-aligned Design System requires the versioned logo reference');
 assert(exists(design.identity.logo_path), `Logo asset missing: ${design.identity.logo_path}`);
 assert(design.tokens_path === tokensPath, 'Design System token path drift');
@@ -165,7 +172,7 @@ for (const binding of bindings) {
   sameSet(binding.api_binding.permissions, spec.permissions, `${binding.interface_slice} permissions`);
   sameSet(binding.idempotency.required_operations, spec.idempotency, `${binding.interface_slice} idempotency operations`);
   assert(binding.api_binding.openapi_path === openapiPath, `${binding.interface_slice}: OpenAPI path drift`);
-  assert(binding.api_binding.revision === 'api-v1-r1', `${binding.interface_slice}: API revision drift`);
+  assert(binding.api_binding.revision === 'api-v1-r1', `${binding.interface_slice}: inherited API revision drift`);
   assert(binding.visual_references.mode === 'none', `${binding.interface_slice}: no slice-specific static mockup is approved`);
   assert(binding.visual_references.approved_reference_paths.length === 0, `${binding.interface_slice}: placeholder/foreign visual reference detected`);
   assert(binding.async_states.offline === 'REQUIRED', `${binding.interface_slice}: degraded offline state must be explicit`);
@@ -193,7 +200,7 @@ for (const binding of bindings) {
   sameSet(binding.api_binding.operation_ids, inventoryOps, `${binding.interface_slice} inventory operation binding`);
 
   for (const operationId of binding.api_binding.operation_ids) {
-    assert(openapi.includes(`operationId: ${operationId}`), `${binding.interface_slice}: operationId ${operationId} missing from OpenAPI`);
+    assert(hasOperationId(operationId), `${binding.interface_slice}: operationId ${operationId} missing from effective OpenAPI`);
   }
   for (const operationId of binding.idempotency.required_operations) {
     assert(binding.api_binding.operation_ids.includes(operationId), `${binding.interface_slice}: idempotency operation ${operationId} is not bound`);
@@ -209,8 +216,8 @@ for (const binding of bindings) {
 sameSet(allBoundIds, ['WEB-002','WEB-003','WEB-004','WEB-005','WEB-006','WEB-007','WEB-008','WEB-009','WEB-010'], 'All slice-bound inventory IDs');
 assert(!allBoundIds.includes('WEB-001'), 'Shared WEB-001 must not be smuggled into a slice binding');
 
-assert(openapi.includes('api-v1-r1'), 'OpenAPI must identify approved API revision api-v1-r1');
-assert(openapi.includes('operationId: createClaim'), 'createClaim missing from OpenAPI');
+assert(openapiRoot.includes('api-v1-r3'), 'OpenAPI must identify effective API revision api-v1-r3');
+assert(hasOperationId('createClaim'), 'createClaim missing from effective OpenAPI');
 assert(openapi.includes('Idempotency-Key'), 'OpenAPI must retain Idempotency-Key contract');
 assert(openapi.includes('expectedFromStatus'), 'OpenAPI must retain backoffice transition concurrency guard');
 
@@ -236,7 +243,7 @@ console.log('Client Architecture semantic validation PASS');
 console.log(`Platform baseline: ${baseline.baseline_id}`);
 console.log(`Slices validated: ${bindings.map((b) => `${b.interface_slice}/web`).join(', ')}`);
 console.log('Executable inventory binding: 9 slice-owned WEB items + shared WEB-001 preserved');
-console.log('API revision: api-v1-r1; operationId/permission/route/idempotency bindings PASS');
+console.log('Effective API revision: api-v1-r3; inherited client bindings remain api-v1-r1 and are present in the effective contract');
 console.log('Auth: bearer JWT memory-only, no refresh, local logout PASS');
 console.log('Visual contract: FAR-aligned Design System/tokens + shared approved WEB-001 landing reference PASS');
 console.log('Security: API authoritative, no new behavior, no hardcoded authoritative data PASS');
