@@ -2,6 +2,7 @@ import { Argon2PasswordHasher, createProductionRuntimeFromEnv } from '@insurance
 
 const operatorId = '00000000-0000-4000-8000-000000000099';
 const adminId = '00000000-0000-4000-8000-000000000098';
+const supervisorId = '00000000-0000-4000-8000-000000000097';
 const portalCustomerId = '91000000-0000-4000-8000-000000000001';
 const portalPolicyId = '92000000-0000-4000-8000-000000000001';
 const portalAssetId = '93000000-0000-4000-8000-000000000001';
@@ -10,6 +11,7 @@ const portalHistoryId = '95000000-0000-4000-8000-000000000001';
 const portalAccountId = '96000000-0000-4000-8000-000000000001';
 const login = process.env.QA_OPERATOR_LOGIN ?? 'qa.operator@example.invalid';
 const adminLogin = process.env.QA_ADMIN_LOGIN ?? 'qa.admin@example.invalid';
+const supervisorLogin = process.env.QA_SUPERVISOR_LOGIN ?? 'qa.supervisor@example.invalid';
 const portalLogin = process.env.QA_CUSTOMER_LOGIN ?? 'qa.customer@example.invalid';
 const password = process.env.QA_OPERATOR_PASSWORD;
 const portalPassword = process.env.QA_CUSTOMER_PASSWORD;
@@ -33,6 +35,14 @@ await runtime.store.seedOperator({
   login: adminLogin.toLowerCase(),
   passwordHash,
   role: 'PLATFORM_ADMIN',
+  isActive: true,
+}, at);
+
+await runtime.store.seedOperator({
+  id: supervisorId,
+  login: supervisorLogin.toLowerCase(),
+  passwordHash,
+  role: 'CLAIMS_SUPERVISOR',
   isActive: true,
 }, at);
 
@@ -118,6 +128,8 @@ console.log(JSON.stringify({
   login,
   adminId,
   adminLogin,
+  supervisorId,
+  supervisorLogin,
   portalSeeded,
   ...(portalSeeded ? { portalCustomerId, portalClaimId, portalAccountId, portalLogin } : {}),
 }));
