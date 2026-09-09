@@ -29,9 +29,13 @@ enum AuditActorType {
   @@type("pg/text@1")
   ANONYMOUS
   CUSTOMER_PUBLIC
+  CUSTOMER_ACCOUNT
   OPERATOR
   SUPERVISOR
   ADMINISTRATOR
+  INTEGRATION
+  AUTOMATION
+  SYSTEM
 }
 
 enum AuditOutcome {
@@ -164,6 +168,30 @@ enum CommunicationAttemptOutcome {
   IN_PROGRESS
   DELIVERED
   FAILED
+}
+
+enum InboundEventIngestionStatus {
+  @@type("pg/text@1")
+  ACCEPTED
+}
+
+enum InboundEventProcessingStatus {
+  @@type("pg/text@1")
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+  DEAD_LETTER
+}
+
+enum AsyncJobStatus {
+  @@type("pg/text@1")
+  PENDING
+  LEASED
+  SUCCEEDED
+  FAILED_RETRYABLE
+  DEAD_LETTER
+  CANCELLED
 }
 
 model Operator {
@@ -495,6 +523,64 @@ model CommunicationAttempt {
   @@unique([communicationId, attemptNumber], map: "communication_attempts_communication_number_key")
   @@index([communicationId, startedAt], map: "communication_attempts_communication_started_idx")
   @@map("communication_attempts")
+}
+
+model InboundIntegration {
+  id                  Uuid           @id @default(uuid())
+  integrationKey      String         @unique @map("integration_key")
+  keyId               String         @unique @map("key_id")
+  enabled             Boolean        @default(false)
+  allowedEventSchemas Json           @map("allowed_event_schemas")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @default(now()) @map("updated_at")
+  version             Int            @default(1)
+  events              InboundEvent[]
+
+  @@map("inbound_integrations")
+}
+
+model InboundEvent {
+  id               Uuid                         @id @default(uuid())
+  integrationId    Uuid                         @map("integration_id")
+  externalEventId  String                       @map("external_event_id")
+  payloadHash      String                       @map("payload_hash")
+  sanitizedPayload Json                         @map("sanitized_payload")
+  eventType        String                       @map("event_type")
+  ingestionStatus  InboundEventIngestionStatus  @map("ingestion_status")
+  processingStatus InboundEventProcessingStatus @map("processing_status")
+  correlationId    String?                      @map("correlation_id")
+  acceptedAt       DateTime                     @map("accepted_at")
+  processedAt      DateTime?                    @map("processed_at")
+  failureCategory  String?                      @map("failure_category")
+  version          Int                          @default(1)
+  integration      InboundIntegration           @relation(fields: [integrationId], references: [id], onDelete: Restrict)
+
+  @@unique([integrationId, externalEventId], map: "inbound_events_integration_external_key")
+  @@index([processingStatus, acceptedAt], map: "inbound_events_processing_accepted_idx")
+  @@map("inbound_events")
+}
+
+model AsyncJob {
+  id                  Uuid           @id @default(uuid())
+  jobType             String         @map("job_type")
+  idempotencyIdentity String         @map("idempotency_identity")
+  payload             Json
+  status              AsyncJobStatus
+  attemptCount        Int            @default(0) @map("attempt_count")
+  maxAttempts         Int            @map("max_attempts")
+  availableAt         DateTime       @map("available_at")
+  leaseOwner          String?        @map("lease_owner")
+  leaseExpiresAt      DateTime?      @map("lease_expires_at")
+  correlationId       String?        @map("correlation_id")
+  lastFailureCategory String?        @map("last_failure_category")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @default(now()) @map("updated_at")
+  completedAt         DateTime?      @map("completed_at")
+  version             Int            @default(1)
+
+  @@unique([jobType, idempotencyIdentity], map: "async_jobs_type_identity_key")
+  @@index([status, availableAt], map: "async_jobs_status_available_idx")
+  @@map("async_jobs")
 }
 
 model IdempotencyRecord {

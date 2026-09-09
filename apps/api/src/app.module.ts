@@ -6,6 +6,7 @@ import { OperatorClaimsAnalyticsController } from './claims-analytics-controller
 import { CommunicationTemplateAdminController, OperatorCommunicationsController } from './communication-controller.js';
 import { HealthController, OperatorAuthController, OperatorClaimsController, PublicClaimsController } from './controllers.js';
 import { CustomerPolicyController } from './customer-policy-controller.js';
+import { AdminIntegrationEventsController, IntegrationEventsController } from './integration-controller.js';
 import { PipelineAdminController } from './pipeline-admin-controller.js';
 import { OperatorClaimPipelineController } from './pipeline-controller.js';
 import { OperatorTasksController } from './task-controller.js';
@@ -26,6 +27,8 @@ export class ApiModule implements NestModule {
         PipelineAdminController,
         CommunicationTemplateAdminController,
         OperatorCommunicationsController,
+        IntegrationEventsController,
+        AdminIntegrationEventsController,
         OperatorTasksController,
         HealthController,
       ],
