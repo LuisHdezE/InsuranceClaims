@@ -15,6 +15,11 @@ import { ClaimsOperationalQueryApplication } from '@insurance/application/claims
 import { CommunicationTemplateAdminApplication, type CommunicationTemplateAdminRepository } from '@insurance/application/communication-template-admin';
 import { CommunicationsApplication, type CommunicationRepository } from '@insurance/application/communications';
 import { CustomerPolicyApplication, type CustomerPolicyRepository } from '@insurance/application/customer-policy';
+import {
+  CustomerPortalApplication,
+  type CustomerAccessTokenPort,
+  type CustomerPortalRepository,
+} from '@insurance/application/customer-portal';
 import { GuidanceAdminApplication, type GuidanceAdminRepository } from '@insurance/application/guidance-admin';
 import type { IntegrationAuthenticatorPort } from '@insurance/application/integration-auth';
 import { IntegrationEventsApplication, type IntegrationEventRepository } from '@insurance/application/integration-events';
@@ -45,6 +50,8 @@ import {
   PrismaCommunicationStore,
   SimulatedCommunicationDeliveryAdapter,
 } from './communication-store.js';
+import { JwtCustomerAccessTokenAdapter } from './customer-portal-adapters.js';
+import { MemoryCustomerPortalStore, PrismaCustomerPortalStore } from './customer-portal-store.js';
 import { MemoryCustomerPolicyStore, PrismaCustomerPolicyStore } from './customer-policy-store.js';
 import { MemoryGuidanceStore, PrismaGuidanceStore } from './guidance-store.js';
 import {
@@ -69,6 +76,7 @@ export interface RuntimeContext {
   automationExecution: AutomationExecutionApplication;
   guidanceAdmin: GuidanceAdminApplication;
   customerPolicy: CustomerPolicyApplication;
+  customerPortal: CustomerPortalApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
   communications: CommunicationsApplication;
   integrations: IntegrationEventsApplication;
@@ -76,6 +84,7 @@ export interface RuntimeContext {
   timeline: ClaimTimelineApplication;
   evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;
+  customerAccessTokens: CustomerAccessTokenPort;
 }
 
 function integrationSecretsFromEnv(raw: string | undefined): Readonly<Record<string, string>> {
@@ -109,6 +118,8 @@ function applicationsFrom(
   automationScheduler: AutomationSchedulePort,
   guidanceRepository: GuidanceAdminRepository,
   customerPolicyRepository: CustomerPolicyRepository,
+  customerPortalRepository: CustomerPortalRepository,
+  customerAccessTokens: CustomerAccessTokenPort,
   communicationRepository: CommunicationRepository & CommunicationTemplateAdminRepository,
   integrationRepository: IntegrationEventRepository,
   integrationSecrets: Readonly<Record<string, string>>,
@@ -128,6 +139,15 @@ function applicationsFrom(
   });
   const guidanceAdmin = new GuidanceAdminApplication({ repository: guidanceRepository, clock: deps.clock, ids: deps.ids });
   const customerPolicy = new CustomerPolicyApplication(customerPolicyRepository);
+  const customerPortal = new CustomerPortalApplication({
+    repository: customerPortalRepository,
+    passwordHasher: deps.passwordHasher,
+    accessTokens: customerAccessTokens,
+    evidenceStorage: deps.evidenceStorage,
+    clock: deps.clock,
+    ids: deps.ids,
+    hash: deps.hash,
+  });
   const communicationTemplates = new CommunicationTemplateAdminApplication({ repository: communicationRepository, clock: deps.clock, ids: deps.ids });
   const communications = new CommunicationsApplication({
     repository: communicationRepository,
@@ -149,9 +169,10 @@ function applicationsFrom(
   const operationalQueries = new ClaimsOperationalQueryApplication({ claims: deps.claims, tasks: taskStore, pipelines: pipelineStore, clock: deps.clock });
   return {
     application: new ClaimsOperationsApplication(deps, tasks, pipeline, operationalQueries),
-    tasks, pipeline, pipelineAdmin, asyncOperations, automationAdmin, automationExecution, guidanceAdmin, customerPolicy, communicationTemplates, communications, integrations, integrationAuthenticator,
-    timeline, evidenceAttention,
+    tasks, pipeline, pipelineAdmin, asyncOperations, automationAdmin, automationExecution, guidanceAdmin, customerPolicy, customerPortal,
+    communicationTemplates, communications, integrations, integrationAuthenticator, timeline, evidenceAttention,
     accessTokens: deps.accessTokens,
+    customerAccessTokens,
   };
 }
 
@@ -159,6 +180,9 @@ export async function createMemoryRuntime(options: {
   jwtSecret?: string;
   staffJwtIssuer?: string;
   staffJwtAudience?: string;
+  customerJwtSecret?: string;
+  customerJwtIssuer?: string;
+  customerJwtAudience?: string;
   operatorLogin?: string;
   operatorPassword?: string;
   integrationSecrets?: Readonly<Record<string, string>>;
@@ -168,6 +192,7 @@ export async function createMemoryRuntime(options: {
   pipelineStore: MemoryPipelineStore;
   asyncStore: MemoryAsyncOperationsStore;
   customerPolicyStore: MemoryCustomerPolicyStore;
+  customerPortalStore: MemoryCustomerPortalStore;
   communicationStore: MemoryCommunicationStore;
   integrationStore: MemoryIntegrationStore;
   automationStore: MemoryAutomationStore;
@@ -185,12 +210,18 @@ export async function createMemoryRuntime(options: {
   const automationStore = new MemoryAutomationStore();
   const automationSchedule = new MemoryAutomationScheduleAdapter();
   const guidanceStore = new MemoryGuidanceStore();
+  const customerPortalStore = new MemoryCustomerPortalStore(store, customerPolicyStore, communicationStore, guidanceStore);
   const evidenceStorage = new MemoryEvidenceStorage();
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(
     options.jwtSecret ?? 'memory-runtime-secret-that-is-long-enough-123456',
     options.staffJwtIssuer ?? 'insurance-claims-staff',
     options.staffJwtAudience ?? 'insurance-claims-staff-api',
+  );
+  const customerAccessTokens = new JwtCustomerAccessTokenAdapter(
+    options.customerJwtSecret ?? 'memory-customer-secret-that-is-separate-and-long-123456',
+    options.customerJwtIssuer ?? 'insurance-claims-customer',
+    options.customerJwtAudience ?? 'insurance-claims-customer-api',
   );
   store.seedOperator({
     id: '00000000-0000-4000-8000-000000000001',
@@ -215,11 +246,14 @@ export async function createMemoryRuntime(options: {
       automationSchedule,
       guidanceStore,
       customerPolicyStore,
+      customerPortalStore,
+      customerAccessTokens,
       communicationStore,
       integrationStore,
       options.integrationSecrets ?? {},
     ),
-    store, taskStore, pipelineStore, asyncStore, customerPolicyStore, communicationStore, integrationStore, automationStore, automationSchedule, guidanceStore, evidenceStorage,
+    store, taskStore, pipelineStore, asyncStore, customerPolicyStore, customerPortalStore, communicationStore, integrationStore,
+    automationStore, automationSchedule, guidanceStore, evidenceStorage,
   };
 }
 
@@ -229,6 +263,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   pipelineStore: PrismaPipelineStore;
   asyncStore: PrismaAsyncOperationsStore;
   customerPolicyStore: PrismaCustomerPolicyStore;
+  customerPortalStore: PrismaCustomerPortalStore;
   communicationStore: PrismaCommunicationStore;
   integrationStore: PrismaIntegrationStore;
   automationStore: PrismaAutomationStore;
@@ -239,9 +274,13 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const staffJwtSecret = env.STAFF_JWT_SECRET ?? env.JWT_SECRET;
   const staffJwtIssuer = env.STAFF_JWT_ISSUER ?? 'insurance-claims-staff';
   const staffJwtAudience = env.STAFF_JWT_AUDIENCE ?? 'insurance-claims-staff-api';
+  const customerJwtSecret = env.CUSTOMER_JWT_SECRET;
+  const customerJwtIssuer = env.CUSTOMER_JWT_ISSUER ?? 'insurance-claims-customer';
+  const customerJwtAudience = env.CUSTOMER_JWT_AUDIENCE ?? 'insurance-claims-customer-api';
   if (!databaseUrl) throw new Error('DATABASE_URL is required.');
   if (!legacyUrl) throw new Error('LEGACY_SIMULATOR_URL is required.');
   if (!staffJwtSecret) throw new Error('STAFF_JWT_SECRET (or legacy JWT_SECRET) is required.');
+  if (!customerJwtSecret) throw new Error('CUSTOMER_JWT_SECRET is required for the separate Customer Portal authentication context.');
   const integrationSecrets = integrationSecretsFromEnv(env.INTEGRATION_HMAC_SECRETS_JSON);
   const db = postgres<Contract>({ contractJson, url: databaseUrl });
   const store = new PrismaWorkflowStore(db);
@@ -255,8 +294,10 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const automationStore = new PrismaAutomationStore(db);
   const automationSchedule = new PrismaAutomationScheduleAdapter(db, new SecureIdGenerator(), new SystemClock());
   const guidanceStore = new PrismaGuidanceStore(db);
+  const customerPortalStore = new PrismaCustomerPortalStore(db);
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(staffJwtSecret, staffJwtIssuer, staffJwtAudience);
+  const customerAccessTokens = new JwtCustomerAccessTokenAdapter(customerJwtSecret, customerJwtIssuer, customerJwtAudience);
   const deps: ApplicationDependencies = {
     policyVerification: new HttpPolicyVerificationAdapter(legacyUrl), claims: store,
     evidenceStorage: new LocalPrivateEvidenceStorage(env.EVIDENCE_STORAGE_DIR ?? '.runtime/evidence'), audits: store,
@@ -274,10 +315,13 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
       automationSchedule,
       guidanceStore,
       customerPolicyStore,
+      customerPortalStore,
+      customerAccessTokens,
       communicationStore,
       integrationStore,
       integrationSecrets,
     ),
-    store, taskStore, pipelineStore, asyncStore, customerPolicyStore, communicationStore, integrationStore, automationStore, guidanceStore,
+    store, taskStore, pipelineStore, asyncStore, customerPolicyStore, customerPortalStore, communicationStore, integrationStore,
+    automationStore, guidanceStore,
   };
 }

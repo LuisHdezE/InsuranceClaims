@@ -94,6 +94,7 @@ jobs:
         shell: bash
         run: |
           echo "JWT_SECRET=integration-qa-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=integration-customer-qa-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "QA_OPERATOR_PASSWORD=Integration-qa-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
 
       - name: Ensure PostgreSQL client and browser runtime

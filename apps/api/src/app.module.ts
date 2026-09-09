@@ -1,11 +1,13 @@
 import { MiddlewareConsumer, Module, type DynamicModule, type NestModule } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
-import { ACCESS_TOKENS, API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
+import { ACCESS_TOKENS, API_RUNTIME, CUSTOMER_ACCESS_TOKENS, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
 import { AutomationAdminController } from './automation-controller.js';
 import { OperatorClaimsAnalyticsController } from './claims-analytics-controller.js';
 import { CommunicationTemplateAdminController, OperatorCommunicationsController } from './communication-controller.js';
 import { HealthController, OperatorAuthController, OperatorClaimsController, PublicClaimsController } from './controllers.js';
+import { CustomerJwtAuthGuard } from './customer-auth.guard.js';
+import { CustomerPortalAuthController, CustomerPortalController } from './customer-portal-controller.js';
 import { CustomerPolicyController } from './customer-policy-controller.js';
 import { DeadLetterAdminController } from './dead-letter-controller.js';
 import { GuidanceAdminController } from './guidance-controller.js';
@@ -22,6 +24,8 @@ export class ApiModule implements NestModule {
       module: ApiModule,
       controllers: [
         PublicClaimsController,
+        CustomerPortalAuthController,
+        CustomerPortalController,
         OperatorAuthController,
         OperatorClaimsController,
         OperatorClaimsAnalyticsController,
@@ -41,8 +45,10 @@ export class ApiModule implements NestModule {
       providers: [
         { provide: API_RUNTIME, useValue: runtime },
         { provide: ACCESS_TOKENS, useValue: runtime.accessTokens },
+        { provide: CUSTOMER_ACCESS_TOKENS, useValue: runtime.customerAccessTokens },
         RateLimitService,
         JwtAuthGuard,
+        CustomerJwtAuthGuard,
         { provide: APP_FILTER, useClass: ProblemDetailsFilter },
       ],
     };

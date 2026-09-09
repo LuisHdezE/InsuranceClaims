@@ -29,7 +29,15 @@ for (const file of applicationFiles) {
   const source = await readFile(join(root, file), 'utf8');
   rejectImports(file, importSpecifiers(source), ['@nestjs', '@prisma', '@modelcontextprotocol', '@insurance/infrastructure', 'node:fs', 'node:http', 'express', 'argon2', 'jose']);
 }
-const apiBoundaryFiles = ['apps/api/src/controllers.ts', 'apps/api/src/task-controller.ts', 'apps/api/src/auth.guard.ts', 'apps/api/src/transport.ts', 'apps/api/src/dead-letter-controller.ts'];
+const apiBoundaryFiles = [
+  'apps/api/src/controllers.ts',
+  'apps/api/src/task-controller.ts',
+  'apps/api/src/auth.guard.ts',
+  'apps/api/src/customer-auth.guard.ts',
+  'apps/api/src/customer-portal-controller.ts',
+  'apps/api/src/transport.ts',
+  'apps/api/src/dead-letter-controller.ts',
+];
 for (const file of apiBoundaryFiles) {
   const source = await readFile(join(root, file), 'utf8');
   rejectImports(file, importSpecifiers(source), ['@prisma', '@insurance/infrastructure']);

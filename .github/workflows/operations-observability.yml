@@ -61,6 +61,7 @@ jobs:
         shell: bash
         run: |
           echo "JWT_SECRET=ops-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=ops-customer-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "QA_OPERATOR_PASSWORD=ops-pass-$(openssl rand -hex 24)" >> "$GITHUB_ENV"
 
       - name: Ensure PostgreSQL client
@@ -131,7 +132,11 @@ jobs:
             exit 1
           fi
           if grep -Fq "$JWT_SECRET" .runtime/api.log .runtime/legacy.log; then
-            echo 'Synthetic JWT secret leaked into service logs.' >&2
+            echo 'Synthetic staff JWT secret leaked into service logs.' >&2
+            exit 1
+          fi
+          if grep -Fq "$CUSTOMER_JWT_SECRET" .runtime/api.log .runtime/legacy.log; then
+            echo 'Synthetic customer JWT secret leaked into service logs.' >&2
             exit 1
           fi
           echo 'OPERATIONS_LOG_SECRET_SCAN_PASS'

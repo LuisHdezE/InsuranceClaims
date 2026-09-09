@@ -17,6 +17,7 @@ export class ApiProblemError extends Error {
 
 const APP_STATUS: Readonly<Record<string, number>> = {
   AUTHENTICATION_REQUIRED: 401,
+  AUTHENTICATION_CONTEXT_MISMATCH: 401,
   INVALID_CREDENTIALS: 401,
   FORBIDDEN: 403,
   CLAIM_NOT_FOUND: 404,
