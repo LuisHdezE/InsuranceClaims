@@ -7,6 +7,8 @@ import type { ClaimTimelineApplication } from '@insurance/application/claim-time
 import type { CommunicationTemplateAdminApplication } from '@insurance/application/communication-template-admin';
 import type { CommunicationsApplication } from '@insurance/application/communications';
 import type { CustomerPolicyApplication } from '@insurance/application/customer-policy';
+import type { IntegrationAuthenticatorPort } from '@insurance/application/integration-auth';
+import type { IntegrationEventsApplication } from '@insurance/application/integration-events';
 import type { PipelineAdminApplication } from '@insurance/application/pipeline-admin';
 
 export const API_RUNTIME = Symbol('API_RUNTIME');
@@ -20,6 +22,8 @@ export interface ApiRuntimeContract {
   customerPolicy: CustomerPolicyApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
   communications: CommunicationsApplication;
+  integrations: IntegrationEventsApplication;
+  integrationAuthenticator: IntegrationAuthenticatorPort;
   timeline: ClaimTimelineApplication;
   evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;
@@ -29,6 +33,7 @@ export interface RequestWithContext {
   requestId: string;
   actor?: import('@insurance/application').ActorContext;
   headers: Record<string, string | string[] | undefined>;
+  rawBody?: Buffer;
   ip?: string;
   socket?: { remoteAddress?: string };
   url?: string;

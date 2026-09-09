@@ -12,6 +12,8 @@ import { ClaimsOperationalQueryApplication } from '@insurance/application/claims
 import { CommunicationTemplateAdminApplication, type CommunicationTemplateAdminRepository } from '@insurance/application/communication-template-admin';
 import { CommunicationsApplication, type CommunicationRepository } from '@insurance/application/communications';
 import { CustomerPolicyApplication, type CustomerPolicyRepository } from '@insurance/application/customer-policy';
+import type { IntegrationAuthenticatorPort } from '@insurance/application/integration-auth';
+import { IntegrationEventsApplication, type IntegrationEventRepository } from '@insurance/application/integration-events';
 import { PipelineAdminApplication, type PipelineAdminRepository } from '@insurance/application/pipeline-admin';
 import {
   Argon2PasswordHasher,
@@ -32,6 +34,12 @@ import {
   SimulatedCommunicationDeliveryAdapter,
 } from './communication-store.js';
 import { MemoryCustomerPolicyStore, PrismaCustomerPolicyStore } from './customer-policy-store.js';
+import {
+  HmacIntegrationAuthenticator,
+  MemoryIntegrationStore,
+  PrismaIntegrationStore,
+  SimulatedInboundEventProcessor,
+} from './integration-store.js';
 import { MemoryWorkflowStore } from './memory.js';
 import { PrismaPipelineAdminStore } from './pipeline-admin-store.js';
 import { MemoryPipelineStore, PrismaPipelineStore } from './pipeline-store.js';
@@ -46,9 +54,32 @@ export interface RuntimeContext {
   customerPolicy: CustomerPolicyApplication;
   communicationTemplates: CommunicationTemplateAdminApplication;
   communications: CommunicationsApplication;
+  integrations: IntegrationEventsApplication;
+  integrationAuthenticator: IntegrationAuthenticatorPort;
   timeline: ClaimTimelineApplication;
   evidenceAttention: ClaimEvidenceAttentionApplication;
   accessTokens: AccessTokenPort;
+}
+
+function integrationSecretsFromEnv(raw: string | undefined): Readonly<Record<string, string>> {
+  if (!raw) return {};
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error('INTEGRATION_HMAC_SECRETS_JSON must be valid JSON.');
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('INTEGRATION_HMAC_SECRETS_JSON must be a JSON object.');
+  }
+  const result: Record<string, string> = {};
+  for (const [keyId, value] of Object.entries(parsed as Record<string, unknown>)) {
+    if (!/^[A-Za-z0-9._:-]{1,80}$/.test(keyId) || typeof value !== 'string' || value.length < 16 || value.length > 512) {
+      throw new Error('INTEGRATION_HMAC_SECRETS_JSON contains an invalid key identifier or secret value.');
+    }
+    result[keyId] = value;
+  }
+  return result;
 }
 
 function applicationsFrom(
@@ -58,6 +89,8 @@ function applicationsFrom(
   pipelineAdminRepository: PipelineAdminRepository,
   customerPolicyRepository: CustomerPolicyRepository,
   communicationRepository: CommunicationRepository & CommunicationTemplateAdminRepository,
+  integrationRepository: IntegrationEventRepository,
+  integrationSecrets: Readonly<Record<string, string>>,
 ): RuntimeContext {
   const tasks = new ClaimTasksApplication({ claims: deps.claims, tasks: taskStore, idempotency: deps.idempotency, hash: deps.hash, clock: deps.clock, ids: deps.ids });
   const pipeline = new ClaimPipelineApplication({ claims: deps.claims, pipelines: pipelineStore, clock: deps.clock, ids: deps.ids });
@@ -72,12 +105,20 @@ function applicationsFrom(
     ids: deps.ids,
     hash: deps.hash,
   });
+  const integrations = new IntegrationEventsApplication({
+    repository: integrationRepository,
+    processor: new SimulatedInboundEventProcessor(),
+    clock: deps.clock,
+    ids: deps.ids,
+  });
+  const integrationAuthenticator = new HmacIntegrationAuthenticator(integrationRepository, integrationSecrets, deps.clock);
   const timeline = new ClaimTimelineApplication({ claims: deps.claims, tasks: taskStore });
   const evidenceAttention = new ClaimEvidenceAttentionApplication({ claims: deps.claims, tasks: taskStore });
   const operationalQueries = new ClaimsOperationalQueryApplication({ claims: deps.claims, tasks: taskStore, pipelines: pipelineStore, clock: deps.clock });
   return {
     application: new ClaimsOperationsApplication(deps, tasks, pipeline, operationalQueries),
-    tasks, pipeline, pipelineAdmin, customerPolicy, communicationTemplates, communications, timeline, evidenceAttention,
+    tasks, pipeline, pipelineAdmin, customerPolicy, communicationTemplates, communications, integrations, integrationAuthenticator,
+    timeline, evidenceAttention,
     accessTokens: deps.accessTokens,
   };
 }
@@ -88,12 +129,14 @@ export async function createMemoryRuntime(options: {
   staffJwtAudience?: string;
   operatorLogin?: string;
   operatorPassword?: string;
+  integrationSecrets?: Readonly<Record<string, string>>;
 } = {}): Promise<RuntimeContext & {
   store: MemoryWorkflowStore;
   taskStore: MemoryClaimTaskStore;
   pipelineStore: MemoryPipelineStore;
   customerPolicyStore: MemoryCustomerPolicyStore;
   communicationStore: MemoryCommunicationStore;
+  integrationStore: MemoryIntegrationStore;
   evidenceStorage: MemoryEvidenceStorage;
 }> {
   const store = new MemoryWorkflowStore();
@@ -101,6 +144,7 @@ export async function createMemoryRuntime(options: {
   const pipelineStore = new MemoryPipelineStore(async (event) => { await store.append(event as any); });
   const customerPolicyStore = new MemoryCustomerPolicyStore(store);
   const communicationStore = new MemoryCommunicationStore();
+  const integrationStore = new MemoryIntegrationStore();
   const evidenceStorage = new MemoryEvidenceStorage();
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(
@@ -121,8 +165,17 @@ export async function createMemoryRuntime(options: {
     clock: new SystemClock(), ids: new SecureIdGenerator(), hash: new Sha256HashAdapter(), logger: new JsonConsoleLogger(),
   };
   return {
-    ...applicationsFrom(deps, taskStore, pipelineStore, pipelineStore, customerPolicyStore, communicationStore),
-    store, taskStore, pipelineStore, customerPolicyStore, communicationStore, evidenceStorage,
+    ...applicationsFrom(
+      deps,
+      taskStore,
+      pipelineStore,
+      pipelineStore,
+      customerPolicyStore,
+      communicationStore,
+      integrationStore,
+      options.integrationSecrets ?? {},
+    ),
+    store, taskStore, pipelineStore, customerPolicyStore, communicationStore, integrationStore, evidenceStorage,
   };
 }
 
@@ -132,6 +185,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   pipelineStore: PrismaPipelineStore;
   customerPolicyStore: PrismaCustomerPolicyStore;
   communicationStore: PrismaCommunicationStore;
+  integrationStore: PrismaIntegrationStore;
 }> {
   const databaseUrl = env.DATABASE_URL;
   const legacyUrl = env.LEGACY_SIMULATOR_URL;
@@ -141,6 +195,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   if (!databaseUrl) throw new Error('DATABASE_URL is required.');
   if (!legacyUrl) throw new Error('LEGACY_SIMULATOR_URL is required.');
   if (!staffJwtSecret) throw new Error('STAFF_JWT_SECRET (or legacy JWT_SECRET) is required.');
+  const integrationSecrets = integrationSecretsFromEnv(env.INTEGRATION_HMAC_SECRETS_JSON);
   const db = postgres<Contract>({ contractJson, url: databaseUrl });
   const store = new PrismaWorkflowStore(db);
   const taskStore = new PrismaClaimTaskStore(db);
@@ -148,6 +203,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const pipelineAdminStore = new PrismaPipelineAdminStore(db);
   const customerPolicyStore = new PrismaCustomerPolicyStore(db);
   const communicationStore = new PrismaCommunicationStore(db);
+  const integrationStore = new PrismaIntegrationStore(db);
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(staffJwtSecret, staffJwtIssuer, staffJwtAudience);
   const deps: ApplicationDependencies = {
@@ -157,7 +213,16 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
     clock: new SystemClock(), ids: new SecureIdGenerator(), hash: new Sha256HashAdapter(), logger: new JsonConsoleLogger(),
   };
   return {
-    ...applicationsFrom(deps, taskStore, pipelineStore, pipelineAdminStore, customerPolicyStore, communicationStore),
-    store, taskStore, pipelineStore, customerPolicyStore, communicationStore,
+    ...applicationsFrom(
+      deps,
+      taskStore,
+      pipelineStore,
+      pipelineAdminStore,
+      customerPolicyStore,
+      communicationStore,
+      integrationStore,
+      integrationSecrets,
+    ),
+    store, taskStore, pipelineStore, customerPolicyStore, communicationStore, integrationStore,
   };
 }
