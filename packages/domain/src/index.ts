@@ -106,3 +106,4 @@ export * from './communication.js';
 export * from './integration.js';
 export * from './automation.js';
 export * from './import-job.js';
+export * from './renewal-case.js';

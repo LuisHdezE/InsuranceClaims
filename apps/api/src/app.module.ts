@@ -15,6 +15,7 @@ import { GovernedImportsController } from './import-controller.js';
 import { AdminIntegrationEventsController, IntegrationEventsController } from './integration-controller.js';
 import { PipelineAdminController } from './pipeline-admin-controller.js';
 import { OperatorClaimPipelineController } from './pipeline-controller.js';
+import { OperatorRenewalsController } from './renewal-controller.js';
 import { OperatorTasksController } from './task-controller.js';
 import { ProblemDetailsFilter, RateLimitService, RequestIdMiddleware } from './transport.js';
 
@@ -31,6 +32,7 @@ export class ApiModule implements NestModule {
         OperatorClaimsController,
         OperatorClaimsAnalyticsController,
         OperatorClaimPipelineController,
+        OperatorRenewalsController,
         CustomerPolicyController,
         PipelineAdminController,
         AutomationAdminController,

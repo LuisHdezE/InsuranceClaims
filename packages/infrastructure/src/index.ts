@@ -12,5 +12,6 @@ export * from './integration-store.js';
 export * from './memory.js';
 export * from './pipeline-store.js';
 export * from './prisma-store.js';
+export * from './renewal-store.js';
 export * from './task-store.js';
 export * from './runtime.js';
