@@ -30,18 +30,24 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: release-formalization-0.2.0-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate-release-formalization:
     name: Release Formalization 0.2.0
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout exact head
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
       - name: Set up Node.js 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm

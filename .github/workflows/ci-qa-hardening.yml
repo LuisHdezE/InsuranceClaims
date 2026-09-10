@@ -1,0 +1,84 @@
+name: CI QA Hardening
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-qa-hardening-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Validate governed CI and QA invariants
+        run: npm run ci:qa:validate
+
+      - name: Verify production audit classifier semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .runtime/audit-self-test
+          node <<'NODE'
+          const fs = require('node:fs');
+          const dir = '.runtime/audit-self-test';
+          const report = (vulnerabilities, entries = {}) => ({
+            auditReportVersion: 2,
+            vulnerabilities: entries,
+            metadata: { vulnerabilities },
+          });
+          fs.writeFileSync(`${dir}/pass.json`, JSON.stringify(report({ info: 0, low: 0, moderate: 3, high: 0, critical: 0, total: 3 })));
+          fs.writeFileSync(`${dir}/block.json`, JSON.stringify(report(
+            { info: 0, low: 0, moderate: 0, high: 1, critical: 0, total: 1 },
+            { synthetic: { severity: 'high', isDirect: true, range: '<1.0.0', fixAvailable: false } },
+          )));
+          fs.writeFileSync(`${dir}/malformed.json`, JSON.stringify({ error: { message: 'synthetic registry failure' } }));
+          NODE
+
+          node scripts/classify-production-audit.mjs \
+            .runtime/audit-self-test/pass.json \
+            .runtime/audit-self-test/pass-summary.json \
+            self-test-pass
+
+          if node scripts/classify-production-audit.mjs \
+            .runtime/audit-self-test/block.json \
+            .runtime/audit-self-test/block-summary.json \
+            self-test-block; then
+            echo 'Blocking high-severity report unexpectedly passed.' >&2
+            exit 1
+          fi
+
+          if node scripts/classify-production-audit.mjs \
+            .runtime/audit-self-test/malformed.json \
+            .runtime/audit-self-test/malformed-summary.json \
+            self-test-malformed; then
+            echo 'Unclassifiable audit report unexpectedly passed.' >&2
+            exit 1
+          fi
+
+          echo 'Production dependency audit classifier fail-closed semantics: PASS'
+
+      - name: Upload CI QA hardening evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-qa-hardening-${{ github.event.pull_request.head.sha }}
+          path: |
+            .runtime/ci-qa-hardening-summary.json
+            .runtime/audit-self-test/pass-summary.json
+            .runtime/audit-self-test/block-summary.json
+          if-no-files-found: error
+          retention-days: 30

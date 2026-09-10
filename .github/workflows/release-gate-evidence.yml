@@ -11,9 +11,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: release-gate-evidence-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   release-evidence:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:18
@@ -36,6 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
@@ -58,7 +64,14 @@ jobs:
       - name: Build web release candidate
         run: npm --workspace @insurance/web run build
       - name: Reject high or critical production dependency advisories
-        run: npm audit --omit=dev --audit-level=high
+        shell: bash
+        run: |
+          mkdir -p .runtime
+          npm audit --omit=dev --json > .runtime/npm-audit-production.json || true
+          node scripts/classify-production-audit.mjs \
+            .runtime/npm-audit-production.json \
+            .runtime/npm-audit-production-summary.json \
+            release.security_accepted
       - name: Ensure PostgreSQL client tools
         shell: bash
         run: |
@@ -77,10 +90,21 @@ jobs:
           dropdb --version
       - name: Prove PostgreSQL backup and restore
         run: bash qa/release-backup-restore.sh
+      - name: Upload Release Gate security evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-gate-security-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            .runtime/npm-audit-production.json
+            .runtime/npm-audit-production-summary.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Release Gate machine candidate summary
+        shell: bash
         run: |
+          candidate_sha=$(git rev-parse HEAD)
           echo "RELEASE_GATE_EVIDENCE_PASS"
-          echo "candidate_sha=${GITHUB_SHA}"
+          echo "candidate_sha=$candidate_sha"
           echo "release.functional_slices_accepted=PASS"
           echo "release.security_accepted=PASS"
           echo "release.documentation=PASS"

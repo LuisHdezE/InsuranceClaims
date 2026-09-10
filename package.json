@@ -22,6 +22,7 @@
     "postman:generate:r3": "node scripts/materialize-postman-r3.mjs",
     "postman:check:r3": "node scripts/materialize-postman-r3.mjs --check",
     "postman:validate:r3": "node scripts/validate-postman-contract.mjs postman/InsuranceClaims.postman_collection.json postman/InsuranceClaims.local.postman_environment.json documentation/api/r3/API_ENDPOINT_INVENTORY_R3.json && node scripts/validate-postman-r3-historical-compat.mjs",
+    "ci:qa:validate": "node scripts/validate-ci-qa-hardening.mjs",
     "architecture:check": "node scripts/architecture-check.mjs",
     "start:api": "tsx apps/api/src/main.ts",
     "start:mcp": "tsx apps/mcp/src/main.ts",
