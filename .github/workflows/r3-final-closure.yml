@@ -1,0 +1,69 @@
+name: R3 Final Closure
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.blueprint/status.yaml'
+      - '.blueprint/project.yaml'
+      - '.blueprint/api-impact/**'
+      - 'documentation/api/r3/**'
+      - 'documentation/api-implementation/r3/**'
+      - 'openapi.yaml'
+      - 'openapi/r3/**'
+      - 'postman/**'
+      - 'scripts/materialize-r3-final-closure-status.mjs'
+      - 'scripts/validate-r3-final-closure.mjs'
+      - 'package.json'
+      - '.github/workflows/r3-final-closure.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r3-final-closure-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Verify R3 closure state has zero drift
+        run: npm run r3:closure:check
+
+      - name: Validate R3 closure semantics
+        run: npm run r3:closure:validate
+
+      - name: Verify R3 runtime endpoint inventory
+        run: npm run api:reconcile:r3
+
+      - name: Verify OpenAPI R3 zero drift
+        run: npm run openapi:check:r3
+
+      - name: Verify Postman R3 zero drift and semantics
+        run: |
+          npm run postman:check:r3
+          npm run postman:validate:r3
+
+      - name: Verify CI QA hardening invariants
+        run: npm run ci:qa:validate
+
+      - name: Verify closure validation is read-only
+        run: git diff --exit-code -- .blueprint/status.yaml .blueprint/project.yaml

@@ -33,7 +33,7 @@ artifact_locations:
   mockups_root: .blueprint/mockups
   client_architecture_root: .blueprint/client-architecture
   functional_slices_root: .blueprint/functional-slices
-  api_impacts_root: .blueprint/api-impacts
+  api_impacts_root: .blueprint/api-impact
   openapi: openapi.yaml
 skills:
   profiles:
