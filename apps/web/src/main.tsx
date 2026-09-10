@@ -17,6 +17,7 @@ import './claims-evidence-attention.css';
 import './public-refresh.css';
 import './hero-fix.css';
 import './r3-productization.css';
+import './r3-claims-work.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {

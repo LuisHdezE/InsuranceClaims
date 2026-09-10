@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getClaimDetail, transitionClaimStatus } from '../api/claims';
 import type { ApiFailure, ClaimStatus, OperatorClaimDetailResponse } from '../api/types';
 import { ClaimEvidenceAttentionPanel } from '../components/ClaimEvidenceAttentionPanel';
+import { ClaimOperationalStagePanel } from '../components/ClaimOperationalStagePanel';
 import { ClaimTasksPanel } from '../components/ClaimTasksPanel';
 import { ClaimTimelinePanel } from '../components/ClaimTimelinePanel';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
@@ -38,6 +39,7 @@ export function OperatorClaimDetailPage() {
         queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId] }),
         queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'timeline'] }),
         queryClient.invalidateQueries({ queryKey: ['operator', 'claims'] }),
+        queryClient.invalidateQueries({ queryKey: ['operator', 'claims-operational-metrics'] }),
       ]);
     },
     onError: async (error) => {
@@ -77,8 +79,10 @@ export function OperatorClaimDetailPage() {
               onRefresh={() => {
                 void Promise.all([
                   claimQuery.refetch(),
+                  queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'operational-projection'] }),
                   queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'timeline'] }),
                   queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'evidence-attention'] }),
+                  queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'tasks'] }),
                 ]);
               }}
               onPrimaryTransition={(toStatus) => {
@@ -89,14 +93,9 @@ export function OperatorClaimDetailPage() {
 
             {transitionFailure && <OperatorApiErrorNotice failure={transitionFailure} />}
 
-            <div className="ops-detail-grid">
+            <div className="ops-detail-grid r3-claim-detail-grid">
               <section className="ops-panel ops-summary-card" aria-labelledby="claim-summary-title">
-                <div className="ops-panel-heading">
-                  <div>
-                    <span className="ops-kicker">Resumen</span>
-                    <h2 id="claim-summary-title">Información del siniestro</h2>
-                  </div>
-                </div>
+                <div className="ops-panel-heading"><div><span className="ops-kicker">Resumen</span><h2 id="claim-summary-title">Información del siniestro</h2></div></div>
                 <dl className="ops-summary-list">
                   <SummaryRow icon="◇" label="Tipo de evento" value={detail.eventType} />
                   <SummaryRow icon="◷" label="Fecha y hora" value={formatDate(detail.occurredAt)} />
@@ -104,30 +103,24 @@ export function OperatorClaimDetailPage() {
                   <SummaryRow icon="▱" label="Póliza" value={detail.policyReference} secondary={detail.verifiedCustomerLabel ?? 'Sin etiqueta de cliente disponible'} />
                   <SummaryRow icon="▰" label="Vehículo" value={detail.vehicleReference} />
                 </dl>
-                <div className="ops-detail-description">
-                  <span className="ops-summary-icon" aria-hidden="true">≡</span>
-                  <div><strong>Descripción</strong><p>{detail.description}</p></div>
-                </div>
+                <div className="ops-detail-description"><span className="ops-summary-icon" aria-hidden="true">≡</span><div><strong>Descripción</strong><p>{detail.description}</p></div></div>
               </section>
 
               <section className="ops-panel ops-work-card" aria-labelledby="transition-title">
                 <div className="ops-panel-heading">
-                  <div>
-                    <span className="ops-kicker">Decisión de negocio</span>
-                    <h2 id="transition-title">Estado y siguiente decisión</h2>
-                  </div>
+                  <div><span className="ops-kicker">Claim lifecycle</span><h2 id="transition-title">Estado y siguiente decisión</h2></div>
                   <span className={`status-badge status-${detail.status.toLowerCase()}`}>{detail.status}</span>
                 </div>
 
-                <div className="ops-state-overview">
-                  <div><span>Etapa operacional</span><strong>{stageLabel(detail.status)}</strong></div>
+                <div className="ops-state-overview r3-state-overview">
                   <div><span>Estado autoritativo</span><strong>{statusLabel(detail.status)}</strong></div>
+                  <div><span>Transiciones disponibles</span><strong>{detail.allowedTransitions.length}</strong></div>
                   <div><span>Actualizado</span><strong>{formatDate(detail.updatedAt)}</strong></div>
                 </div>
 
                 <div className="ops-task-contract-note is-live">
-                  <strong>Trabajo y ciclo de vida están separados.</strong>
-                  <span>Las tareas operativas se gestionan debajo. Una tarea completada no cambia automáticamente el estado autoritativo del Claim.</span>
+                  <strong>Claim lifecycle y Pipeline son dos autoridades diferentes.</strong>
+                  <span>Esta decisión cambia `ClaimStatus`. La etapa operacional se gestiona en su panel propio y nunca se deriva visualmente de este estado.</span>
                 </div>
 
                 <form className="ops-transition-form" onSubmit={(event) => {
@@ -142,14 +135,13 @@ export function OperatorClaimDetailPage() {
                       <option value="">Seleccionar…</option>
                       {detail.allowedTransitions.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
                     </select>
-                    <button className="ops-primary-action" type="submit" disabled={!selectedTransition || transitionMutation.isPending}>
-                      {transitionMutation.isPending ? 'Enviando…' : 'Confirmar'}
-                    </button>
+                    <button className="ops-primary-action" type="submit" disabled={!selectedTransition || transitionMutation.isPending}>{transitionMutation.isPending ? 'Enviando…' : 'Confirmar'}</button>
                   </div>
                 </form>
                 <div className="operator-concurrency-note">`allowedTransitions` proviene del servidor. Se envía `expectedFromStatus = {detail.status}`; un 409 refresca el detalle antes de una nueva decisión.</div>
               </section>
 
+              <ClaimOperationalStagePanel claimId={claimId} trackingCode={detail.trackingCode} />
               <ClaimTasksPanel claimId={claimId} />
               <ClaimEvidenceAttentionPanel claimId={claimId} />
               <ClaimTimelinePanel claimId={claimId} />
@@ -159,20 +151,7 @@ export function OperatorClaimDetailPage() {
               <summary>Actividad técnica / auditoría <span>{detail.auditEvents.length} evento(s)</span></summary>
               <div className="ops-audit-table-wrap">
                 {detail.auditEvents.length === 0 ? <div className="ops-compact-empty">No hay eventos de auditoría disponibles.</div> : (
-                  <table className="ops-audit-table">
-                    <thead><tr><th>Fecha y hora</th><th>Evento</th><th>Actor</th><th>Resultado</th><th>Request ID</th></tr></thead>
-                    <tbody>
-                      {detail.auditEvents.map((event, index) => (
-                        <tr key={`${event.eventCode}-${event.occurredAt}-${index}`}>
-                          <td>{formatDate(event.occurredAt)}</td>
-                          <td><strong>{event.eventCode}</strong></td>
-                          <td>{event.actorType}{event.actorId ? ` · ${event.actorId}` : ''}</td>
-                          <td>{event.outcome}</td>
-                          <td>{event.requestId ?? '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <table className="ops-audit-table"><thead><tr><th>Fecha y hora</th><th>Evento</th><th>Actor</th><th>Resultado</th><th>Request ID</th></tr></thead><tbody>{detail.auditEvents.map((event, index) => <tr key={`${event.eventCode}-${event.occurredAt}-${index}`}><td>{formatDate(event.occurredAt)}</td><td><strong>{event.eventCode}</strong></td><td>{event.actorType}{event.actorId ? ` · ${event.actorId}` : ''}</td><td>{event.outcome}</td><td>{event.requestId ?? '—'}</td></tr>)}</tbody></table>
                 )}
               </div>
             </details>
@@ -193,25 +172,11 @@ function ClaimHeader({ detail, busy, refreshBusy, onRefresh, onPrimaryTransition
   const primary = preferredTransition(detail.status, detail.allowedTransitions);
   return (
     <header className="ops-detail-header">
-      <div className="ops-detail-identity">
-        <h1>{detail.trackingCode}</h1>
-        <span>{detail.policyReference} · {detail.vehicleReference}</span>
-      </div>
-      <div className="ops-detail-stage">
-        <span>Etapa actual</span>
-        <strong>{stageLabel(detail.status)}</strong>
-        <small>{statusLabel(detail.status)}</small>
-      </div>
-      <div className="ops-detail-status">
-        <span>Estado</span>
-        <strong className={`status-badge status-${detail.status.toLowerCase()}`}>{detail.status}</strong>
-      </div>
+      <div className="ops-detail-identity"><h1>{detail.trackingCode}</h1><span>{detail.policyReference} · {detail.vehicleReference}</span></div>
+      <div className="ops-detail-stage"><span>Claim lifecycle</span><strong>{statusLabel(detail.status)}</strong><small>Separado del Pipeline operacional</small></div>
+      <div className="ops-detail-status"><span>Estado</span><strong className={`status-badge status-${detail.status.toLowerCase()}`}>{detail.status}</strong></div>
       <div className="ops-detail-actions">
-        {primary && (
-          <button className="ops-primary-action" type="button" disabled={busy} onClick={() => onPrimaryTransition(primary.status)}>
-            ▷ {busy ? 'Procesando…' : primary.label}
-          </button>
-        )}
+        {primary && <button className="ops-primary-action" type="button" disabled={busy} onClick={() => onPrimaryTransition(primary.status)}>▷ {busy ? 'Procesando…' : primary.label}</button>}
         <button className="ops-icon-button" type="button" onClick={onRefresh} disabled={refreshBusy} aria-label="Actualizar detalle">↻</button>
       </div>
     </header>
@@ -233,24 +198,10 @@ function preferredTransition(current: ClaimStatus, allowed: ClaimStatus[]) {
   return preferred && allowed.includes(preferred.status) ? preferred : null;
 }
 
-function stageLabel(status: ClaimStatus) {
-  if (status === 'RECEIVED') return 'Reportado';
-  if (status === 'OBSERVED') return 'Requiere información';
-  if (status === 'CLOSED') return 'Resuelto';
-  return 'En gestión';
-}
-
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('es-UY', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 }
 
 function statusLabel(status: ClaimStatus) {
-  return ({
-    RECEIVED: 'Recibido',
-    UNDER_REVIEW: 'En revisión',
-    OBSERVED: 'Observado',
-    APPROVED: 'Aprobado',
-    IN_REPAIR: 'En reparación',
-    CLOSED: 'Cerrado',
-  } satisfies Record<ClaimStatus, string>)[status];
+  return ({ RECEIVED: 'Recibido', UNDER_REVIEW: 'En revisión', OBSERVED: 'Observado', APPROVED: 'Aprobado', IN_REPAIR: 'En reparación', CLOSED: 'Cerrado' } satisfies Record<ClaimStatus, string>)[status];
 }

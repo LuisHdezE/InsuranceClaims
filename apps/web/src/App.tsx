@@ -9,6 +9,7 @@ import { OperatorClaimDetailPage } from './pages/OperatorClaimDetailPage';
 import { OperatorClaimsPage } from './pages/OperatorClaimsPage';
 import { OperatorDashboardPage } from './pages/OperatorDashboardPage';
 import { OperatorLoginPage } from './pages/OperatorLoginPage';
+import { OperatorTaskDetailPage } from './pages/OperatorTaskDetailPage';
 import { OperatorTasksPage } from './pages/OperatorTasksPage';
 import { ReviewClaimPage } from './pages/ReviewClaimPage';
 import { StaffForbiddenPage } from './pages/StaffForbiddenPage';
@@ -28,62 +29,13 @@ export function App() {
       <Route path="/claims/track/status" element={<ClaimStatusPage />} />
       <Route path="/operator/login" element={<OperatorLoginPage />} />
       <Route path="/operator" element={<Navigate to="/operator/workspace" replace />} />
-      <Route
-        path="/operator/workspace"
-        element={(
-          <RequireOperator>
-            <RequireStaffAccess><StaffWorkspacePage /></RequireStaffAccess>
-          </RequireOperator>
-        )}
-      />
-      <Route
-        path="/operator/dashboard"
-        element={(
-          <RequireOperator>
-            <RequireStaffAccess allOf={['claims.backoffice.read', 'claims.tasks.read']}>
-              <OperatorDashboardPage />
-            </RequireStaffAccess>
-          </RequireOperator>
-        )}
-      />
-      <Route
-        path="/operator/claims"
-        element={(
-          <RequireOperator>
-            <RequireStaffAccess allOf={['claims.backoffice.read']}>
-              <OperatorClaimsPage />
-            </RequireStaffAccess>
-          </RequireOperator>
-        )}
-      />
-      <Route
-        path="/operator/claims/:claimId"
-        element={(
-          <RequireOperator>
-            <RequireStaffAccess allOf={['claims.backoffice.read']}>
-              <OperatorClaimDetailPage />
-            </RequireStaffAccess>
-          </RequireOperator>
-        )}
-      />
-      <Route
-        path="/operator/tasks"
-        element={(
-          <RequireOperator>
-            <RequireStaffAccess allOf={['claims.tasks.read']}>
-              <OperatorTasksPage />
-            </RequireStaffAccess>
-          </RequireOperator>
-        )}
-      />
-      <Route
-        path="/operator/forbidden"
-        element={(
-          <RequireOperator>
-            <RequireStaffAccess><StaffForbiddenPage /></RequireStaffAccess>
-          </RequireOperator>
-        )}
-      />
+      <Route path="/operator/workspace" element={<RequireOperator><RequireStaffAccess><StaffWorkspacePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/dashboard" element={<RequireOperator><RequireStaffAccess allOf={['claims.backoffice.read', 'claims.tasks.read']}><OperatorDashboardPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/claims" element={<RequireOperator><RequireStaffAccess allOf={['claims.backoffice.read']}><OperatorClaimsPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/claims/:claimId" element={<RequireOperator><RequireStaffAccess allOf={['claims.backoffice.read']}><OperatorClaimDetailPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/tasks" element={<RequireOperator><RequireStaffAccess allOf={['claims.tasks.read']}><OperatorTasksPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/tasks/:taskId" element={<RequireOperator><RequireStaffAccess allOf={['claims.tasks.read']}><OperatorTaskDetailPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/forbidden" element={<RequireOperator><RequireStaffAccess><StaffForbiddenPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

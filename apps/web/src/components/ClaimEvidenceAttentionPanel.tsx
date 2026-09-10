@@ -26,7 +26,7 @@ export function ClaimEvidenceAttentionPanel({ claimId }: { claimId: string }) {
   }, [queryFailure, signOut]);
 
   const completeReviewMutation = useMutation({
-    mutationFn: (task: EvidenceReviewTask) => completeClaimTask(task.taskId, task.status, session!.accessToken),
+    mutationFn: (task: EvidenceReviewTask) => completeClaimTask(task.taskId, 'OPEN', session!.accessToken),
     onSuccess: async () => {
       setFailure(null);
       await Promise.all([
@@ -34,6 +34,7 @@ export function ClaimEvidenceAttentionPanel({ claimId }: { claimId: string }) {
         queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'tasks'] }),
         queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'timeline'] }),
         queryClient.invalidateQueries({ queryKey: ['operator', 'tasks'] }),
+        queryClient.invalidateQueries({ queryKey: ['operator', 'claims-operational-metrics'] }),
       ]);
     },
     onError: async (error) => {
