@@ -1,5 +1,5 @@
 blueprint_version: 0.5.2
-updated_at: '2026-09-07T05:51:05-03:00'
+updated_at: '2026-09-10T01:13:03-03:00'
 phases:
   discovery:
     status: COMPLETE
@@ -24,27 +24,27 @@ phases:
   api_contract_design:
     status: COMPLETE
     progress: 100
-    note: Initial v1 REST and MCP-facing contract package was explicitly approved by Luis Hernández; API Contract Ready passed on 2026-09-05.
+    note: Historical initial API Contract Ready approval remains preserved; the effective governed contract is now api-v1-r3 with 90 REST operations and recorded R1->R2->R3 impact analysis.
   api_implementation:
     status: COMPLETE
     progress: 100
-    note: API implementation and executable architecture conformance were explicitly approved by Luis Hernández; API Implemented passed on 2026-09-05.
+    note: Historical initial API Implemented approval remains preserved; the effective R3 implementation is reconciled exactly against the frozen 90-operation inventory and retains Clean Architecture/Ports & Adapters boundaries.
   openapi_validation:
     status: COMPLETE
     progress: 100
-    note: OpenAPI 3.1 formalization and exact contract validation were explicitly approved by Luis Hernández; OpenAPI Valid passed on 2026-09-05.
+    note: The effective root OpenAPI 3.1 contract is api-v1-r3 and is deterministically validated at 90/90 operations while historical R1/R2 evidence remains preserved.
   postman_contract:
     status: COMPLETE
     progress: 100
-    note: Postman collection, local environment and exact REST coverage were explicitly approved by Luis Hernández; Postman Ready passed on 2026-09-05.
+    note: The effective Postman Collection v2.1 operationalizes api-v1-r3 with deterministic 90/90 REST coverage while preserving the historical R1 pack byte-for-byte.
   api_qa:
     status: COMPLETE
     progress: 100
-    note: Runtime API QA against PostgreSQL 18 and the simulated legacy HTTP dependency was explicitly approved by Luis Hernández; API QA Pass passed on 2026-09-05.
+    note: Current API QA revalidates the effective R3 surface against PostgreSQL 18 and the simulated legacy boundary, including security, audit, concurrency and all implemented R3 verticals.
   api_gate:
     status: COMPLETE
     progress: 100
-    note: Project-scoped API Gate was explicitly approved by Luis Hernández after all fifteen canonical aggregate checks passed.
+    note: The historical initial project API Gate remains approved; Increment 22 reconciles the completed R3 evolution without rewriting that historical human decision.
   interface_inventory:
     status: COMPLETE
     progress: 100
@@ -178,138 +178,138 @@ checks:
   api.auth_strategy:
     status: PASS
     verification: evidence
-    note: Short-lived operator bearer JWT with Argon2id password hashing and no refresh flow is approved for the mandatory MVP; customer/MCP lookup remains separate.
-    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-SECURITY-MODEL-001, EVD-ARCH-CLARIFICATIONS-001]
+    note: R3 uses separate short-lived staff and customer JWT contexts plus HMAC-SHA256 for inbound integrations; no refresh-token or logout endpoint is introduced.
+    evidence_ids: [EVD-API-R3-CONTRACT-001, EVD-API-R3-INVENTORY-001]
   api.error_contract:
     status: PASS
     verification: evidence
-    note: RFC 9457 Problem Details with safe project extensions is approved and concrete operation mappings are frozen in API Contract Design.
-    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-SECURITY-MODEL-001, EVD-API-CONTRACT-001]
+    note: Effective R3 REST errors preserve RFC 9457 Problem Details with safe project extensions and X-Request-Id correlation across the 90-operation contract.
+    evidence_ids: [EVD-API-R3-CONTRACT-001, EVD-API-R3-INVENTORY-001]
   api.versioning_policy:
     status: PASS
     verification: evidence
-    note: URL major versioning under /api/v1 is approved; operationIds are now frozen for the initial contract baseline.
-    evidence_ids: [EVD-ARCH-CONTRACT-001, EVD-API-CONTRACT-001]
+    note: URL major versioning remains /api/v1 while governed contract revisions progressed additively from api-v1-r1 to api-v1-r2 and api-v1-r3 with historical evidence preserved.
+    evidence_ids: [EVD-API-R3-CONTRACT-001, EVD-API-R3-INVENTORY-001]
   api.scope_defined:
     status: PASS
     verification: evidence
-    note: Initial business REST scope is eight operations plus two operational health routes; MCP status is a separate read-only Presentation contract.
-    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+    note: Effective api-v1-r3 scope contains exactly 90 REST operations: 15 inherited and 75 additive; the historical MCP get_claim_status tool remains a separate Presentation contract outside REST counting.
+    evidence_ids: [EVD-API-R3-CONTRACT-001, EVD-API-R3-INVENTORY-001]
   api.endpoint_inventory:
     status: PASS
     verification: evidence
-    note: Stable methods, paths, operationIds, schemas, status codes, rate limits and operation ownership are explicitly inventoried before implementation.
-    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+    note: The frozen R3 inventory defines exactly 90 effective REST operations across 76 paths and 16 operation families, including authentication, permissions, audit, idempotency and concurrency metadata.
+    evidence_ids: [EVD-API-R3-CONTRACT-001, EVD-API-R3-INVENTORY-001]
   api.auth_contract:
     status: PASS
     verification: evidence
-    note: Anonymous public proof flows and short-lived operator bearer JWT behavior are defined per operation, including fail-closed success-login audit semantics.
-    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+    note: R3 freezes anonymous/public, staff JWT, customer JWT and HMAC integration authentication contexts and keeps staff/customer tokens non-interchangeable.
+    evidence_ids: [EVD-API-R3-CONTRACT-001, EVD-API-R3-INVENTORY-001]
   api.permission_matrix:
     status: PASS
     verification: evidence
-    note: Every protected operation and the MCP tool map to approved requirement-level permission intents; UI remains non-authoritative.
-    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+    note: The effective R3 role/permission matrix is frozen for Claims Operator, Claims Supervisor, Platform Admin, Customer Portal User and External Integration with Application/API authority remaining server-side.
+    evidence_ids: [EVD-API-R3-CONTRACT-001, EVD-API-R3-INVENTORY-001]
   api.audit_event_mapping:
     status: PASS
     verification: evidence
-    note: Login, claim creation and state transition operations map to the approved durable audit catalog with explicit atomic/failure rules.
-    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001, EVD-AUDIT-MODEL-001]
+    note: R3 operations map to the approved expanded durable audit catalog; authoritative mutations preserve atomic audit behavior where required and sanitized technical logging remains separate.
+    evidence_ids: [EVD-API-R3-CONTRACT-001, EVD-AUDIT-MODEL-001]
   api.idempotency_matrix:
     status: PASS
     verification: evidence
-    note: createClaim requires Idempotency-Key with replay/conflict semantics; transitionClaimStatus uses expectedFromStatus as a concurrency guard without inventing a second idempotency protocol.
-    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+    note: R3 freezes idempotency and optimistic-concurrency behavior per operation, including required Idempotency-Key flows, expectedVersion guards and preserved historical transition semantics without inventing blanket protocols.
+    evidence_ids: [EVD-API-R3-CONTRACT-001, EVD-API-R3-INVENTORY-001]
   api.contract_traceability:
     status: PASS
     verification: evidence
-    note: OperationIds and MCP identity are traced to approved requirements, use cases and Interface Scope Baseline IDs.
-    evidence_ids: [EVD-API-CONTRACT-001, EVD-API-INVENTORY-001]
+    note: The effective R3 operation inventory traces the governed Insurance Operations surface through FR-020..FR-052 and UC-R3-001..UC-R3-013 while preserving inherited requirement/use-case links.
+    evidence_ids: [EVD-API-R3-CONTRACT-001, EVD-API-R3-INVENTORY-001]
   api.change_impact_analysis:
-    status: N/A
+    status: PASS
     verification: evidence
-    note: Initial API baseline; no prior api_gate consumers exist, so post-baseline change-impact analysis is not applicable yet.
-    evidence_ids: [EVD-API-CONTRACT-001]
+    note: Post-baseline API evolution is governed by API-IMPACT-001 (R1->R2) and API-IMPACT-002 (R2->R3), both platform_cross_cutting with required web-platform revalidation and unrelated historical evidence preserved.
+    evidence_ids: [EVD-API-R2-IMPACT-001, EVD-API-R3-IMPACT-001]
   api.endpoints_implemented:
     status: PASS
     verification: evidence
-    note: All eight approved REST business operations, two health routes, the read-only MCP tool and separate simulated legacy adapter path are implemented without expanding v1 scope.
-    evidence_ids: [EVD-API-IMPLEMENTATION-001]
+    note: Runtime reconciliation proves all 90 frozen R3 REST operations are registered exactly, with no missing, extra or duplicate method/path tuple; MCP and simulated legacy remain separate adapters.
+    evidence_ids: [EVD-API-R3-IMPLEMENTATION-001, EVD-API-R3-CI-QA-001]
   api.auth_authorization:
     status: PASS
     verification: evidence
-    note: Operator JWT/Argon2id authentication and Application-authoritative backoffice permissions are implemented; public tracking remains proof-bound rather than account-authenticated.
-    evidence_ids: [EVD-API-IMPLEMENTATION-001, EVD-API-ARCH-CONFORMANCE-001]
+    note: R3 staff/customer/integration authentication and least-privilege authorization are implemented through Application-authoritative permission checks with distinct JWT contexts and HMAC verification.
+    evidence_ids: [EVD-API-R3-IMPLEMENTATION-001, EVD-API-R3-CI-QA-001]
   api.audit_logging:
     status: PASS
     verification: evidence
-    note: Required durable events and fail-closed critical audit behavior are implemented separately from sanitized technical logging and transactionally coupled where required.
-    evidence_ids: [EVD-API-IMPLEMENTATION-001]
+    note: Required R3 durable audit events, sanitized diagnostics, correlation and fail-closed critical audit behavior are implemented across the expanded operational surface.
+    evidence_ids: [EVD-API-R3-IMPLEMENTATION-001, EVD-API-R3-CI-QA-001]
   api.backend_tests:
     status: PASS
     verification: evidence
-    note: Domain, Application and REST tests cover lifecycle, concurrency, idempotency, tracking redaction, authentication, authorization and transition/audit behavior; reproducible CI passes the complete suite.
-    evidence_ids: [EVD-API-IMPLEMENTATION-001]
+    note: The final R3 backend suite contains 91 tests covering Domain, Application, REST, RBAC, lifecycle, idempotency, concurrency, integrations, worker behavior and configuration governance.
+    evidence_ids: [EVD-API-R3-IMPLEMENTATION-001, EVD-API-R3-CI-QA-001]
   api.architecture_implementation_conformance:
     status: PASS
     verification: evidence
-    note: Executable dependency-boundary assertions plus explicit responsibility review confirm the implementation preserves the approved Clean Architecture/Ports & Adapters contract.
-    evidence_ids: [EVD-API-IMPLEMENTATION-001, EVD-API-ARCH-CONFORMANCE-001]
+    note: Executable conformance checks preserve Clean Architecture/Ports & Adapters across Domain, Application, REST Presentation, Worker composition, MCP Presentation, Infrastructure and legacy DTO boundaries.
+    evidence_ids: [EVD-API-R3-IMPLEMENTATION-001, EVD-API-R3-CI-QA-001]
   api.openapi:
     status: PASS
     verification: file
-    note: OpenAPI 3.1 description formalizes all ten approved REST operations without exposing MCP as REST.
-    evidence_ids: [EVD-OPENAPI-001]
+    note: Effective OpenAPI 3.1 formalizes exactly the 90-operation api-v1-r3 REST surface; generated fragments are deterministic and MCP remains outside REST.
+    evidence_ids: [EVD-API-R3-OPENAPI-001, EVD-API-R3-INVENTORY-001]
   api.openapi_validation:
     status: PASS
     verification: evidence
-    note: Redocly specification validation and semantic inventory validation pass; an earlier harness failure was corrected without relaxing business-contract checks.
-    evidence_ids: [EVD-OPENAPI-001, EVD-OPENAPI-VALIDATION-001]
+    note: R3 OpenAPI zero-drift, Redocly lint, bundle/dereference and semantic validation pass at 90/90 against the frozen endpoint inventory.
+    evidence_ids: [EVD-API-R3-OPENAPI-001, EVD-API-R3-INVENTORY-001]
   api.postman_collection:
     status: PASS
     verification: file
-    note: Postman Collection v2.1 contains exactly the ten approved REST operations and no fake MCP REST operation.
-    evidence_ids: [EVD-POSTMAN-COLLECTION-001, EVD-POSTMAN-COVERAGE-001]
+    note: The effective Postman Collection v2.1 contains exactly one governed request for each of the 90 R3 REST operationIds and no fake MCP REST operation.
+    evidence_ids: [EVD-API-R3-POSTMAN-001, EVD-API-R3-INVENTORY-001]
   api.postman_environment:
     status: PASS
     verification: file
-    note: Local Postman environment provides synthetic/configurable variables and contains no committed operator password or bearer token.
-    evidence_ids: [EVD-POSTMAN-ENVIRONMENT-001, EVD-POSTMAN-COVERAGE-001]
+    note: The R3 local Postman environment separates staff, customer and integration contexts, keeps secrets empty and provides only synthetic/configurable variables.
+    evidence_ids: [EVD-API-R3-POSTMAN-001, EVD-API-R3-INVENTORY-001]
   api.postman_coverage:
     status: PASS
     verification: evidence
-    note: Exact static validation proves 10/10 REST request coverage, method/path/auth/header/body alignment and safe environment wiring; runtime QA remains downstream.
-    evidence_ids: [EVD-POSTMAN-COVERAGE-001]
+    note: Deterministic Postman validation proves 90/90 R3 REST request coverage, 16/16 operation families, security-context fidelity, correlation/idempotency wiring and historical R1 body compatibility.
+    evidence_ids: [EVD-API-R3-POSTMAN-001, EVD-API-R3-INVENTORY-001]
   api.qa_positive:
     status: PASS
     verification: evidence
-    note: Real runtime QA over PostgreSQL 18, the simulated legacy HTTP dependency and the production API composition passes the approved positive REST workflow.
-    evidence_ids: [EVD-API-QA-001]
+    note: Exact-head runtime QA passes positive paths for the effective R3 API over PostgreSQL 18, simulated legacy dependencies and the implemented Insurance Operations verticals.
+    evidence_ids: [EVD-API-R3-CI-QA-001, EVD-INTEGRATION-QA-WEB-SYSTEM-001]
   api.qa_negative:
     status: PASS
     verification: evidence
-    note: Runtime negative assertions pass for proof mismatch, authentication, authorization transport, validation, idempotency, evidence, state conflicts and rate limiting.
-    evidence_ids: [EVD-API-QA-001]
+    note: Exact-head R3 runtime QA passes negative security, authorization, validation, idempotency, replay, concurrency, rate-limit and resource-isolation assertions.
+    evidence_ids: [EVD-API-R3-CI-QA-001, EVD-INTEGRATION-QA-WEB-SYSTEM-001]
   api.contract_validation:
     status: PASS
     verification: evidence
-    note: Runtime REST behavior preserves the frozen contract while exact-head OpenAPI and Postman regressions also pass on the same QA candidate.
-    evidence_ids: [EVD-API-QA-001, EVD-OPENAPI-VALIDATION-001, EVD-POSTMAN-COVERAGE-001]
+    note: Runtime route reconciliation, OpenAPI and Postman independently converge on the same frozen api-v1-r3 90-operation REST contract.
+    evidence_ids: [EVD-API-R3-INVENTORY-001, EVD-API-R3-IMPLEMENTATION-001, EVD-API-R3-OPENAPI-001, EVD-API-R3-POSTMAN-001]
   api.security_qa:
     status: PASS
     verification: evidence
-    note: Runtime auth, redaction, evidence, rate-limit, Problem Details, idempotency and concurrency assertions pass; npm audit --omit=dev reports zero production advisories.
-    evidence_ids: [EVD-API-QA-001, EVD-SECURITY-MODEL-001]
+    note: R3 auth, authorization, redaction, HMAC/replay, evidence, rate-limit, Problem Details, idempotency and concurrency assertions pass; governed npm audit --omit=dev reports no production advisories.
+    evidence_ids: [EVD-API-R3-CI-QA-001, EVD-INTEGRATION-QA-WEB-SYSTEM-001]
   api.audit_qa:
     status: PASS
     verification: evidence
-    note: PostgreSQL assertions prove required login, claim creation and transition audit durability, idempotent non-duplication and concurrent transition integrity.
-    evidence_ids: [EVD-API-QA-001, EVD-AUDIT-MODEL-001]
+    note: PostgreSQL and integration assertions prove required R3 durable audit persistence, transactional coupling where applicable, replay non-duplication and sanitized audit metadata.
+    evidence_ids: [EVD-API-R3-CI-QA-001, EVD-INTEGRATION-QA-WEB-SYSTEM-001]
   api.affected_consumer_revalidation:
-    status: N/A
+    status: PASS
     verification: evidence
-    note: Initial API baseline with no accepted executable client consumers; impact-based downstream revalidation is not applicable yet.
-    evidence_ids: [EVD-API-QA-001]
+    note: API-IMPACT-001 and API-IMPACT-002 required platform web revalidation; accepted web consumers were revalidated through exact-head Integration QA, including real API clients, responsive/accessibility and degraded/offline behavior.
+    evidence_ids: [EVD-API-R2-IMPACT-001, EVD-API-R3-IMPACT-001, EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-API-R3-CI-QA-001]
   ui.web_inventory:
     status: PASS
     verification: evidence
@@ -759,7 +759,13 @@ scoped_gates:
     note: Explicit human Integration QA approval recorded after exact-head 13/13 workflow success; expectedFromStatus remains the concurrency guard, idempotency remains N/A, and Human Acceptance remains PENDING.
     evidence_ids: [EVD-INTEGRATION-QA-WEB-SYSTEM-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-001, EVD-INTEGRATION-QA-BACKOFFICE-WEB-APPROVAL-001]
 blockers: []
-api_impacts: []
+api_impacts:
+  - id: API-IMPACT-001
+    artifact: .blueprint/api-impact/API-IMPACT-001.json
+    status: RESOLVED
+  - id: API-IMPACT-002
+    artifact: .blueprint/api-impact/API-IMPACT-002.json
+    status: RESOLVED
 artifacts:
   - id: EVD-BLUEPRINT-BASELINE-001
     type: blueprint_baseline
@@ -1001,3 +1007,30 @@ artifacts:
   - id: EVD-OPERATIONS-OBSERVABILITY-001
     type: operations_observability_evidence
     value: documentation/operations/OPERATIONS_OBSERVABILITY_EVIDENCE.md
+  - id: EVD-API-R2-IMPACT-001
+    type: api_change_impact
+    value: .blueprint/api-impact/API-IMPACT-001.json
+  - id: EVD-API-R3-CONTRACT-001
+    type: api_contract_r3
+    value: documentation/api/r3/API_CONTRACT_R3.md
+  - id: EVD-API-R3-INVENTORY-001
+    type: api_endpoint_inventory_r3
+    value: documentation/api/r3/API_ENDPOINT_INVENTORY_R3.json
+  - id: EVD-API-R3-IMPACT-001
+    type: api_change_impact
+    value: .blueprint/api-impact/API-IMPACT-002.json
+  - id: EVD-API-R3-IMPLEMENTATION-001
+    type: api_implementation_reconciliation_r3
+    value: documentation/api-implementation/r3/API_IMPLEMENTATION_RECONCILIATION_INCREMENT_18.md
+  - id: EVD-API-R3-OPENAPI-001
+    type: openapi_r3
+    value: openapi.yaml
+  - id: EVD-API-R3-POSTMAN-001
+    type: postman_r3
+    value: postman/InsuranceClaims.postman_collection.json
+  - id: EVD-API-R3-CI-QA-001
+    type: ci_qa_hardening_r3
+    value: documentation/api-implementation/r3/CI_QA_HARDENING_INCREMENT_21.md
+  - id: EVD-API-R3-CLOSURE-001
+    type: api_final_closure_r3
+    value: documentation/api-implementation/r3/FINAL_CLOSURE_INCREMENT_22.md

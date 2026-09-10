@@ -62,13 +62,24 @@ jobs:
         shell: bash
         env:
           HISTORICAL_BASELINE_SHA: 531828a18babaca563c83dd76df56b725d6105f0
+          HISTORICAL_PROJECT_BLOB: 96ac7c83c11d4e996127b6352e0a00de6961347e
+          HISTORICAL_STATUS_BLOB: 1c21a364a109da111230b9da9225696f4a581581
           HISTORICAL_OPENAPI_ARCHIVE: documentation/api/post-mvp/baselines/openapi-v1-r1.yaml
         run: |
           set -euo pipefail
           git cat-file -e "${HISTORICAL_BASELINE_SHA}^{commit}"
+
+          # Project/status are living Blueprint consumer state. Preserve the exact
+          # v0.1.0 snapshots by their immutable blobs rather than requiring the
+          # current files to remain frozen forever.
+          test "$(git rev-parse "${HISTORICAL_BASELINE_SHA}:.blueprint/project.yaml")" = "${HISTORICAL_PROJECT_BLOB}"
+          test "$(git rev-parse "${HISTORICAL_BASELINE_SHA}:.blueprint/status.yaml")" = "${HISTORICAL_STATUS_BLOB}"
+          git cat-file -e "${HISTORICAL_PROJECT_BLOB}^{blob}"
+          git cat-file -e "${HISTORICAL_STATUS_BLOB}^{blob}"
+
+          # All other historical release evidence remains byte-identical in the
+          # living tree and therefore retains the stronger current-vs-baseline diff.
           git diff --exit-code "${HISTORICAL_BASELINE_SHA}" -- \
-            .blueprint/project.yaml \
-            .blueprint/status.yaml \
             .blueprint/ui/interface-inventory.json \
             documentation/api/API_CONTRACT.md \
             documentation/api/API_ENDPOINT_INVENTORY.json \
@@ -78,9 +89,11 @@ jobs:
             documentation/operations \
             documentation/visual-functional-review \
             documentation/portfolio/RELEASE_NOTES_v0.1.0.md
+
           mkdir -p .runtime
           git show "${HISTORICAL_BASELINE_SHA}:openapi.yaml" > .runtime/openapi-v1-r1-historical.yaml
           cmp --silent .runtime/openapi-v1-r1-historical.yaml "${HISTORICAL_OPENAPI_ARCHIVE}"
           test "$(git hash-object "${HISTORICAL_OPENAPI_ARCHIVE}")" = "868fcb74f57d507dd1ef27fa24518357287dd3ff"
           echo 'Historical v0.1.0 evidence preservation: PASS'
+          echo 'Historical v0.1.0 project/status blob identity: PASS'
           echo 'Historical api-v1-r1 OpenAPI archive byte identity: PASS'
