@@ -1,30 +1,56 @@
 {
   "info": {
-    "_postman_id": "0bb72b55-b8ec-44c5-90c6-2afe782cc101",
-    "name": "Insurance Claims Legacy Modernization MVP",
-    "description": "Unofficial technical case study. No affiliation with FAR Seguros. All data is synthetic. Operational collection for approved contract revision api-v1-r1; API QA is a downstream boundary.",
+    "_postman_id": "6f25c1c6-2bed-4f66-82f5-31b08a7f3990",
+    "name": "Insurance Claims Legacy Modernization MVP — R3",
+    "description": "Unofficial technical case study. No affiliation with FAR Seguros. All data is synthetic/demo. Deterministic Postman contract pack for effective REST revision api-v1-r3: 90 operations across 16 frozen families. The historical MCP get_claim_status tool is intentionally outside this REST collection.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Public Claims",
+      "name": "historical-r1-r2",
+      "description": "api-v1-r3 operation family: historical-r1-r2",
       "item": [
         {
           "name": "verifyPolicyVehicle",
           "request": {
             "method": "POST",
             "header": [
-              {"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"},
-              {"key": "Content-Type", "value": "application/json", "type": "text"}
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"policyReference\": \"{{policyReference}}\",\n  \"vehicleReference\": \"{{vehicleReference}}\"\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": {"raw": "{{baseUrl}}/api/v1/public/policy-verifications", "host": ["{{baseUrl}}"], "path": ["api", "v1", "public", "policy-verifications"]},
-            "auth": {"type": "noauth"},
-            "description": "operationId: verifyPolicyVehicle"
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/policy-verifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "policy-verifications"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "operationId: verifyPolicyVehicle\ncontract revision: api-v1-r3\nauthentication: anonymous\npermission: claims.intake.create\nrequest contract: PolicyVehicleVerificationRequest\nsuccess contract: 200:PolicyVehicleVerificationResponse\nrequirements: FR-001, FR-002\nuse cases: UC-001\naudit: not required\nidempotency: none\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
           }
         },
         {
@@ -46,24 +72,75 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"},
-              {"key": "Idempotency-Key", "value": "{{idempotencyKey}}", "type": "text"}
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "formdata",
               "formdata": [
-                {"key": "policyReference", "value": "{{policyReference}}", "type": "text"},
-                {"key": "vehicleReference", "value": "{{vehicleReference}}", "type": "text"},
-                {"key": "eventType", "value": "{{eventType}}", "type": "text"},
-                {"key": "occurredAt", "value": "{{occurredAt}}", "type": "text"},
-                {"key": "locationText", "value": "{{locationText}}", "type": "text"},
-                {"key": "description", "value": "{{claimDescription}}", "type": "text"},
-                {"key": "evidence", "type": "file", "src": "", "disabled": true, "description": "Optional. Enable and choose one JPEG, PNG or PDF file. Repeat this part for up to five files."}
+                {
+                  "key": "policyReference",
+                  "value": "{{policyReference}}",
+                  "type": "text"
+                },
+                {
+                  "key": "vehicleReference",
+                  "value": "{{vehicleReference}}",
+                  "type": "text"
+                },
+                {
+                  "key": "eventType",
+                  "value": "{{eventType}}",
+                  "type": "text"
+                },
+                {
+                  "key": "occurredAt",
+                  "value": "{{occurredAt}}",
+                  "type": "text"
+                },
+                {
+                  "key": "locationText",
+                  "value": "{{locationText}}",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "{{description}}",
+                  "type": "text"
+                },
+                {
+                  "key": "evidence",
+                  "type": "file",
+                  "src": "",
+                  "disabled": true,
+                  "description": "Repeat for up to 5 files."
+                }
               ]
             },
-            "url": {"raw": "{{baseUrl}}/api/v1/public/claims", "host": ["{{baseUrl}}"], "path": ["api", "v1", "public", "claims"]},
-            "auth": {"type": "noauth"},
-            "description": "operationId: createClaim. Successful 201 stores trackingCode in the active environment."
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/claims",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "claims"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "operationId: createClaim\ncontract revision: api-v1-r3\nauthentication: anonymous\npermission: claims.intake.create\nrequest contract: CreateClaimRequest multipart\nsuccess contract: 201:CreateClaimResponse\nrequirements: FR-002, FR-003, FR-004, FR-005, FR-006\nuse cases: UC-002\naudit: CLAIM_CREATED\nidempotency: Idempotency-Key required; historical 24h behavior\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
           }
         },
         {
@@ -71,24 +148,44 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"},
-              {"key": "Content-Type", "value": "application/json", "type": "text"}
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"trackingCode\": \"{{trackingCode}}\",\n  \"policyReference\": \"{{policyReference}}\"\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": {"raw": "{{baseUrl}}/api/v1/public/claim-tracking", "host": ["{{baseUrl}}"], "path": ["api", "v1", "public", "claim-tracking"]},
-            "auth": {"type": "noauth"},
-            "description": "operationId: trackClaim"
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/claim-tracking",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "claim-tracking"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "operationId: trackClaim\ncontract revision: api-v1-r3\nauthentication: anonymous\npermission: claims.tracking.read\nrequest contract: TrackClaimRequest\nsuccess contract: 200:CustomerClaimStatusResponse\nrequirements: FR-007, FR-008\nuse cases: UC-003\naudit: not required\nidempotency: none\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
           }
-        }
-      ]
-    },
-    {
-      "name": "Operator",
-      "item": [
+        },
         {
           "name": "authenticateOperator",
           "event": [
@@ -99,7 +196,7 @@
                 "exec": [
                   "if (pm.response.code === 200) {",
                   "  const body = pm.response.json();",
-                  "  if (body.accessToken) pm.environment.set('bearerToken', body.accessToken);",
+                  "  if (body.accessToken) pm.environment.set('staffBearerToken', body.accessToken);",
                   "}"
                 ]
               }
@@ -108,17 +205,43 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"},
-              {"key": "Content-Type", "value": "application/json", "type": "text"}
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"login\": \"{{operatorLogin}}\",\n  \"password\": \"{{operatorPassword}}\"\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": {"raw": "{{baseUrl}}/api/v1/operator/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "operator", "auth", "login"]},
-            "auth": {"type": "noauth"},
-            "description": "operationId: authenticateOperator. Successful 200 stores bearerToken in the active environment."
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "operationId: authenticateOperator\ncontract revision: api-v1-r3\nauthentication: anonymous_credentials\npermission: none\nrequest contract: OperatorLoginRequest\nsuccess contract: 200:StaffLoginResponse\nrequirements: FR-009\nuse cases: UC-004\naudit: AUTH_LOGIN_SUCCEEDED | AUTH_LOGIN_FAILED\nidempotency: none\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
           }
         },
         {
@@ -139,19 +262,68 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"}],
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/operator/claims?page={{page}}&pageSize={{pageSize}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "operator", "claims"],
+              "raw": "{{baseUrl}}/api/v1/operator/claims",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "claims"
+              ],
               "query": [
-                {"key": "page", "value": "{{page}}"},
-                {"key": "pageSize", "value": "{{pageSize}}"},
-                {"key": "status", "value": "{{status}}", "disabled": true, "description": "Optional lifecycle filter."}
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "{{status}}",
+                  "disabled": true
+                },
+                {
+                  "key": "stage",
+                  "value": "{{stage}}",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "{{sort}}",
+                  "disabled": true
+                }
               ]
             },
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{bearerToken}}", "type": "string"}]},
-            "description": "operationId: listClaims. Successful response stores the first claimId when available."
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listClaims\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.backoffice.read\nrequest contract: none\nsuccess contract: 200:ClaimsPageResponse\nrequirements: FR-010, FR-020, FR-022\nuse cases: UC-005, UC-R3-001\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
           }
         },
         {
@@ -172,20 +344,76 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"}],
-            "url": {"raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "operator", "claims", "{{claimId}}"]},
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{bearerToken}}", "type": "string"}]},
-            "description": "operationId: getClaimDetail. Successful response stores the first evidenceId when available."
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "claims",
+                "{{claimId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getClaimDetail\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.backoffice.read\nrequest contract: none\nsuccess contract: 200:OperatorClaimDetailResponse\nrequirements: FR-011, FR-020, FR-036, FR-037\nuse cases: UC-005, UC-R3-007\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
           }
         },
         {
           "name": "downloadClaimEvidence",
           "request": {
             "method": "GET",
-            "header": [{"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"}],
-            "url": {"raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/evidence/{{evidenceId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "operator", "claims", "{{claimId}}", "evidence", "{{evidenceId}}"]},
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{bearerToken}}", "type": "string"}]},
-            "description": "operationId: downloadClaimEvidence. Binary response may be JPEG, PNG or PDF."
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/evidence/{{evidenceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "claims",
+                "{{claimId}}",
+                "evidence",
+                "{{evidenceId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: downloadClaimEvidence\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.backoffice.read\nrequest contract: none\nsuccess contract: 200:binary evidence\nrequirements: FR-011\nuse cases: UC-005\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
           }
         },
         {
@@ -193,32 +421,72 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "X-Request-Id", "value": "{{$guid}}", "type": "text"},
-              {"key": "Content-Type", "value": "application/json", "type": "text"}
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"expectedFromStatus\": \"{{expectedFromStatus}}\",\n  \"toStatus\": \"{{toStatus}}\"\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": {"raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/transitions", "host": ["{{baseUrl}}"], "path": ["api", "v1", "operator", "claims", "{{claimId}}", "transitions"]},
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{bearerToken}}", "type": "string"}]},
-            "description": "operationId: transitionClaimStatus"
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/transitions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "claims",
+                "{{claimId}}",
+                "transitions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: transitionClaimStatus\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.backoffice.transition\nrequest contract: TransitionClaimStatusRequest\nsuccess contract: 200:TransitionClaimStatusResponse\nrequirements: FR-012, FR-013\nuse cases: UC-006\naudit: CLAIM_STATE_TRANSITIONED\nidempotency: none\nconcurrency: expectedFromStatus required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
           }
-        }
-      ]
-    },
-    {
-      "name": "Health",
-      "item": [
+        },
         {
           "name": "getLiveness",
           "request": {
             "method": "GET",
             "header": [],
-            "url": {"raw": "{{baseUrl}}/health/live", "host": ["{{baseUrl}}"], "path": ["health", "live"]},
-            "auth": {"type": "noauth"},
-            "description": "operationId: getLiveness"
+            "url": {
+              "raw": "{{baseUrl}}/health/live",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "live"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "operationId: getLiveness\ncontract revision: api-v1-r3\nauthentication: anonymous\npermission: none\nrequest contract: none\nsuccess contract: 200:HealthResponse\nrequirements: FR-019\nuse cases: UC-008\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
           }
         },
         {
@@ -226,9 +494,3981 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {"raw": "{{baseUrl}}/health/ready", "host": ["{{baseUrl}}"], "path": ["health", "ready"]},
-            "auth": {"type": "noauth"},
-            "description": "operationId: getReadiness"
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "operationId: getReadiness\ncontract revision: api-v1-r3\nauthentication: anonymous\npermission: none\nrequest contract: none\nsuccess contract: 200:HealthResponse\nrequirements: FR-019\nuse cases: UC-008\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "listTasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "{{status}}",
+                  "disabled": true
+                },
+                {
+                  "key": "assigneeId",
+                  "value": "{{assigneeId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "queueKey",
+                  "value": "{{queueKey}}",
+                  "disabled": true
+                },
+                {
+                  "key": "priority",
+                  "value": "{{priority}}",
+                  "disabled": true
+                },
+                {
+                  "key": "overdue",
+                  "value": "{{overdue}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listTasks\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.tasks.read\nrequest contract: none\nsuccess contract: 200:ClaimTasksPageResponse\nrequirements: FR-023\nuse cases: UC-R3-002\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "listClaimTasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "claims",
+                "{{claimId}}",
+                "tasks"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listClaimTasks\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.tasks.read\nrequest contract: none\nsuccess contract: 200:ClaimTaskProjection[]\nrequirements: FR-023\nuse cases: UC-R3-002\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "completeClaimTask",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedStatus\": \"{{expectedStatus}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/tasks/{{taskId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "tasks",
+                "{{taskId}}",
+                "complete"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: completeClaimTask\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.tasks.manage\nrequest contract: CompleteClaimTaskRequest\nsuccess contract: 200:ClaimTaskProjection\nrequirements: FR-023\nuse cases: UC-R3-002\naudit: CLAIM_TASK_COMPLETED\nidempotency: none\nconcurrency: historical expectedStatus required + persisted optimistic check\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getClaimTimeline",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/timeline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "claims",
+                "{{claimId}}",
+                "timeline"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getClaimTimeline\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.backoffice.read\nrequest contract: none\nsuccess contract: 200:ClaimTimelineResponse\nrequirements: FR-024\nuse cases: UC-R3-002, UC-R3-007\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getClaimEvidenceAttention",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/evidence-attention",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "claims",
+                "{{claimId}}",
+                "evidence-attention"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getClaimEvidenceAttention\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.backoffice.read\nrequest contract: none\nsuccess contract: 200:ClaimEvidenceAttentionResponse\nrequirements: FR-025\nuse cases: UC-R3-003\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "claims-work",
+      "description": "api-v1-r3 operation family: claims-work",
+      "item": [
+        {
+          "name": "moveClaimOperationalStage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"toStageKey\": \"{{toStageKey}}\",\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/operational-transitions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "claims",
+                "{{claimId}}",
+                "operational-transitions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: moveClaimOperationalStage\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.pipeline.transition\nrequest contract: MoveOperationalStageRequest\nsuccess contract: 200:PipelineWorkItemResponse\nrequirements: FR-020, FR-021\nuse cases: UC-R3-001\naudit: PIPELINE_STAGE_MOVED\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createClaimTask",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/claims/{{claimId}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "claims",
+                "{{claimId}}",
+                "tasks"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createClaimTask\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.tasks.manage\nrequest contract: CreateClaimTaskRequest\nsuccess contract: 201:ClaimTaskProjection\nrequirements: FR-023\nuse cases: UC-R3-002\naudit: CLAIM_TASK_CREATED (+ CLAIM_TASK_ASSIGNED)\nidempotency: Idempotency-Key required\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getClaimTask",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "tasks",
+                "{{taskId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getClaimTask\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.tasks.read\nrequest contract: none\nsuccess contract: 200:ClaimTaskProjection\nrequirements: FR-023\nuse cases: UC-R3-002\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "updateClaimTask",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "tasks",
+                "{{taskId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: updateClaimTask\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.tasks.manage\nrequest contract: UpdateClaimTaskRequest\nsuccess contract: 200:ClaimTaskProjection\nrequirements: FR-023\nuse cases: UC-R3-002\naudit: CLAIM_TASK_ASSIGNED and/or CLAIM_TASK_UPDATED\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "cancelClaimTask",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/tasks/{{taskId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "tasks",
+                "{{taskId}}",
+                "cancel"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: cancelClaimTask\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.tasks.manage\nrequest contract: CancelClaimTaskRequest\nsuccess contract: 200:ClaimTaskProjection\nrequirements: FR-023\nuse cases: UC-R3-002\naudit: CLAIM_TASK_CANCELLED\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getClaimsOperationalMetrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/analytics/claims",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "analytics",
+                "claims"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getClaimsOperationalMetrics\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: claims.analytics.read\nrequest contract: none\nsuccess contract: 200:ClaimsOperationalMetricsResponse\nrequirements: FR-025\nuse cases: UC-R3-003\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "pipeline-admin",
+      "description": "api-v1-r3 operation family: pipeline-admin",
+      "item": [
+        {
+          "name": "listPipelines",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/pipelines",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "pipelines"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listPipelines\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: pipelines.admin\nrequest contract: none\nsuccess contract: 200:PipelineDefinitionResponsePageResponse\nrequirements: FR-026, FR-028, FR-050\nuse cases: UC-R3-012\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getPipeline",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/pipelines/{{definitionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "pipelines",
+                "{{definitionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getPipeline\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: pipelines.admin\nrequest contract: none\nsuccess contract: 200:PipelineDefinitionResponse\nrequirements: FR-026, FR-028, FR-050\nuse cases: UC-R3-012\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createPipeline",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/pipelines",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "pipelines"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createPipeline\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: pipelines.admin\nrequest contract: CreatePipelineRequest\nsuccess contract: 201:PipelineDefinitionResponse\nrequirements: FR-026, FR-028, FR-050\nuse cases: UC-R3-012\naudit: PIPELINE_VERSION_CREATED\nidempotency: none\nconcurrency: definition key unique; initial DRAFT v1\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createPipelineVersion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/pipelines/{{definitionId}}/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "pipelines",
+                "{{definitionId}}",
+                "versions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createPipelineVersion\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: pipelines.admin\nrequest contract: CreatePipelineVersionRequest\nsuccess contract: 201:PipelineDefinitionResponse\nrequirements: FR-026, FR-028, FR-050\nuse cases: UC-R3-012\naudit: PIPELINE_VERSION_CREATED\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "activatePipelineVersion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/pipelines/{{definitionId}}/versions/{{versionId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "pipelines",
+                "{{definitionId}}",
+                "versions",
+                "{{versionId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: activatePipelineVersion\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: pipelines.admin\nrequest contract: ActivatePipelineVersionRequest\nsuccess contract: 200:PipelineDefinitionResponse\nrequirements: FR-026, FR-028, FR-050\nuse cases: UC-R3-012\naudit: PIPELINE_VERSION_ACTIVATED\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "updatePipelineState",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/pipelines/{{definitionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "pipelines",
+                "{{definitionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: updatePipelineState\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: pipelines.admin\nrequest contract: UpdatePipelineStateRequest\nsuccess contract: 200:PipelineDefinitionResponse\nrequirements: FR-026, FR-028, FR-050\nuse cases: UC-R3-012\naudit: PIPELINE_VERSION_RETIRED when disabling active definition\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "communication-template-admin",
+      "description": "api-v1-r3 operation family: communication-template-admin",
+      "item": [
+        {
+          "name": "listCommunicationTemplates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/communication-templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "communication-templates"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listCommunicationTemplates\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: communications.admin\nrequest contract: none\nsuccess contract: 200:CommunicationTemplateDefinitionResponsePageResponse\nrequirements: FR-029, FR-050\nuse cases: UC-R3-012\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getCommunicationTemplate",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/communication-templates/{{definitionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "communication-templates",
+                "{{definitionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getCommunicationTemplate\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: communications.admin\nrequest contract: none\nsuccess contract: 200:CommunicationTemplateDefinitionResponse\nrequirements: FR-029, FR-050\nuse cases: UC-R3-012\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createCommunicationTemplate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/communication-templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "communication-templates"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createCommunicationTemplate\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: communications.admin\nrequest contract: CreateCommunicationTemplateRequest\nsuccess contract: 201:CommunicationTemplateDefinitionResponse\nrequirements: FR-029, FR-050\nuse cases: UC-R3-012\naudit: COMM_TEMPLATE_VERSION_CREATED\nidempotency: none\nconcurrency: initial DRAFT v1\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createCommunicationTemplateVersion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/communication-templates/{{definitionId}}/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "communication-templates",
+                "{{definitionId}}",
+                "versions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createCommunicationTemplateVersion\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: communications.admin\nrequest contract: CreateCommunicationTemplateVersionRequest\nsuccess contract: 201:CommunicationTemplateDefinitionResponse\nrequirements: FR-029, FR-050\nuse cases: UC-R3-012\naudit: COMM_TEMPLATE_VERSION_CREATED\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "activateCommunicationTemplateVersion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/communication-templates/{{definitionId}}/versions/{{versionId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "communication-templates",
+                "{{definitionId}}",
+                "versions",
+                "{{versionId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: activateCommunicationTemplateVersion\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: communications.admin\nrequest contract: ActivateCommunicationTemplateVersionRequest\nsuccess contract: 200:CommunicationTemplateDefinitionResponse\nrequirements: FR-029, FR-050\nuse cases: UC-R3-012\naudit: COMM_TEMPLATE_VERSION_ACTIVATED\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "updateCommunicationTemplateState",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/communication-templates/{{definitionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "communication-templates",
+                "{{definitionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: updateCommunicationTemplateState\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: communications.admin\nrequest contract: UpdateCommunicationTemplateStateRequest\nsuccess contract: 200:CommunicationTemplateDefinitionResponse\nrequirements: FR-029, FR-050\nuse cases: UC-R3-012\naudit: COMM_TEMPLATE_VERSION_RETIRED when disabling active definition\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "communications",
+      "description": "api-v1-r3 operation family: communications",
+      "item": [
+        {
+          "name": "requestCommunication",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/communications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "communications"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: requestCommunication\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: communications.send\nrequest contract: RequestCommunicationRequest\nsuccess contract: 202:CommunicationResponse\nrequirements: FR-030, FR-031\nuse cases: UC-R3-004\naudit: COMMUNICATION_REQUESTED\nidempotency: Idempotency-Key required\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "listCommunications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/communications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "communications"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listCommunications\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: communications.read\nrequest contract: none\nsuccess contract: 200:CommunicationsPageResponse\nrequirements: FR-031, FR-036\nuse cases: UC-R3-004, UC-R3-007\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getCommunication",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/communications/{{communicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "communications",
+                "{{communicationId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getCommunication\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: communications.read\nrequest contract: none\nsuccess contract: 200:CommunicationResponse\nrequirements: FR-031\nuse cases: UC-R3-004\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "description": "api-v1-r3 operation family: integration",
+      "item": [
+        {
+          "name": "ingestIntegrationEvent",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const CryptoJS = pm.require('npm:crypto-js@4.2.0');",
+                  "const secret = pm.environment.get('integrationSecret');",
+                  "if (!secret) { console.warn('integrationSecret is empty; HMAC signature was not generated.'); return; }",
+                  "const timestamp = Math.floor(Date.now() / 1000).toString();",
+                  "const eventId = pm.variables.replaceIn('{{integrationEventId}}');",
+                  "const rawBody = pm.variables.replaceIn(pm.request.body?.raw ?? '{}');",
+                  "const bodyHash = CryptoJS.SHA256(rawBody).toString(CryptoJS.enc.Hex);",
+                  "const canonical = `${timestamp}\\n${eventId}\\n${bodyHash}`;",
+                  "const signature = CryptoJS.HmacSHA256(canonical, secret).toString(CryptoJS.enc.Hex);",
+                  "pm.environment.set('integrationTimestamp', timestamp);",
+                  "pm.environment.set('integrationSignature', signature);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Integration-Key",
+                "value": "{{integrationKey}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Event-Id",
+                "value": "{{integrationEventId}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Event-Timestamp",
+                "value": "{{integrationTimestamp}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Event-Signature",
+                "value": "{{integrationSignature}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"{{eventType}}\",\n  \"payload\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/integrations/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "integrations",
+                "events"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "operationId: ingestIntegrationEvent\ncontract revision: api-v1-r3\nauthentication: hmac_sha256\npermission: integration.events.ingest\nrequest contract: InboundIntegrationEventRequest\nsuccess contract: 202:InboundEventAcceptedResponse\nrequirements: FR-032, FR-033\nuse cases: UC-R3-005\naudit: INBOUND_EVENT_ACCEPTED\nidempotency: X-Integration-Key + X-Event-Id replay identity\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getIntegrationEventStatus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/integration-events/{{eventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "integration-events",
+                "{{eventId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getIntegrationEventStatus\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: operations.integration.read\nrequest contract: none\nsuccess contract: 200:InboundEventStatusResponse\nrequirements: FR-033, FR-052\nuse cases: UC-R3-005\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "automation-admin",
+      "description": "api-v1-r3 operation family: automation-admin",
+      "item": [
+        {
+          "name": "listAutomations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/automations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "automations"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listAutomations\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: automations.admin\nrequest contract: none\nsuccess contract: 200:AutomationDefinitionResponsePageResponse\nrequirements: FR-034, FR-035, FR-050\nuse cases: UC-R3-012\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getAutomation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/automations/{{definitionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "automations",
+                "{{definitionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getAutomation\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: automations.admin\nrequest contract: none\nsuccess contract: 200:AutomationDefinitionResponse\nrequirements: FR-034, FR-035, FR-050\nuse cases: UC-R3-012\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createAutomation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/automations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "automations"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createAutomation\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: automations.admin\nrequest contract: CreateAutomationRequest\nsuccess contract: 201:AutomationDefinitionResponse\nrequirements: FR-034, FR-035, FR-050\nuse cases: UC-R3-012\naudit: AUTOMATION_VERSION_CREATED\nidempotency: none\nconcurrency: initial DRAFT v1\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createAutomationVersion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/automations/{{definitionId}}/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "automations",
+                "{{definitionId}}",
+                "versions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createAutomationVersion\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: automations.admin\nrequest contract: CreateAutomationVersionRequest\nsuccess contract: 201:AutomationDefinitionResponse\nrequirements: FR-034, FR-035, FR-050\nuse cases: UC-R3-012\naudit: AUTOMATION_VERSION_CREATED\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "activateAutomationVersion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/automations/{{definitionId}}/versions/{{versionId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "automations",
+                "{{definitionId}}",
+                "versions",
+                "{{versionId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: activateAutomationVersion\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: automations.admin\nrequest contract: ActivateAutomationVersionRequest\nsuccess contract: 200:AutomationDefinitionResponse\nrequirements: FR-034, FR-035, FR-050\nuse cases: UC-R3-012\naudit: AUTOMATION_VERSION_ACTIVATED\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "updateAutomationState",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/automations/{{definitionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "automations",
+                "{{definitionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: updateAutomationState\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: automations.admin\nrequest contract: UpdateAutomationStateRequest\nsuccess contract: 200:AutomationDefinitionResponse\nrequirements: FR-034, FR-035, FR-050\nuse cases: UC-R3-012\naudit: AUTOMATION_VERSION_DISABLED when disabling active definition\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "customer-policy-360",
+      "description": "api-v1-r3 operation family: customer-policy-360",
+      "item": [
+        {
+          "name": "listCustomers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "customers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listCustomers\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: customers.read\nrequest contract: none\nsuccess contract: 200:CustomersPageResponse\nrequirements: FR-036\nuse cases: UC-R3-007\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getCustomer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/customers/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "customers",
+                "{{customerId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getCustomer\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: customers.read\nrequest contract: none\nsuccess contract: 200:Customer360Response\nrequirements: FR-036\nuse cases: UC-R3-007\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "listPolicies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/policies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "policies"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listPolicies\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: policies.read\nrequest contract: none\nsuccess contract: 200:PoliciesPageResponse\nrequirements: FR-037\nuse cases: UC-R3-007\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getPolicy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/policies/{{policyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "policies",
+                "{{policyId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getPolicy\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: policies.read\nrequest contract: none\nsuccess contract: 200:Policy360Response\nrequirements: FR-037\nuse cases: UC-R3-007\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "guidance-admin",
+      "description": "api-v1-r3 operation family: guidance-admin",
+      "item": [
+        {
+          "name": "listGuidances",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/guidance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "guidance"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listGuidances\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: guidance.admin\nrequest contract: none\nsuccess contract: 200:InsurerGuidanceDefinitionResponsePageResponse\nrequirements: FR-038, FR-050\nuse cases: UC-R3-012\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getGuidance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/guidance/{{definitionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "guidance",
+                "{{definitionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getGuidance\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: guidance.admin\nrequest contract: none\nsuccess contract: 200:InsurerGuidanceDefinitionResponse\nrequirements: FR-038, FR-050\nuse cases: UC-R3-012\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createGuidance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/guidance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "guidance"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createGuidance\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: guidance.admin\nrequest contract: CreateGuidanceRequest\nsuccess contract: 201:InsurerGuidanceDefinitionResponse\nrequirements: FR-038, FR-050\nuse cases: UC-R3-012\naudit: INSURER_GUIDANCE_VERSION_CREATED\nidempotency: none\nconcurrency: initial DRAFT v1\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createGuidanceVersion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/guidance/{{definitionId}}/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "guidance",
+                "{{definitionId}}",
+                "versions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createGuidanceVersion\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: guidance.admin\nrequest contract: CreateGuidanceVersionRequest\nsuccess contract: 201:InsurerGuidanceDefinitionResponse\nrequirements: FR-038, FR-050\nuse cases: UC-R3-012\naudit: INSURER_GUIDANCE_VERSION_CREATED\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "activateGuidanceVersion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/guidance/{{definitionId}}/versions/{{versionId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "guidance",
+                "{{definitionId}}",
+                "versions",
+                "{{versionId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: activateGuidanceVersion\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: guidance.admin\nrequest contract: ActivateGuidanceVersionRequest\nsuccess contract: 200:InsurerGuidanceDefinitionResponse\nrequirements: FR-038, FR-050\nuse cases: UC-R3-012\naudit: INSURER_GUIDANCE_VERSION_ACTIVATED\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "updateGuidanceState",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/guidance/{{definitionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "guidance",
+                "{{definitionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: updateGuidanceState\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: guidance.admin\nrequest contract: UpdateGuidanceStateRequest\nsuccess contract: 200:InsurerGuidanceDefinitionResponse\nrequirements: FR-038, FR-050\nuse cases: UC-R3-012\naudit: INSURER_GUIDANCE_VERSION_RETIRED when disabling active definition\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "customer-portal",
+      "description": "api-v1-r3 operation family: customer-portal",
+      "item": [
+        {
+          "name": "authenticateCustomer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.accessToken) pm.environment.set('customerBearerToken', body.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{customerLogin}}\",\n  \"password\": \"{{customerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portal/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portal",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "operationId: authenticateCustomer\ncontract revision: api-v1-r3\nauthentication: anonymous_credentials\npermission: none\nrequest contract: CustomerLoginRequest\nsuccess contract: 200:CustomerLoginResponse\nrequirements: FR-039\nuse cases: UC-R3-008\naudit: CUSTOMER_AUTH_LOGIN_SUCCEEDED | CUSTOMER_AUTH_LOGIN_FAILED\nidempotency: none\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getPortalSelf",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portal/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portal",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getPortalSelf\ncontract revision: api-v1-r3\nauthentication: customer_jwt\npermission: portal.self.read\nrequest contract: none\nsuccess contract: 200:PortalCustomerSelfResponse\nrequirements: FR-040\nuse cases: UC-R3-008\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "listPortalPolicies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portal/policies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portal",
+                "policies"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listPortalPolicies\ncontract revision: api-v1-r3\nauthentication: customer_jwt\npermission: portal.self.read\nrequest contract: none\nsuccess contract: 200:PortalPoliciesPageResponse\nrequirements: FR-040\nuse cases: UC-R3-008\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "listPortalClaims",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portal/claims",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portal",
+                "claims"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listPortalClaims\ncontract revision: api-v1-r3\nauthentication: customer_jwt\npermission: portal.self.read\nrequest contract: none\nsuccess contract: 200:PortalClaimsPageResponse\nrequirements: FR-040\nuse cases: UC-R3-008\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getPortalClaimDetail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portal/claims/{{claimId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portal",
+                "claims",
+                "{{claimId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getPortalClaimDetail\ncontract revision: api-v1-r3\nauthentication: customer_jwt\npermission: portal.self.read\nrequest contract: none\nsuccess contract: 200:PortalClaimDetailResponse\nrequirements: FR-024, FR-038, FR-040\nuse cases: UC-R3-008\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "uploadPortalClaimEvidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "evidence",
+                  "type": "file",
+                  "src": "",
+                  "description": "Repeat for up to 5 files."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portal/claims/{{claimId}}/evidence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portal",
+                "claims",
+                "{{claimId}}",
+                "evidence"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: uploadPortalClaimEvidence\ncontract revision: api-v1-r3\nauthentication: customer_jwt\npermission: portal.self.evidence.create\nrequest contract: PortalEvidenceUploadRequest multipart\nsuccess contract: 201:PortalEvidenceUploadResponse\nrequirements: FR-041\nuse cases: UC-R3-008\naudit: CUSTOMER_EVIDENCE_ADDED\nidempotency: Idempotency-Key required\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "listPortalCommunications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portal/communications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portal",
+                "communications"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listPortalCommunications\ncontract revision: api-v1-r3\nauthentication: customer_jwt\npermission: portal.self.read\nrequest contract: none\nsuccess contract: 200:PortalCommunicationsPageResponse\nrequirements: FR-031, FR-040\nuse cases: UC-R3-008\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "imports",
+      "description": "api-v1-r3 operation family: imports",
+      "item": [
+        {
+          "name": "listImportJobs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/import-jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "import-jobs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listImportJobs\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: imports.execute\nrequest contract: none\nsuccess contract: 200:ImportJobsPageResponse\nrequirements: FR-042, FR-043\nuse cases: UC-R3-009\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createImportJob",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "CSV or XLSX source file. Technical portfolio maximum is 10 MiB."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/import-jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "import-jobs"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createImportJob\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: imports.execute\nrequest contract: CreateImportJobRequest multipart\nsuccess contract: 201:ImportJobResponse\nrequirements: FR-042\nuse cases: UC-R3-009\naudit: IMPORT_JOB_CREATED\nidempotency: Idempotency-Key required\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getImportJob",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/import-jobs/{{importJobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "import-jobs",
+                "{{importJobId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getImportJob\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: imports.execute\nrequest contract: none\nsuccess contract: 200:ImportJobResponse\nrequirements: FR-042, FR-043\nuse cases: UC-R3-009\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "previewImportJob",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/import-jobs/{{importJobId}}/preview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "import-jobs",
+                "{{importJobId}}",
+                "preview"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: previewImportJob\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: imports.execute\nrequest contract: PreviewImportJobRequest\nsuccess contract: 200:ImportJobResponse\nrequirements: FR-042, FR-043\nuse cases: UC-R3-009\naudit: not required\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "updateImportMapping",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/import-jobs/{{importJobId}}/mapping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "import-jobs",
+                "{{importJobId}}",
+                "mapping"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: updateImportMapping\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: imports.execute\nrequest contract: UpdateImportMappingRequest\nsuccess contract: 200:ImportJobResponse\nrequirements: FR-042, FR-043\nuse cases: UC-R3-009\naudit: not required\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "validateImportJob",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/import-jobs/{{importJobId}}/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "import-jobs",
+                "{{importJobId}}",
+                "validate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: validateImportJob\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: imports.execute\nrequest contract: ValidateImportJobRequest\nsuccess contract: 200:ImportJobResponse\nrequirements: FR-042, FR-043\nuse cases: UC-R3-009\naudit: not required\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "dryRunImportJob",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/import-jobs/{{importJobId}}/dry-run",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "import-jobs",
+                "{{importJobId}}",
+                "dry-run"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: dryRunImportJob\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: imports.execute\nrequest contract: DryRunImportJobRequest\nsuccess contract: 200:ImportJobResponse\nrequirements: FR-042, FR-043\nuse cases: UC-R3-009\naudit: IMPORT_DRY_RUN_COMPLETED\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "commitImportJob",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/import-jobs/{{importJobId}}/commit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "import-jobs",
+                "{{importJobId}}",
+                "commit"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: commitImportJob\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: imports.execute\nrequest contract: CommitImportJobRequest\nsuccess contract: 202:ImportJobResponse\nrequirements: FR-042, FR-043\nuse cases: UC-R3-009\naudit: IMPORT_COMMIT_REQUESTED; terminal outcome audit async\nidempotency: Idempotency-Key required\nconcurrency: expectedVersion required; DRY_RUN_READY\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "listImportJobRows",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/import-jobs/{{importJobId}}/rows",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "import-jobs",
+                "{{importJobId}}",
+                "rows"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listImportJobRows\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: imports.execute\nrequest contract: none\nsuccess contract: 200:ImportJobRowsPageResponse\nrequirements: FR-043\nuse cases: UC-R3-009\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "renewals",
+      "description": "api-v1-r3 operation family: renewals",
+      "item": [
+        {
+          "name": "listRenewalCases",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/renewals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "renewals"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listRenewalCases\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: renewals.read\nrequest contract: none\nsuccess contract: 200:RenewalCasesPageResponse\nrequirements: FR-044, FR-045\nuse cases: UC-R3-010\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getRenewalCase",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/renewals/{{renewalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "renewals",
+                "{{renewalId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getRenewalCase\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: renewals.read\nrequest contract: none\nsuccess contract: 200:RenewalCaseResponse\nrequirements: FR-044, FR-045\nuse cases: UC-R3-010\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "transitionRenewalCase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/renewals/{{renewalId}}/transitions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "renewals",
+                "{{renewalId}}",
+                "transitions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: transitionRenewalCase\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: renewals.manage\nrequest contract: TransitionRenewalCaseRequest\nsuccess contract: 200:RenewalCaseResponse\nrequirements: FR-045\nuse cases: UC-R3-010\naudit: RENEWAL_CASE_COMPLETED | RENEWAL_CASE_CANCELLED\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "moveRenewalOperationalStage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"toStageKey\": \"{{toStageKey}}\",\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/renewals/{{renewalId}}/operational-transitions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "renewals",
+                "{{renewalId}}",
+                "operational-transitions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: moveRenewalOperationalStage\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: renewals.manage\nrequest contract: MoveOperationalStageRequest\nsuccess contract: 200:PipelineWorkItemResponse\nrequirements: FR-026, FR-027, FR-045\nuse cases: UC-R3-010\naudit: PIPELINE_STAGE_MOVED\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "collections",
+      "description": "api-v1-r3 operation family: collections",
+      "item": [
+        {
+          "name": "listCollectionCases",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/collections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "collections"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listCollectionCases\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: collections.read\nrequest contract: none\nsuccess contract: 200:CollectionCasesPageResponse\nrequirements: FR-046, FR-047\nuse cases: UC-R3-011\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getCollectionCase",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/collections/{{collectionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "collections",
+                "{{collectionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getCollectionCase\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: collections.read\nrequest contract: none\nsuccess contract: 200:CollectionCaseResponse\nrequirements: FR-046, FR-047\nuse cases: UC-R3-011\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "transitionCollectionCase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/collections/{{collectionId}}/transitions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "collections",
+                "{{collectionId}}",
+                "transitions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: transitionCollectionCase\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: collections.manage\nrequest contract: TransitionCollectionCaseRequest\nsuccess contract: 200:CollectionCaseResponse\nrequirements: FR-047\nuse cases: UC-R3-011\naudit: COLLECTION_CASE_COMPLETED | COLLECTION_CASE_CANCELLED\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "moveCollectionOperationalStage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"toStageKey\": \"{{toStageKey}}\",\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/collections/{{collectionId}}/operational-transitions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "collections",
+                "{{collectionId}}",
+                "operational-transitions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: moveCollectionOperationalStage\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: collections.manage\nrequest contract: MoveOperationalStageRequest\nsuccess contract: 200:PipelineWorkItemResponse\nrequirements: FR-026, FR-027, FR-047\nuse cases: UC-R3-011\naudit: PIPELINE_STAGE_MOVED\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "updateCollectionPaymentState",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/collections/{{collectionId}}/payment-state",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "collections",
+                "{{collectionId}}",
+                "payment-state"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: updateCollectionPaymentState\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: collections.manage\nrequest contract: UpdateCollectionPaymentStateRequest\nsuccess contract: 200:CollectionCaseResponse\nrequirements: FR-046, FR-047\nuse cases: UC-R3-011\naudit: COLLECTION_PAYMENT_STATE_CHANGED\nidempotency: none\nconcurrency: expectedVersion + server verification required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "custom-field-admin",
+      "description": "api-v1-r3 operation family: custom-field-admin",
+      "item": [
+        {
+          "name": "listCustomFields",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/custom-fields",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "custom-fields"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listCustomFields\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: custom_fields.admin\nrequest contract: none\nsuccess contract: 200:CustomFieldDefinitionResponsePageResponse\nrequirements: FR-048, FR-050\nuse cases: UC-R3-012\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getCustomField",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/custom-fields/{{definitionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "custom-fields",
+                "{{definitionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getCustomField\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: custom_fields.admin\nrequest contract: none\nsuccess contract: 200:CustomFieldDefinitionResponse\nrequirements: FR-048, FR-050\nuse cases: UC-R3-012\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createCustomField",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/custom-fields",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "custom-fields"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createCustomField\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: custom_fields.admin\nrequest contract: CreateCustomFieldRequest\nsuccess contract: 201:CustomFieldDefinitionResponse\nrequirements: FR-048, FR-050\nuse cases: UC-R3-012\naudit: CUSTOM_FIELD_VERSION_CREATED\nidempotency: none\nconcurrency: initial DRAFT v1\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "createCustomFieldVersion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/custom-fields/{{definitionId}}/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "custom-fields",
+                "{{definitionId}}",
+                "versions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: createCustomFieldVersion\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: custom_fields.admin\nrequest contract: CreateCustomFieldVersionRequest\nsuccess contract: 201:CustomFieldDefinitionResponse\nrequirements: FR-048, FR-050\nuse cases: UC-R3-012\naudit: CUSTOM_FIELD_VERSION_CREATED\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "activateCustomFieldVersion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/custom-fields/{{definitionId}}/versions/{{versionId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "custom-fields",
+                "{{definitionId}}",
+                "versions",
+                "{{versionId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: activateCustomFieldVersion\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: custom_fields.admin\nrequest contract: ActivateCustomFieldVersionRequest\nsuccess contract: 200:CustomFieldDefinitionResponse\nrequirements: FR-048, FR-050\nuse cases: UC-R3-012\naudit: CUSTOM_FIELD_VERSION_ACTIVATED\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "updateCustomFieldState",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDefinitionVersion\": {{expectedDefinitionVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/custom-fields/{{definitionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "custom-fields",
+                "{{definitionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: updateCustomFieldState\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: custom_fields.admin\nrequest contract: UpdateCustomFieldStateRequest\nsuccess contract: 200:CustomFieldDefinitionResponse\nrequirements: FR-048, FR-050\nuse cases: UC-R3-012\naudit: CUSTOM_FIELD_VERSION_RETIRED when disabling active definition\nidempotency: none\nconcurrency: expectedDefinitionVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "bulk",
+      "description": "api-v1-r3 operation family: bulk",
+      "item": [
+        {
+          "name": "executeBulkOperation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actionType\": \"{{actionType}}\",\n  \"action\": {},\n  \"items\": [{}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/operator/bulk-actions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "operator",
+                "bulk-actions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: executeBulkOperation\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: bulk.execute\nrequest contract: ExecuteBulkOperationRequest\nsuccess contract: 200:BulkOperationResponse\nrequirements: FR-049\nuse cases: UC-R3-013\naudit: BULK_OPERATION_REQUESTED + BULK_OPERATION_COMPLETED\nidempotency: Idempotency-Key required\nconcurrency: per-item expected version where action requires it\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "dead-letter",
+      "description": "api-v1-r3 operation family: dead-letter",
+      "item": [
+        {
+          "name": "listDeadLetters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/dead-letters",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "dead-letters"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: listDeadLetters\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: operations.dead_letters.read\nrequest contract: none\nsuccess contract: 200:DeadLettersPageResponse\nrequirements: FR-052\nuse cases: UC-R3-005, UC-R3-006\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "getDeadLetter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/dead-letters/{{deadLetterId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "dead-letters",
+                "{{deadLetterId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: getDeadLetter\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: operations.dead_letters.read\nrequest contract: none\nsuccess contract: 200:DeadLetterResponse\nrequirements: FR-052\nuse cases: UC-R3-005, UC-R3-006\naudit: not required\nidempotency: n/a\nconcurrency: none\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "requeueDeadLetter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/dead-letters/{{deadLetterId}}/requeue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "dead-letters",
+                "{{deadLetterId}}",
+                "requeue"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: requeueDeadLetter\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: operations.dead_letters.manage\nrequest contract: RequeueDeadLetterRequest\nsuccess contract: 202:DeadLetterResponse\nrequirements: FR-051, FR-052\nuse cases: UC-R3-005, UC-R3-006\naudit: DEAD_LETTER_REQUEUED\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
+          }
+        },
+        {
+          "name": "resolveDeadLetter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Request-Id",
+                "value": "{{$guid}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": {{expectedVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/dead-letters/{{deadLetterId}}/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "dead-letters",
+                "{{deadLetterId}}",
+                "resolve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffBearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "operationId: resolveDeadLetter\ncontract revision: api-v1-r3\nauthentication: staff_jwt\npermission: operations.dead_letters.manage\nrequest contract: ResolveDeadLetterRequest\nsuccess contract: 200:DeadLetterResponse\nrequirements: FR-052\nuse cases: UC-R3-005, UC-R3-006\naudit: DEAD_LETTER_RESOLVED\nidempotency: none\nconcurrency: expectedVersion required\n\nSynthetic/demo contract request. Where the frozen OpenAPI schema intentionally leaves business fields open, complete the request using the corresponding governed implementation documentation rather than inventing insurer data."
           }
         }
       ]
