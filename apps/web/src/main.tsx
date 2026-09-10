@@ -18,6 +18,7 @@ import './public-refresh.css';
 import './hero-fix.css';
 import './r3-productization.css';
 import './r3-claims-work.css';
+import './customer-policy-360.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {

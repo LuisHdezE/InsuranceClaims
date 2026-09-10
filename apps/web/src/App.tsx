@@ -7,8 +7,12 @@ import { HomePage } from './pages/HomePage';
 import { NewClaimPage } from './pages/NewClaimPage';
 import { OperatorClaimDetailPage } from './pages/OperatorClaimDetailPage';
 import { OperatorClaimsPage } from './pages/OperatorClaimsPage';
+import { OperatorCustomerDetailPage } from './pages/OperatorCustomerDetailPage';
+import { OperatorCustomersPage } from './pages/OperatorCustomersPage';
 import { OperatorDashboardPage } from './pages/OperatorDashboardPage';
 import { OperatorLoginPage } from './pages/OperatorLoginPage';
+import { OperatorPoliciesPage } from './pages/OperatorPoliciesPage';
+import { OperatorPolicyDetailPage } from './pages/OperatorPolicyDetailPage';
 import { OperatorTaskDetailPage } from './pages/OperatorTaskDetailPage';
 import { OperatorTasksPage } from './pages/OperatorTasksPage';
 import { ReviewClaimPage } from './pages/ReviewClaimPage';
@@ -35,6 +39,10 @@ export function App() {
       <Route path="/operator/claims/:claimId" element={<RequireOperator><RequireStaffAccess allOf={['claims.backoffice.read']}><OperatorClaimDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/tasks" element={<RequireOperator><RequireStaffAccess allOf={['claims.tasks.read']}><OperatorTasksPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/tasks/:taskId" element={<RequireOperator><RequireStaffAccess allOf={['claims.tasks.read']}><OperatorTaskDetailPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/customers" element={<RequireOperator><RequireStaffAccess allOf={['customers.read']}><OperatorCustomersPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/customers/:customerId" element={<RequireOperator><RequireStaffAccess allOf={['customers.read']}><OperatorCustomerDetailPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/policies" element={<RequireOperator><RequireStaffAccess allOf={['policies.read']}><OperatorPoliciesPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/policies/:policyId" element={<RequireOperator><RequireStaffAccess allOf={['policies.read']}><OperatorPolicyDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/forbidden" element={<RequireOperator><RequireStaffAccess><StaffForbiddenPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

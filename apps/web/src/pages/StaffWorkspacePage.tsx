@@ -32,8 +32,10 @@ const CARDS: WorkspaceCard[] = [
   {
     kicker: 'Customer 360',
     title: 'Clientes y pólizas',
-    description: 'La API R3 ya expone las vistas 360. Su interfaz se incorporará en el siguiente bloque de productización.',
+    description: 'Directorio y detalle R3 de clientes, pólizas, assets y Claims relacionados, sin enriquecer datos fuera del contrato.',
     permissions: ['customers.read', 'policies.read'],
+    href: '/operator/customers',
+    action: 'Abrir Customer 360',
     tone: 'blue',
   },
   {

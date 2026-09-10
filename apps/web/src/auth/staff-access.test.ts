@@ -21,6 +21,8 @@ describe('R3 staff presentation access', () => {
       'claims.tasks.manage',
       'claims.analytics.read',
       'bulk.execute',
+      'customers.read',
+      'policies.read',
     ])).toBe(true);
   });
 
@@ -37,11 +39,13 @@ describe('R3 staff presentation access', () => {
     expect(defaultStaffRoute('PLATFORM_ADMIN')).toBe('/operator/workspace');
   });
 
-  it('honors permitted Claim and Task deep links without elevating Platform Admin', () => {
+  it('honors permitted Claim, Task and Customer 360 deep links without elevating Platform Admin', () => {
     expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/claims')).toBe('/operator/claims');
     expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/tasks/11111111-1111-4111-8111-111111111111')).toBe('/operator/tasks/11111111-1111-4111-8111-111111111111');
-    expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/tasks')).toBe('/operator/tasks');
-    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/tasks/11111111-1111-4111-8111-111111111111')).toBe('/operator/workspace');
+    expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/customers/11111111-1111-4111-8111-111111111111')).toBe('/operator/customers/11111111-1111-4111-8111-111111111111');
+    expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/policies')).toBe('/operator/policies');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/customers')).toBe('/operator/workspace');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/policies/22222222-2222-4222-8222-222222222222')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/claims')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/workspace')).toBe('/operator/workspace');
   });

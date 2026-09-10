@@ -77,6 +77,8 @@ export function canAccessStaffPath(role: StaffRole, path: string): boolean {
   if (path === '/operator/dashboard') return hasAllPermissions(role, ['claims.backoffice.read', 'claims.tasks.read']);
   if (path === '/operator/claims' || /^\/operator\/claims\/[^/]+$/.test(path)) return hasPermission(role, 'claims.backoffice.read');
   if (path === '/operator/tasks' || /^\/operator\/tasks\/[^/]+$/.test(path)) return hasPermission(role, 'claims.tasks.read');
+  if (path === '/operator/customers' || /^\/operator\/customers\/[^/]+$/.test(path)) return hasPermission(role, 'customers.read');
+  if (path === '/operator/policies' || /^\/operator\/policies\/[^/]+$/.test(path)) return hasPermission(role, 'policies.read');
   return false;
 }
 
