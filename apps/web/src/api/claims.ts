@@ -3,8 +3,8 @@ import { createApiClient, toApiFailure } from './client';
 import type {
   ApiResult,
   ClaimDraft,
+  ClaimsListInput,
   ClaimsPageResponse,
-  ClaimStatus,
   CreateClaimResponse,
   CustomerClaimStatusResponse,
   EvidenceDownload,
@@ -102,7 +102,7 @@ export async function authenticateOperator(
 }
 
 export async function listClaims(
-  input: { page?: number; pageSize?: number; status?: ClaimStatus },
+  input: ClaimsListInput,
   accessToken: string,
   client: AxiosInstance = browserClient,
 ): Promise<ApiResult<ClaimsPageResponse>> {

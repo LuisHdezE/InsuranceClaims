@@ -107,9 +107,12 @@ try:
     }
     block_api(False)
 
-    # Backoffice: authenticate online, then prove an explicit refresh fails closed when
-    # the API transport disappears while the protected SPA remains loaded.
-    visit("/operator/login")
+    # Backoffice: begin from the protected Claims route so the auth redirect captures the
+    # requested deep link. Authenticate online, return only if the role is authorized, then
+    # prove an explicit refresh fails closed when the API transport disappears while the SPA
+    # remains loaded. This also exercises the R3 permission-aware return-path behavior.
+    visit("/operator/claims")
+    wait.until(lambda d: d.current_url.startswith(f"{WEB_BASE_URL}/operator/login"))
     set_input("operator-login", OPERATOR_LOGIN)
     set_input("operator-password", OPERATOR_PASSWORD)
     click_button("Ingresar")
@@ -121,7 +124,7 @@ try:
     wait_text("No mostramos datos locales como si fueran el estado real")
     results["slices"]["claims-backoffice/web"] = {
         "qa.offline": "PASS",
-        "observation": "Protected claims refresh fails closed and explicitly refuses to present cached data as authoritative.",
+        "observation": "Protected claims deep link returns after authorized login, then refresh fails closed and explicitly refuses to present cached data as authoritative.",
     }
     block_api(False)
 finally:

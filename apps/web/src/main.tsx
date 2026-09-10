@@ -16,6 +16,7 @@ import './claims-timeline.css';
 import './claims-evidence-attention.css';
 import './public-refresh.css';
 import './hero-fix.css';
+import './r3-productization.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {

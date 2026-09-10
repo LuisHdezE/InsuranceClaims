@@ -73,10 +73,12 @@ export type OperatorLoginRequest = {
   password: string;
 };
 
+export type StaffRole = 'CLAIMS_OPERATOR' | 'CLAIMS_SUPERVISOR' | 'PLATFORM_ADMIN';
+
 export type OperatorIdentity = {
   id: string;
   login: string;
-  role: 'CLAIMS_OPERATOR';
+  role: StaffRole;
 };
 
 export type OperatorLoginResponse = {
@@ -86,6 +88,12 @@ export type OperatorLoginResponse = {
   operator: OperatorIdentity;
 };
 
+export type OperationalStageSummary = {
+  stageKey: string;
+  displayName: string;
+  sortOrder: number;
+};
+
 export type ClaimSummary = {
   claimId: string;
   trackingCode: string;
@@ -93,6 +101,8 @@ export type ClaimSummary = {
   occurredAt: string;
   policyReference: string;
   vehicleReference: string;
+  operationalStage?: OperationalStageSummary | null;
+  operationalWorkItemVersion?: number | null;
   createdAt: string;
 };
 
@@ -102,6 +112,23 @@ export type ClaimsPageResponse = {
   pageSize: number;
   totalItems: number;
   totalPages: number;
+};
+
+export type ClaimsListSort =
+  | 'createdAt:desc'
+  | 'createdAt:asc'
+  | 'occurredAt:desc'
+  | 'occurredAt:asc'
+  | 'trackingCode:asc'
+  | 'trackingCode:desc';
+
+export type ClaimsListInput = {
+  page?: number;
+  pageSize?: number;
+  status?: ClaimStatus;
+  stage?: string;
+  search?: string;
+  sort?: ClaimsListSort;
 };
 
 export type EvidenceMetadata = {

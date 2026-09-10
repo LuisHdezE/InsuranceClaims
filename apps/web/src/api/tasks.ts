@@ -1,12 +1,17 @@
 import type { AxiosInstance } from 'axios';
 import { createApiClient, toApiFailure } from './client';
 import type { ApiResult } from './types';
-import type { ClaimTaskProjection, ClaimTasksPageResponse, ClaimTaskStatus, ClaimTaskType } from './task-types';
+import type {
+  ClaimTaskProjection,
+  ClaimTasksPageResponse,
+  ClaimTaskStatus,
+  ListTasksInput,
+} from './task-types';
 
 const browserClient = createApiClient();
 
 export async function listTasks(
-  input: { page?: number; pageSize?: number; status?: ClaimTaskStatus; type?: ClaimTaskType; claimId?: string },
+  input: ListTasksInput,
   accessToken: string,
   client: AxiosInstance = browserClient,
 ): Promise<ApiResult<ClaimTasksPageResponse>> {

@@ -2,12 +2,25 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { listClaims } from '../api/claims';
-import type { ApiFailure, ClaimStatus, ClaimSummary } from '../api/types';
+import type {
+  ApiFailure,
+  ClaimStatus,
+  ClaimSummary,
+  ClaimsListSort,
+} from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 const STATUSES: ClaimStatus[] = ['RECEIVED', 'UNDER_REVIEW', 'OBSERVED', 'APPROVED', 'IN_REPAIR', 'CLOSED'];
+const SORT_OPTIONS: Array<{ value: ClaimsListSort; label: string }> = [
+  { value: 'createdAt:desc', label: 'Más recientes' },
+  { value: 'createdAt:asc', label: 'Más antiguos' },
+  { value: 'occurredAt:desc', label: 'Ocurrencia reciente' },
+  { value: 'occurredAt:asc', label: 'Ocurrencia antigua' },
+  { value: 'trackingCode:asc', label: 'Seguimiento A-Z' },
+  { value: 'trackingCode:desc', label: 'Seguimiento Z-A' },
+];
 type ViewMode = 'kanban' | 'list';
 
 type Stage = {
@@ -29,18 +42,36 @@ export function OperatorClaimsPage() {
   const { session, signOut } = useOperatorSession();
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<ClaimStatus | ''>('');
+  const [searchDraft, setSearchDraft] = useState('');
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<ClaimsListSort>('createdAt:desc');
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
 
+  const sharedQuery = {
+    search: search || undefined,
+    sort,
+  };
+
   const claimsQuery = useQuery({
-    queryKey: ['operator', 'claims', 'list', page, status],
-    queryFn: () => listClaims({ page, pageSize: 20, status: status || undefined }, session!.accessToken),
+    queryKey: ['operator', 'claims', 'list', page, status, search, sort],
+    queryFn: () => listClaims({
+      page,
+      pageSize: 20,
+      status: status || undefined,
+      ...sharedQuery,
+    }, session!.accessToken),
     enabled: Boolean(session) && viewMode === 'list',
   });
 
   const stageQueries = useQueries({
     queries: STATUSES.map((claimStatus) => ({
-      queryKey: ['operator', 'claims', 'kanban', claimStatus],
-      queryFn: () => listClaims({ page: 1, pageSize: 20, status: claimStatus }, session!.accessToken),
+      queryKey: ['operator', 'claims', 'kanban', claimStatus, search, sort],
+      queryFn: () => listClaims({
+        page: 1,
+        pageSize: 20,
+        status: claimStatus,
+        ...sharedQuery,
+      }, session!.accessToken),
       enabled: Boolean(session) && viewMode === 'kanban',
     })),
   });
@@ -75,6 +106,21 @@ export function OperatorClaimsPage() {
     return claimsQuery.refetch();
   };
 
+  const applySearch = () => {
+    setSearch(searchDraft.trim());
+    setPage(1);
+  };
+
+  const clearFilters = () => {
+    setStatus('');
+    setSearchDraft('');
+    setSearch('');
+    setSort('createdAt:desc');
+    setPage(1);
+  };
+
+  const hasFilters = Boolean(status || search || sort !== 'createdAt:desc');
+
   return (
     <OperatorShell>
       <main className="operator-main ops-main">
@@ -82,40 +128,91 @@ export function OperatorClaimsPage() {
           <div>
             <span className="ops-kicker">Operación</span>
             <h1>Gestión de siniestros</h1>
-            <p>Listado autoritativo del API. El Kanban es una proyección visual y nunca reemplaza los estados del dominio.</p>
+            <p>
+              Estados autoritativos, búsqueda y orden R3. El Kanban conserva la agrupación visual aprobada,
+              mientras la etapa operacional real se muestra desde la proyección del servidor.
+            </p>
           </div>
           <button className="ops-refresh-button" type="button" onClick={() => void refresh()} disabled={isRefreshing}>
             {isRefreshing ? 'Actualizando…' : 'Actualizar'}
           </button>
         </div>
 
-        <section className="ops-claims-toolbar" aria-label="Controles del workspace de siniestros">
+        <section className="ops-claims-toolbar r3-claims-toolbar" aria-label="Controles del workspace de siniestros">
+          <form
+            className="r3-claims-search"
+            role="search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              applySearch();
+            }}
+          >
+            <label htmlFor="claims-search">Buscar</label>
+            <div>
+              <input
+                id="claims-search"
+                type="search"
+                value={searchDraft}
+                maxLength={120}
+                placeholder="Seguimiento, póliza, vehículo…"
+                onChange={(event) => setSearchDraft(event.target.value)}
+              />
+              <button type="submit">Buscar</button>
+            </div>
+          </form>
+
           <div className="ops-filter-control">
-            <label htmlFor="claim-status-filter">Estado / filtro</label>
+            <label htmlFor="claim-status-filter">Estado</label>
             <select
               id="claim-status-filter"
               value={status}
               onChange={(event) => {
                 setStatus(event.target.value as ClaimStatus | '');
                 setPage(1);
-                setViewMode('list');
+                if (event.target.value) setViewMode('list');
               }}
             >
-              <option value="">Todos los estados</option>
+              <option value="">Todos</option>
               {STATUSES.map((item) => <option value={item} key={item}>{statusLabel(item)}</option>)}
             </select>
           </div>
 
-          <div className="ops-view-toggle" role="group" aria-label="Vista del listado">
-            <button type="button" className={viewMode === 'kanban' ? 'is-active' : ''} onClick={() => setViewMode('kanban')} aria-pressed={viewMode === 'kanban'}>▥ Kanban</button>
-            <button type="button" className={viewMode === 'list' ? 'is-active' : ''} onClick={() => setViewMode('list')} aria-pressed={viewMode === 'list'}>☷ Lista</button>
+          <div className="ops-filter-control">
+            <label htmlFor="claim-sort">Orden</label>
+            <select
+              id="claim-sort"
+              value={sort}
+              onChange={(event) => {
+                setSort(event.target.value as ClaimsListSort);
+                setPage(1);
+              }}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option value={option.value} key={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="r3-toolbar-actions">
+            {hasFilters && <button className="r3-clear-filter" type="button" onClick={clearFilters}>Limpiar</button>}
+            <div className="ops-view-toggle" role="group" aria-label="Vista del listado">
+              <button type="button" className={viewMode === 'kanban' ? 'is-active' : ''} onClick={() => setViewMode('kanban')} aria-pressed={viewMode === 'kanban'}>▥ Kanban</button>
+              <button type="button" className={viewMode === 'list' ? 'is-active' : ''} onClick={() => setViewMode('list')} aria-pressed={viewMode === 'list'}>☷ Lista</button>
+            </div>
           </div>
         </section>
+
+        {search && (
+          <div className="r3-active-filter" role="status">
+            Resultados para <strong>“{search}”</strong>
+            <button type="button" onClick={() => { setSearch(''); setSearchDraft(''); setPage(1); }} aria-label="Quitar búsqueda">×</button>
+          </div>
+        )}
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
 
         {viewMode === 'kanban' && (
-          <section className="ops-kanban" aria-label="Kanban operacional de siniestros">
+          <section className="ops-kanban" aria-label="Kanban visual de siniestros por estado">
             {stageData.map((stage) => (
               <article className={`ops-kanban-column is-${stage.tone}`} key={stage.id}>
                 <header className="ops-kanban-heading">
@@ -132,7 +229,7 @@ export function OperatorClaimsPage() {
                     <div className="ops-kanban-empty" role="status">Cargando…</div>
                   )}
                   {!stageQueries.some((query) => query.isLoading) && stage.items.length === 0 && (
-                    <div className="ops-kanban-empty">Sin siniestros en esta etapa.</div>
+                    <div className="ops-kanban-empty">Sin siniestros en esta agrupación.</div>
                   )}
                   {stage.items.map((claim) => <ClaimCard claim={claim} key={claim.claimId} />)}
                 </div>
@@ -147,8 +244,8 @@ export function OperatorClaimsPage() {
 
             {result && result.items.length === 0 && (
               <div className="ops-panel empty-state" role="status">
-                <strong>{status ? 'No hay resultados para este filtro.' : 'No hay siniestros disponibles.'}</strong>
-                {status && <button className="ops-refresh-button" type="button" onClick={() => { setStatus(''); setPage(1); }}>Quitar filtro</button>}
+                <strong>No hay resultados para los filtros actuales.</strong>
+                {hasFilters && <button className="ops-refresh-button" type="button" onClick={clearFilters}>Limpiar filtros</button>}
               </div>
             )}
 
@@ -161,6 +258,7 @@ export function OperatorClaimsPage() {
                       <th scope="col">Seguimiento</th>
                       <th scope="col">Póliza</th>
                       <th scope="col">Vehículo</th>
+                      <th scope="col">Etapa operativa</th>
                       <th scope="col">Estado</th>
                       <th scope="col">Ocurrido</th>
                       <th scope="col"><span className="sr-only">Acción</span></th>
@@ -172,6 +270,9 @@ export function OperatorClaimsPage() {
                         <td data-label="Seguimiento"><strong>{claim.trackingCode}</strong></td>
                         <td data-label="Póliza">{claim.policyReference}</td>
                         <td data-label="Vehículo">{claim.vehicleReference}</td>
+                        <td data-label="Etapa">
+                          <OperationalStageBadge claim={claim} />
+                        </td>
                         <td data-label="Estado"><span className={`status-badge status-${claim.status.toLowerCase()}`}>{statusLabel(claim.status)}</span></td>
                         <td data-label="Ocurrido">{formatDate(claim.occurredAt)}</td>
                         <td data-label="Acción"><Link className="ops-card-link" to={`/operator/claims/${claim.claimId}`}>Ver detalle</Link></td>
@@ -198,18 +299,32 @@ export function OperatorClaimsPage() {
 
 function ClaimCard({ claim }: { claim: ClaimSummary }) {
   return (
-    <Link className="ops-claim-card" to={`/operator/claims/${claim.claimId}`}>
+    <Link className="ops-claim-card r3-claim-card" to={`/operator/claims/${claim.claimId}`}>
       <div className="ops-claim-card-top">
         <strong>{claim.trackingCode}</strong>
-        <span className={`status-badge status-${claim.status.toLowerCase()}`}>{claim.status}</span>
+        <span className={`status-badge status-${claim.status.toLowerCase()}`}>{statusLabel(claim.status)}</span>
       </div>
       <span className="ops-claim-policy">{claim.policyReference}</span>
+      <OperationalStageBadge claim={claim} />
       <dl>
         <div><dt>Vehículo</dt><dd>{claim.vehicleReference}</dd></div>
         <div><dt>Ocurrido</dt><dd>{formatDate(claim.occurredAt)}</dd></div>
       </dl>
       <span className="ops-claim-card-action">Abrir detalle <span aria-hidden="true">›</span></span>
     </Link>
+  );
+}
+
+function OperationalStageBadge({ claim }: { claim: ClaimSummary }) {
+  if (!claim.operationalStage) {
+    return <span className="r3-stage-badge is-unassigned">Sin etapa operativa</span>;
+  }
+
+  return (
+    <span className="r3-stage-badge" title={`Stage key: ${claim.operationalStage.stageKey}`}>
+      <span aria-hidden="true">◆</span>
+      {claim.operationalStage.displayName}
+    </span>
   );
 }
 

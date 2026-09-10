@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { completeClaimTask, listClaimTasks } from '../api/tasks';
 import type { ApiFailure } from '../api/types';
-import type { ClaimTaskProjection, ClaimTaskType } from '../api/task-types';
+import type { ClaimTaskProjection, ClaimTaskStatus, ClaimTaskType } from '../api/task-types';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import { OperatorApiErrorNotice } from './OperatorApiErrorNotice';
 
@@ -67,14 +67,16 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
       ) : (
         <ul className="ops-claim-task-list">
           {tasks.map((task) => (
-            <li key={task.taskId} className={task.status === 'COMPLETED' ? 'is-completed' : ''}>
-              <span className="ops-task-check" aria-hidden="true">{task.status === 'COMPLETED' ? '✓' : '○'}</span>
+            <li key={task.taskId} className={task.status !== 'OPEN' ? `is-${task.status.toLowerCase()}` : ''}>
+              <span className="ops-task-check" aria-hidden="true">
+                {task.status === 'COMPLETED' ? '✓' : task.status === 'CANCELLED' ? '×' : '○'}
+              </span>
               <div className="ops-task-main-copy">
                 <strong>{task.title}</strong>
                 <span>{taskTypeLabel(task.type)} · {task.priority === 'HIGH' ? 'Prioridad alta' : 'Prioridad normal'}</span>
                 <small>{task.dueAt ? `Vence ${formatDate(task.dueAt)}` : 'Sin vencimiento definido'} · Cola {task.queue}</small>
               </div>
-              <span className={`ops-task-status is-${task.status.toLowerCase()}`}>{task.status === 'OPEN' ? 'Abierta' : 'Completada'}</span>
+              <TaskStatusBadge status={task.status} />
               {task.status === 'OPEN' && (
                 <button
                   type="button"
@@ -103,6 +105,11 @@ export function taskTypeLabel(type: ClaimTaskType) {
     CUSTOMER_FOLLOWUP: 'Seguimiento al cliente',
     CLOSURE_REVIEW: 'Revisión de cierre',
   } satisfies Record<ClaimTaskType, string>)[type];
+}
+
+function TaskStatusBadge({ status }: { status: ClaimTaskStatus }) {
+  const label = status === 'OPEN' ? 'Abierta' : status === 'COMPLETED' ? 'Completada' : 'Cancelada';
+  return <span className={`ops-task-status is-${status.toLowerCase()}`}>{label}</span>;
 }
 
 function formatDate(value: string) {
