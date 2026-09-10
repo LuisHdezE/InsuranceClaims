@@ -1,0 +1,127 @@
+import type { StaffRole } from '../api/types';
+
+export type StaffPermission =
+  | 'claims.backoffice.read'
+  | 'claims.backoffice.transition'
+  | 'claims.tasks.read'
+  | 'claims.tasks.manage'
+  | 'claims.pipeline.read'
+  | 'claims.pipeline.transition'
+  | 'claims.analytics.read'
+  | 'communications.read'
+  | 'communications.send'
+  | 'customers.read'
+  | 'policies.read'
+  | 'renewals.read'
+  | 'renewals.manage'
+  | 'collections.read'
+  | 'collections.manage'
+  | 'bulk.execute'
+  | 'pipelines.admin'
+  | 'communications.admin'
+  | 'automations.admin'
+  | 'guidance.admin'
+  | 'custom_fields.admin'
+  | 'imports.execute'
+  | 'operations.integration.read'
+  | 'operations.dead_letters.read'
+  | 'operations.dead_letters.manage';
+
+export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
+  CLAIMS_OPERATOR: 'Operador de siniestros',
+  CLAIMS_SUPERVISOR: 'Supervisor de siniestros',
+  PLATFORM_ADMIN: 'Administrador de plataforma',
+};
+
+const ROLE_GRANTS = {
+  CLAIMS_OPERATOR: [
+    'claims.backoffice.read',
+    'claims.backoffice.transition',
+    'claims.tasks.read',
+    'claims.tasks.manage',
+    'claims.pipeline.read',
+    'claims.pipeline.transition',
+    'communications.read',
+    'communications.send',
+    'customers.read',
+    'policies.read',
+    'renewals.read',
+    'renewals.manage',
+    'collections.read',
+    'collections.manage',
+  ],
+  CLAIMS_SUPERVISOR: [
+    'claims.backoffice.read',
+    'claims.backoffice.transition',
+    'claims.tasks.read',
+    'claims.tasks.manage',
+    'claims.pipeline.read',
+    'claims.pipeline.transition',
+    'claims.analytics.read',
+    'communications.read',
+    'communications.send',
+    'customers.read',
+    'policies.read',
+    'renewals.read',
+    'renewals.manage',
+    'collections.read',
+    'collections.manage',
+    'bulk.execute',
+  ],
+  PLATFORM_ADMIN: [
+    'claims.analytics.read',
+    'pipelines.admin',
+    'communications.admin',
+    'automations.admin',
+    'guidance.admin',
+    'custom_fields.admin',
+    'imports.execute',
+    'operations.integration.read',
+    'operations.dead_letters.read',
+    'operations.dead_letters.manage',
+  ],
+} as const satisfies Record<StaffRole, readonly StaffPermission[]>;
+
+/**
+ * Presentation-only mirror of the frozen R3 role grants.
+ * The API/Application layers remain authoritative for authorization.
+ */
+export function permissionsForRole(role: StaffRole): readonly StaffPermission[] {
+  return ROLE_GRANTS[role];
+}
+
+export function hasPermission(role: StaffRole, permission: StaffPermission): boolean {
+  return permissionsForRole(role).includes(permission);
+}
+
+export function hasAllPermissions(role: StaffRole, permissions: readonly StaffPermission[]): boolean {
+  return permissions.every((permission) => hasPermission(role, permission));
+}
+
+export function hasAnyPermission(role: StaffRole, permissions: readonly StaffPermission[]): boolean {
+  return permissions.some((permission) => hasPermission(role, permission));
+}
+
+export function defaultStaffRoute(role: StaffRole): string {
+  return hasAllPermissions(role, ['claims.backoffice.read', 'claims.tasks.read'])
+    ? '/operator/dashboard'
+    : '/operator/workspace';
+}
+
+export function canAccessStaffPath(role: StaffRole, path: string): boolean {
+  if (path === '/operator/workspace') return true;
+  if (path === '/operator/dashboard') {
+    return hasAllPermissions(role, ['claims.backoffice.read', 'claims.tasks.read']);
+  }
+  if (path === '/operator/claims' || /^\/operator\/claims\/[^/]+$/.test(path)) {
+    return hasPermission(role, 'claims.backoffice.read');
+  }
+  if (path === '/operator/tasks') return hasPermission(role, 'claims.tasks.read');
+  return false;
+}
+
+export function resolveStaffLandingRoute(role: StaffRole, requestedPath?: string | null): string {
+  return requestedPath && canAccessStaffPath(role, requestedPath)
+    ? requestedPath
+    : defaultStaffRoute(role);
+}

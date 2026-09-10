@@ -5,8 +5,19 @@ export type ClaimTaskType =
   | 'CUSTOMER_FOLLOWUP'
   | 'CLOSURE_REVIEW';
 
-export type ClaimTaskStatus = 'OPEN' | 'COMPLETED';
+export type ClaimTaskStatus = 'OPEN' | 'COMPLETED' | 'CANCELLED';
 export type ClaimTaskPriority = 'NORMAL' | 'HIGH';
+
+export type ListTasksInput = {
+  page?: number;
+  pageSize?: number;
+  status?: ClaimTaskStatus;
+  type?: ClaimTaskType;
+  claimId?: string;
+  priority?: ClaimTaskPriority;
+  assignedOperatorId?: string;
+  overdue?: boolean;
+};
 
 export type ClaimTaskProjection = {
   taskId: string;
