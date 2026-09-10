@@ -37,9 +37,11 @@ describe('R3 staff presentation access', () => {
     expect(defaultStaffRoute('PLATFORM_ADMIN')).toBe('/operator/workspace');
   });
 
-  it('honors a permitted deep link and rejects a privilege-escalating return path', () => {
+  it('honors permitted Claim and Task deep links without elevating Platform Admin', () => {
     expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/claims')).toBe('/operator/claims');
+    expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/tasks/11111111-1111-4111-8111-111111111111')).toBe('/operator/tasks/11111111-1111-4111-8111-111111111111');
     expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/tasks')).toBe('/operator/tasks');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/tasks/11111111-1111-4111-8111-111111111111')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/claims')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/workspace')).toBe('/operator/workspace');
   });

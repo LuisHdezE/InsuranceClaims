@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { hasPermission } from '../auth/staff-access';
 import { completeClaimTask, listClaimTasks } from '../api/tasks';
 import type { ApiFailure } from '../api/types';
-import type { ClaimTaskProjection, ClaimTaskStatus, ClaimTaskType } from '../api/task-types';
+import type { ClaimTaskProjection, ClaimTaskStatus } from '../api/task-types';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
+import { ClaimTaskCreateForm } from './ClaimTaskCreateForm';
 import { OperatorApiErrorNotice } from './OperatorApiErrorNotice';
+import { taskStatusLabel, taskTypeLabel } from './task-presentation';
 
 export function ClaimTasksPanel({ claimId }: { claimId: string }) {
   const queryClient = useQueryClient();
   const { session, signOut } = useOperatorSession();
   const [failure, setFailure] = useState<ApiFailure | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const tasksQuery = useQuery({
     queryKey: ['operator', 'claim', claimId, 'tasks'],
@@ -23,7 +28,7 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
   }, [queryFailure, signOut]);
 
   const completeMutation = useMutation({
-    mutationFn: (task: ClaimTaskProjection) => completeClaimTask(task.taskId, task.status, session!.accessToken),
+    mutationFn: (task: ClaimTaskProjection) => completeClaimTask(task.taskId, 'OPEN', session!.accessToken),
     onSuccess: async () => {
       setFailure(null);
       await Promise.all([
@@ -31,6 +36,7 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
         queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'timeline'] }),
         queryClient.invalidateQueries({ queryKey: ['operator', 'claim', claimId, 'evidence-attention'] }),
         queryClient.invalidateQueries({ queryKey: ['operator', 'tasks'] }),
+        queryClient.invalidateQueries({ queryKey: ['operator', 'claims-operational-metrics'] }),
       ]);
     },
     onError: async (error) => {
@@ -44,20 +50,30 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
     },
   });
 
+  if (!session) return null;
   const tasks = tasksQuery.data?.data ?? [];
   const openCount = tasks.filter((task) => task.status === 'OPEN').length;
+  const canManage = hasPermission(session.operator.role, 'claims.tasks.manage');
 
   return (
-    <section className="ops-panel ops-claim-tasks-card" aria-labelledby="claim-tasks-title">
+    <section className="ops-panel ops-claim-tasks-card r3-claim-tasks-card" aria-labelledby="claim-tasks-title">
       <div className="ops-panel-heading">
         <div>
           <span className="ops-kicker">Trabajo operativo</span>
           <h2 id="claim-tasks-title">Tareas</h2>
           <p>Trabajo persistente asociado al siniestro. Completar una tarea no cambia el estado del Claim.</p>
         </div>
-        <span className="ops-count-pill">{openCount} abierta(s)</span>
+        <div className="r3-task-panel-heading-actions">
+          <span className="ops-count-pill">{openCount} abierta(s)</span>
+          {canManage && (
+            <button className="ops-refresh-button" type="button" onClick={() => setCreating((value) => !value)}>
+              {creating ? 'Cerrar formulario' : '+ Nueva Task'}
+            </button>
+          )}
+        </div>
       </div>
 
+      {creating && canManage && <ClaimTaskCreateForm claimId={claimId} onCreated={() => setCreating(false)} />}
       {failure && <OperatorApiErrorNotice failure={failure} />}
       {queryFailure && queryFailure.problem?.status !== 401 && <OperatorApiErrorNotice failure={queryFailure} />}
       {tasksQuery.isLoading ? (
@@ -65,30 +81,33 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
       ) : tasks.length === 0 ? (
         <div className="ops-compact-empty">Este siniestro no tiene tareas operativas registradas.</div>
       ) : (
-        <ul className="ops-claim-task-list">
+        <ul className="ops-claim-task-list r3-claim-task-list">
           {tasks.map((task) => (
             <li key={task.taskId} className={task.status !== 'OPEN' ? `is-${task.status.toLowerCase()}` : ''}>
               <span className="ops-task-check" aria-hidden="true">
                 {task.status === 'COMPLETED' ? '✓' : task.status === 'CANCELLED' ? '×' : '○'}
               </span>
               <div className="ops-task-main-copy">
-                <strong>{task.title}</strong>
-                <span>{taskTypeLabel(task.type)} · {task.priority === 'HIGH' ? 'Prioridad alta' : 'Prioridad normal'}</span>
-                <small>{task.dueAt ? `Vence ${formatDate(task.dueAt)}` : 'Sin vencimiento definido'} · Cola {task.queue}</small>
+                <Link className="r3-task-title-link" to={`/operator/tasks/${task.taskId}`}><strong>{task.title}</strong></Link>
+                <span>{taskTypeLabel(task.type)} · {task.priority === 'HIGH' ? 'Prioridad alta' : 'Prioridad normal'} · v{task.version}</span>
+                <small>{task.dueAt ? `Vence ${formatDate(task.dueAt)}` : 'Sin vencimiento definido'} · {task.assignedOperatorId ? `Asignada ${shortId(task.assignedOperatorId)}` : 'Sin asignar'}</small>
               </div>
               <TaskStatusBadge status={task.status} />
-              {task.status === 'OPEN' && (
-                <button
-                  type="button"
-                  disabled={completeMutation.isPending}
-                  onClick={() => {
-                    setFailure(null);
-                    completeMutation.mutate(task);
-                  }}
-                >
-                  {completeMutation.isPending && completeMutation.variables?.taskId === task.taskId ? 'Completando…' : 'Completar'}
-                </button>
-              )}
+              <div className="r3-task-row-actions">
+                <Link to={`/operator/tasks/${task.taskId}`}>Gestionar</Link>
+                {canManage && task.status === 'OPEN' && (
+                  <button
+                    type="button"
+                    disabled={completeMutation.isPending}
+                    onClick={() => {
+                      setFailure(null);
+                      completeMutation.mutate(task);
+                    }}
+                  >
+                    {completeMutation.isPending && completeMutation.variables?.taskId === task.taskId ? 'Completando…' : 'Completar'}
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
@@ -97,21 +116,16 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
   );
 }
 
-export function taskTypeLabel(type: ClaimTaskType) {
-  return ({
-    CLAIM_REVIEW: 'Revisión de siniestro',
-    EVIDENCE_REVIEW: 'Revisión de evidencia',
-    MISSING_DOCUMENT_FOLLOWUP: 'Seguimiento documental',
-    CUSTOMER_FOLLOWUP: 'Seguimiento al cliente',
-    CLOSURE_REVIEW: 'Revisión de cierre',
-  } satisfies Record<ClaimTaskType, string>)[type];
-}
+export { taskTypeLabel } from './task-presentation';
 
 function TaskStatusBadge({ status }: { status: ClaimTaskStatus }) {
-  const label = status === 'OPEN' ? 'Abierta' : status === 'COMPLETED' ? 'Completada' : 'Cancelada';
-  return <span className={`ops-task-status is-${status.toLowerCase()}`}>{label}</span>;
+  return <span className={`ops-task-status is-${status.toLowerCase()}`}>{taskStatusLabel(status)}</span>;
 }
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('es-UY', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+}
+
+function shortId(value: string) {
+  return value.length > 12 ? `${value.slice(0, 8)}…` : value;
 }

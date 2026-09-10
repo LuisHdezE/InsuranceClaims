@@ -7,6 +7,9 @@ export type ClaimTaskType =
 
 export type ClaimTaskStatus = 'OPEN' | 'COMPLETED' | 'CANCELLED';
 export type ClaimTaskPriority = 'NORMAL' | 'HIGH';
+export type ClaimTaskQueue = 'CLAIMS';
+export type ClaimTaskCancellationReason = 'NO_LONGER_REQUIRED' | 'DUPLICATE' | 'CREATED_IN_ERROR';
+export type ClaimTaskActorType = 'SYSTEM' | 'OPERATOR' | 'SUPERVISOR' | 'ADMINISTRATOR' | 'AUTOMATION';
 
 export type ListTasksInput = {
   page?: number;
@@ -19,6 +22,29 @@ export type ListTasksInput = {
   overdue?: boolean;
 };
 
+export type CreateClaimTaskInput = {
+  type: ClaimTaskType;
+  title: string;
+  description?: string | null;
+  priority?: ClaimTaskPriority;
+  queue?: ClaimTaskQueue;
+  assignedOperatorId?: string | null;
+  dueAt?: string | null;
+};
+
+export type UpdateClaimTaskInput = {
+  expectedVersion: number;
+  assignedOperatorId?: string | null;
+  queue?: ClaimTaskQueue;
+  priority?: ClaimTaskPriority;
+  dueAt?: string | null;
+};
+
+export type CancelClaimTaskInput = {
+  expectedVersion: number;
+  reason: ClaimTaskCancellationReason;
+};
+
 export type ClaimTaskProjection = {
   taskId: string;
   claimId: string;
@@ -27,17 +53,23 @@ export type ClaimTaskProjection = {
   vehicleReference: string | null;
   type: ClaimTaskType;
   title: string;
+  description: string | null;
   status: ClaimTaskStatus;
   priority: ClaimTaskPriority;
-  queue: 'CLAIMS';
+  queue: ClaimTaskQueue;
   assignedOperatorId: string | null;
   dueAt: string | null;
-  createdByType: 'SYSTEM' | 'OPERATOR';
+  version: number;
+  createdByType: ClaimTaskActorType;
   createdById: string | null;
   correlationId: string | null;
   createdAt: string;
+  updatedAt: string;
   completedAt: string | null;
   completedById: string | null;
+  cancelledAt: string | null;
+  cancelledById: string | null;
+  cancellationReason: ClaimTaskCancellationReason | null;
 };
 
 export type ClaimTasksPageResponse = {
