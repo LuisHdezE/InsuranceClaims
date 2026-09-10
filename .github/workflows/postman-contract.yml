@@ -15,14 +15,39 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
 
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
-      - name: Validate Postman collection and environment coverage
+      - name: Verify historical R1 Postman baseline is byte-identical
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object postman/baselines/api-v1-r1/InsuranceClaims.postman_collection.json)" = '11ea019cd242af84e77ded532153b922f15a56f7'
+          test "$(git hash-object postman/baselines/api-v1-r1/InsuranceClaims.local.postman_environment.json)" = 'c4d64ac58ea62a7296b4fc7cd6f1386bb9623220'
+          echo 'Historical Postman api-v1-r1 baseline preservation: PASS'
+
+      - name: Verify deterministic Postman R3 materialization
+        run: npm run postman:check:r3
+
+      - name: Validate Postman R3 contract coverage
+        run: npm run postman:validate:r3
+
+      - name: Assert tracked Postman pack remains unchanged
         run: >-
-          node scripts/validate-postman-contract.mjs
+          git diff --exit-code --
           postman/InsuranceClaims.postman_collection.json
           postman/InsuranceClaims.local.postman_environment.json
-          documentation/api/API_ENDPOINT_INVENTORY.json
+          postman/baselines/api-v1-r1
+
+      - name: Upload validated R3 Postman pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-r3-validated
+          path: |
+            postman/InsuranceClaims.postman_collection.json
+            postman/InsuranceClaims.local.postman_environment.json
+          if-no-files-found: error
+          retention-days: 7
