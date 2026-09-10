@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: api-qa-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   runtime-qa:
     runs-on: ubuntu-latest
@@ -308,25 +312,24 @@ jobs:
       - name: Classify production dependency vulnerabilities
         shell: bash
         run: |
+          mkdir -p .runtime
           npm audit --omit=dev --json > .runtime/npm-audit-production.json || true
-          node <<'NODE'
-          const fs = require('node:fs');
-          const report = JSON.parse(fs.readFileSync('.runtime/npm-audit-production.json', 'utf8'));
-          const counts = report.metadata?.vulnerabilities ?? {};
-          const summary = {
-            info: counts.info ?? 0,
-            low: counts.low ?? 0,
-            moderate: counts.moderate ?? 0,
-            high: counts.high ?? 0,
-            critical: counts.critical ?? 0,
-            total: counts.total ?? 0,
-          };
-          console.log(JSON.stringify({ event: 'PRODUCTION_DEPENDENCY_AUDIT', ...summary }));
-          if (summary.high > 0 || summary.critical > 0) {
-            console.error('High or critical production dependency advisories block api.security_qa.');
-            process.exit(1);
-          }
-          NODE
+          node scripts/classify-production-audit.mjs \
+            .runtime/npm-audit-production.json \
+            .runtime/npm-audit-production-summary.json \
+            api.security_qa
+
+      - name: Upload API QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-qa-${{ github.event.pull_request.head.sha }}
+          path: |
+            .runtime/api-qa-state.json
+            .runtime/npm-audit-production.json
+            .runtime/npm-audit-production-summary.json
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Runtime logs on failure
         if: failure()

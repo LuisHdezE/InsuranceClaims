@@ -20,6 +20,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: integration-qa-web-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   system-integration:
     runs-on: ubuntu-latest
@@ -53,6 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v7
@@ -162,16 +167,12 @@ jobs:
       - name: Classify production dependency vulnerabilities
         shell: bash
         run: |
+          mkdir -p .runtime
           npm audit --omit=dev --json > .runtime/npm-audit-production.json || true
-          node <<'NODE'
-          const fs = require('node:fs');
-          const report = JSON.parse(fs.readFileSync('.runtime/npm-audit-production.json', 'utf8'));
-          const counts = report.metadata?.vulnerabilities ?? {};
-          const high = counts.high ?? 0;
-          const critical = counts.critical ?? 0;
-          console.log(JSON.stringify({ event: 'INTEGRATION_PRODUCTION_DEPENDENCY_AUDIT', high, critical, total: counts.total ?? 0 }));
-          if (high > 0 || critical > 0) process.exit(1);
-          NODE
+          node scripts/classify-production-audit.mjs \
+            .runtime/npm-audit-production.json \
+            .runtime/npm-audit-production-summary.json \
+            qa.security
 
       - name: Restart API to reset transport rate-limit state
         shell: bash
@@ -290,12 +291,13 @@ jobs:
       - name: Upload Integration QA runtime evidence
         uses: actions/upload-artifact@v4
         with:
-          name: integration-qa-web-${{ github.sha }}
+          name: integration-qa-web-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             .runtime/integration-qa-summary.json
             .runtime/integration-offline-browser.json
             .runtime/api-qa-state.json
             .runtime/npm-audit-production.json
+            .runtime/npm-audit-production-summary.json
             documentation/visual-functional-review/generated/visual-functional-review-browser.json
           if-no-files-found: error
           retention-days: 30
