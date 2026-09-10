@@ -25,6 +25,8 @@ const navItems: NavItem[] = [
   },
   { to: '/operator/claims', label: 'Claims', glyph: '▱', allOf: ['claims.backoffice.read'] },
   { to: '/operator/tasks', label: 'Tasks', glyph: '☑', allOf: ['claims.tasks.read'] },
+  { to: '/operator/customers', label: 'Clientes', glyph: '◎', allOf: ['customers.read'] },
+  { to: '/operator/policies', label: 'Pólizas', glyph: '▤', allOf: ['policies.read'] },
 ];
 
 export function OperatorShell({ children }: { children: ReactNode }) {
@@ -34,9 +36,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
   const visibleNavItems = role
     ? navItems.filter((item) => !item.allOf || hasAllPermissions(role, item.allOf))
     : [];
-  const topbarContext = location.pathname === '/operator/claims'
-    ? 'Listado autoritativo del API · Workspace protegido y consciente del rol'
-    : 'Workspace protegido y consciente del rol';
+  const topbarContext = contextForPath(location.pathname);
 
   return (
     <div className="operator-shell operator-ops-shell">
@@ -98,6 +98,13 @@ export function OperatorShell({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
+}
+
+function contextForPath(path: string) {
+  if (path === '/operator/claims') return 'Listado autoritativo del API · Workspace protegido y consciente del rol';
+  if (path.startsWith('/operator/customers')) return 'Customer 360 R3 · Relaciones autoritativas y read-only';
+  if (path.startsWith('/operator/policies')) return 'Policy 360 R3 · Referencias modernas y legacy';
+  return 'Workspace protegido y consciente del rol';
 }
 
 function operatorInitials(login: string | undefined) {
