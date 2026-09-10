@@ -9,6 +9,7 @@ on:
       - 'packages/**/package.json'
       - 'documentation/release/CLAIMS_OPERATIONS_RELEASE_0.2.0.md'
       - 'documentation/portfolio/RELEASE_NOTES_v0.2.0.md'
+      - 'documentation/api/post-mvp/baselines/openapi-v1-r1.yaml'
       - 'scripts/validate-release-formalization-0.2.0.mjs'
       - '.github/workflows/release-formalization-0.2.0.yml'
   push:
@@ -21,6 +22,7 @@ on:
       - 'packages/**/package.json'
       - 'documentation/release/CLAIMS_OPERATIONS_RELEASE_0.2.0.md'
       - 'documentation/portfolio/RELEASE_NOTES_v0.2.0.md'
+      - 'documentation/api/post-mvp/baselines/openapi-v1-r1.yaml'
       - 'scripts/validate-release-formalization-0.2.0.mjs'
       - '.github/workflows/release-formalization-0.2.0.yml'
   workflow_dispatch:
@@ -54,6 +56,7 @@ jobs:
         shell: bash
         env:
           HISTORICAL_BASELINE_SHA: 531828a18babaca563c83dd76df56b725d6105f0
+          HISTORICAL_OPENAPI_ARCHIVE: documentation/api/post-mvp/baselines/openapi-v1-r1.yaml
         run: |
           set -euo pipefail
           git cat-file -e "${HISTORICAL_BASELINE_SHA}^{commit}"
@@ -61,7 +64,6 @@ jobs:
             .blueprint/project.yaml \
             .blueprint/status.yaml \
             .blueprint/ui/interface-inventory.json \
-            openapi.yaml \
             documentation/api/API_CONTRACT.md \
             documentation/api/API_ENDPOINT_INVENTORY.json \
             documentation/release/RELEASE_READINESS.md \
@@ -70,4 +72,9 @@ jobs:
             documentation/operations \
             documentation/visual-functional-review \
             documentation/portfolio/RELEASE_NOTES_v0.1.0.md
+          mkdir -p .runtime
+          git show "${HISTORICAL_BASELINE_SHA}:openapi.yaml" > .runtime/openapi-v1-r1-historical.yaml
+          cmp --silent .runtime/openapi-v1-r1-historical.yaml "${HISTORICAL_OPENAPI_ARCHIVE}"
+          test "$(git hash-object "${HISTORICAL_OPENAPI_ARCHIVE}")" = "868fcb74f57d507dd1ef27fa24518357287dd3ff"
           echo 'Historical v0.1.0 evidence preservation: PASS'
+          echo 'Historical api-v1-r1 OpenAPI archive byte identity: PASS'

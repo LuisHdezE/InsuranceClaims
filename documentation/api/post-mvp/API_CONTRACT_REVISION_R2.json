@@ -6,7 +6,7 @@
   "project": "LuisHdezE/InsuranceClaims",
   "composition": {
     "strategy": "immutable_base_plus_additions_no_overrides",
-    "base_openapi": "openapi.yaml",
+    "base_openapi": "documentation/api/post-mvp/baselines/openapi-v1-r1.yaml",
     "base_openapi_git_blob_sha1": "868fcb74f57d507dd1ef27fa24518357287dd3ff",
     "base_inventory": "documentation/api/API_ENDPOINT_INVENTORY.json",
     "base_inventory_git_blob_sha1": "cb71abd33b0c0237b29346225f6ee019df2de709",

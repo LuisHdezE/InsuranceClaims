@@ -20,13 +20,29 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Verify deterministic OpenAPI R3 materialization
+        run: npm run openapi:check:r3
+
       - name: Validate OpenAPI 3.1 structure
         run: npx --yes @redocly/cli@2.51.2 lint --extends=spec openapi.yaml
 
-      - name: Bundle OpenAPI for semantic checks
+      - name: Bundle and dereference OpenAPI R3
         run: |
           mkdir -p .runtime
           npx --yes @redocly/cli@2.51.2 bundle openapi.yaml --dereferenced --output .runtime/openapi.bundle.json
 
-      - name: Validate approved contract coverage
-        run: node scripts/validate-openapi-contract.mjs .runtime/openapi.bundle.json documentation/api/API_ENDPOINT_INVENTORY.json
+      - name: Validate frozen R3 contract coverage
+        run: npm run openapi:validate:r3
+
+      - name: Assert tracked contract remains unchanged
+        run: git diff --exit-code -- openapi.yaml openapi/r3
+
+      - name: Upload validated R3 contract
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-r3-validated
+          path: |
+            openapi.yaml
+            openapi/r3/*.json
+          if-no-files-found: error
+          retention-days: 7
