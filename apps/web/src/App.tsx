@@ -1,6 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { RequireOperator } from './components/RequireOperator';
 import { RequireStaffAccess } from './components/RequireStaffAccess';
+import { AdminAutomationCreatePage } from './pages/AdminAutomationCreatePage';
+import { AdminAutomationDetailPage } from './pages/AdminAutomationDetailPage';
+import { AdminAutomationsPage } from './pages/AdminAutomationsPage';
+import { AdminAutomationVersionCreatePage } from './pages/AdminAutomationVersionCreatePage';
 import { AdminCommunicationTemplateCreatePage } from './pages/AdminCommunicationTemplateCreatePage';
 import { AdminCommunicationTemplateDetailPage } from './pages/AdminCommunicationTemplateDetailPage';
 import { AdminCommunicationTemplatesPage } from './pages/AdminCommunicationTemplatesPage';
@@ -87,6 +91,10 @@ export function App() {
       <Route path="/operator/admin/guidance/new" element={<RequireOperator><RequireStaffAccess allOf={['guidance.admin']}><AdminGuidanceCreatePage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/guidance/:definitionId" element={<RequireOperator><RequireStaffAccess allOf={['guidance.admin']}><AdminGuidanceDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/guidance/:definitionId/versions/new" element={<RequireOperator><RequireStaffAccess allOf={['guidance.admin']}><AdminGuidanceVersionCreatePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/automations" element={<RequireOperator><RequireStaffAccess allOf={['automations.admin']}><AdminAutomationsPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/automations/new" element={<RequireOperator><RequireStaffAccess allOf={['automations.admin']}><AdminAutomationCreatePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/automations/:definitionId" element={<RequireOperator><RequireStaffAccess allOf={['automations.admin']}><AdminAutomationDetailPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/automations/:definitionId/versions/new" element={<RequireOperator><RequireStaffAccess allOf={['automations.admin']}><AdminAutomationVersionCreatePage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/recovery" element={<RequireOperator><RequireStaffAccess allOf={['operations.integration.read', 'operations.dead_letters.read']}><AdminRecoveryPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/recovery/dead-letters/:deadLetterId" element={<RequireOperator><RequireStaffAccess allOf={['operations.dead_letters.read']}><AdminDeadLetterDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/forbidden" element={<RequireOperator><RequireStaffAccess><StaffForbiddenPage /></RequireStaffAccess></RequireOperator>} />

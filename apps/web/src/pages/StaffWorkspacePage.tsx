@@ -109,10 +109,19 @@ const CARDS: WorkspaceCard[] = [
     tone: 'green',
   },
   {
+    kicker: 'Platform Automation',
+    title: 'Automations',
+    description: 'Reglas versionadas con triggers allowlisted, condiciones escalares, wait opcional y acciones aprobadas sin semántica inventada por la UI.',
+    permissions: ['automations.admin'],
+    href: '/operator/admin/automations',
+    action: 'Administrar Automations',
+    tone: 'violet',
+  },
+  {
     kicker: 'Platform Next',
-    title: 'Configuración pendiente',
-    description: 'Automatizaciones e imports conservan API R3 y permanecen como próximos cortes de productización.',
-    permissions: ['automations.admin', 'imports.execute'],
+    title: 'Imports gobernados',
+    description: 'El lifecycle de imports conserva API R3 y queda como próximo corte de productización: upload, preview, mapping, validate, dry-run, commit y filas.',
+    permissions: ['imports.execute'],
     tone: 'yellow',
   },
   {

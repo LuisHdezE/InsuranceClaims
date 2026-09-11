@@ -1,6 +1,6 @@
 # Interface Inventory - R3 Web Productization
 
-**Revision:** post-R3 productization, after Increment 11 implementation  
+**Revision:** post-R3 productization, after Increment 12 implementation  
 **Historical evidence boundary:** this document does not replace or rewrite the earlier 10-interface MVP inventory.
 
 ## Current route-level interfaces
@@ -48,7 +48,11 @@
 | 39 | `/operator/admin/guidance/new` | New Guidance Definition + First DRAFT | Guidance admin |
 | 40 | `/operator/admin/guidance/:definitionId` | Guidance Definition + Version Administration | Guidance admin |
 | 41 | `/operator/admin/guidance/:definitionId/versions/new` | New Immutable Guidance Version | Guidance admin |
-| 42 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
+| 42 | `/operator/admin/automations` | Automation Administration Directory | Automations admin |
+| 43 | `/operator/admin/automations/new` | New Automation Definition + First DRAFT | Automations admin |
+| 44 | `/operator/admin/automations/:definitionId` | Automation Definition + Version Administration | Automations admin |
+| 45 | `/operator/admin/automations/:definitionId/versions/new` | New Immutable Automation Version | Automations admin |
+| 46 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
 
 ## Embedded product surfaces
 
@@ -69,6 +73,7 @@ Route count is not operation count. The following R3 capabilities are embedded i
 - Communication Template Admin activation, enable/disable, immutable content history and typed variable schema in Template Detail;
 - Custom Field Admin activation, enable/disable, immutable configuration history, ENUM values and typed validation metadata in Custom Field Detail;
 - Guidance Admin activation, enable/disable, immutable content history, document categories, instructions and assistance metadata in Guidance Detail;
+- Automation Admin activation, enable/disable, immutable rule history, typed conditions, optional wait and allowlisted actions in Automation Detail;
 - Integration Event lookup by published `eventId` in Recovery Console;
 - dead-letter pagination in Recovery Console and optimistic-concurrency requeue/resolve in Dead-letter Detail.
 
@@ -184,6 +189,29 @@ Guidance Administration uses only the frozen R3 admin operations `listGuidances`
 - 409/version conflicts refetch authoritative state rather than blind retry;
 - the directory exposes server pagination only because the frozen list contract publishes no search/filter contract for key, context, category or state.
 
+## Automation Administration boundary
+
+Automation Administration uses only the frozen R3 admin operations `listAutomations`, `getAutomation`, `createAutomation`, `createAutomationVersion`, `activateAutomationVersion`, and `updateAutomationState`.
+
+- access is presentation-gated by `automations.admin` and remains API-authoritative;
+- a new definition starts disabled with its first DRAFT version;
+- stable definition identity is `key` plus the definition-level `displayName`; later configuration changes create a new immutable DRAFT version;
+- trigger selection is restricted to the published R3 allowlist: `CLAIM_CREATED`, `CLAIM_STATE_TRANSITIONED`, `CLAIM_TASK_COMPLETED`, `COMMUNICATION_DELIVERED`, `INBOUND_EVENT_PROCESSED`, and `SCHEDULED_CHECK`;
+- conditions support at most 20 entries and only `EQ`, `NEQ`, `IN`, `NOT_IN`, `EXISTS`, and `NOT_EXISTS`;
+- scalar values preserve the published string/number/boolean/null types; `IN` and `NOT_IN` use bounded scalar arrays instead of comma-delimited reinterpretation;
+- `EXISTS` and `NOT_EXISTS` do not send a value; all other operators follow the server-published value requirements;
+- optional wait accepts only the published 60-to-2,592,000 second range;
+- each version contains between 1 and 20 actions and exposes only the published types `CREATE_TASK`, `MOVE_OPERATIONAL_STAGE`, `REQUEST_COMMUNICATION`, `ADD_OPERATIONAL_TAG`, `NOTIFY_OPERATOR`, `PAUSE_AUTOMATION`, `UPDATE_APPROVED_FIELD`, and `SCHEDULE_CHECK`;
+- action keys are explicit and unique within the version;
+- action parameters remain opaque scalar maps because R3 publishes no per-action parameter schema; the UI therefore does not invent required fields or business semantics;
+- the published safety boundary is preserved: parameter keys associated with URL/URI, SQL, script/code, secrets, tokens or passwords are rejected, and string scalars that look like executable/outbound targets are not accepted;
+- source classification remains opaque and receives no invented semantics;
+- version creation, activation and enable/disable submit the authoritative definition `version` as `expectedDefinitionVersion`;
+- only server-projected DRAFT versions are offered for activation;
+- enabling is unavailable until an active version exists;
+- 409/version conflicts refetch authoritative state rather than blind retry;
+- the directory exposes server pagination only because the frozen list contract publishes no trigger/action/key/state filters.
+
 ## Recovery Operations boundary
 
 Recovery Operations uses only `listDeadLetters`, `getDeadLetter`, `requeueDeadLetter`, `resolveDeadLetter`, and `getIntegrationEventStatus` from the frozen R3 API.
@@ -208,4 +236,4 @@ Increment 07 productizes the administrator-facing template lifecycle only. It do
 
 Navigation remains permission-aware. A route existing in this inventory does not imply every staff role may access it.
 
-Platform Admin is not an implicit Claims, Customer, Policy, Renewals, Collections, or Tasks superuser. Claims Analytics is exposed specifically through `claims.analytics.read`; Pipeline Administration, Communication Template Administration, Custom Field Administration, Guidance Administration, and Recovery Operations are exposed through their own explicit permissions.
+Platform Admin is not an implicit Claims, Customer, Policy, Renewals, Collections, or Tasks superuser. Claims Analytics is exposed specifically through `claims.analytics.read`; Pipeline Administration, Communication Template Administration, Custom Field Administration, Guidance Administration, Automation Administration, and Recovery Operations are exposed through their own explicit permissions.

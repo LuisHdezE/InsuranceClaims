@@ -19,6 +19,7 @@ describe('R3 staff presentation access', () => {
     expect(hasPermission('PLATFORM_ADMIN', 'claims.analytics.read')).toBe(true);
     expect(hasPermission('PLATFORM_ADMIN', 'pipelines.admin')).toBe(true);
     expect(hasPermission('PLATFORM_ADMIN', 'communications.admin')).toBe(true);
+    expect(hasPermission('PLATFORM_ADMIN', 'automations.admin')).toBe(true);
     expect(hasPermission('PLATFORM_ADMIN', 'guidance.admin')).toBe(true);
     expect(hasPermission('PLATFORM_ADMIN', 'custom_fields.admin')).toBe(true);
     expect(hasPermission('PLATFORM_ADMIN', 'operations.integration.read')).toBe(true);
@@ -78,7 +79,6 @@ describe('R3 staff presentation access', () => {
   it('permits Pipeline Admin deep links only for Platform Admin', () => {
     const detail = '/operator/admin/pipelines/55555555-5555-4555-8555-555555555555';
     const versionEditor = `${detail}/versions/new`;
-
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/pipelines')).toBe('/operator/admin/pipelines');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/pipelines/new')).toBe('/operator/admin/pipelines/new');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', detail)).toBe(detail);
@@ -90,7 +90,6 @@ describe('R3 staff presentation access', () => {
   it('permits Communication Template Admin deep links only for Platform Admin', () => {
     const detail = '/operator/admin/communication-templates/66666666-6666-4666-8666-666666666666';
     const versionEditor = `${detail}/versions/new`;
-
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/communication-templates')).toBe('/operator/admin/communication-templates');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/communication-templates/new')).toBe('/operator/admin/communication-templates/new');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', detail)).toBe(detail);
@@ -102,7 +101,6 @@ describe('R3 staff presentation access', () => {
   it('permits Custom Field Admin deep links only for Platform Admin', () => {
     const detail = '/operator/admin/custom-fields/88888888-8888-4888-8888-888888888888';
     const versionEditor = `${detail}/versions/new`;
-
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/custom-fields')).toBe('/operator/admin/custom-fields');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/custom-fields/new')).toBe('/operator/admin/custom-fields/new');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', detail)).toBe(detail);
@@ -114,7 +112,6 @@ describe('R3 staff presentation access', () => {
   it('permits Guidance Admin deep links only for Platform Admin', () => {
     const detail = '/operator/admin/guidance/99999999-9999-4999-8999-999999999999';
     const versionEditor = `${detail}/versions/new`;
-
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/guidance')).toBe('/operator/admin/guidance');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/guidance/new')).toBe('/operator/admin/guidance/new');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', detail)).toBe(detail);
@@ -123,9 +120,19 @@ describe('R3 staff presentation access', () => {
     expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/admin/guidance')).toBe('/operator/dashboard');
   });
 
+  it('permits Automation Admin deep links only for Platform Admin', () => {
+    const detail = '/operator/admin/automations/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const versionEditor = `${detail}/versions/new`;
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/automations')).toBe('/operator/admin/automations');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/automations/new')).toBe('/operator/admin/automations/new');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', detail)).toBe(detail);
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', versionEditor)).toBe(versionEditor);
+    expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', detail)).toBe('/operator/dashboard');
+    expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/admin/automations')).toBe('/operator/dashboard');
+  });
+
   it('permits Recovery deep links only for Platform Admin', () => {
     const detail = '/operator/admin/recovery/dead-letters/77777777-7777-4777-8777-777777777777';
-
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/recovery')).toBe('/operator/admin/recovery');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', detail)).toBe(detail);
     expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/admin/recovery')).toBe('/operator/dashboard');
