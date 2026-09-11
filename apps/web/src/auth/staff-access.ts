@@ -80,6 +80,7 @@ export function canAccessStaffPath(role: StaffRole, path: string): boolean {
   if (path === '/operator/customers' || /^\/operator\/customers\/[^/]+$/.test(path)) return hasPermission(role, 'customers.read');
   if (path === '/operator/policies' || /^\/operator\/policies\/[^/]+$/.test(path)) return hasPermission(role, 'policies.read');
   if (path === '/operator/renewals' || /^\/operator\/renewals\/[^/]+$/.test(path)) return hasPermission(role, 'renewals.read');
+  if (path === '/operator/collections' || /^\/operator\/collections\/[^/]+$/.test(path)) return hasPermission(role, 'collections.read');
   return false;
 }
 

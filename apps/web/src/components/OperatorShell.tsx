@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
   { to: '/operator/customers', label: 'Clientes', glyph: '◎', allOf: ['customers.read'] },
   { to: '/operator/policies', label: 'Pólizas', glyph: '▤', allOf: ['policies.read'] },
   { to: '/operator/renewals', label: 'Renovaciones', glyph: '↻', allOf: ['renewals.read'] },
+  { to: '/operator/collections', label: 'Cobranzas', glyph: '¤', allOf: ['collections.read'] },
 ];
 
 export function OperatorShell({ children }: { children: ReactNode }) {
@@ -106,6 +107,7 @@ function contextForPath(path: string) {
   if (path.startsWith('/operator/customers')) return 'Customer 360 R3 · Relaciones autoritativas y read-only';
   if (path.startsWith('/operator/policies')) return 'Policy 360 R3 · Referencias modernas y legacy';
   if (path.startsWith('/operator/renewals')) return 'Renewals R3 · Lifecycle y pipeline operativo con control de versión';
+  if (path.startsWith('/operator/collections')) return 'Collections R3 · Lifecycle, pago verificado y pipeline separados';
   return 'Workspace protegido y consciente del rol';
 }
 

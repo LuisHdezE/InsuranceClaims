@@ -1,6 +1,6 @@
 # Interface Inventory - R3 Web Productization
 
-**Revision:** post-R3 productization, after Increment 04 implementation  
+**Revision:** post-R3 productization, after Increment 05 implementation  
 **Historical evidence boundary:** this document does not replace or rewrite the earlier 10-interface MVP inventory.
 
 ## Current route-level interfaces
@@ -27,7 +27,9 @@
 | 18 | `/operator/policies/:policyId` | Policy 360 Detail | Policies read |
 | 19 | `/operator/renewals` | Renewal Operations Workspace | Renewals read |
 | 20 | `/operator/renewals/:renewalId` | Renewal Detail + Lifecycle + Pipeline | Renewals read; mutations permission-gated |
-| 21 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
+| 21 | `/operator/collections` | Collections Operations Workspace | Collections read |
+| 22 | `/operator/collections/:collectionId` | Collection Detail + Lifecycle + Payment + Pipeline | Collections read; mutations permission-gated |
+| 23 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
 
 ## Embedded product surfaces
 
@@ -41,7 +43,8 @@ Route count is not operation count. The following R3 capabilities are embedded i
 - evidence attention and Claim timeline in Claim Detail;
 - Customer 360 policy and Claim relationships in Customer Detail;
 - Policy 360 customer, asset, metadata and Claim relationships in Policy Detail;
-- Renewal customer/policy context, lifecycle transition and version-pinned pipeline movement in Renewal Detail.
+- Renewal customer/policy context, lifecycle transition and version-pinned pipeline movement in Renewal Detail;
+- Collection customer/policy context, terminal lifecycle transition, server-verified payment-state mutation and version-pinned pipeline movement in Collection Detail.
 
 ## Customer & Policy 360 boundary
 
@@ -57,6 +60,18 @@ Renewals productization uses only the frozen R3 operations `listRenewalCases`, `
 - operational movements use only `allowedNextStageKeys` from the pinned pipeline version and the pipeline work-item `version`;
 - 409/version-conflict responses cause a projection refresh rather than a blind retry.
 
+## Collections boundary
+
+Collections productization uses only the frozen R3 operations `listCollectionCases`, `getCollectionCase`, `transitionCollectionCase`, `moveCollectionOperationalStage`, and `updateCollectionPaymentState`.
+
+- the list exposes server pagination only because the frozen list contract publishes no search/status/payment filters;
+- Collection lifecycle, payment state and operational pipeline remain separate concepts;
+- lifecycle and payment-state mutations both use the authoritative Collection case `version`;
+- pipeline movement uses the independent work-item `version` and only server-provided `allowedNextStageKeys`;
+- R3 defines no universal payment-state vocabulary, so the web does not invent a dropdown or assign insurer/payment semantics to values;
+- payment-state input is a bounded opaque code and remains non-authoritative until the server-configured verification policy approves it;
+- 409/version-conflict responses refresh the authoritative projection; unverified payment values surface the server validation failure instead of being silently accepted.
+
 ## Communications boundary discovered during Increment 04 planning
 
 R3 exposes operator communication history/detail and send operations, but `requestCommunication` requires an active `templateVersionId`. The active template catalog is only available through the admin template endpoints guarded by `communications.admin`; Claims Operator/Supervisor do not have that permission. Productization therefore does not invent an operator template catalog or require operators to paste opaque template UUIDs. A complete Communications UI is deferred until the contract provides a safe operator-facing active-template discovery path or an explicitly approved product design resolves the boundary.
@@ -65,4 +80,4 @@ R3 exposes operator communication history/detail and send operations, but `reque
 
 Navigation remains permission-aware. A route existing in this inventory does not imply every staff role may access it.
 
-Platform Admin is not an implicit Claims, Customer, Policy, or Renewals superuser.
+Platform Admin is not an implicit Claims, Customer, Policy, Renewals, or Collections superuser.

@@ -48,6 +48,15 @@ const CARDS: WorkspaceCard[] = [
     tone: 'violet',
   },
   {
+    kicker: 'Collections',
+    title: 'Cobranzas',
+    description: 'Casos de cobranza con lifecycle, estado de pago verificado por servidor y pipeline operativo tratados como estados independientes.',
+    permissions: ['collections.read'],
+    href: '/operator/collections',
+    action: 'Abrir cobranzas',
+    tone: 'yellow',
+  },
+  {
     kicker: 'Communications',
     title: 'Comunicaciones',
     description: 'Historial y envío operativo existen en R3, pero el catálogo de plantillas activas no está expuesto al rol operador. La UI completa queda diferida.',

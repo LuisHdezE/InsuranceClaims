@@ -8,12 +8,14 @@ import {
 } from './staff-access';
 
 describe('R3 staff presentation access', () => {
-  it('keeps Platform Admin out of Claim and Renewal lifecycle permissions', () => {
+  it('keeps Platform Admin out of business-operation permissions', () => {
     expect(hasPermission('PLATFORM_ADMIN', 'claims.backoffice.read')).toBe(false);
     expect(hasPermission('PLATFORM_ADMIN', 'claims.backoffice.transition')).toBe(false);
     expect(hasPermission('PLATFORM_ADMIN', 'claims.tasks.manage')).toBe(false);
     expect(hasPermission('PLATFORM_ADMIN', 'renewals.read')).toBe(false);
     expect(hasPermission('PLATFORM_ADMIN', 'renewals.manage')).toBe(false);
+    expect(hasPermission('PLATFORM_ADMIN', 'collections.read')).toBe(false);
+    expect(hasPermission('PLATFORM_ADMIN', 'collections.manage')).toBe(false);
     expect(hasPermission('PLATFORM_ADMIN', 'pipelines.admin')).toBe(true);
   });
 
@@ -27,6 +29,8 @@ describe('R3 staff presentation access', () => {
       'policies.read',
       'renewals.read',
       'renewals.manage',
+      'collections.read',
+      'collections.manage',
     ])).toBe(true);
   });
 
@@ -49,9 +53,11 @@ describe('R3 staff presentation access', () => {
     expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/customers/11111111-1111-4111-8111-111111111111')).toBe('/operator/customers/11111111-1111-4111-8111-111111111111');
     expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/policies')).toBe('/operator/policies');
     expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/renewals/33333333-3333-4333-8333-333333333333')).toBe('/operator/renewals/33333333-3333-4333-8333-333333333333');
+    expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/collections/44444444-4444-4444-8444-444444444444')).toBe('/operator/collections/44444444-4444-4444-8444-444444444444');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/customers')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/policies/22222222-2222-4222-8222-222222222222')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/renewals')).toBe('/operator/workspace');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/collections')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/claims')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/workspace')).toBe('/operator/workspace');
   });
