@@ -178,6 +178,7 @@ export interface ImportJobResponse {
   importType: string;
   status: ImportJobStatus;
   source: { mediaType: string; sizeBytes: number };
+  sourceHeaders?: readonly string[];
   mapping: Readonly<Record<string, string>> | null;
   counts: {
     total: number;
@@ -292,12 +293,13 @@ function validateSource(file: ImportSourceFileInput): void {
   }
 }
 
-function jobResponse(job: ImportJobProps): ImportJobResponse {
+function jobResponse(job: ImportJobProps, sourceHeaders?: readonly string[]): ImportJobResponse {
   return {
     importJobId: job.id,
     importType: job.importType,
     status: job.status,
     source: { mediaType: job.sourceMediaType, sizeBytes: job.sourceSizeBytes },
+    ...(sourceHeaders ? { sourceHeaders: [...sourceHeaders] } : {}),
     mapping: job.mappingConfiguration ? { ...job.mappingConfiguration } : null,
     counts: {
       total: job.totalRows,
@@ -315,6 +317,10 @@ function jobResponse(job: ImportJobProps): ImportJobResponse {
     startedAt: job.startedAt?.toISOString() ?? null,
     completedAt: job.completedAt?.toISOString() ?? null,
   };
+}
+
+function sourceHeadersFromRows(rows: readonly ImportRowProps[]): string[] {
+  return rows.length ? Object.keys(rows[0]!.stagedInput) : [];
 }
 
 function rowResponse(row: ImportRowProps): ImportRowResponse {
@@ -409,7 +415,9 @@ export class GovernedImportsApplication {
     requireAdmin(actorInput);
     const job = await this.deps.repository.getJob(importJobId);
     if (!job) throw new GovernedImportApplicationError('RESOURCE_NOT_FOUND', 'The import job was not found.');
-    return jobResponse(job);
+    if (job.status === 'UPLOADED' || job.totalRows === 0) return jobResponse(job, []);
+    const rows = await this.allRows(importJobId);
+    return jobResponse(job, sourceHeadersFromRows(rows));
   }
 
   async listRows(importJobId: string, input: { page?: number; pageSize?: number }, actorInput: ActorContext | undefined): Promise<ImportJobRowsPageResponse> {
@@ -522,7 +530,8 @@ export class GovernedImportsApplication {
       });
     }
     assertImportJobTransition(job.status, 'PREVIEWED');
-    return jobResponse(mutationOrThrow(await this.deps.repository.savePreview({ importJobId, expectedVersion, rows, at: now })));
+    const saved = mutationOrThrow(await this.deps.repository.savePreview({ importJobId, expectedVersion, rows, at: now }));
+    return jobResponse(saved, headers);
   }
 
   async updateMapping(importJobId: string, expectedVersion: number, mappingInput: unknown, actorInput: ActorContext | undefined): Promise<ImportJobResponse> {
@@ -539,7 +548,8 @@ export class GovernedImportsApplication {
       if (!availableHeaders.has(sourceHeader)) throw new GovernedImportApplicationError('IMPORT_MAPPING_INVALID', 'Mapping references a source header that is not present in the preview.');
     }
     assertImportJobTransition(job.status, 'MAPPED');
-    return jobResponse(mutationOrThrow(await this.deps.repository.saveMapping({ importJobId, expectedVersion, mapping, at: this.deps.clock.now() })));
+    const saved = mutationOrThrow(await this.deps.repository.saveMapping({ importJobId, expectedVersion, mapping, at: this.deps.clock.now() }));
+    return jobResponse(saved, sourceHeadersFromRows(rows));
   }
 
   async validateJob(importJobId: string, expectedVersion: number, actorInput: ActorContext | undefined): Promise<ImportJobResponse> {
@@ -564,7 +574,8 @@ export class GovernedImportsApplication {
       validated.push({ ...row, normalizedInput: normalized, validationStatus: valid ? 'VALID' : 'INVALID', validationErrors: errors, dryRunOutcome: 'PENDING', commitOutcome: 'PENDING', targetType: null, targetId: null, updatedAt: at });
     }
     assertImportJobTransition(job.status, 'VALIDATED');
-    return jobResponse(mutationOrThrow(await this.deps.repository.saveValidation({ importJobId, expectedVersion, rows: validated, validRows, invalidRows, at })));
+    const saved = mutationOrThrow(await this.deps.repository.saveValidation({ importJobId, expectedVersion, rows: validated, validRows, invalidRows, at }));
+    return jobResponse(saved, sourceHeadersFromRows(rows));
   }
 
   async dryRunJob(importJobId: string, expectedVersion: number, actorInput: ActorContext | undefined, context: { requestId?: string } = {}): Promise<ImportJobResponse> {
@@ -602,7 +613,7 @@ export class GovernedImportsApplication {
         metadata: { validRows: job.validRows, invalidRows: job.invalidRows, unchangedRows },
       },
     });
-    return jobResponse(mutationOrThrow(result));
+    return jobResponse(mutationOrThrow(result), sourceHeadersFromRows(rows));
   }
 
   async commitJob(input: { importJobId: string; expectedVersion: number; idempotencyKey: string }, actorInput: ActorContext | undefined, context: { requestId?: string } = {}): Promise<{ response: ImportJobResponse; replayed: boolean }> {
@@ -690,7 +701,7 @@ export class GovernedImportsApplication {
           metadata: { commitPolicy: 'ROW_PARTIAL_INDEPENDENT', committedRows, rejectedRows, failedRows, terminalStatus },
         },
       }));
-      return jobResponse(finalized);
+      return jobResponse(finalized, sourceHeadersFromRows(rows));
     } catch (error) {
       const at = this.deps.clock.now();
       await this.deps.repository.failCommit({
