@@ -1,6 +1,6 @@
 # Interface Inventory - R3 Web Productization
 
-**Revision:** post-R3 productization, after Increment 08 implementation  
+**Revision:** post-R3 productization, after Increment 09 implementation  
 **Historical evidence boundary:** this document does not replace or rewrite the earlier 10-interface MVP inventory.
 
 ## Current route-level interfaces
@@ -39,13 +39,15 @@
 | 30 | `/operator/admin/communication-templates/:definitionId/versions/new` | New Immutable Communication Template Version | Communications admin |
 | 31 | `/operator/admin/recovery` | Recovery Console + Integration Event Lookup + Dead-letter Queue | Integration read + Dead-letter read |
 | 32 | `/operator/admin/recovery/dead-letters/:deadLetterId` | Dead-letter Detail + Requeue/Resolve | Dead-letter read; mutations permission-gated |
-| 33 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
+| 33 | `/operator/analytics` | Claims Analytics Dashboard | Claims analytics read |
+| 34 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
 
 ## Embedded product surfaces
 
 Route count is not operation count. The following R3 capabilities are embedded in coherent workspaces rather than inflated into artificial standalone pages:
 
-- canonical Claims operational metrics in Dashboard;
+- canonical Claims operational metrics in Dashboard for operational staff with `claims.analytics.read`;
+- dedicated Claims Analytics dashboard for any role that owns `claims.analytics.read`, including Platform Admin without business-operation elevation;
 - Claim lifecycle transitions in Claim Detail;
 - Pipeline stage movement in Claim Detail;
 - Claim Task creation and per-Claim Task list in Claim Detail;
@@ -59,6 +61,19 @@ Route count is not operation count. The following R3 capabilities are embedded i
 - Communication Template Admin activation, enable/disable, immutable content history and typed variable schema in Template Detail;
 - Integration Event lookup by published `eventId` in Recovery Console;
 - dead-letter pagination in Recovery Console and optimistic-concurrency requeue/resolve in Dead-letter Detail.
+
+## Claims Analytics boundary
+
+Claims Analytics uses only the frozen R3 `GET /api/v1/operator/analytics/claims` operation through the existing `getClaimsOperationalMetrics` web client.
+
+- access is gated only by `claims.analytics.read`; Supervisor and Platform Admin may enter, Claims Operator may not;
+- Platform Admin gains no `claims.backoffice.read`, `claims.tasks.read`, Customer, Policy, Renewals or Collections permission as a side effect;
+- the UI offers only bounded 7/30/90-day client presets that serialize the published RFC 3339 `from` and `to` parameters;
+- the server-projected window semantics `[from,to)` are displayed instead of being silently reinterpreted;
+- `reportedInWindow` is presented as the metric tied to that creation window;
+- `openClaims`, `closedClaims`, `claimsByStatus`, `claimsByOperationalStage`, `openTasks`, `overdueTasks`, and `evidencePendingReviewClaims` are presented as generated-at snapshots because that is what the application contract computes;
+- no rates, percentages, SLA, trend deltas, severity scores, financial impact, forecasting, or other inferred KPIs are invented;
+- no Claims or Tasks are listed from this route, preserving the distinction between aggregated analytics permission and business-record read permissions.
 
 ## Customer & Policy 360 boundary
 
@@ -140,4 +155,4 @@ Increment 07 productizes the administrator-facing template lifecycle only. It do
 
 Navigation remains permission-aware. A route existing in this inventory does not imply every staff role may access it.
 
-Platform Admin is not an implicit Claims, Customer, Policy, Renewals, or Collections superuser. Pipeline Administration, Communication Template Administration, and Recovery Operations are exposed specifically because Platform Admin owns their explicit permissions.
+Platform Admin is not an implicit Claims, Customer, Policy, Renewals, Collections, or Tasks superuser. Claims Analytics is exposed specifically through `claims.analytics.read`; Pipeline Administration, Communication Template Administration, and Recovery Operations are exposed through their own explicit permissions.

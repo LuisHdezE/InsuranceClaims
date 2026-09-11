@@ -66,8 +66,10 @@ const CARDS: WorkspaceCard[] = [
   {
     kicker: 'Analytics',
     title: 'Métricas operacionales',
-    description: 'R3 incluye métricas autoritativas. Este acceso se convertirá en dashboard analítico sin KPIs inventados.',
+    description: 'Panel R3 autoritativo con KPIs, estados y etapas operacionales, separado del acceso a Claims individuales.',
     permissions: ['claims.analytics.read'],
+    href: '/operator/analytics',
+    action: 'Abrir Analytics',
     tone: 'violet',
   },
   {

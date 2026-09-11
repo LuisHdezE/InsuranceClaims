@@ -1,0 +1,31 @@
+.claims-analytics-main { display: grid; gap: 1.25rem; }
+.claims-analytics-heading { align-items: end; }
+.claims-analytics-actions { display: flex; align-items: end; gap: .75rem; flex-wrap: wrap; }
+.claims-analytics-provenance { margin: 0; }
+.claims-analytics-note { border: 1px solid rgba(69, 113, 160, .2); border-radius: 14px; padding: 1rem 1.1rem; background: rgba(239, 247, 255, .68); display: grid; gap: .35rem; }
+.claims-analytics-note strong { color: var(--ops-navy, #12314b); }
+.claims-analytics-note p { margin: 0; color: #52667a; line-height: 1.55; }
+.claims-analytics-note code { font-size: .78rem; }
+.claims-analytics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.claims-analytics-panel { min-width: 0; }
+.claims-analytics-bars { display: grid; gap: .9rem; }
+.claims-analytics-bar-row { display: grid; grid-template-columns: minmax(140px, 1.2fr) minmax(110px, 2fr) auto; align-items: center; gap: .8rem; }
+.claims-analytics-bar-row > div { min-width: 0; display: grid; gap: .12rem; }
+.claims-analytics-bar-row > div strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.claims-analytics-bar-row code { color: #718296; font-size: .72rem; overflow-wrap: anywhere; }
+.claims-analytics-bar-track { height: 9px; border-radius: 999px; overflow: hidden; background: rgba(66, 92, 120, .12); }
+.claims-analytics-bar-track > span { display: block; height: 100%; border-radius: inherit; background: currentColor; color: #2d7498; }
+.claims-analytics-bar-row > strong { min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 900px) {
+  .claims-analytics-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .claims-analytics-heading { align-items: stretch; }
+  .claims-analytics-actions { align-items: stretch; }
+  .claims-analytics-actions .r3-window-control { flex: 1 1 180px; }
+  .claims-analytics-actions .ops-refresh-button { flex: 1 1 140px; }
+  .claims-analytics-bar-row { grid-template-columns: 1fr auto; }
+  .claims-analytics-bar-track { grid-column: 1 / -1; grid-row: 2; }
+}

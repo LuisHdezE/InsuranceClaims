@@ -16,6 +16,7 @@ describe('R3 staff presentation access', () => {
     expect(hasPermission('PLATFORM_ADMIN', 'renewals.manage')).toBe(false);
     expect(hasPermission('PLATFORM_ADMIN', 'collections.read')).toBe(false);
     expect(hasPermission('PLATFORM_ADMIN', 'collections.manage')).toBe(false);
+    expect(hasPermission('PLATFORM_ADMIN', 'claims.analytics.read')).toBe(true);
     expect(hasPermission('PLATFORM_ADMIN', 'pipelines.admin')).toBe(true);
     expect(hasPermission('PLATFORM_ADMIN', 'communications.admin')).toBe(true);
     expect(hasPermission('PLATFORM_ADMIN', 'operations.integration.read')).toBe(true);
@@ -64,6 +65,12 @@ describe('R3 staff presentation access', () => {
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/collections')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/claims')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/workspace')).toBe('/operator/workspace');
+  });
+
+  it('permits Analytics deep links only for roles with claims.analytics.read', () => {
+    expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/analytics')).toBe('/operator/analytics');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/analytics')).toBe('/operator/analytics');
+    expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/analytics')).toBe('/operator/dashboard');
   });
 
   it('permits Pipeline Admin deep links only for Platform Admin', () => {

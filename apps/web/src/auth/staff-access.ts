@@ -75,6 +75,7 @@ export function defaultStaffRoute(role: StaffRole): string {
 export function canAccessStaffPath(role: StaffRole, path: string): boolean {
   if (path === '/operator/workspace') return true;
   if (path === '/operator/dashboard') return hasAllPermissions(role, ['claims.backoffice.read', 'claims.tasks.read']);
+  if (path === '/operator/analytics') return hasPermission(role, 'claims.analytics.read');
   if (path === '/operator/claims' || /^\/operator\/claims\/[^/]+$/.test(path)) return hasPermission(role, 'claims.backoffice.read');
   if (path === '/operator/tasks' || /^\/operator\/tasks\/[^/]+$/.test(path)) return hasPermission(role, 'claims.tasks.read');
   if (path === '/operator/customers' || /^\/operator\/customers\/[^/]+$/.test(path)) return hasPermission(role, 'customers.read');

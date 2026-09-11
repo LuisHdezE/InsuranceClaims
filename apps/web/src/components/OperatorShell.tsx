@@ -23,6 +23,7 @@ const navItems: NavItem[] = [
     glyph: '⌂',
     allOf: ['claims.backoffice.read', 'claims.tasks.read'],
   },
+  { to: '/operator/analytics', label: 'Analytics', glyph: '◫', allOf: ['claims.analytics.read'] },
   { to: '/operator/claims', label: 'Claims', glyph: '▱', allOf: ['claims.backoffice.read'] },
   { to: '/operator/tasks', label: 'Tasks', glyph: '☑', allOf: ['claims.tasks.read'] },
   { to: '/operator/customers', label: 'Clientes', glyph: '◎', allOf: ['customers.read'] },
@@ -106,6 +107,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
 }
 
 function contextForPath(path: string) {
+  if (path === '/operator/analytics') return 'Claims Analytics R3 · Métricas agregadas sin elevar permisos de negocio';
   if (path === '/operator/claims') return 'Listado autoritativo del API · Workspace protegido y consciente del rol';
   if (path.startsWith('/operator/customers')) return 'Customer 360 R3 · Relaciones autoritativas y read-only';
   if (path.startsWith('/operator/policies')) return 'Policy 360 R3 · Referencias modernas y legacy';

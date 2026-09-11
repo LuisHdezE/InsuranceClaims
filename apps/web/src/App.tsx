@@ -15,6 +15,7 @@ import { ClaimStatusPage } from './pages/ClaimStatusPage';
 import { ClaimSubmittedPage } from './pages/ClaimSubmittedPage';
 import { HomePage } from './pages/HomePage';
 import { NewClaimPage } from './pages/NewClaimPage';
+import { OperatorAnalyticsPage } from './pages/OperatorAnalyticsPage';
 import { OperatorClaimDetailPage } from './pages/OperatorClaimDetailPage';
 import { OperatorClaimsPage } from './pages/OperatorClaimsPage';
 import { OperatorCollectionDetailPage } from './pages/OperatorCollectionDetailPage';
@@ -49,6 +50,7 @@ export function App() {
       <Route path="/operator" element={<Navigate to="/operator/workspace" replace />} />
       <Route path="/operator/workspace" element={<RequireOperator><RequireStaffAccess><StaffWorkspacePage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/dashboard" element={<RequireOperator><RequireStaffAccess allOf={['claims.backoffice.read', 'claims.tasks.read']}><OperatorDashboardPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/analytics" element={<RequireOperator><RequireStaffAccess allOf={['claims.analytics.read']}><OperatorAnalyticsPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/claims" element={<RequireOperator><RequireStaffAccess allOf={['claims.backoffice.read']}><OperatorClaimsPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/claims/:claimId" element={<RequireOperator><RequireStaffAccess allOf={['claims.backoffice.read']}><OperatorClaimDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/tasks" element={<RequireOperator><RequireStaffAccess allOf={['claims.tasks.read']}><OperatorTasksPage /></RequireStaffAccess></RequireOperator>} />
