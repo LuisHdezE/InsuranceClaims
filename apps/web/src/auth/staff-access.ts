@@ -94,6 +94,12 @@ export function canAccessStaffPath(role: StaffRole, path: string): boolean {
     || /^\/operator\/admin\/communication-templates\/[^/]+$/.test(path)
     || /^\/operator\/admin\/communication-templates\/[^/]+\/versions\/new$/.test(path)
   ) return hasPermission(role, 'communications.admin');
+  if (
+    path === '/operator/admin/custom-fields'
+    || path === '/operator/admin/custom-fields/new'
+    || /^\/operator\/admin\/custom-fields\/[^/]+$/.test(path)
+    || /^\/operator\/admin\/custom-fields\/[^/]+\/versions\/new$/.test(path)
+  ) return hasPermission(role, 'custom_fields.admin');
   if (path === '/operator/admin/recovery') {
     return hasAllPermissions(role, ['operations.integration.read', 'operations.dead_letters.read']);
   }

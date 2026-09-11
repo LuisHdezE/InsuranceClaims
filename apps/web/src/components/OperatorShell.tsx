@@ -32,6 +32,7 @@ const navItems: NavItem[] = [
   { to: '/operator/collections', label: 'Cobranzas', glyph: '¤', allOf: ['collections.read'] },
   { to: '/operator/admin/pipelines', label: 'Pipelines', glyph: '⌘', allOf: ['pipelines.admin'] },
   { to: '/operator/admin/communication-templates', label: 'Plantillas', glyph: '✉', allOf: ['communications.admin'] },
+  { to: '/operator/admin/custom-fields', label: 'Campos', glyph: '⊞', allOf: ['custom_fields.admin'] },
   { to: '/operator/admin/recovery', label: 'Recovery', glyph: '↺', allOf: ['operations.integration.read', 'operations.dead_letters.read'] },
 ];
 
@@ -115,6 +116,7 @@ function contextForPath(path: string) {
   if (path.startsWith('/operator/collections')) return 'Collections R3 · Lifecycle, pago verificado y pipeline separados';
   if (path.startsWith('/operator/admin/pipelines')) return 'Pipeline Administration R3 · Versiones inmutables y activación gobernada';
   if (path.startsWith('/operator/admin/communication-templates')) return 'Communication Templates R3 · Contenido versionado y activación gobernada';
+  if (path.startsWith('/operator/admin/custom-fields')) return 'Custom Fields R3 · Proyecciones extendidas con versionado y límites de dominio';
   if (path.startsWith('/operator/admin/recovery')) return 'Recovery Operations R3 · Integraciones y dead letters con acceso separado';
   return 'Workspace protegido y consciente del rol';
 }
