@@ -1,6 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { RequireOperator } from './components/RequireOperator';
 import { RequireStaffAccess } from './components/RequireStaffAccess';
+import { AdminCommunicationTemplateCreatePage } from './pages/AdminCommunicationTemplateCreatePage';
+import { AdminCommunicationTemplateDetailPage } from './pages/AdminCommunicationTemplateDetailPage';
+import { AdminCommunicationTemplatesPage } from './pages/AdminCommunicationTemplatesPage';
+import { AdminCommunicationTemplateVersionCreatePage } from './pages/AdminCommunicationTemplateVersionCreatePage';
 import { AdminPipelineCreatePage } from './pages/AdminPipelineCreatePage';
 import { AdminPipelineDetailPage } from './pages/AdminPipelineDetailPage';
 import { AdminPipelinesPage } from './pages/AdminPipelinesPage';
@@ -59,6 +63,10 @@ export function App() {
       <Route path="/operator/admin/pipelines/new" element={<RequireOperator><RequireStaffAccess allOf={['pipelines.admin']}><AdminPipelineCreatePage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/pipelines/:definitionId" element={<RequireOperator><RequireStaffAccess allOf={['pipelines.admin']}><AdminPipelineDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/pipelines/:definitionId/versions/new" element={<RequireOperator><RequireStaffAccess allOf={['pipelines.admin']}><AdminPipelineVersionCreatePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/communication-templates" element={<RequireOperator><RequireStaffAccess allOf={['communications.admin']}><AdminCommunicationTemplatesPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/communication-templates/new" element={<RequireOperator><RequireStaffAccess allOf={['communications.admin']}><AdminCommunicationTemplateCreatePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/communication-templates/:definitionId" element={<RequireOperator><RequireStaffAccess allOf={['communications.admin']}><AdminCommunicationTemplateDetailPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/communication-templates/:definitionId/versions/new" element={<RequireOperator><RequireStaffAccess allOf={['communications.admin']}><AdminCommunicationTemplateVersionCreatePage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/forbidden" element={<RequireOperator><RequireStaffAccess><StaffForbiddenPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

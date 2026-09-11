@@ -17,6 +17,7 @@ describe('R3 staff presentation access', () => {
     expect(hasPermission('PLATFORM_ADMIN', 'collections.read')).toBe(false);
     expect(hasPermission('PLATFORM_ADMIN', 'collections.manage')).toBe(false);
     expect(hasPermission('PLATFORM_ADMIN', 'pipelines.admin')).toBe(true);
+    expect(hasPermission('PLATFORM_ADMIN', 'communications.admin')).toBe(true);
   });
 
   it('gives Supervisor operator capabilities plus analytics and bulk', () => {
@@ -72,5 +73,17 @@ describe('R3 staff presentation access', () => {
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', versionEditor)).toBe(versionEditor);
     expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', detail)).toBe('/operator/dashboard');
     expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/admin/pipelines')).toBe('/operator/dashboard');
+  });
+
+  it('permits Communication Template Admin deep links only for Platform Admin', () => {
+    const detail = '/operator/admin/communication-templates/66666666-6666-4666-8666-666666666666';
+    const versionEditor = `${detail}/versions/new`;
+
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/communication-templates')).toBe('/operator/admin/communication-templates');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/communication-templates/new')).toBe('/operator/admin/communication-templates/new');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', detail)).toBe(detail);
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', versionEditor)).toBe(versionEditor);
+    expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', detail)).toBe('/operator/dashboard');
+    expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/admin/communication-templates')).toBe('/operator/dashboard');
   });
 });

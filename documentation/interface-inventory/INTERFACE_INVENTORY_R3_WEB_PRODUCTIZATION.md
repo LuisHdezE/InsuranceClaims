@@ -1,6 +1,6 @@
 # Interface Inventory - R3 Web Productization
 
-**Revision:** post-R3 productization, after Increment 06 implementation  
+**Revision:** post-R3 productization, after Increment 07 implementation  
 **Historical evidence boundary:** this document does not replace or rewrite the earlier 10-interface MVP inventory.
 
 ## Current route-level interfaces
@@ -33,7 +33,11 @@
 | 24 | `/operator/admin/pipelines/new` | New Pipeline Definition + First DRAFT | Pipelines admin |
 | 25 | `/operator/admin/pipelines/:definitionId` | Pipeline Definition + Version Administration | Pipelines admin |
 | 26 | `/operator/admin/pipelines/:definitionId/versions/new` | New Immutable Pipeline Version | Pipelines admin |
-| 27 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
+| 27 | `/operator/admin/communication-templates` | Communication Template Administration Directory | Communications admin |
+| 28 | `/operator/admin/communication-templates/new` | New Communication Template + First DRAFT | Communications admin |
+| 29 | `/operator/admin/communication-templates/:definitionId` | Communication Template + Version Administration | Communications admin |
+| 30 | `/operator/admin/communication-templates/:definitionId/versions/new` | New Immutable Communication Template Version | Communications admin |
+| 31 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
 
 ## Embedded product surfaces
 
@@ -49,7 +53,8 @@ Route count is not operation count. The following R3 capabilities are embedded i
 - Policy 360 customer, asset, metadata and Claim relationships in Policy Detail;
 - Renewal customer/policy context, lifecycle transition and version-pinned pipeline movement in Renewal Detail;
 - Collection customer/policy context, terminal lifecycle transition, server-verified payment-state mutation and version-pinned pipeline movement in Collection Detail;
-- Pipeline Admin activation, enable/disable and immutable version history in Pipeline Detail.
+- Pipeline Admin activation, enable/disable and immutable version history in Pipeline Detail;
+- Communication Template Admin activation, enable/disable, immutable content history and typed variable schema in Template Detail.
 
 ## Customer & Policy 360 boundary
 
@@ -91,12 +96,30 @@ Pipeline Administration uses only the frozen R3 admin operations `listPipelines`
 - 409/version conflicts refresh the authoritative definition rather than blind retry;
 - configuration/activation conflicts are surfaced from the API instead of being bypassed client-side.
 
-## Communications boundary discovered during Increment 04 planning
+## Communication Template Administration boundary
 
-R3 exposes operator communication history/detail and send operations, but `requestCommunication` requires an active `templateVersionId`. The active template catalog is only available through the admin template endpoints guarded by `communications.admin`; Claims Operator/Supervisor do not have that permission. Productization therefore does not invent an operator template catalog or require operators to paste opaque template UUIDs. A complete Communications UI is deferred until the contract provides a safe operator-facing active-template discovery path or an explicitly approved product design resolves the boundary.
+Communication Template Administration uses only the frozen R3 admin operations `listCommunicationTemplates`, `getCommunicationTemplate`, `createCommunicationTemplate`, `createCommunicationTemplateVersion`, `activateCommunicationTemplateVersion`, and `updateCommunicationTemplateState`.
+
+- access is presentation-gated by `communications.admin` and remains API-authoritative;
+- the only channels offered are the R3 values `EMAIL` and `WHATSAPP`;
+- a new definition is created disabled with its first DRAFT version;
+- the definition channel and key are treated as identity; content changes create a new immutable DRAFT version rather than editing historical content;
+- EMAIL requires a subject; WHATSAPP sends `subject: null` instead of inventing a subject concept;
+- variable schemas support at most 30 variables with R3 types `STRING`, `NUMBER`, and `BOOLEAN`; names retain the server-published stable-key pattern;
+- source classification remains opaque and receives no invented business semantics;
+- version creation, activation and enable/disable use authoritative definition `version` as `expectedDefinitionVersion`;
+- activation is offered only for server-projected DRAFT versions;
+- disabling an active definition may retire its active version; the UI does not pretend that a retired version can simply be toggled active again;
+- 409/version conflicts refresh authoritative state rather than blind retry; configuration conflicts remain visible to the administrator.
+
+## Operator Communications boundary discovered during Increment 04 planning
+
+R3 exposes operator communication history/detail and send operations, but `requestCommunication` requires an active `templateVersionId`. The active template catalog is only available through the admin template endpoints guarded by `communications.admin`; Claims Operator/Supervisor do not have that permission.
+
+Increment 07 productizes the administrator-facing template lifecycle only. It does **not** erase the operator discovery boundary: Claims Operator/Supervisor still cannot safely discover active template IDs through their own contract. The web therefore continues to avoid an operator template catalog or a UX that asks users to paste opaque UUIDs. A complete operator Communications UI remains deferred until the contract provides a safe operator-facing active-template discovery path or an explicitly approved product design resolves that boundary.
 
 ## Navigation rule
 
 Navigation remains permission-aware. A route existing in this inventory does not imply every staff role may access it.
 
-Platform Admin is not an implicit Claims, Customer, Policy, Renewals, or Collections superuser. Pipeline Administration is exposed specifically because Platform Admin owns `pipelines.admin`.
+Platform Admin is not an implicit Claims, Customer, Policy, Renewals, or Collections superuser. Pipeline Administration and Communication Template Administration are exposed specifically because Platform Admin owns `pipelines.admin` and `communications.admin` respectively.

@@ -87,6 +87,12 @@ export function canAccessStaffPath(role: StaffRole, path: string): boolean {
     || /^\/operator\/admin\/pipelines\/[^/]+$/.test(path)
     || /^\/operator\/admin\/pipelines\/[^/]+\/versions\/new$/.test(path)
   ) return hasPermission(role, 'pipelines.admin');
+  if (
+    path === '/operator/admin/communication-templates'
+    || path === '/operator/admin/communication-templates/new'
+    || /^\/operator\/admin\/communication-templates\/[^/]+$/.test(path)
+    || /^\/operator\/admin\/communication-templates\/[^/]+\/versions\/new$/.test(path)
+  ) return hasPermission(role, 'communications.admin');
   return false;
 }
 
