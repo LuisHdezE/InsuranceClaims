@@ -91,10 +91,19 @@ const CARDS: WorkspaceCard[] = [
     tone: 'green',
   },
   {
+    kicker: 'Platform Configuration',
+    title: 'Custom Fields',
+    description: 'Campos versionados para CLAIM, RENEWAL y COLLECTION con tipos y sensibilidad R3, activación explícita y protección de dominio.',
+    permissions: ['custom_fields.admin'],
+    href: '/operator/admin/custom-fields',
+    action: 'Administrar Custom Fields',
+    tone: 'blue',
+  },
+  {
     kicker: 'Platform Next',
     title: 'Configuración pendiente',
-    description: 'Automatizaciones, guidance, custom fields e imports conservan API R3 y permanecen como próximos cortes de productización.',
-    permissions: ['automations.admin', 'guidance.admin', 'custom_fields.admin', 'imports.execute'],
+    description: 'Automatizaciones, guidance e imports conservan API R3 y permanecen como próximos cortes de productización.',
+    permissions: ['automations.admin', 'guidance.admin', 'imports.execute'],
     tone: 'yellow',
   },
   {

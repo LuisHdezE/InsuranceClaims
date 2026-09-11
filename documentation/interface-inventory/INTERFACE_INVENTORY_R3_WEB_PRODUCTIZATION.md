@@ -1,6 +1,6 @@
 # Interface Inventory - R3 Web Productization
 
-**Revision:** post-R3 productization, after Increment 09 implementation  
+**Revision:** post-R3 productization, after Increment 10 implementation  
 **Historical evidence boundary:** this document does not replace or rewrite the earlier 10-interface MVP inventory.
 
 ## Current route-level interfaces
@@ -40,7 +40,11 @@
 | 31 | `/operator/admin/recovery` | Recovery Console + Integration Event Lookup + Dead-letter Queue | Integration read + Dead-letter read |
 | 32 | `/operator/admin/recovery/dead-letters/:deadLetterId` | Dead-letter Detail + Requeue/Resolve | Dead-letter read; mutations permission-gated |
 | 33 | `/operator/analytics` | Claims Analytics Dashboard | Claims analytics read |
-| 34 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
+| 34 | `/operator/admin/custom-fields` | Custom Field Administration Directory | Custom fields admin |
+| 35 | `/operator/admin/custom-fields/new` | New Custom Field + First DRAFT | Custom fields admin |
+| 36 | `/operator/admin/custom-fields/:definitionId` | Custom Field Definition + Version Administration | Custom fields admin |
+| 37 | `/operator/admin/custom-fields/:definitionId/versions/new` | New Immutable Custom Field Version | Custom fields admin |
+| 38 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
 
 ## Embedded product surfaces
 
@@ -59,6 +63,7 @@ Route count is not operation count. The following R3 capabilities are embedded i
 - Collection customer/policy context, terminal lifecycle transition, server-verified payment-state mutation and version-pinned pipeline movement in Collection Detail;
 - Pipeline Admin activation, enable/disable and immutable version history in Pipeline Detail;
 - Communication Template Admin activation, enable/disable, immutable content history and typed variable schema in Template Detail;
+- Custom Field Admin activation, enable/disable, immutable configuration history, ENUM values and typed validation metadata in Custom Field Detail;
 - Integration Event lookup by published `eventId` in Recovery Console;
 - dead-letter pagination in Recovery Console and optimistic-concurrency requeue/resolve in Dead-letter Detail.
 
@@ -131,6 +136,28 @@ Communication Template Administration uses only the frozen R3 admin operations `
 - disabling an active definition may retire its active version; the UI does not pretend that a retired version can simply be toggled active again;
 - 409/version conflicts refresh authoritative state rather than blind retry; configuration conflicts remain visible to the administrator.
 
+## Custom Field Administration boundary
+
+Custom Field Administration uses only the frozen R3 admin operations `listCustomFields`, `getCustomField`, `createCustomField`, `createCustomFieldVersion`, `activateCustomFieldVersion`, and `updateCustomFieldState`.
+
+- access is presentation-gated by `custom_fields.admin` and remains API-authoritative;
+- only the published target types `CLAIM`, `RENEWAL`, and `COLLECTION` are offered;
+- only the published value types `STRING`, `NUMBER`, `BOOLEAN`, `DATE`, and `ENUM` are offered;
+- only the published sensitivity classifications `PUBLIC_SAFE` and `STAFF_ONLY` are offered;
+- a new definition starts disabled with its first DRAFT version;
+- `fieldKey` and `targetType` are treated as definition identity and are never edited by a later version;
+- existing versions are immutable; configuration changes create a new DRAFT version;
+- ENUM requires between 1 and 100 unique values with the R3 length bound, while non-ENUM versions send `enumValues: []`;
+- `validationMetadata` is edited as at most 20 stable-key entries with scalar `STRING`, `NUMBER`, or `BOOLEAN` values; the UI does not assign business meaning to those keys;
+- the server remains authoritative for protected field keys and protected validation metadata; the web intentionally does not duplicate those internal deny-lists;
+- source classification remains opaque and receives no invented business semantics;
+- version creation, activation and enable/disable use the authoritative definition `version` as `expectedDefinitionVersion`;
+- only server-projected DRAFT versions are offered for activation;
+- enabling is blocked until the definition has an active version;
+- disabling an active definition may retire the active version; the UI surfaces the resulting projection rather than pretending the retired version is still active;
+- 409/version conflicts refresh authoritative state instead of blind retry;
+- the directory exposes server pagination only because the frozen list contract publishes no field/target/type/status search filters.
+
 ## Recovery Operations boundary
 
 Recovery Operations uses only `listDeadLetters`, `getDeadLetter`, `requeueDeadLetter`, `resolveDeadLetter`, and `getIntegrationEventStatus` from the frozen R3 API.
@@ -155,4 +182,4 @@ Increment 07 productizes the administrator-facing template lifecycle only. It do
 
 Navigation remains permission-aware. A route existing in this inventory does not imply every staff role may access it.
 
-Platform Admin is not an implicit Claims, Customer, Policy, Renewals, Collections, or Tasks superuser. Claims Analytics is exposed specifically through `claims.analytics.read`; Pipeline Administration, Communication Template Administration, and Recovery Operations are exposed through their own explicit permissions.
+Platform Admin is not an implicit Claims, Customer, Policy, Renewals, Collections, or Tasks superuser. Claims Analytics is exposed specifically through `claims.analytics.read`; Pipeline Administration, Communication Template Administration, Custom Field Administration, and Recovery Operations are exposed through their own explicit permissions.
