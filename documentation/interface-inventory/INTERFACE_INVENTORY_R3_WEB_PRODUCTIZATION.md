@@ -1,6 +1,6 @@
 # Interface Inventory - R3 Web Productization
 
-**Revision:** post-R3 productization, after Increment 07 implementation  
+**Revision:** post-R3 productization, after Increment 08 implementation  
 **Historical evidence boundary:** this document does not replace or rewrite the earlier 10-interface MVP inventory.
 
 ## Current route-level interfaces
@@ -37,7 +37,9 @@
 | 28 | `/operator/admin/communication-templates/new` | New Communication Template + First DRAFT | Communications admin |
 | 29 | `/operator/admin/communication-templates/:definitionId` | Communication Template + Version Administration | Communications admin |
 | 30 | `/operator/admin/communication-templates/:definitionId/versions/new` | New Immutable Communication Template Version | Communications admin |
-| 31 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
+| 31 | `/operator/admin/recovery` | Recovery Console + Integration Event Lookup + Dead-letter Queue | Integration read + Dead-letter read |
+| 32 | `/operator/admin/recovery/dead-letters/:deadLetterId` | Dead-letter Detail + Requeue/Resolve | Dead-letter read; mutations permission-gated |
+| 33 | `/operator/forbidden` | Staff Permission Boundary | Authenticated staff |
 
 ## Embedded product surfaces
 
@@ -54,7 +56,9 @@ Route count is not operation count. The following R3 capabilities are embedded i
 - Renewal customer/policy context, lifecycle transition and version-pinned pipeline movement in Renewal Detail;
 - Collection customer/policy context, terminal lifecycle transition, server-verified payment-state mutation and version-pinned pipeline movement in Collection Detail;
 - Pipeline Admin activation, enable/disable and immutable version history in Pipeline Detail;
-- Communication Template Admin activation, enable/disable, immutable content history and typed variable schema in Template Detail.
+- Communication Template Admin activation, enable/disable, immutable content history and typed variable schema in Template Detail;
+- Integration Event lookup by published `eventId` in Recovery Console;
+- dead-letter pagination in Recovery Console and optimistic-concurrency requeue/resolve in Dead-letter Detail.
 
 ## Customer & Policy 360 boundary
 
@@ -112,6 +116,20 @@ Communication Template Administration uses only the frozen R3 admin operations `
 - disabling an active definition may retire its active version; the UI does not pretend that a retired version can simply be toggled active again;
 - 409/version conflicts refresh authoritative state rather than blind retry; configuration conflicts remain visible to the administrator.
 
+## Recovery Operations boundary
+
+Recovery Operations uses only `listDeadLetters`, `getDeadLetter`, `requeueDeadLetter`, `resolveDeadLetter`, and `getIntegrationEventStatus` from the frozen R3 API.
+
+- Recovery Console requires both `operations.integration.read` and `operations.dead_letters.read` because it contains both diagnostic surfaces;
+- Dead-letter Detail requires `operations.dead_letters.read`; requeue/resolve controls additionally require `operations.dead_letters.manage`;
+- dead-letter list exposes server pagination only because R3 publishes no filters for job type, failure category, date, correlation ID, or state;
+- Integration Events have no administrative list/search endpoint; the UI therefore performs only explicit UUID `eventId` lookup and does not fabricate discovery;
+- the UI displays only the published dead-letter projection: job type, status, attempts, availability, correlation ID, failure category, completed timestamp and version;
+- requeue and resolve both submit authoritative `expectedVersion` and are treated as separate administrative outcomes;
+- 409/version conflicts refetch the current dead-letter projection rather than blind retry;
+- a successful requeue/resolve leaves the dead-letter detail because the resource may no longer satisfy the dead-letter read contract;
+- no integration payload, worker internals, proprietary process detail or inferred relationship is added to the UI.
+
 ## Operator Communications boundary discovered during Increment 04 planning
 
 R3 exposes operator communication history/detail and send operations, but `requestCommunication` requires an active `templateVersionId`. The active template catalog is only available through the admin template endpoints guarded by `communications.admin`; Claims Operator/Supervisor do not have that permission.
@@ -122,4 +140,4 @@ Increment 07 productizes the administrator-facing template lifecycle only. It do
 
 Navigation remains permission-aware. A route existing in this inventory does not imply every staff role may access it.
 
-Platform Admin is not an implicit Claims, Customer, Policy, Renewals, or Collections superuser. Pipeline Administration and Communication Template Administration are exposed specifically because Platform Admin owns `pipelines.admin` and `communications.admin` respectively.
+Platform Admin is not an implicit Claims, Customer, Policy, Renewals, or Collections superuser. Pipeline Administration, Communication Template Administration, and Recovery Operations are exposed specifically because Platform Admin owns their explicit permissions.

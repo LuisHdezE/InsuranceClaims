@@ -98,8 +98,10 @@ const CARDS: WorkspaceCard[] = [
   {
     kicker: 'Recovery',
     title: 'Integraciones y recuperación',
-    description: 'Diagnóstico de eventos y dead letters con permisos separados de la operación normal de Claims.',
+    description: 'Consulta explícita de Integration Events y bandeja de dead letters con requeue/resolve gobernados por versión.',
     permissions: ['operations.integration.read', 'operations.dead_letters.read'],
+    href: '/operator/admin/recovery',
+    action: 'Abrir Recovery',
     tone: 'blue',
   },
 ];
