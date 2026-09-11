@@ -406,7 +406,7 @@ export class GovernedImportsApplication {
     validatePage(page, pageSize);
     const result = await this.deps.repository.listJobs({ page, pageSize });
     return {
-      items: result.items.map(jobResponse), page, pageSize, totalItems: result.totalItems,
+      items: result.items.map((job) => jobResponse(job)), page, pageSize, totalItems: result.totalItems,
       totalPages: Math.ceil(result.totalItems / pageSize),
     };
   }
