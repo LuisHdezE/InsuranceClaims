@@ -123,6 +123,12 @@ test('governed imports enforce admin-only preview/mapping/validation/dry-run and
   assert.equal(preview.status, 'PREVIEWED');
   assert.equal(preview.version, 2);
   assert.equal(preview.counts.total, 3);
+  assert.deepEqual(preview.sourceHeaders, ['ref', 'label', 'class']);
+  const refreshedPreview = await runtime.governedImports.getJob(importJobId, admin);
+  assert.deepEqual(refreshedPreview.sourceHeaders, ['ref', 'label', 'class']);
+  const safePreviewJson = JSON.stringify(refreshedPreview);
+  assert.equal(safePreviewJson.includes('Alpha'), false, 'sourceHeaders projection must not expose staged row values');
+  assert.equal(safePreviewJson.includes('SYN-A'), false, 'sourceHeaders projection must not expose raw external references');
   assert.equal(runtime.importStore.snapshotTargets().length, 0);
 
   await assert.rejects(

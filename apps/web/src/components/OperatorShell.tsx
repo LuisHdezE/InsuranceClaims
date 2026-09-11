@@ -35,6 +35,7 @@ const navItems: NavItem[] = [
   { to: '/operator/admin/custom-fields', label: 'Campos', glyph: '⊞', allOf: ['custom_fields.admin'] },
   { to: '/operator/admin/guidance', label: 'Guidance', glyph: '◈', allOf: ['guidance.admin'] },
   { to: '/operator/admin/automations', label: 'Automations', glyph: '⚙', allOf: ['automations.admin'] },
+  { to: '/operator/admin/imports', label: 'Imports', glyph: '⇧', allOf: ['imports.execute'] },
   { to: '/operator/admin/recovery', label: 'Recovery', glyph: '↺', allOf: ['operations.integration.read', 'operations.dead_letters.read'] },
 ];
 
@@ -121,6 +122,7 @@ function contextForPath(path: string) {
   if (path.startsWith('/operator/admin/custom-fields')) return 'Custom Fields R3 · Proyecciones extendidas con versionado y límites de dominio';
   if (path.startsWith('/operator/admin/guidance')) return 'Guidance Administration R3 · Orientación versionada sin semántica inventada';
   if (path.startsWith('/operator/admin/automations')) return 'Automation Administration R3 · Reglas versionadas con triggers y acciones allowlisted';
+  if (path.startsWith('/operator/admin/imports')) return 'Governed Imports R3 · Preview, mapping, validación, dry-run y commit gobernados';
   if (path.startsWith('/operator/admin/recovery')) return 'Recovery Operations R3 · Integraciones y dead letters con acceso separado';
   return 'Workspace protegido y consciente del rol';
 }

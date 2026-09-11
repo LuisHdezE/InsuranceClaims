@@ -18,6 +18,9 @@ import { AdminGuidanceCreatePage } from './pages/AdminGuidanceCreatePage';
 import { AdminGuidanceDetailPage } from './pages/AdminGuidanceDetailPage';
 import { AdminGuidancePage } from './pages/AdminGuidancePage';
 import { AdminGuidanceVersionCreatePage } from './pages/AdminGuidanceVersionCreatePage';
+import { AdminImportCreatePage } from './pages/AdminImportCreatePage';
+import { AdminImportDetailPage } from './pages/AdminImportDetailPage';
+import { AdminImportsPage } from './pages/AdminImportsPage';
 import { AdminPipelineCreatePage } from './pages/AdminPipelineCreatePage';
 import { AdminPipelineDetailPage } from './pages/AdminPipelineDetailPage';
 import { AdminPipelinesPage } from './pages/AdminPipelinesPage';
@@ -95,6 +98,9 @@ export function App() {
       <Route path="/operator/admin/automations/new" element={<RequireOperator><RequireStaffAccess allOf={['automations.admin']}><AdminAutomationCreatePage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/automations/:definitionId" element={<RequireOperator><RequireStaffAccess allOf={['automations.admin']}><AdminAutomationDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/automations/:definitionId/versions/new" element={<RequireOperator><RequireStaffAccess allOf={['automations.admin']}><AdminAutomationVersionCreatePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/imports" element={<RequireOperator><RequireStaffAccess allOf={['imports.execute']}><AdminImportsPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/imports/new" element={<RequireOperator><RequireStaffAccess allOf={['imports.execute']}><AdminImportCreatePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/imports/:importJobId" element={<RequireOperator><RequireStaffAccess allOf={['imports.execute']}><AdminImportDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/recovery" element={<RequireOperator><RequireStaffAccess allOf={['operations.integration.read', 'operations.dead_letters.read']}><AdminRecoveryPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/recovery/dead-letters/:deadLetterId" element={<RequireOperator><RequireStaffAccess allOf={['operations.dead_letters.read']}><AdminDeadLetterDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/forbidden" element={<RequireOperator><RequireStaffAccess><StaffForbiddenPage /></RequireStaffAccess></RequireOperator>} />
