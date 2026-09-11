@@ -30,6 +30,7 @@ const navItems: NavItem[] = [
   { to: '/operator/renewals', label: 'Renovaciones', glyph: '↻', allOf: ['renewals.read'] },
   { to: '/operator/collections', label: 'Cobranzas', glyph: '¤', allOf: ['collections.read'] },
   { to: '/operator/admin/pipelines', label: 'Pipelines', glyph: '⌘', allOf: ['pipelines.admin'] },
+  { to: '/operator/admin/communication-templates', label: 'Plantillas', glyph: '✉', allOf: ['communications.admin'] },
 ];
 
 export function OperatorShell({ children }: { children: ReactNode }) {
@@ -110,6 +111,7 @@ function contextForPath(path: string) {
   if (path.startsWith('/operator/renewals')) return 'Renewals R3 · Lifecycle y pipeline operativo con control de versión';
   if (path.startsWith('/operator/collections')) return 'Collections R3 · Lifecycle, pago verificado y pipeline separados';
   if (path.startsWith('/operator/admin/pipelines')) return 'Pipeline Administration R3 · Versiones inmutables y activación gobernada';
+  if (path.startsWith('/operator/admin/communication-templates')) return 'Communication Templates R3 · Contenido versionado y activación gobernada';
   return 'Workspace protegido y consciente del rol';
 }
 
