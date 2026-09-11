@@ -13,6 +13,8 @@ import { OperatorDashboardPage } from './pages/OperatorDashboardPage';
 import { OperatorLoginPage } from './pages/OperatorLoginPage';
 import { OperatorPoliciesPage } from './pages/OperatorPoliciesPage';
 import { OperatorPolicyDetailPage } from './pages/OperatorPolicyDetailPage';
+import { OperatorRenewalDetailPage } from './pages/OperatorRenewalDetailPage';
+import { OperatorRenewalsPage } from './pages/OperatorRenewalsPage';
 import { OperatorTaskDetailPage } from './pages/OperatorTaskDetailPage';
 import { OperatorTasksPage } from './pages/OperatorTasksPage';
 import { ReviewClaimPage } from './pages/ReviewClaimPage';
@@ -43,6 +45,8 @@ export function App() {
       <Route path="/operator/customers/:customerId" element={<RequireOperator><RequireStaffAccess allOf={['customers.read']}><OperatorCustomerDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/policies" element={<RequireOperator><RequireStaffAccess allOf={['policies.read']}><OperatorPoliciesPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/policies/:policyId" element={<RequireOperator><RequireStaffAccess allOf={['policies.read']}><OperatorPolicyDetailPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/renewals" element={<RequireOperator><RequireStaffAccess allOf={['renewals.read']}><OperatorRenewalsPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/renewals/:renewalId" element={<RequireOperator><RequireStaffAccess allOf={['renewals.read']}><OperatorRenewalDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/forbidden" element={<RequireOperator><RequireStaffAccess><StaffForbiddenPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
