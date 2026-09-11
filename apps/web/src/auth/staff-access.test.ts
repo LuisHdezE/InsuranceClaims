@@ -18,6 +18,9 @@ describe('R3 staff presentation access', () => {
     expect(hasPermission('PLATFORM_ADMIN', 'collections.manage')).toBe(false);
     expect(hasPermission('PLATFORM_ADMIN', 'pipelines.admin')).toBe(true);
     expect(hasPermission('PLATFORM_ADMIN', 'communications.admin')).toBe(true);
+    expect(hasPermission('PLATFORM_ADMIN', 'operations.integration.read')).toBe(true);
+    expect(hasPermission('PLATFORM_ADMIN', 'operations.dead_letters.read')).toBe(true);
+    expect(hasPermission('PLATFORM_ADMIN', 'operations.dead_letters.manage')).toBe(true);
   });
 
   it('gives Supervisor operator capabilities plus analytics and bulk', () => {
@@ -85,5 +88,14 @@ describe('R3 staff presentation access', () => {
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', versionEditor)).toBe(versionEditor);
     expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', detail)).toBe('/operator/dashboard');
     expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/admin/communication-templates')).toBe('/operator/dashboard');
+  });
+
+  it('permits Recovery deep links only for Platform Admin', () => {
+    const detail = '/operator/admin/recovery/dead-letters/77777777-7777-4777-8777-777777777777';
+
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/recovery')).toBe('/operator/admin/recovery');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', detail)).toBe(detail);
+    expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', '/operator/admin/recovery')).toBe('/operator/dashboard');
+    expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', detail)).toBe('/operator/dashboard');
   });
 });

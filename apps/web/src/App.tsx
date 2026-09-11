@@ -5,10 +5,12 @@ import { AdminCommunicationTemplateCreatePage } from './pages/AdminCommunication
 import { AdminCommunicationTemplateDetailPage } from './pages/AdminCommunicationTemplateDetailPage';
 import { AdminCommunicationTemplatesPage } from './pages/AdminCommunicationTemplatesPage';
 import { AdminCommunicationTemplateVersionCreatePage } from './pages/AdminCommunicationTemplateVersionCreatePage';
+import { AdminDeadLetterDetailPage } from './pages/AdminDeadLetterDetailPage';
 import { AdminPipelineCreatePage } from './pages/AdminPipelineCreatePage';
 import { AdminPipelineDetailPage } from './pages/AdminPipelineDetailPage';
 import { AdminPipelinesPage } from './pages/AdminPipelinesPage';
 import { AdminPipelineVersionCreatePage } from './pages/AdminPipelineVersionCreatePage';
+import { AdminRecoveryPage } from './pages/AdminRecoveryPage';
 import { ClaimStatusPage } from './pages/ClaimStatusPage';
 import { ClaimSubmittedPage } from './pages/ClaimSubmittedPage';
 import { HomePage } from './pages/HomePage';
@@ -67,6 +69,8 @@ export function App() {
       <Route path="/operator/admin/communication-templates/new" element={<RequireOperator><RequireStaffAccess allOf={['communications.admin']}><AdminCommunicationTemplateCreatePage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/communication-templates/:definitionId" element={<RequireOperator><RequireStaffAccess allOf={['communications.admin']}><AdminCommunicationTemplateDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/communication-templates/:definitionId/versions/new" element={<RequireOperator><RequireStaffAccess allOf={['communications.admin']}><AdminCommunicationTemplateVersionCreatePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/recovery" element={<RequireOperator><RequireStaffAccess allOf={['operations.integration.read', 'operations.dead_letters.read']}><AdminRecoveryPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/recovery/dead-letters/:deadLetterId" element={<RequireOperator><RequireStaffAccess allOf={['operations.dead_letters.read']}><AdminDeadLetterDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/forbidden" element={<RequireOperator><RequireStaffAccess><StaffForbiddenPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

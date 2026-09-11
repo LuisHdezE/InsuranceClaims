@@ -23,6 +23,7 @@ import './renewals-operations.css';
 import './collections-operations.css';
 import './pipeline-admin.css';
 import './communication-template-admin.css';
+import './recovery-admin.css';
 import './r3-mobile-nav-containment.css';
 
 const queryClient = new QueryClient({
