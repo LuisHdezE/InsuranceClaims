@@ -1,4 +1,4 @@
-import type { AxiosInstance } from 'axios';
+import type { AxiosInstance, AxiosResponse } from 'axios';
 import { createApiClient, toApiFailure } from './client';
 import type { ApiResult } from './types';
 
@@ -13,7 +13,8 @@ export type ImportJobStatus =
   | 'COMMITTING'
   | 'COMPLETED'
   | 'COMPLETED_WITH_ERRORS'
-  | 'FAILED';
+  | 'FAILED'
+  | 'CANCELLED';
 
 export type ImportJobResponse = {
   importJobId: string;
@@ -110,7 +111,7 @@ function bearer(accessToken: string) {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
-async function request<T>(call: () => Promise<{ data: T; headers: Record<string, unknown> }>): Promise<ApiResult<T>> {
+async function request<T>(call: () => Promise<AxiosResponse<T>>): Promise<ApiResult<T>> {
   try {
     const response = await call();
     return {
