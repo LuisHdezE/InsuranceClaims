@@ -26,6 +26,7 @@ import './communication-template-admin.css';
 import './recovery-admin.css';
 import './claims-analytics.css';
 import './custom-field-admin.css';
+import './guidance-admin.css';
 import './r3-mobile-nav-containment.css';
 
 const queryClient = new QueryClient({

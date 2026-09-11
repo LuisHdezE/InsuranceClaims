@@ -100,10 +100,19 @@ const CARDS: WorkspaceCard[] = [
     tone: 'blue',
   },
   {
+    kicker: 'Platform Guidance',
+    title: 'Guidance',
+    description: 'Orientación configurada con contexto, categorías documentales, instrucciones y metadata versionados sin semántica añadida por la UI.',
+    permissions: ['guidance.admin'],
+    href: '/operator/admin/guidance',
+    action: 'Administrar Guidance',
+    tone: 'green',
+  },
+  {
     kicker: 'Platform Next',
     title: 'Configuración pendiente',
-    description: 'Automatizaciones, guidance e imports conservan API R3 y permanecen como próximos cortes de productización.',
-    permissions: ['automations.admin', 'guidance.admin', 'imports.execute'],
+    description: 'Automatizaciones e imports conservan API R3 y permanecen como próximos cortes de productización.',
+    permissions: ['automations.admin', 'imports.execute'],
     tone: 'yellow',
   },
   {

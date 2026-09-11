@@ -100,6 +100,12 @@ export function canAccessStaffPath(role: StaffRole, path: string): boolean {
     || /^\/operator\/admin\/custom-fields\/[^/]+$/.test(path)
     || /^\/operator\/admin\/custom-fields\/[^/]+\/versions\/new$/.test(path)
   ) return hasPermission(role, 'custom_fields.admin');
+  if (
+    path === '/operator/admin/guidance'
+    || path === '/operator/admin/guidance/new'
+    || /^\/operator\/admin\/guidance\/[^/]+$/.test(path)
+    || /^\/operator\/admin\/guidance\/[^/]+\/versions\/new$/.test(path)
+  ) return hasPermission(role, 'guidance.admin');
   if (path === '/operator/admin/recovery') {
     return hasAllPermissions(role, ['operations.integration.read', 'operations.dead_letters.read']);
   }

@@ -10,6 +10,10 @@ import { AdminCustomFieldDetailPage } from './pages/AdminCustomFieldDetailPage';
 import { AdminCustomFieldsPage } from './pages/AdminCustomFieldsPage';
 import { AdminCustomFieldVersionCreatePage } from './pages/AdminCustomFieldVersionCreatePage';
 import { AdminDeadLetterDetailPage } from './pages/AdminDeadLetterDetailPage';
+import { AdminGuidanceCreatePage } from './pages/AdminGuidanceCreatePage';
+import { AdminGuidanceDetailPage } from './pages/AdminGuidanceDetailPage';
+import { AdminGuidancePage } from './pages/AdminGuidancePage';
+import { AdminGuidanceVersionCreatePage } from './pages/AdminGuidanceVersionCreatePage';
 import { AdminPipelineCreatePage } from './pages/AdminPipelineCreatePage';
 import { AdminPipelineDetailPage } from './pages/AdminPipelineDetailPage';
 import { AdminPipelinesPage } from './pages/AdminPipelinesPage';
@@ -79,6 +83,10 @@ export function App() {
       <Route path="/operator/admin/custom-fields/new" element={<RequireOperator><RequireStaffAccess allOf={['custom_fields.admin']}><AdminCustomFieldCreatePage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/custom-fields/:definitionId" element={<RequireOperator><RequireStaffAccess allOf={['custom_fields.admin']}><AdminCustomFieldDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/custom-fields/:definitionId/versions/new" element={<RequireOperator><RequireStaffAccess allOf={['custom_fields.admin']}><AdminCustomFieldVersionCreatePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/guidance" element={<RequireOperator><RequireStaffAccess allOf={['guidance.admin']}><AdminGuidancePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/guidance/new" element={<RequireOperator><RequireStaffAccess allOf={['guidance.admin']}><AdminGuidanceCreatePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/guidance/:definitionId" element={<RequireOperator><RequireStaffAccess allOf={['guidance.admin']}><AdminGuidanceDetailPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/guidance/:definitionId/versions/new" element={<RequireOperator><RequireStaffAccess allOf={['guidance.admin']}><AdminGuidanceVersionCreatePage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/recovery" element={<RequireOperator><RequireStaffAccess allOf={['operations.integration.read', 'operations.dead_letters.read']}><AdminRecoveryPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/admin/recovery/dead-letters/:deadLetterId" element={<RequireOperator><RequireStaffAccess allOf={['operations.dead_letters.read']}><AdminDeadLetterDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/forbidden" element={<RequireOperator><RequireStaffAccess><StaffForbiddenPage /></RequireStaffAccess></RequireOperator>} />
