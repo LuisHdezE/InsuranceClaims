@@ -20,6 +20,7 @@ import './r3-productization.css';
 import './r3-claims-work.css';
 import './customer-policy-360.css';
 import './renewals-operations.css';
+import './collections-operations.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
