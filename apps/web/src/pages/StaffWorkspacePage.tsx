@@ -73,7 +73,7 @@ const CARDS: WorkspaceCard[] = [
   {
     kicker: 'Platform',
     title: 'Configuración administrada',
-    description: 'Pipelines, plantillas, automatizaciones, guidance, custom fields, imports y soporte operacional.',
+    description: 'Pipelines ya dispone de UI R3 para definiciones y versiones. Plantillas, automatizaciones, guidance, custom fields e imports continúan como próximos cortes.',
     permissions: [
       'pipelines.admin',
       'communications.admin',
@@ -82,6 +82,8 @@ const CARDS: WorkspaceCard[] = [
       'custom_fields.admin',
       'imports.execute',
     ],
+    href: '/operator/admin/pipelines',
+    action: 'Administrar pipelines',
     tone: 'yellow',
   },
   {

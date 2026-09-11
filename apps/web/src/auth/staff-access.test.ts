@@ -61,4 +61,16 @@ describe('R3 staff presentation access', () => {
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/claims')).toBe('/operator/workspace');
     expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/workspace')).toBe('/operator/workspace');
   });
+
+  it('permits Pipeline Admin deep links only for Platform Admin', () => {
+    const detail = '/operator/admin/pipelines/55555555-5555-4555-8555-555555555555';
+    const versionEditor = `${detail}/versions/new`;
+
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/pipelines')).toBe('/operator/admin/pipelines');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', '/operator/admin/pipelines/new')).toBe('/operator/admin/pipelines/new');
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', detail)).toBe(detail);
+    expect(resolveStaffLandingRoute('PLATFORM_ADMIN', versionEditor)).toBe(versionEditor);
+    expect(resolveStaffLandingRoute('CLAIMS_OPERATOR', detail)).toBe('/operator/dashboard');
+    expect(resolveStaffLandingRoute('CLAIMS_SUPERVISOR', '/operator/admin/pipelines')).toBe('/operator/dashboard');
+  });
 });
