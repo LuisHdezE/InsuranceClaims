@@ -39,9 +39,18 @@ const CARDS: WorkspaceCard[] = [
     tone: 'blue',
   },
   {
+    kicker: 'Policy Lifecycle',
+    title: 'Renovaciones',
+    description: 'Bandeja y detalle de renovaciones con lifecycle, cliente/póliza relacionada y pipeline operativo gobernado por versión.',
+    permissions: ['renewals.read'],
+    href: '/operator/renewals',
+    action: 'Abrir renovaciones',
+    tone: 'violet',
+  },
+  {
     kicker: 'Communications',
     title: 'Comunicaciones',
-    description: 'Historial y envío operativo están autorizados para este rol cuando corresponda. La UI está planificada.',
+    description: 'Historial y envío operativo existen en R3, pero el catálogo de plantillas activas no está expuesto al rol operador. La UI completa queda diferida.',
     permissions: ['communications.read', 'communications.send'],
     tone: 'green',
   },
@@ -113,7 +122,7 @@ export function StaffWorkspacePage() {
               <span className="ops-kicker">Capacidades</span>
               <h2 id="capabilities-title">Lo que tu rol puede utilizar</h2>
             </div>
-            <p>Las tarjetas sin enlace representan API disponible cuya UI aún no se ha productizado.</p>
+            <p>Las tarjetas sin enlace representan API disponible cuya UI aún no se ha productizado de forma íntegra.</p>
           </div>
 
           <div className="r3-capability-grid">
@@ -147,7 +156,7 @@ export function StaffWorkspacePage() {
 
         <section className="r3-contract-strip" aria-label="Principios de acceso">
           <div><strong>Rol explícito</strong><span>{role}</span></div>
-          <div><strong>Sin superusuario implícito</strong><span>Platform Admin no hereda Claims</span></div>
+          <div><strong>Sin superusuario implícito</strong><span>Platform Admin no hereda operación de negocio</span></div>
           <div><strong>API autoritativa</strong><span>La UI solo anticipa y explica acceso</span></div>
         </section>
       </main>
