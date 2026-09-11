@@ -81,6 +81,12 @@ export function canAccessStaffPath(role: StaffRole, path: string): boolean {
   if (path === '/operator/policies' || /^\/operator\/policies\/[^/]+$/.test(path)) return hasPermission(role, 'policies.read');
   if (path === '/operator/renewals' || /^\/operator\/renewals\/[^/]+$/.test(path)) return hasPermission(role, 'renewals.read');
   if (path === '/operator/collections' || /^\/operator\/collections\/[^/]+$/.test(path)) return hasPermission(role, 'collections.read');
+  if (
+    path === '/operator/admin/pipelines'
+    || path === '/operator/admin/pipelines/new'
+    || /^\/operator\/admin\/pipelines\/[^/]+$/.test(path)
+    || /^\/operator\/admin\/pipelines\/[^/]+\/versions\/new$/.test(path)
+  ) return hasPermission(role, 'pipelines.admin');
   return false;
 }
 

@@ -1,6 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { RequireOperator } from './components/RequireOperator';
 import { RequireStaffAccess } from './components/RequireStaffAccess';
+import { AdminPipelineCreatePage } from './pages/AdminPipelineCreatePage';
+import { AdminPipelineDetailPage } from './pages/AdminPipelineDetailPage';
+import { AdminPipelinesPage } from './pages/AdminPipelinesPage';
+import { AdminPipelineVersionCreatePage } from './pages/AdminPipelineVersionCreatePage';
 import { ClaimStatusPage } from './pages/ClaimStatusPage';
 import { ClaimSubmittedPage } from './pages/ClaimSubmittedPage';
 import { HomePage } from './pages/HomePage';
@@ -51,6 +55,10 @@ export function App() {
       <Route path="/operator/renewals/:renewalId" element={<RequireOperator><RequireStaffAccess allOf={['renewals.read']}><OperatorRenewalDetailPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/collections" element={<RequireOperator><RequireStaffAccess allOf={['collections.read']}><OperatorCollectionsPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/collections/:collectionId" element={<RequireOperator><RequireStaffAccess allOf={['collections.read']}><OperatorCollectionDetailPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/pipelines" element={<RequireOperator><RequireStaffAccess allOf={['pipelines.admin']}><AdminPipelinesPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/pipelines/new" element={<RequireOperator><RequireStaffAccess allOf={['pipelines.admin']}><AdminPipelineCreatePage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/pipelines/:definitionId" element={<RequireOperator><RequireStaffAccess allOf={['pipelines.admin']}><AdminPipelineDetailPage /></RequireStaffAccess></RequireOperator>} />
+      <Route path="/operator/admin/pipelines/:definitionId/versions/new" element={<RequireOperator><RequireStaffAccess allOf={['pipelines.admin']}><AdminPipelineVersionCreatePage /></RequireStaffAccess></RequireOperator>} />
       <Route path="/operator/forbidden" element={<RequireOperator><RequireStaffAccess><StaffForbiddenPage /></RequireStaffAccess></RequireOperator>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

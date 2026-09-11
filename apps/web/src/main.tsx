@@ -21,6 +21,7 @@ import './r3-claims-work.css';
 import './customer-policy-360.css';
 import './renewals-operations.css';
 import './collections-operations.css';
+import './pipeline-admin.css';
 import './r3-mobile-nav-containment.css';
 
 const queryClient = new QueryClient({
