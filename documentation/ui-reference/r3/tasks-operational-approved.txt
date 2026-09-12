@@ -1,0 +1,1 @@
+La referencia gráfica aprobada se conserva en la conversación de diseño y debe materializarse como `tasks-operational-approved.jpg` en el paquete visual R3. El baseline funcional y visual está descrito en `tasks-operational-approved.md`.
