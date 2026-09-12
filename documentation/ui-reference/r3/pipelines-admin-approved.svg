@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#f4f7fb"/>
+  <rect x="0" y="0" width="210" height="900" fill="#0f2138"/>
+  <text x="24" y="42" font-family="Arial" font-size="24" font-weight="700" fill="#fff">InsuranceClaims</text>
+  <text x="24" y="64" font-family="Arial" font-size="12" fill="#b9c6d6">Gestión de Siniestros</text>
+  <g font-family="Arial" font-size="15" fill="#dce5ef">
+    <text x="28" y="118">Tablero</text><text x="28" y="164">Siniestros</text><text x="28" y="210">Tareas</text><text x="28" y="256">Clientes</text><text x="28" y="302">Pólizas</text><text x="28" y="348">Renovaciones</text><text x="28" y="394">Cobranzas</text>
+  </g>
+  <rect x="12" y="414" width="186" height="44" rx="8" fill="#1859a7"/>
+  <text x="28" y="442" font-family="Arial" font-size="15" font-weight="700" fill="#fff">Pipelines</text>
+  <g font-family="Arial" font-size="15" fill="#dce5ef"><text x="28" y="492">Comunicaciones</text><text x="28" y="538">Reportes</text><text x="28" y="584">Configuración</text></g>
+
+  <rect x="210" y="0" width="1390" height="68" fill="#fff" stroke="#dfe6ef"/>
+  <rect x="236" y="16" width="560" height="38" rx="8" fill="#f7f9fc" stroke="#d9e2ee"/>
+  <text x="258" y="40" font-family="Arial" font-size="14" fill="#53657a">Buscar pipelines, etapas, reglas…</text>
+  <text x="1510" y="40" font-family="Arial" font-size="14" fill="#20324a">Administrador</text>
+
+  <text x="236" y="112" font-family="Arial" font-size="30" font-weight="700" fill="#111827">Administración de Pipelines</text>
+  <text x="236" y="137" font-family="Arial" font-size="14" fill="#53657a">Configura y gobierna los flujos de trabajo del sistema.</text>
+  <rect x="1250" y="88" width="150" height="40" rx="8" fill="#0969e8"/>
+  <text x="1280" y="113" font-family="Arial" font-size="14" font-weight="700" fill="#fff">+ Nuevo pipeline</text>
+
+  <g font-family="Arial">
+    <rect x="236" y="166" width="290" height="110" rx="12" fill="#fff" stroke="#dce5ef"/>
+    <rect x="546" y="166" width="290" height="110" rx="12" fill="#fff" stroke="#dce5ef"/>
+    <rect x="856" y="166" width="290" height="110" rx="12" fill="#fff" stroke="#dce5ef"/>
+    <circle cx="266" cy="198" r="18" fill="#eaf2ff"/><circle cx="576" cy="198" r="18" fill="#f3eaff"/><circle cx="886" cy="198" r="18" fill="#e9f8ef"/>
+    <text x="296" y="196" font-size="17" font-weight="700" fill="#111827">Renovaciones</text><text x="296" y="220" font-size="13" fill="#53657a">RENEWAL · 4 etapas</text><text x="296" y="248" font-size="13" fill="#138a49">Habilitado · v1 activa</text>
+    <text x="606" y="196" font-size="17" font-weight="700" fill="#111827">Cobranzas</text><text x="606" y="220" font-size="13" fill="#53657a">COLLECTION · 4 etapas</text><text x="606" y="248" font-size="13" fill="#138a49">Habilitado · v1 activa</text>
+    <text x="916" y="196" font-size="17" font-weight="700" fill="#111827">Siniestros</text><text x="916" y="220" font-size="13" fill="#53657a">CLAIM · 6 etapas</text><text x="916" y="248" font-size="13" fill="#138a49">Habilitado · v3 activa</text>
+  </g>
+
+  <rect x="236" y="298" width="910" height="258" rx="12" fill="#fff" stroke="#dce5ef"/>
+  <text x="254" y="330" font-family="Arial" font-size="19" font-weight="700" fill="#111827">Definiciones configuradas</text>
+  <line x1="254" y1="354" x2="1128" y2="354" stroke="#dce5ef"/>
+  <g font-family="Arial" font-size="13" fill="#65758b"><text x="254" y="378">Nombre</text><text x="470" y="378">Consumidor</text><text x="610" y="378">Versión activa</text><text x="760" y="378">Etapas</text><text x="875" y="378">Estado</text><text x="1010" y="378">Acción</text></g>
+  <g font-family="Arial" font-size="14" fill="#1f2937">
+    <text x="254" y="414" font-weight="700" fill="#0969e8">Renovaciones</text><text x="470" y="414">RENEWAL</text><text x="610" y="414">v1</text><text x="760" y="414">4</text><text x="875" y="414" fill="#138a49">Habilitado</text><text x="1010" y="414" fill="#0969e8">Administrar →</text>
+    <text x="254" y="458" font-weight="700" fill="#0969e8">Cobranzas</text><text x="470" y="458">COLLECTION</text><text x="610" y="458">v1</text><text x="760" y="458">4</text><text x="875" y="458" fill="#138a49">Habilitado</text><text x="1010" y="458" fill="#0969e8">Administrar →</text>
+    <text x="254" y="502" font-weight="700" fill="#0969e8">Siniestros</text><text x="470" y="502">CLAIM</text><text x="610" y="502">v3</text><text x="760" y="502">6</text><text x="875" y="502" fill="#138a49">Habilitado</text><text x="1010" y="502" fill="#0969e8">Administrar →</text>
+  </g>
+
+  <rect x="236" y="576" width="910" height="275" rx="12" fill="#fff" stroke="#dce5ef"/>
+  <text x="254" y="608" font-family="Arial" font-size="19" font-weight="700" fill="#111827">Detalle del pipeline: Renovaciones</text>
+  <text x="1030" y="608" font-family="Arial" font-size="13" fill="#138a49">Versión activa · v1</text>
+  <g font-family="Arial">
+    <rect x="254" y="638" width="185" height="132" rx="10" fill="#fff9eb" stroke="#f0d38c"/><rect x="456" y="638" width="185" height="132" rx="10" fill="#eef5ff" stroke="#b9d0f4"/><rect x="658" y="638" width="185" height="132" rx="10" fill="#f7efff" stroke="#d9c0f3"/><rect x="860" y="638" width="185" height="132" rx="10" fill="#ecf9f1" stroke="#bde7cd"/>
+    <text x="272" y="666" font-size="13" fill="#7d5b00">1</text><text x="292" y="666" font-size="15" font-weight="700" fill="#111827">Por renovar</text><text x="272" y="694" font-size="12" fill="#53657a">stageKey: renewal.pending</text><text x="272" y="722" font-size="12" fill="#53657a">Permite → En cotización</text>
+    <text x="474" y="666" font-size="13" fill="#145bc1">2</text><text x="494" y="666" font-size="15" font-weight="700" fill="#111827">En cotización</text><text x="474" y="694" font-size="12" fill="#53657a">stageKey: renewal.quote</text><text x="474" y="722" font-size="12" fill="#53657a">Permite → En negociación</text>
+    <text x="676" y="666" font-size="13" fill="#763bb7">3</text><text x="696" y="666" font-size="15" font-weight="700" fill="#111827">En negociación</text><text x="676" y="694" font-size="12" fill="#53657a">stageKey: renewal.negotiation</text><text x="676" y="722" font-size="12" fill="#53657a">Permite → Renovada</text>
+    <text x="878" y="666" font-size="13" fill="#138a49">4</text><text x="898" y="666" font-size="15" font-weight="700" fill="#111827">Renovada</text><text x="878" y="694" font-size="12" fill="#53657a">stageKey: renewal.completed</text><text x="878" y="722" font-size="12" fill="#53657a">Sin transición siguiente</text>
+  </g>
+  <rect x="254" y="790" width="150" height="38" rx="8" fill="#0969e8"/><text x="278" y="814" font-family="Arial" font-size="13" font-weight="700" fill="#fff">+ Nueva versión</text>
+  <rect x="418" y="790" width="130" height="38" rx="8" fill="#eef3f8"/><text x="446" y="814" font-family="Arial" font-size="13" font-weight="700" fill="#20324a">Deshabilitar</text>
+
+  <rect x="1170" y="150" width="360" height="690" rx="32" fill="#122033"/>
+  <rect x="1182" y="174" width="336" height="642" rx="24" fill="#fff"/>
+  <text x="1204" y="218" font-family="Arial" font-size="24" font-weight="700" fill="#111827">Pipelines</text>
+  <rect x="1202" y="240" width="296" height="86" rx="12" fill="#f8fbff" stroke="#dce5ef"/><text x="1220" y="270" font-family="Arial" font-size="16" font-weight="700" fill="#111827">Renovaciones</text><text x="1220" y="294" font-family="Arial" font-size="12" fill="#53657a">RENEWAL · v1 · 4 etapas</text><text x="1430" y="270" font-family="Arial" font-size="12" fill="#138a49">Activo</text>
+  <rect x="1202" y="338" width="296" height="86" rx="12" fill="#f8fbff" stroke="#dce5ef"/><text x="1220" y="368" font-family="Arial" font-size="16" font-weight="700" fill="#111827">Cobranzas</text><text x="1220" y="392" font-family="Arial" font-size="12" fill="#53657a">COLLECTION · v1 · 4 etapas</text><text x="1430" y="368" font-family="Arial" font-size="12" fill="#138a49">Activo</text>
+  <rect x="1202" y="436" width="296" height="86" rx="12" fill="#f8fbff" stroke="#dce5ef"/><text x="1220" y="466" font-family="Arial" font-size="16" font-weight="700" fill="#111827">Siniestros</text><text x="1220" y="490" font-family="Arial" font-size="12" fill="#53657a">CLAIM · v3 · 6 etapas</text><text x="1430" y="466" font-family="Arial" font-size="12" fill="#138a49">Activo</text>
+  <text x="1202" y="560" font-family="Arial" font-size="14" font-weight="700" fill="#111827">Pipeline seleccionado</text>
+  <g font-family="Arial" font-size="13" fill="#1f2937"><text x="1220" y="598">1 · Por renovar</text><text x="1220" y="632">2 · En cotización</text><text x="1220" y="666">3 · En negociación</text><text x="1220" y="700">4 · Renovada</text></g>
+  <line x1="1212" y1="580" x2="1212" y2="710" stroke="#4a90e2" stroke-width="3"/>
+  <rect x="1202" y="742" width="296" height="46" rx="10" fill="#0969e8"/><text x="1274" y="770" font-family="Arial" font-size="14" font-weight="700" fill="#fff">Administrar pipeline</text>
+</svg>
