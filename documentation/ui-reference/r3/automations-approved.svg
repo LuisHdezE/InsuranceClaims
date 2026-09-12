@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <rect width="1440" height="900" fill="#f6f9fc"/>
+  <rect width="210" height="900" fill="#10263d"/>
+  <text x="28" y="48" fill="#fff" font-family="Arial" font-size="21" font-weight="700">InsuranceClaims</text>
+  <g font-family="Arial" font-size="14" fill="#dce8f4">
+    <text x="30" y="118">Tablero</text><text x="30" y="166">Siniestros</text><text x="30" y="214">Tareas</text><text x="30" y="262">Clientes</text><text x="30" y="310">Pólizas</text><text x="30" y="358">Renovaciones</text><text x="30" y="406">Cobranzas</text><text x="30" y="454">Pipelines</text>
+  </g>
+  <rect x="12" y="478" width="186" height="42" rx="7" fill="#1267b2"/><text x="30" y="504" fill="#fff" font-family="Arial" font-size="14">Automatizaciones</text>
+  <text x="240" y="62" font-family="Arial" font-size="29" font-weight="700" fill="#12233f">Automatizaciones (R3)</text>
+  <text x="240" y="88" font-family="Arial" font-size="14" fill="#526581">Reglas versionadas y gobernadas para automatizar procesos.</text>
+  <rect x="1170" y="34" width="170" height="42" rx="7" fill="#0d6efd"/><text x="1210" y="60" fill="#fff" font-family="Arial" font-size="14">+ Nueva regla</text>
+  <g font-family="Arial">
+    <rect x="240" y="118" width="350" height="78" rx="9" fill="#fff" stroke="#dce6f1"/><text x="264" y="146" font-size="13" fill="#59708a">CLAIM</text><text x="264" y="174" font-size="24" font-weight="700" fill="#173455">8 reglas</text>
+    <rect x="605" y="118" width="350" height="78" rx="9" fill="#fff" stroke="#dce6f1"/><text x="629" y="146" font-size="13" fill="#59708a">RENEWAL</text><text x="629" y="174" font-size="24" font-weight="700" fill="#173455">6 reglas</text>
+    <rect x="970" y="118" width="370" height="78" rx="9" fill="#fff" stroke="#dce6f1"/><text x="994" y="146" font-size="13" fill="#59708a">COLLECTION</text><text x="994" y="174" font-size="24" font-weight="700" fill="#173455">4 reglas</text>
+  </g>
+  <rect x="240" y="216" width="1100" height="330" rx="10" fill="#fff" stroke="#dce6f1"/>
+  <text x="264" y="250" font-family="Arial" font-size="18" font-weight="700" fill="#173455">Definiciones</text>
+  <g font-family="Arial" font-size="13" fill="#566a83"><text x="264" y="286">Nombre</text><text x="500" y="286">CUANDO</text><text x="720" y="286">SI</text><text x="880" y="286">ENTONCES</text><text x="1110" y="286">Estado</text></g>
+  <g font-family="Arial" font-size="13" fill="#173455">
+    <line x1="258" y1="300" x2="1320" y2="300" stroke="#e5edf5"/>
+    <text x="264" y="330">Notificar nuevo siniestro</text><text x="500" y="330">Siniestro creado</text><text x="720" y="330">Siempre</text><text x="880" y="330">Notificar operador</text><text x="1110" y="330">Habilitada</text>
+    <line x1="258" y1="350" x2="1320" y2="350" stroke="#e5edf5"/>
+    <text x="264" y="380">Crear tarea de seguimiento</text><text x="500" y="380">Tarea completada</text><text x="720" y="380">Prioridad = alta</text><text x="880" y="380">Crear tarea</text><text x="1110" y="380">Habilitada</text>
+    <line x1="258" y1="400" x2="1320" y2="400" stroke="#e5edf5"/>
+    <text x="264" y="430">Alerta de renovación</text><text x="500" y="430">Chequeo programado</text><text x="720" y="430">Faltan ≤ 30 días</text><text x="880" y="430">Solicitar comunicación</text><text x="1110" y="430">Habilitada</text>
+    <line x1="258" y1="450" x2="1320" y2="450" stroke="#e5edf5"/>
+    <text x="264" y="480">Escalar cobranza</text><text x="500" y="480">Evento entrante</text><text x="720" y="480">Pago vencido</text><text x="880" y="480">Mover etapa</text><text x="1110" y="480">Deshabilitada</text>
+  </g>
+  <rect x="240" y="570" width="540" height="278" rx="10" fill="#fff" stroke="#dce6f1"/>
+  <text x="264" y="604" font-family="Arial" font-size="18" font-weight="700" fill="#173455">Detalle de la regla</text>
+  <text x="264" y="638" font-family="Arial" font-size="15" font-weight="700" fill="#173455">Notificar nuevo siniestro</text>
+  <text x="264" y="672" font-family="Arial" font-size="13" fill="#61748c">Versión activa: v3 · Habilitada</text>
+  <text x="264" y="706" font-family="Arial" font-size="13" fill="#61748c">Historial inmutable · Nueva versión crea DRAFT</text>
+  <rect x="805" y="570" width="535" height="278" rx="10" fill="#fff" stroke="#dce6f1"/>
+  <text x="829" y="604" font-family="Arial" font-size="18" font-weight="700" fill="#173455">Flujo de la regla</text>
+  <g font-family="Arial" font-size="14"><circle cx="850" cy="650" r="18" fill="#0d6efd"/><text x="844" y="655" fill="#fff">1</text><text x="882" y="655" fill="#173455" font-weight="700">CUANDO</text><text x="975" y="655" fill="#61748c">Se registra un siniestro</text>
+  <circle cx="850" cy="706" r="18" fill="#20a464"/><text x="844" y="711" fill="#fff">2</text><text x="882" y="711" fill="#173455" font-weight="700">SI</text><text x="915" y="711" fill="#61748c">Sin condición adicional</text>
+  <circle cx="850" cy="762" r="18" fill="#8c52ff"/><text x="844" y="767" fill="#fff">3</text><text x="882" y="767" fill="#173455" font-weight="700">ENTONCES</text><text x="970" y="767" fill="#61748c">Notificar al operador</text></g>
+</svg>
