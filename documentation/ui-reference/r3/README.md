@@ -15,38 +15,51 @@ Este directorio conserva las vistas **aprobadas explícitamente** durante la rac
 - No simular drag & drop en Claims Workspace.
 - Claim Lifecycle y Operational Pipeline siguen siendo conceptos distintos.
 - Los detalles técnicos de concurrencia, versiones, IDs o claves internas no deben dominar la UI normal del operador.
+- Cuando una referencia gráfica incluya datos ilustrativos no soportados por el contrato, prevalece siempre la ficha `.md` de esa capability.
 
 ## Flujo de aprobación
 
 1. Se define la responsabilidad funcional de la vista.
-2. Se genera una referencia visual.
-3. Luis la revisa y aprueba o solicita ajustes.
-4. Solo las vistas aprobadas se guardan aquí como baseline canónico.
-5. La implementación posterior debe compararse contra estas referencias sin violar las capacidades reales del sistema.
+2. Se contrasta contra el contrato/implementación R3 real.
+3. Se genera una referencia visual.
+4. Luis la revisa y aprueba o solicita ajustes.
+5. Solo las vistas aprobadas se guardan aquí como baseline canónico.
+6. La implementación posterior debe compararse contra estas referencias sin violar las capacidades reales del sistema.
 
 ## Vistas aprobadas
 
-| Vista | Estado | Archivo |
+| Vista | Alcance | Referencia |
 |---|---|---|
-| Tablero de Operaciones | APROBADA | `operations-dashboard-approved.svg` |
+| Tablero de Operaciones | CORE | `operations-dashboard-approved.svg` |
+| Claims Workspace / Kanban | CORE | `claims-workspace-kanban-approved.jpg` |
+| Claims Workspace responsive | CORE | `claims-workspace-responsive-approved.md` |
+| Claim Detail / Claim Operations | CORE | `claim-detail-approved.jpg` + `claim-detail-approved.md` |
+| Tareas operativas | CORE | `tasks-operational-approved.svg` + `tasks-operational-approved.md` |
+| Cliente 360 | MANTENER / SIMPLIFICAR | `customer-360-approved.svg` + `customer-360-approved.md` |
+| Póliza 360 | MANTENER / SIMPLIFICAR | `policy-360-approved.svg` + `policy-360-approved.md` |
+| Renovaciones | MANTENER / SIMPLIFICAR | `renewals-approved.svg` + `renewals-approved.md` |
+| Cobranzas | MANTENER / SIMPLIFICAR | `collections-approved.svg` + `collections-approved.md` |
+| Administración de Pipelines | MANTENER | `pipelines-admin-approved.svg` + `pipelines-admin-approved.md` |
 
-## Baseline funcional asociado
+## Principios funcionales clave
 
 ### Tablero de Operaciones
+Responsabilidad: **priorizar**. Responde a: **¿qué requiere atención?**
 
-Responsabilidad: **priorizar**. Responde a la pregunta: **¿qué requiere atención?**
+### Claims Workspace
+Responsabilidad: **encontrar y seleccionar**. No edita Claims y no simula drag & drop.
 
-Debe conservar:
+### Claim Detail
+Responsabilidad: **comprender y actuar**. Claim Lifecycle y Operational Pipeline permanecen separados. Timeline operacional y Audit Log técnico también.
 
-- Siniestros abiertos.
-- Tareas abiertas.
-- Tareas vencidas.
-- Evidencia pendiente de revisión.
-- Ventana temporal y actualización.
-- Distribución por etapa operacional.
-- Siniestros recientes.
-- Tareas que requieren atención.
-- Navegación hacia Claims y Tasks.
-- Respeto de permisos/RBAC.
+### Tareas
+Responsabilidad: **organizar y cerrar trabajo operativo**. Completar una tarea no cambia automáticamente ClaimStatus.
 
-`Reportados en ventana` y `Siniestros cerrados` pueden mantenerse como información secundaria sin competir con los cuatro KPIs operativos principales.
+### Cliente 360 / Póliza 360
+Responsabilidad: **contexto rápido de lectura**. No se inventa edición ni atributos ausentes en el API.
+
+### Renovaciones / Cobranzas
+Responsabilidad: **gestionar casos de negocio propios** sin duplicar los 360. Lifecycle y pipeline permanecen separados. En Cobranzas, el estado de pago es una tercera dimensión autoritativa independiente.
+
+### Administración de Pipelines
+Responsabilidad: **gobernar configuración versionada** para `CLAIM`, `RENEWAL` y `COLLECTION`. Las versiones son inmutables; DRAFT, activación y enable/disable son pasos explícitos y gobernados.
