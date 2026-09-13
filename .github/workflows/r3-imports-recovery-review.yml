@@ -1,0 +1,165 @@
+name: R3 Imports Recovery Review
+
+on:
+  push:
+    branches: [review/r3-parallel-11-imports-recovery]
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_task10_review
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_task10_review"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_task10_review
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-task10-review
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-task10-review
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+      REVIEW_TARGET_SHA: 9889862d88bfc5268dcd7e7fff36f719c6e44775
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 9889862d88bfc5268dcd7e7fff36f719c6e44775
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+      - name: Typecheck production code
+        run: npm run typecheck
+      - name: Run core automated tests
+        run: npm run test
+      - name: Typecheck web client
+        run: npm run typecheck --workspace=@insurance/web
+      - name: Run web client tests
+        run: npm run test --workspace=@insurance/web
+      - name: Build web client
+        run: npm run build --workspace=@insurance/web
+      - name: Validate architecture
+        run: npm run architecture:check
+      - name: Validate CI QA hardening invariants
+        run: npm run ci:qa:validate
+      - name: Validate Design System
+        run: node scripts/validate-design-system.mjs
+      - name: Validate executable interface inventory
+        run: node scripts/validate-interface-inventory.mjs
+      - name: Validate OpenAPI R3
+        run: |
+          npm run openapi:check:r3
+          npx --yes @redocly/cli@2.51.2 lint --extends=spec openapi.yaml
+          mkdir -p .runtime
+          npx --yes @redocly/cli@2.51.2 bundle openapi.yaml --dereferenced --output .runtime/openapi.bundle.json
+          npm run openapi:validate:r3
+          git diff --exit-code -- openapi.yaml openapi/r3
+      - name: Validate Postman R3 contract
+        run: |
+          npm run postman:check:r3
+          npm run postman:validate:r3
+      - name: Prepare synthetic review secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=r3-task10-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-task10-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-task10-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-task10-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+      - name: Bootstrap PostgreSQL and synthetic identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+      - name: Start simulated legacy and API
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-r3-task10-review .runtime/imports-r3-task10-review
+          npm run start:legacy > .runtime/r3-task10-legacy.log 2>&1 &
+          npm run start:api > .runtime/r3-task10-api.log 2>&1 &
+          for attempt in $(seq 1 50); do
+            legacy_ok=0; api_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          echo 'Runtime services did not become ready.' >&2
+          cat .runtime/r3-task10-api.log || true
+          exit 1
+      - name: Execute baseline API runtime QA
+        run: node qa/runtime-qa.mjs
+      - name: Exercise Task 10 governed import through real PostgreSQL API
+        shell: bash
+        run: |
+          cat > .runtime/task10-import.csv <<'CSV'
+          ref,label,class
+          R3-QA-A,Task 10 Alpha,PRIMARY
+          R3-QA-B,,SECONDARY
+          CSV
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const base = process.env.QA_BASE_URL.replace(/\/$/, '');
+          async function json(method, path, body, token, extra={}) {
+            const response = await fetch(base + path, { method, headers: { 'content-type':'application/json', ...(token ? {authorization:`Bearer ${token}`} : {}), ...extra }, ...(body===undefined?{}:{body:JSON.stringify(body)}) });
+            const text = await response.text();
+            if (!response.ok) throw new Error(`${method} ${path} -> ${response.status}: ${text}`);
+            return text ? JSON.parse(text) : null;
+          }
+          const auth = await json('POST','/api/v1/operator/auth/login',{login:process.env.QA_ADMIN_LOGIN,password:process.env.QA_OPERATOR_PASSWORD});
+          const token = auth.accessToken;
+          const form = new FormData();
+          form.append('importType','SYNTHETIC_REFERENCE_RECORDS');
+          form.append('source', new Blob([fs.readFileSync('.runtime/task10-import.csv')], {type:'text/csv'}), 'task10-import.csv');
+          let response = await fetch(base + '/api/v1/admin/import-jobs', { method:'POST', headers:{authorization:`Bearer ${token}`,'Idempotency-Key':'task10-review-create-0001'}, body:form });
+          if (!response.ok) throw new Error(`create import -> ${response.status}: ${await response.text()}`);
+          let job = await response.json();
+          job = await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/preview`,{expectedVersion:job.version},token);
+          job = await json('PUT',`/api/v1/admin/import-jobs/${job.importJobId}/mapping`,{expectedVersion:job.version,mapping:{externalReference:'ref',label:'label',classification:'class'}},token);
+          job = await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/validate`,{expectedVersion:job.version},token);
+          job = await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/dry-run`,{expectedVersion:job.version},token);
+          if (job.status !== 'DRY_RUN_READY') throw new Error(`Expected DRY_RUN_READY, got ${job.status}`);
+          const rows = await json('GET',`/api/v1/admin/import-jobs/${job.importJobId}/rows?page=1&pageSize=10`,undefined,token);
+          if (rows.totalItems !== 2) throw new Error(`Expected 2 import rows, got ${rows.totalItems}`);
+          console.log(JSON.stringify({event:'R3_TASK10_IMPORT_RUNTIME_PASS',importJobId:job.importJobId,status:job.status,version:job.version,rows:rows.totalItems}));
+          NODE
+      - name: Upload exact-head runtime logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-task10-runtime-${{ env.REVIEW_TARGET_SHA }}
+          path: |
+            .runtime/r3-task10-*.log
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
