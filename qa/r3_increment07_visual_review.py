@@ -73,6 +73,22 @@ def capture(driver, prefix, width, kind):
     })
 
 
+def write_workspace_debug(driver, body):
+    metrics = page_metrics(driver)
+    debug = {
+        'pathname': driver.execute_script('return location.pathname'),
+        'title': driver.title,
+        'h1Count': int(metrics['h1Count']),
+        'overflow': max(0, int(metrics['scrollWidth']) - int(metrics['clientWidth'])),
+        'bodyText': body,
+    }
+    (OUT / 'workspace-debug.json').write_text(json.dumps(debug, indent=2, ensure_ascii=False), encoding='utf-8')
+    driver.set_window_size(1440, min(max(int(metrics['scrollHeight']) + 40, 1000), 6500))
+    time.sleep(0.2)
+    driver.execute_script('window.scrollTo(0,0)')
+    assert driver.save_screenshot(str(OUT / 'workspace-debug.png'))
+
+
 supervisor = make_driver()
 try:
     wait = login(supervisor, os.environ['QA_SUPERVISOR_LOGIN'])
@@ -98,7 +114,10 @@ admin = make_driver()
 try:
     wait = login(admin, os.environ['QA_ADMIN_LOGIN'])
     spa_go(admin, wait, '/operator/workspace', '.r3-increment-07-workspace')
+    wait.until(lambda d: 'Tu espacio de trabajo' in d.find_element(By.TAG_NAME, 'body').text)
+    time.sleep(0.5)
     body = admin.find_element(By.TAG_NAME, 'body').text
+    write_workspace_debug(admin, body)
     for required in (
         'Tu espacio de trabajo', 'Administrador de plataforma', 'Supervisión',
         'Configuración de plataforma', 'Operación técnica', 'Métricas operacionales',
