@@ -1,0 +1,345 @@
+name: R3 Task 12 Full-System Visual V5
+
+on:
+  push:
+    branches: [review/r3-task12-full-system-visual-v5]
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_task12_visual_v5
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_task12_visual_v5"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      REVIEW_TARGET_SHA: 24817b7d36a23cc184a0615da9fb8a4e251ab2e2
+      REVIEW_DIR: .runtime/r3-task12-visual-v5
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_task12_visual_v5
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-task12-visual-v5
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-task12-visual-v5
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 24817b7d36a23cc184a0615da9fb8a4e251ab2e2
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Verify exact Task 12 product head
+        run: test "$(git rev-parse HEAD)" = "$REVIEW_TARGET_SHA"
+
+      - name: Install dependencies and browser harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+          echo "JWT_SECRET=r3-task12-v5-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-task12-v5-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-task12-v5-operator-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-task12-v5-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+
+      - name: Bootstrap exact-head runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run contract:emit
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+          mkdir -p "$REVIEW_DIR" "$EVIDENCE_STORAGE_DIR" "$IMPORT_SOURCE_STORAGE_DIR"
+          npm run start:legacy > "$REVIEW_DIR/legacy.log" 2>&1 & echo $! > "$REVIEW_DIR/legacy.pid"
+          npm run start:api > "$REVIEW_DIR/api.log" 2>&1 & echo $! > "$REVIEW_DIR/api.pid"
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > "$REVIEW_DIR/web.log" 2>&1 & echo $! > "$REVIEW_DIR/web.pid"
+          for attempt in $(seq 1 60); do
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          cat "$REVIEW_DIR/api.log" || true
+          cat "$REVIEW_DIR/web.log" || true
+          exit 1
+
+      - name: Capture and validate 42 full-system R3 views
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, time, traceback
+          from pathlib import Path
+          from urllib.parse import urlparse
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support.ui import WebDriverWait
+          from selenium.webdriver.support import expected_conditions as EC
+
+          target = os.environ['REVIEW_TARGET_SHA']
+          base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          out = Path(os.environ['REVIEW_DIR'])
+          out.mkdir(parents=True, exist_ok=True)
+          shots = []
+
+          def new_driver(width=1440, height=1000):
+              opts = webdriver.ChromeOptions()
+              for arg in ('--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--force-device-scale-factor=1'):
+                  opts.add_argument(arg)
+              opts.add_argument(f'--window-size={width},{height}')
+              opts.binary_location = os.environ['BROWSER_BIN']
+              return webdriver.Chrome(options=opts)
+
+          def wait_view(driver, expected_h1=None, required=(), timeout=30):
+              wait = WebDriverWait(driver, timeout)
+              def ready(d):
+                  heads = d.find_elements(By.TAG_NAME, 'h1')
+                  if len(heads) != 1 or not heads[0].is_displayed():
+                      return False
+                  if expected_h1 is not None and heads[0].text.strip() != expected_h1:
+                      return False
+                  body = d.find_element(By.TAG_NAME, 'body').text
+                  return all(text in body for text in required)
+              wait.until(ready)
+
+          def body_text(driver):
+              return driver.find_element(By.TAG_NAME, 'body').text
+
+          def h1_text(driver):
+              heads = driver.find_elements(By.TAG_NAME, 'h1')
+              return heads[0].text.strip() if len(heads) == 1 else f'<count:{len(heads)}>'
+
+          def metrics(driver):
+              return driver.execute_script("const r=document.documentElement; return {cw:r.clientWidth,sw:r.scrollWidth,sh:Math.max(r.scrollHeight,document.body.scrollHeight),h1:document.querySelectorAll('h1').length};")
+
+          def assert_copy(driver, required=(), forbidden=(), expected_h1=None):
+              text = body_text(driver)
+              if expected_h1 is not None:
+                  assert h1_text(driver) == expected_h1, f'Expected h1 {expected_h1!r}, got {h1_text(driver)!r}'
+              for item in required:
+                  assert item in text, f'Missing required UI copy: {item!r}'
+              for item in forbidden:
+                  assert item not in text, f'Stale UI copy remains: {item!r}'
+
+          def capture(driver, name, width, min_height):
+              driver.set_window_size(width, min_height)
+              time.sleep(.30)
+              m = metrics(driver)
+              overflow = m['sw'] - m['cw']
+              assert overflow <= 2, f'{name} {width}: horizontal overflow {overflow}'
+              assert m['h1'] == 1, f'{name} {width}: expected 1 h1, got {m["h1"]}'
+              height = min(max(int(m['sh']) + 32, min_height), 7000)
+              driver.set_window_size(width, height)
+              time.sleep(.12)
+              driver.execute_script('window.scrollTo(0,0)')
+              path = out / f'{name}-{width}.png'
+              assert driver.save_screenshot(str(path))
+              shots.append({'name':name,'width':width,'height':height,'overflow':overflow,'h1':m['h1'],'url':driver.current_url,'file':path.name})
+
+          def capture_pair(driver, name, expected_h1=None, required=(), forbidden=()):
+              wait_view(driver, expected_h1, required)
+              assert_copy(driver, required, forbidden, expected_h1)
+              capture(driver, name, 1440, 1000)
+              wait_view(driver, expected_h1, required)
+              assert_copy(driver, required, forbidden, expected_h1)
+              capture(driver, name, 390, 844)
+              driver.set_window_size(1440, 1000)
+
+          def login_once(driver, login_name):
+              driver.get(base + '/operator/login')
+              wait = WebDriverWait(driver, 30)
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-login')))
+              driver.find_element(By.ID, 'operator-login').send_keys(login_name)
+              driver.find_element(By.ID, 'operator-password').send_keys(os.environ['QA_OPERATOR_PASSWORD'])
+              driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+              wait.until(lambda d: '/operator/' in d.current_url and '/operator/login' not in d.current_url)
+              wait_view(driver)
+
+          def click_route(driver, route, expected_h1=None, required=()):
+              current = urlparse(driver.current_url).path
+              if current == route:
+                  wait_view(driver, expected_h1, required)
+                  return
+              links = driver.find_elements(By.CSS_SELECTOR, f'a[href="{route}"]')
+              assert links, f'No real application Link for {route}; current={current}; h1={h1_text(driver)!r}'
+              driver.execute_script('arguments[0].click()', links[0])
+              WebDriverWait(driver, 30).until(lambda d: urlparse(d.current_url).path == route)
+              wait_view(driver, expected_h1, required)
+
+          def diagnostic(driver, label):
+              payload = {
+                  'failure_label': label,
+                  'url': driver.current_url,
+                  'h1': h1_text(driver),
+                  'body': body_text(driver)[:3000],
+              }
+              print(json.dumps(payload, ensure_ascii=False, indent=2))
+              try:
+                  driver.save_screenshot(str(out / f'failure-{label}.png'))
+              except Exception:
+                  pass
+
+          # 1) Login, exactly two screenshots without submitting credentials.
+          login_driver = new_driver()
+          try:
+              login_driver.get(base + '/operator/login')
+              WebDriverWait(login_driver, 30).until(EC.visibility_of_element_located((By.ID, 'operator-login')))
+              capture(login_driver, 'operator-login', 1440, 1000)
+              capture(login_driver, 'operator-login', 390, 844)
+          finally:
+              login_driver.quit()
+
+          # 2) Operator surfaces, one authenticated session and real React Router links only.
+          operator_driver = new_driver()
+          try:
+              login_once(operator_driver, os.environ['QA_OPERATOR_LOGIN'])
+              operator_routes = [
+                  ('dashboard','/operator/dashboard','Tablero',('Tablero',),('Dashboard',)),
+                  ('claims','/operator/claims',None,(),()),
+                  ('tasks','/operator/tasks','Tareas operativas',(),()),
+                  ('customers','/operator/customers',None,(),()),
+                  ('policies','/operator/policies',None,(),()),
+                  ('renewals','/operator/renewals','Renovaciones',('Ciclo de vida de póliza',),('Policy Lifecycle',)),
+                  ('collections','/operator/collections','Cobranzas',('Operaciones de cobranzas',),('Collections Operations',)),
+              ]
+              for name, route, heading, required, forbidden in operator_routes:
+                  try:
+                      click_route(operator_driver, route, heading, required)
+                      capture_pair(operator_driver, name, heading, required, forbidden)
+                  except Exception:
+                      diagnostic(operator_driver, name)
+                      raise
+
+              # Claim detail from an authoritative claim row.
+              click_route(operator_driver, '/operator/claims')
+              claim_links = operator_driver.find_elements(By.CSS_SELECTOR, 'a[href^="/operator/claims/"]')
+              assert claim_links, 'No authoritative Claim Detail link found'
+              detail_path = urlparse(claim_links[0].get_attribute('href')).path
+              operator_driver.execute_script('arguments[0].click()', claim_links[0])
+              WebDriverWait(operator_driver, 30).until(lambda d: urlparse(d.current_url).path == detail_path)
+              wait_view(operator_driver)
+              capture_pair(operator_driver, 'claim-detail')
+          finally:
+              operator_driver.quit()
+
+          # 3) Platform-admin surfaces, one fresh authenticated admin session.
+          admin_driver = new_driver()
+          try:
+              login_once(admin_driver, os.environ['QA_ADMIN_LOGIN'])
+              admin_routes = [
+                  ('workspace-admin','/operator/workspace',None,('Configuración de plataforma','Operación técnica'),('Custom Fields','Guidance','Automations','Imports gobernados')),
+                  ('analytics','/operator/analytics',None,(),()),
+                  ('pipelines','/operator/admin/pipelines','Administración de pipelines',('Configuración de plataforma','Versión de definición','Borradores'),('Platform Configuration','Definition version','Drafts')),
+                  ('communication-templates','/operator/admin/communication-templates','Plantillas de comunicación',('Plantillas de comunicación R3','Versión de definición'),('Communication Templates R3','Definition version')),
+                  ('custom-fields','/operator/admin/custom-fields','Campos personalizados',('Configuración de plataforma R3','Versión de definición'),('Platform Configuration R3','Definition version')),
+                  ('guidance','/operator/admin/guidance','Orientación',('Orientación de plataforma R3','Versión de definición'),('Platform Guidance R3','Definition version')),
+                  ('automations','/operator/admin/automations','Automatizaciones',(),()),
+                  ('imports','/operator/admin/imports','Importaciones gobernadas',('Importaciones gobernadas R3','Trabajos de importación'),('Governed Imports R3','Jobs de importación')),
+                  ('recovery','/operator/admin/recovery','Integraciones y recuperación',('Operaciones de recuperación R3','RECUPERACIÓN'),('Recovery Operations R3',)),
+              ]
+              for name, route, heading, required, forbidden in admin_routes:
+                  try:
+                      click_route(admin_driver, route, heading, required)
+                      capture_pair(admin_driver, name, heading, required, forbidden)
+                  except Exception:
+                      diagnostic(admin_driver, name)
+                      raise
+          finally:
+              admin_driver.quit()
+
+          # 4) Public customer surfaces, separate unauthenticated browser.
+          public_driver = new_driver()
+          try:
+              for name, route in [('public-home','/'),('public-claim-verify','/claims/new/verify'),('public-tracking','/claims/track')]:
+                  public_driver.get(base + route)
+                  wait_view(public_driver)
+                  WebDriverWait(public_driver, 30).until(lambda d: 'caso técnico no oficial' in body_text(d).lower())
+                  capture_pair(public_driver, name)
+          finally:
+              public_driver.quit()
+
+          assert len(shots) == 42, f'Expected 42 captures, got {len(shots)}'
+          summary = {
+              'review_type': 'r3_task12_full_system_visual_v5',
+              'review_target_sha': target,
+              'capture_count': len(shots),
+              'max_horizontal_overflow': max(s['overflow'] for s in shots),
+              'all_single_h1': all(s['h1'] == 1 for s in shots),
+              'operator_login_count': 1,
+              'admin_login_count': 1,
+              'real_link_navigation': 'PASS',
+              'copy_reconciliation_assertions': 'PASS',
+              'shots': shots,
+              'result': 'PASS',
+          }
+          (out / 'visual-review.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
+          print(json.dumps(summary, indent=2))
+          PY
+
+      - name: Assert no unhandled API errors
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -q 'UNHANDLED_API_ERROR' "$REVIEW_DIR/api.log"; then
+            cat "$REVIEW_DIR/api.log"
+            exit 1
+          fi
+
+      - name: Upload final Task 12 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-task12-full-system-visual-v5-${{ env.REVIEW_TARGET_SHA }}
+          path: |
+            .runtime/r3-task12-visual-v5/*.png
+            .runtime/r3-task12-visual-v5/visual-review.json
+            .runtime/r3-task12-visual-v5/api.log
+            .runtime/r3-task12-visual-v5/web.log
+            .runtime/r3-task12-visual-v5/legacy.log
+          retention-days: 30
+
+      - name: Stop review stack
+        if: always()
+        shell: bash
+        run: |
+          for pidfile in "$REVIEW_DIR"/*.pid; do
+            [[ -f "$pidfile" ]] || continue
+            kill "$(cat "$pidfile")" 2>/dev/null || true
+          done
