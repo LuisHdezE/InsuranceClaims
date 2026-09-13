@@ -1,0 +1,479 @@
+/* R3 UI Increment 02: Claims Workspace + Claim Detail
+ * Visual-only refinement over existing API-backed capabilities.
+ * No business data, lifecycle rule or pipeline transition is derived here.
+ */
+
+.r3-workspace-page,
+.r3-claim-detail-page {
+  min-width: 0;
+}
+
+/* Claims Workspace */
+.r3-workspace-page .ops-page-heading {
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.r3-workspace-page .ops-page-heading h1 {
+  margin: 3px 0 5px;
+  color: var(--ops-ink);
+  font-size: clamp(25px, 2.2vw, 34px);
+  line-height: 1.08;
+  letter-spacing: -.025em;
+}
+
+.r3-workspace-page .ops-page-heading p {
+  max-width: 780px;
+  margin: 0;
+  color: var(--ops-muted);
+  line-height: 1.55;
+}
+
+.r3-workspace-page .r3-claims-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.5fr) minmax(145px, .55fr) minmax(170px, .65fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--ops-border);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 9px 26px rgba(11, 24, 48, .045);
+}
+
+.r3-workspace-page .r3-claims-search,
+.r3-workspace-page .ops-filter-control {
+  display: grid;
+  gap: 6px;
+}
+
+.r3-workspace-page .r3-claims-search > label,
+.r3-workspace-page .ops-filter-control > label {
+  color: var(--ops-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.r3-workspace-page .r3-claims-search > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+}
+
+.r3-workspace-page .r3-claims-search input,
+.r3-workspace-page .ops-filter-control select {
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--ops-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ops-ink);
+  padding: 0 12px;
+  outline: none;
+}
+
+.r3-workspace-page .r3-claims-search input:focus,
+.r3-workspace-page .ops-filter-control select:focus {
+  border-color: var(--ops-blue);
+  box-shadow: 0 0 0 3px rgba(15, 95, 204, .12);
+}
+
+.r3-workspace-page .r3-claims-search button,
+.r3-workspace-page .r3-toolbar-actions button,
+.r3-workspace-page .ops-view-toggle button {
+  min-height: 44px;
+}
+
+.r3-workspace-page .r3-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: max-content;
+}
+
+.r3-workspace-page .r3-active-filter {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 12px;
+  padding: 7px 10px;
+  border: 1px solid #bfd4ef;
+  border-radius: 999px;
+  background: #f1f7ff;
+  color: #31506f;
+}
+
+.r3-workspace-page .r3-active-filter button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ops-muted);
+  cursor: pointer;
+}
+
+.r3-workspace-page .ops-kanban {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+  overflow: visible;
+}
+
+.r3-workspace-page .ops-kanban-column {
+  min-width: 0;
+  border: 1px solid var(--ops-border);
+  border-radius: 12px;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.r3-workspace-page .ops-kanban-heading {
+  min-height: 92px;
+  padding: 13px;
+  background: #fff;
+  border-bottom: 1px solid var(--ops-border);
+}
+
+.r3-workspace-page .ops-kanban-heading h2 {
+  font-size: 14px;
+}
+
+.r3-workspace-page .ops-kanban-heading p {
+  margin-top: 3px;
+  color: var(--ops-muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.r3-workspace-page .ops-kanban-cards {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+}
+
+.r3-workspace-page .r3-claim-card {
+  min-width: 0;
+  border-radius: 10px;
+  box-shadow: 0 5px 16px rgba(11, 24, 48, .045);
+}
+
+.r3-workspace-page .r3-claim-card:focus-visible,
+.r3-workspace-page .ops-card-link:focus-visible,
+.r3-detail-anchor-nav a:focus-visible {
+  outline: 3px solid rgba(15, 95, 204, .25);
+  outline-offset: 2px;
+}
+
+.r3-workspace-page .r3-stage-badge {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.r3-workspace-page .claims-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Claim Detail */
+.r3-detail-hero {
+  margin-bottom: 0;
+  border: 1px solid var(--ops-border);
+  border-radius: 12px 12px 0 0;
+  background: #fff;
+  box-shadow: 0 9px 26px rgba(11, 24, 48, .05);
+}
+
+.r3-detail-anchor-nav {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  margin: 0 0 16px;
+  padding: 7px 9px;
+  border: 1px solid var(--ops-border);
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 6px 18px rgba(11, 24, 48, .035);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.r3-detail-anchor-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.r3-detail-anchor-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--ops-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.r3-detail-anchor-nav a:hover {
+  background: #f1f6fb;
+  color: var(--ops-blue);
+}
+
+.r3-detail-section {
+  min-width: 0;
+  scroll-margin-top: 66px;
+}
+
+.r3-claim-detail-page .r3-claim-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(320px, .82fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.r3-claim-detail-page .r3-claim-detail-grid > .r3-detail-section,
+.r3-claim-detail-page .r3-claim-detail-grid > section {
+  min-width: 0;
+}
+
+.r3-claim-detail-page #resumen,
+.r3-claim-detail-page #flujo,
+.r3-claim-detail-page #historial {
+  grid-column: 1;
+}
+
+.r3-claim-detail-page #etapa,
+.r3-claim-detail-page #tareas,
+.r3-claim-detail-page #evidencia {
+  grid-column: 2;
+}
+
+.r3-claim-detail-page .ops-panel,
+.r3-claim-detail-page .r3-detail-section > section {
+  border-radius: 12px;
+}
+
+.r3-claim-detail-page .ops-state-overview {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.r3-claim-detail-page .operator-concurrency-note {
+  margin-top: 10px;
+  color: var(--ops-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.r3-claim-detail-page .r3-pipeline-move {
+  border-style: dashed;
+  background: #fbfcfe;
+}
+
+.r3-claim-detail-page .r3-pipeline-move::before {
+  content: "Operación técnica";
+  width: fit-content;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: var(--ops-muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.r3-claim-detail-page .ops-audit-details {
+  scroll-margin-top: 66px;
+  margin-top: 14px;
+  border: 1px solid var(--ops-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.r3-claim-detail-page .ops-audit-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 1120px) {
+  .r3-workspace-page .r3-claims-toolbar {
+    grid-template-columns: minmax(240px, 1fr) minmax(140px, .55fr) minmax(160px, .6fr);
+  }
+
+  .r3-workspace-page .r3-toolbar-actions {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+  }
+
+  .r3-workspace-page .ops-kanban {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .r3-claim-detail-page .r3-claim-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-claim-detail-page #resumen,
+  .r3-claim-detail-page #flujo,
+  .r3-claim-detail-page #historial,
+  .r3-claim-detail-page #etapa,
+  .r3-claim-detail-page #tareas,
+  .r3-claim-detail-page #evidencia {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .r3-workspace-page .ops-page-heading,
+  .r3-claim-detail-page .ops-detail-header {
+    gap: 10px;
+  }
+
+  .r3-workspace-page .r3-claims-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .r3-workspace-page .r3-claims-search,
+  .r3-workspace-page .r3-toolbar-actions {
+    grid-column: 1 / -1;
+  }
+
+  .r3-workspace-page .ops-kanban {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-workspace-page .ops-kanban-heading {
+    min-height: auto;
+  }
+
+  .r3-detail-anchor-nav {
+    margin-inline: -2px;
+    padding-inline: 7px;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .r3-detail-anchor-nav a {
+    min-height: 44px;
+  }
+
+  .r3-claim-detail-page .ops-state-overview {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .r3-workspace-page .r3-claims-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-workspace-page .r3-claims-search,
+  .r3-workspace-page .r3-toolbar-actions {
+    grid-column: 1;
+  }
+
+  .r3-workspace-page .r3-claims-search > div {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-workspace-page .r3-toolbar-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .r3-workspace-page .ops-view-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .r3-workspace-page .claims-table,
+  .r3-workspace-page .claims-table tbody,
+  .r3-workspace-page .claims-table tr,
+  .r3-workspace-page .claims-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .r3-workspace-page .claims-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .r3-workspace-page .claims-table tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .r3-workspace-page .claims-table tr {
+    padding: 12px;
+    border: 1px solid var(--ops-border);
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .r3-workspace-page .claims-table td {
+    display: grid;
+    grid-template-columns: minmax(88px, .7fr) minmax(0, 1.3fr);
+    gap: 8px;
+    align-items: start;
+    min-height: 34px;
+    padding: 6px 0;
+    border: 0;
+  }
+
+  .r3-workspace-page .claims-table td::before {
+    content: attr(data-label);
+    color: var(--ops-muted);
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .r3-workspace-page .claims-table td:last-child {
+    grid-template-columns: 1fr;
+    padding-top: 10px;
+  }
+
+  .r3-workspace-page .claims-table td:last-child::before {
+    display: none;
+  }
+
+  .r3-workspace-page .ops-card-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .r3-claim-detail-page .ops-transition-row,
+  .r3-claim-detail-page .r3-pipeline-move-row {
+    grid-template-columns: 1fr;
+  }
+}
