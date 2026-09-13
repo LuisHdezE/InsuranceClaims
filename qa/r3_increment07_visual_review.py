@@ -136,10 +136,15 @@ try:
             'Guidance', 'Automations', 'Imports gobernados', 'Integraciones y recuperación',
             'Sin superusuario implícito',
         ),
-        (
-            'Siniestros y trabajo operativo', 'Clientes y pólizas', 'Renovaciones', 'Cobranzas',
-            'UI planificada', 'permisos de presentación sincronizados',
-        ),
+        ('UI planificada', 'permisos de presentación sincronizados'),
+    )
+    cards = admin.find_elements(By.CSS_SELECTOR, '.r3-capability-card')
+    assert len(cards) == 8, len(cards)
+    card_text = '\n'.join(card.text for card in cards)
+    assert_visible_text(
+        card_text,
+        (),
+        ('Siniestros y trabajo operativo', 'Clientes y pólizas', 'Renovaciones', 'Cobranzas'),
     )
     (OUT / 'workspace-debug.json').unlink(missing_ok=True)
     (OUT / 'workspace-debug.png').unlink(missing_ok=True)
