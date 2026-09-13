@@ -31,12 +31,12 @@ jobs:
       QA_WEB_BASE_URL: http://127.0.0.1:5173
       QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
       EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-policies-review
-      REVIEW_TARGET_SHA: e8f19b3638e7d4df54658ae23e6d417b04799160
+      REVIEW_TARGET_SHA: 0dd6bf491a71f6b6e2283b88b7c26588be0f372d
 
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: e8f19b3638e7d4df54658ae23e6d417b04799160
+          ref: 0dd6bf491a71f6b6e2283b88b7c26588be0f372d
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
