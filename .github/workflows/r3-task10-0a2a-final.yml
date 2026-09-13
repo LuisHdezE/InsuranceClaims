@@ -1,0 +1,303 @@
+name: R3 Task 10 0A2A Final Evidence
+
+on:
+  push:
+    branches: [review/r3-task10-0a2a-final]
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head-final:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_task10_0a2a_final
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_task10_0a2a_final"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_task10_0a2a_final
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-task10-0a2a-final
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-task10-0a2a-final
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+      REVIEW_TARGET_SHA: 0a2a4b16a5c02f6842e6e94a95d3ecab25ac0882
+      TASK10_EVENT_ID: 97000000-0000-4000-8000-000000000001
+      TASK10_DEAD_LETTER_ID: 98000000-0000-4000-8000-000000000001
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 0a2a4b16a5c02f6842e6e94a95d3ecab25ac0882
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Verify exact product head
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$REVIEW_TARGET_SHA"
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+      - name: Typecheck production code
+        run: npm run typecheck
+      - name: Run core automated tests
+        run: npm run test
+      - name: Typecheck web client
+        run: npm run typecheck --workspace=@insurance/web
+      - name: Run web client tests
+        run: npm run test --workspace=@insurance/web
+      - name: Build web client
+        run: npm run build --workspace=@insurance/web
+      - name: Validate architecture and QA invariants
+        shell: bash
+        run: |
+          npm run architecture:check
+          npm run ci:qa:validate
+          node scripts/validate-design-system.mjs
+          node scripts/validate-interface-inventory.mjs
+      - name: Validate OpenAPI R3
+        shell: bash
+        run: |
+          npm run openapi:check:r3
+          npx --yes @redocly/cli@2.51.2 lint --extends=spec openapi.yaml
+          mkdir -p .runtime
+          npx --yes @redocly/cli@2.51.2 bundle openapi.yaml --dereferenced --output .runtime/openapi.bundle.json
+          npm run openapi:validate:r3
+          git diff --exit-code -- openapi.yaml openapi/r3
+      - name: Validate Postman R3
+        shell: bash
+        run: |
+          npm run postman:check:r3
+          npm run postman:validate:r3
+
+      - name: Prepare synthetic review secrets and browser
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+          echo "JWT_SECRET=r3-task10-0a2a-final-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-task10-0a2a-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-task10-0a2a-final-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-task10-0a2a-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+
+      - name: Bootstrap PostgreSQL and synthetic identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+
+      - name: Seed contract-valid Recovery projections
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO inbound_integrations (id, integration_key, key_id, enabled, allowed_event_schemas)
+          VALUES ('96000000-0000-4000-8000-000000000001', 'task10-0a2a-integration', 'task10-0a2a-key', true, '{}'::jsonb);
+          INSERT INTO inbound_events (
+            id, integration_id, external_event_id, payload_hash, sanitized_payload, event_type,
+            ingestion_status, processing_status, correlation_id, accepted_at, processed_at, failure_category, version
+          ) VALUES (
+            '97000000-0000-4000-8000-000000000001','96000000-0000-4000-8000-000000000001',
+            'task10-0a2a-event-001',repeat('a',64),'{}'::jsonb,'SYNTHETIC_RECOVERY_EVENT',
+            'ACCEPTED','PROCESSED','task10-0a2a-correlation',now()-interval '4 minutes',now()-interval '3 minutes',NULL,2
+          );
+          INSERT INTO async_jobs (
+            id, job_type, idempotency_identity, payload, status, attempt_count, max_attempts,
+            available_at, correlation_id, last_failure_category, completed_at, version
+          ) VALUES (
+            '98000000-0000-4000-8000-000000000001','RESUME_AUTOMATION_EXECUTION',
+            'task10-0a2a-dead-letter-001','{}'::jsonb,'DEAD_LETTER',3,3,
+            now()-interval '6 minutes','task10-0a2a-correlation','AUTOMATION_RESUME_FAILED',now()-interval '5 minutes',3
+          );
+          SQL
+
+      - name: Start simulated legacy API and web
+        shell: bash
+        run: |
+          mkdir -p .runtime/task10-0a2a-final .runtime/evidence-r3-task10-0a2a-final .runtime/imports-r3-task10-0a2a-final
+          npm run start:legacy > .runtime/task10-0a2a-final/legacy.log 2>&1 &
+          npm run start:api > .runtime/task10-0a2a-final/api.log 2>&1 &
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/task10-0a2a-final/web.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          cat .runtime/task10-0a2a-final/api.log || true
+          exit 1
+
+      - name: Execute baseline API runtime QA
+        run: node qa/runtime-qa.mjs
+
+      - name: Exercise Task 10 real PostgreSQL API paths
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const base=process.env.QA_BASE_URL.replace(/\/$/,'');
+          async function json(method,path,body,token,extra={}) {
+            const response=await fetch(base+path,{method,headers:{'content-type':'application/json',...(token?{authorization:`Bearer ${token}`} : {}),...extra},...(body===undefined?{}:{body:JSON.stringify(body)})});
+            const text=await response.text();
+            if(!response.ok) throw new Error(`${method} ${path} -> ${response.status}: ${text}`);
+            return text?JSON.parse(text):null;
+          }
+          const auth=await json('POST','/api/v1/operator/auth/login',{login:process.env.QA_ADMIN_LOGIN,password:process.env.QA_OPERATOR_PASSWORD});
+          const token=auth.accessToken;
+          const csv='ref,label,class\nFINAL-A,Final Alpha,PRIMARY\nFINAL-B,,SECONDARY\n';
+          const form=new FormData();
+          form.append('importType','SYNTHETIC_REFERENCE_RECORDS');
+          form.append('source',new Blob([csv],{type:'text/csv'}),'task10-0a2a-final.csv');
+          let response=await fetch(base+'/api/v1/admin/import-jobs',{method:'POST',headers:{authorization:`Bearer ${token}`,'Idempotency-Key':'task10-0a2a-create-0001'},body:form});
+          if(!response.ok) throw new Error(`create import -> ${response.status}: ${await response.text()}`);
+          let job=await response.json();
+          job=await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/preview`,{expectedVersion:job.version},token);
+          job=await json('PUT',`/api/v1/admin/import-jobs/${job.importJobId}/mapping`,{expectedVersion:job.version,mapping:{externalReference:'ref',label:'label',classification:'class'}},token);
+          job=await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/validate`,{expectedVersion:job.version},token);
+          job=await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/dry-run`,{expectedVersion:job.version},token);
+          if(job.status!=='DRY_RUN_READY') throw new Error(`Expected DRY_RUN_READY, got ${job.status}`);
+          const rows=await json('GET',`/api/v1/admin/import-jobs/${job.importJobId}/rows?page=1&pageSize=10`,undefined,token);
+          if(rows.totalItems!==2) throw new Error(`Expected 2 rows, got ${rows.totalItems}`);
+          const event=await json('GET',`/api/v1/admin/integration-events/${process.env.TASK10_EVENT_ID}`,undefined,token);
+          const deadList=await json('GET','/api/v1/admin/dead-letters?page=1&pageSize=25',undefined,token);
+          const dead=await json('GET',`/api/v1/admin/dead-letters/${process.env.TASK10_DEAD_LETTER_ID}`,undefined,token);
+          if(event.processingStatus!=='PROCESSED'||dead.status!=='DEAD_LETTER'||!deadList.items.some(x=>x.deadLetterId===process.env.TASK10_DEAD_LETTER_ID)) throw new Error('Recovery projection mismatch');
+          const seed={importJobId:job.importJobId,eventId:process.env.TASK10_EVENT_ID,deadLetterId:process.env.TASK10_DEAD_LETTER_ID};
+          fs.writeFileSync('.runtime/task10-0a2a-final/seed.json',JSON.stringify(seed,null,2));
+          console.log(JSON.stringify({event:'R3_TASK10_0A2A_RUNTIME_PASS',status:job.status,rows:rows.totalItems,deadLetters:deadList.totalItems,eventStatus:event.processingStatus,deadLetterStatus:dead.status}));
+          NODE
+
+      - name: Capture and assert all 12 Task 10 views
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base=os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          out=Path('.runtime/task10-0a2a-final')
+          seed=json.loads((out/'seed.json').read_text())
+          options=webdriver.ChromeOptions()
+          for arg in ('--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--force-device-scale-factor=1'):
+              options.add_argument(arg)
+          options.add_argument('--window-size=1440,1000')
+          options.binary_location=os.environ['BROWSER_BIN']
+          driver=webdriver.Chrome(options=options)
+          wait=WebDriverWait(driver,25)
+          captures=[]
+
+          def nav(route):
+              driver.execute_script("window.history.pushState({}, '', arguments[0]); window.dispatchEvent(new PopStateEvent('popstate'));",route)
+              wait.until(lambda d:d.current_url.startswith(base+route))
+
+          def snap(name,route,width,marker,text,primary=None,surface=None,bg='rgb(255, 255, 255)',prepare=None):
+              driver.set_window_size(width,1000); nav(route)
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,marker)))
+              if prepare: prepare()
+              wait.until(lambda d:text in d.find_element(By.TAG_NAME,'body').text)
+              time.sleep(.35)
+              m=driver.execute_script("const r=document.documentElement;return {cw:r.clientWidth,sw:r.scrollWidth,sh:Math.max(r.scrollHeight,document.body.scrollHeight),h1:document.querySelectorAll('h1').length};")
+              overflow=m['sw']-m['cw']
+              assert overflow<=2,f'{name} {width}: overflow {overflow}'
+              assert m['h1']==1,f'{name} {width}: h1 {m["h1"]}'
+              if primary:
+                  node=driver.find_element(By.CSS_SELECTOR,primary)
+                  assert node.rect['height']>=43,f'{name} {width}: primary below target {node.rect}'
+              if surface:
+                  node=driver.find_element(By.CSS_SELECTOR,surface)
+                  style=driver.execute_script("const s=getComputedStyle(arguments[0]);return {bg:s.backgroundColor,r:parseFloat(s.borderRadius)};",node)
+                  assert style['bg']==bg,f'{name} {width}: surface {style}, expected {bg}'
+                  assert style['r']>=10,f'{name} {width}: radius {style}'
+              height=min(max(int(m['sh'])+40,1000),7000)
+              driver.set_window_size(width,height);time.sleep(.2);driver.execute_script('window.scrollTo(0,0)')
+              path=out/f'{name}-{width}.png';assert driver.save_screenshot(str(path))
+              captures.append({'name':name,'route':route,'width':width,'height':height,'horizontal_overflow_px':overflow,'h1_count':m['h1'],'file':str(path)})
+
+          def lookup_event():
+              field=wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'.recovery-event-form input')))
+              field.clear();field.send_keys(seed['eventId'])
+              button=driver.find_element(By.CSS_SELECTOR,'.recovery-event-form button')
+              driver.execute_script('arguments[0].click()',button)
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'.recovery-event-result')))
+
+          try:
+              driver.get(base+'/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID,'operator-login'))).send_keys(os.environ['QA_ADMIN_LOGIN'])
+              wait.until(EC.visibility_of_element_located((By.ID,'operator-password'))).send_keys(os.environ['QA_OPERATOR_PASSWORD'])
+              submit=wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'button.r3-login-submit')))
+              driver.execute_script('arguments[0].click()',submit)
+              wait.until(lambda d:d.current_url.startswith(base+'/operator/workspace'))
+              scenarios=[
+                ('import-directory','/operator/admin/imports','.gi-job-card','SYNTHETIC_REFERENCE_RECORDS','.gi-primary','.gi-job-card','rgb(255, 255, 255)',None),
+                ('import-create','/operator/admin/imports/new','.gi-form','Nueva importación','.gi-primary','.gi-form-panel','rgb(255, 255, 255)',None),
+                ('import-detail',f"/operator/admin/imports/{seed['importJobId']}",'.gi-summary','Dry-run listo','.gi-danger','.gi-summary','rgb(255, 255, 255)',None),
+                ('recovery-main','/operator/admin/recovery','.recovery-dead-letter-panel','RESUME_AUTOMATION_EXECUTION','.recovery-event-form button','.recovery-dead-letter-panel','rgb(255, 255, 255)',None),
+                ('recovery-event','/operator/admin/recovery','.recovery-event-form','SYNTHETIC_RECOVERY_EVENT','.recovery-event-form button','.recovery-event-result','rgb(251, 253, 255)',lookup_event),
+                ('dead-letter-detail',f"/operator/admin/recovery/dead-letters/{seed['deadLetterId']}",'.recovery-detail-panel','AUTOMATION_RESUME_FAILED','.recovery-action-button.is-requeue','.recovery-detail-panel','rgb(255, 255, 255)',None),
+              ]
+              for name,route,marker,text,primary,surface,bg,prepare in scenarios:
+                  snap(name,route,1440,marker,text,primary,surface,bg,prepare)
+                  snap(name,route,390,marker,text,primary,surface,bg,prepare)
+              assert len(captures)==12,f'Expected 12 captures, got {len(captures)}'
+              manifest={'target_sha':os.environ['REVIEW_TARGET_SHA'],'seed':seed,'captures':captures,'assertions':{'capture_count':12,'max_horizontal_overflow_px':2,'expected_h1_count':1,'minimum_primary_action_height_px':43,'recovery_event_result_background':'#fbfdff'}}
+              (out/'manifest.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False))
+              print(json.dumps(manifest,indent=2,ensure_ascii=False))
+          finally:
+              driver.quit()
+          PY
+
+      - name: Assert no unhandled API errors
+        shell: bash
+        run: |
+          if grep -q 'UNHANDLED_API_ERROR' .runtime/task10-0a2a-final/api.log; then
+            cat .runtime/task10-0a2a-final/api.log
+            exit 1
+          fi
+
+      - name: Upload final evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-task10-0a2a-final-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/task10-0a2a-final/**
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
