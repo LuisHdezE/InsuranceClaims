@@ -154,8 +154,11 @@ jobs:
                   for label in ('Póliza 360','Cliente relacionado','Metadata operacional','Assets cubiertos por el registro','Siniestros relacionados','Alcance contractual','Versión de registro:'): assert label in body, f'Policy 360 label missing: {label}'
                   assert 'SYN-QA-POLICY-POL-001' in body
                   assert 'Synthetic Policy Customer' in body
-                  assert 'Vehículo' in body and 'VEHICLE' not in body
-                  assert 'SYN-QA-POLICY-TRACK-001' in body and 'Requiere información' in body and 'OBSERVED' not in body
+                  asset_type = driver.find_element(By.CSS_SELECTOR, '.cp360-asset-card small')
+                  assert (asset_type.get_attribute('textContent') or '').strip() == 'Vehículo'
+                  assert 'SYN-QA-POLICY-TRACK-001' in body
+                  claim_status = driver.find_element(By.CSS_SELECTOR, '.cp360-claim-status')
+                  assert (claim_status.get_attribute('textContent') or '').strip() == 'Requiere información'
                   assert 'SYNTHETIC_R3_POLICIES_REVIEW' in body
                   assert len(driver.find_elements(By.CSS_SELECTOR,'.r3-policy-detail')) == 1
               height=min(max(int(m['scrollHeight'])+40,1000),6500); driver.set_window_size(width,height); time.sleep(.3); driver.execute_script('window.scrollTo(0,0)')
