@@ -58,6 +58,7 @@ jobs:
         shell: bash
         run: |
           npm ci
+          npm run contract:emit
           python -m pip install --disable-pip-version-check selenium==4.35.0
           browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           test -n "$browser_bin"
