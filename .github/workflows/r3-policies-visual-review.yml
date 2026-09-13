@@ -1,0 +1,204 @@
+name: R3 Policies Visual Review
+
+on:
+  push:
+    branches: [review/r3-ui-increment-05-policies]
+
+permissions:
+  contents: read
+
+jobs:
+  policies-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_policies_review
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_policies_review"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_policies_review
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-policies-review
+      REVIEW_TARGET_SHA: e8f19b3638e7d4df54658ae23e6d417b04799160
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: e8f19b3638e7d4df54658ae23e6d417b04799160
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+      - name: Prepare synthetic review secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=r3-policies-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-policies-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-policies-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+      - name: Prepare browser runtime
+        shell: bash
+        run: |
+          command -v psql >/dev/null 2>&1 || { sudo apt-get update && sudo apt-get install -y postgresql-client; }
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+      - name: Bootstrap database and synthetic Policy 360 graph
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          QA_CUSTOMER_PASSWORD= npx tsx qa/seed.ts
+          mkdir -p .runtime
+          cat > .runtime/r3-policies-review-seed.ts <<'TS'
+          import { createProductionRuntimeFromEnv } from '@insurance/infrastructure';
+          const customerId = 'a1000000-0000-4000-8000-000000000001';
+          const policyId = 'a2000000-0000-4000-8000-000000000001';
+          const claimId = 'a4000000-0000-4000-8000-000000000001';
+          const at = new Date();
+          const runtime = await createProductionRuntimeFromEnv();
+          await runtime.customerPolicyStore.seedSyntheticCustomerPolicy({
+            customer: { id: customerId, customerRef: 'SYN-QA-POLICY-CUST-001', displayName: 'Synthetic Policy Customer', status: 'ACTIVE', createdAt: at, updatedAt: at, version: 3 },
+            policy: { id: policyId, customerId, policyReference: 'MOD-QA-POLICY-POL-001', legacyPolicyReference: 'SYN-QA-POLICY-POL-001', insurerReference: 'SYN-QA-INSURER-001', recordStatus: 'ACTIVE', operationalMetadata: { source: 'SYNTHETIC_R3_POLICIES_REVIEW' }, createdAt: at, updatedAt: at, version: 5 },
+            assets: [{ id: 'a3000000-0000-4000-8000-000000000001', policyId, assetType: 'VEHICLE', assetReference: 'MOD-QA-POLICY-VEH-001', legacyAssetReference: 'SYN-QA-POLICY-VEH-001', metadata: { source: 'SYNTHETIC_R3_POLICIES_REVIEW' }, createdAt: at }],
+          });
+          if (!(await runtime.store.getById(claimId))) {
+            await runtime.store.create({
+              id: claimId, trackingCode: 'SYN-QA-POLICY-TRACK-001', policyReference: 'MOD-QA-POLICY-POL-001', vehicleReference: 'MOD-QA-POLICY-VEH-001', customerId, policyId,
+              verifiedCustomerLabel: 'Synthetic Policy Customer', eventType: 'Synthetic R3 policies review event', occurredAt: at, locationText: 'Synthetic R3 policies review location',
+              description: 'Synthetic R3 policies visual review claim.', status: 'OBSERVED', createdAt: at, updatedAt: at,
+            }, [], { historyId: 'a5000000-0000-4000-8000-000000000001', claimId, fromStatus: null, toStatus: 'RECEIVED', actorType: 'SYSTEM', actorId: null, occurredAt: at });
+          }
+          console.log(JSON.stringify({ event: 'R3_POLICIES_REVIEW_GRAPH_SEEDED', customerId, policyId, claimId }));
+          process.exit(0);
+          TS
+          npx tsx .runtime/r3-policies-review-seed.ts
+      - name: Start runtime
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-r3-policies-review .runtime/policies-review
+          npm run start:legacy > .runtime/r3-policies-legacy.log 2>&1 &
+          npm run start:api > .runtime/r3-policies-api.log 2>&1 &
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/r3-policies-web.log 2>&1 &
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 50); do
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]] && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: Capture Policy Directory and Policy 360
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          out = Path('.runtime/policies-review'); out.mkdir(parents=True, exist_ok=True)
+          opts = webdriver.ChromeOptions()
+          for arg in ('--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--force-device-scale-factor=1'): opts.add_argument(arg)
+          opts.add_argument('--window-size=1440,1100'); opts.binary_location = os.environ['BROWSER_BIN']
+          driver = webdriver.Chrome(options=opts); wait = WebDriverWait(driver, 20)
+
+          def metrics():
+              return driver.execute_script('''const r=document.documentElement; return {clientWidth:r.clientWidth,scrollWidth:r.scrollWidth,scrollHeight:Math.max(r.scrollHeight,document.body.scrollHeight),h1Count:document.querySelectorAll('h1').length,bodyText:document.body.innerText};''')
+          def activate(el):
+              driver.execute_script('arguments[0].scrollIntoView({block:"center",inline:"nearest"});arguments[0].click()', el); time.sleep(.2)
+          def capture(name, width, kind):
+              driver.set_window_size(width, 1000); time.sleep(.5); m=metrics(); body=m['bodyText']; lower=body.lower(); overflow=m['scrollWidth']-m['clientWidth']
+              assert overflow <= 2, f'{kind}: horizontal overflow at {width}px = {overflow}px'
+              assert m['h1Count'] == 1, f'{kind}: expected one h1, got {m["h1Count"]}'
+              assert 'MOD-QA-POLICY-POL-001' in body
+              for forbidden in ('crear póliza','editar póliza','eliminar póliza','exportar pólizas','prima anual','fecha de vigencia'): assert forbidden not in lower
+              if kind == 'directory':
+                  for label in ('Pólizas','Directorio de pólizas'): assert label in body, f'Directory label missing: {label}'
+                  search_label = driver.find_element(By.CSS_SELECTOR, 'label[for="policy-search"]')
+                  assert (search_label.get_attribute('textContent') or '').strip() == 'Buscar póliza'
+                  state_control = driver.find_element(By.CSS_SELECTOR, '.cp360-filter')
+                  assert 'Estado' in (state_control.get_attribute('textContent') or '')
+                  summary = driver.find_element(By.CSS_SELECTOR, '.cp360-result-summary')
+                  assert 'Resultado R3' in (summary.get_attribute('textContent') or '')
+                  assert 'Búsqueda y filtros server-side' in (summary.get_attribute('textContent') or '')
+                  assert len(driver.find_elements(By.CSS_SELECTOR,'.r3-policy-directory')) == 1
+                  assert len(driver.find_elements(By.CSS_SELECTOR,'a.cp360-row-action')) >= 1
+              else:
+                  for label in ('Póliza 360','Cliente relacionado','Metadata operacional','Assets cubiertos por el registro','Siniestros relacionados','Alcance contractual','Versión de registro:'): assert label in body, f'Policy 360 label missing: {label}'
+                  assert 'SYN-QA-POLICY-POL-001' in body
+                  assert 'Synthetic Policy Customer' in body
+                  assert 'Vehículo' in body and 'VEHICLE' not in body
+                  assert 'SYN-QA-POLICY-TRACK-001' in body and 'Requiere información' in body and 'OBSERVED' not in body
+                  assert 'SYNTHETIC_R3_POLICIES_REVIEW' in body
+                  assert len(driver.find_elements(By.CSS_SELECTOR,'.r3-policy-detail')) == 1
+              height=min(max(int(m['scrollHeight'])+40,1000),6500); driver.set_window_size(width,height); time.sleep(.3); driver.execute_script('window.scrollTo(0,0)')
+              path=out/name; assert driver.save_screenshot(str(path))
+              return {'kind':kind,'width':width,'height':height,'horizontal_overflow_px':overflow,'h1_count':m['h1Count'],'file':str(path)}
+
+          try:
+              driver.get(base+'/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID,'operator-login'))).send_keys(os.environ['QA_SUPERVISOR_LOGIN'])
+              wait.until(EC.visibility_of_element_located((By.ID,'operator-password'))).send_keys(os.environ['QA_OPERATOR_PASSWORD'])
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'button.r3-login-submit'))).click()
+              wait.until(lambda d:d.current_url.startswith(base+'/operator/dashboard'))
+              activate(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'a[href="/operator/policies"]'))))
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'.r3-policy-directory')))
+              wait.until(lambda d:'MOD-QA-POLICY-POL-001' in d.find_element(By.TAG_NAME,'body').text)
+              shots=[capture('policy-directory-desktop.png',1440,'directory'),capture('policy-directory-mobile.png',390,'directory')]
+              driver.set_window_size(1440,1100)
+              activate(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'a.cp360-row-action[href^="/operator/policies/"]'))))
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'.r3-policy-detail')))
+              wait.until(lambda d:'SYN-QA-POLICY-TRACK-001' in d.find_element(By.TAG_NAME,'body').text)
+              detail_url=driver.current_url
+              shots += [capture('policy-360-desktop.png',1440,'detail'),capture('policy-360-mobile.png',390,'detail')]
+              summary={'review_type':'r3_policy_directory_360_visual_review','review_target_sha':os.environ['REVIEW_TARGET_SHA'],'runtime_commit':os.environ.get('GITHUB_SHA'),'role':'CLAIMS_SUPERVISOR','api_authoritative':True,'synthetic_policy_graph_seeded_through_runtime_store':True,'detail_url_path':detail_url.replace(base,''),'screenshots':shots}
+              (out/'policies-visual-review.json').write_text(json.dumps(summary,indent=2)+'\n',encoding='utf-8'); print(json.dumps(summary))
+          finally: driver.quit()
+          PY
+      - name: Upload Policies visual review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-policies-visual-review-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/policies-review/**
+          if-no-files-found: error
+          retention-days: 30
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          tail -n 120 .runtime/r3-policies-api.log 2>/dev/null || true
+          tail -n 120 .runtime/r3-policies-web.log 2>/dev/null || true
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          pkill -f 'tsx apps/api/src/main.ts' 2>/dev/null || true
+          pkill -f 'tsx apps/legacy-simulator/src/main.ts' 2>/dev/null || true
+          pkill -f 'vite --host 127.0.0.1' 2>/dev/null || true
