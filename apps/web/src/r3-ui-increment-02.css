@@ -186,11 +186,35 @@
 
 /* Claim Detail */
 .r3-detail-hero {
+  grid-template-columns: minmax(0, 1.45fr) minmax(170px, .72fr) minmax(120px, .45fr) auto;
+  align-items: start;
   margin-bottom: 0;
   border: 1px solid var(--ops-border);
   border-radius: 12px 12px 0 0;
   background: #fff;
   box-shadow: 0 9px 26px rgba(11, 24, 48, .05);
+}
+
+.r3-detail-hero .ops-detail-identity,
+.r3-detail-hero .ops-detail-stage,
+.r3-detail-hero .ops-detail-status,
+.r3-detail-hero .ops-detail-actions {
+  min-width: 0;
+}
+
+.r3-detail-hero .ops-detail-identity h1 {
+  max-width: 100%;
+  font-size: clamp(25px, 2.4vw, 34px);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.r3-detail-hero .ops-detail-identity > span,
+.r3-detail-hero .ops-detail-stage strong,
+.r3-detail-hero .ops-detail-stage small {
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .r3-detail-anchor-nav {
@@ -322,6 +346,16 @@
 
   .r3-workspace-page .ops-kanban {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1050px) {
+  .r3-detail-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(160px, .62fr) minmax(120px, .45fr);
+  }
+
+  .r3-detail-hero .ops-detail-actions {
+    grid-column: 1 / -1;
   }
 }
 
