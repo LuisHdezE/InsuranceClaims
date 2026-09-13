@@ -47,10 +47,18 @@ jobs:
       REVIEW_DIR: .runtime/r3-ui08-visual
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout exact product head
+        uses: actions/checkout@v7
         with:
           ref: b04778511f3a8dd7d9b7cc9b68b036bdfad003ce
           fetch-depth: 0
+
+      - name: Checkout isolated review harness
+        uses: actions/checkout@v7
+        with:
+          ref: review/r3-ui-increment-08-pipelines-automations-v1
+          path: .review-harness
+          fetch-depth: 1
 
       - uses: actions/setup-node@v7
         with:
@@ -64,6 +72,11 @@ jobs:
 
       - name: Verify exact product head
         run: test "$(git rev-parse HEAD)" = "$REVIEW_TARGET_SHA"
+
+      - name: Verify isolated review harness
+        run: |
+          test -f .review-harness/qa/r3_ui08_review_seed.mjs
+          test -f .review-harness/qa/r3_ui08_visual_review.py
 
       - name: Install locked dependencies and emit contract
         run: |
@@ -120,10 +133,10 @@ jobs:
           exit 1
 
       - name: Seed Pipelines and Automations through real API
-        run: node qa/r3_ui08_review_seed.mjs
+        run: node .review-harness/qa/r3_ui08_review_seed.mjs
 
       - name: Capture desktop and 390px exact-head evidence
-        run: python qa/r3_ui08_visual_review.py
+        run: python .review-harness/qa/r3_ui08_visual_review.py
 
       - name: Upload exact-head evidence
         if: always()
