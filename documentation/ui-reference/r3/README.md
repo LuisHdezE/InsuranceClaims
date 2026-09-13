@@ -51,6 +51,7 @@ Este directorio conserva las vistas **aprobadas explícitamente** durante la rac
 | Custom Fields R3 | DIFERENCIADOR TÉCNICO / MANTENER | `custom-fields-r3-approved.svg` + `custom-fields-r3-approved.md` |
 | Guidance R3 | DIFERENCIADOR TÉCNICO / MANTENER | `guidance-r3-approved.svg` + `guidance-r3-approved.md` |
 | Operator Login R3 | CORE / MANTENER Y PULIR | `operator-login-r3-approved.svg` + `operator-login-r3-approved.md` |
+| Customer Journey público R3 | CORE / MANTENER Y SIMPLIFICAR | `public-customer-journey-r3-approved.svg` + `public-customer-journey-r3-approved.md` |
 
 ## Principios funcionales clave
 
@@ -106,4 +107,7 @@ Responsabilidad: **extender proyecciones operacionales con campos gobernados y v
 Responsabilidad: **gobernar orientación configurable y versionada** sin inferir semántica de negocio fuera del contrato publicado. Contexto, categorías, instrucciones, documentos y metadata permanecen opacos; DRAFT, activación y enable/disable son pasos explícitos y protegidos por versión esperada.
 
 ### Operator Login R3
-Responsabilidad: **autenticar staff y entregar una sesión corta cuyo rol determina la navegación autorizada**. La UI no selecciona roles ni inventa recuperación de cuenta, MFA, SSO o refresh token; si una ruta solicitada no está autorizada se usa el destino seguro del rol.
+Responsabilidad: **autenticar al staff y enviarlo a una ruta realmente autorizada**. El rol lo emite el API; no existe selector de rol, refresh token, recuperación de contraseña, MFA ni SSO en el contrato R3.
+
+### Customer Journey público R3
+Responsabilidad: **permitir reportar y seguir un siniestro sin exponer backoffice ni prometer capacidades fuera del MVP**. El reporte fluye Verificar → Datos → Revisar → Confirmación; el seguimiento usa `trackingCode + policyReference` como prueba conjunta y muestra solo la proyección pública autorizada.
