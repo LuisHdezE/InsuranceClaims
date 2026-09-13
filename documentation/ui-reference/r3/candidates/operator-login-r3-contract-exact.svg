@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#071727"/>
+    <stop offset="0.62" stop-color="#10243d"/>
+    <stop offset="1" stop-color="#17345a"/>
+  </linearGradient>
+  <linearGradient id="soft" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#eef6ff"/>
+    <stop offset="1" stop-color="#f8fbff"/>
+  </linearGradient>
+  <filter id="sh"><feDropShadow dx="0" dy="12" stdDeviation="24" flood-color="#071727" flood-opacity=".18"/></filter>
+  <style>
+    .t{font-family:Arial,Helvetica,sans-serif;fill:#10233d}.w{fill:#fff}.muted{fill:#60738d}
+    .xs{font-size:11px}.sm{font-size:12px}.body{font-size:14px}.lab{font-size:14px;font-weight:700}
+    .sec{font-size:18px;font-weight:700}.title{font-size:34px;font-weight:760}.h{font-weight:700}.mono{font-family:Consolas,monospace}
+  </style>
+</defs>
+<rect width="1600" height="900" fill="#f4f8fc"/>
+<rect x="0" y="0" width="980" height="900" fill="url(#bg)"/>
+<circle cx="780" cy="135" r="260" fill="#1d5f9f" opacity=".10"/>
+<circle cx="160" cy="760" r="330" fill="#1469e8" opacity=".08"/>
+<rect x="0" y="0" width="1600" height="42" fill="#fff4d6"/>
+<circle cx="24" cy="21" r="7" fill="#d28a00"/>
+<text x="42" y="26" class="t sm"><tspan class="h">Caso técnico no oficial.</tspan> Acceso de demostración con usuarios y datos sintéticos.</text>
+<circle cx="88" cy="110" r="30" fill="#1469e8"/>
+<path d="M88 89l18 7v15c0 14-9 23-18 29-9-6-18-15-18-29V96z" fill="none" stroke="#fff" stroke-width="3"/>
+<text x="130" y="106" class="t w" font-size="26" font-weight="700">FAR Seguros</text>
+<text x="130" y="128" class="t w sm" opacity=".72">InsuranceClaims · Operations R3</text>
+<text x="80" y="244" class="t w" font-size="44" font-weight="760">Acceso seguro del equipo</text>
+<text x="80" y="280" class="t w body" opacity=".78">Un único ingreso. El API determina el rol y la navegación autorizada.</text>
+<g filter="url(#sh)">
+  <rect x="80" y="330" width="250" height="132" rx="16" fill="#102c4b" stroke="#2f557c"/>
+  <rect x="350" y="330" width="250" height="132" rx="16" fill="#102c4b" stroke="#2f557c"/>
+  <rect x="620" y="330" width="270" height="132" rx="16" fill="#102c4b" stroke="#2f557c"/>
+</g>
+<circle cx="108" cy="359" r="15" fill="#1469e8"/><text x="108" y="364" text-anchor="middle" class="t w xs h">OP</text>
+<text x="132" y="365" class="t w lab">Operador de siniestros</text><text x="100" y="393" class="t w xs" opacity=".72">Workspace operativo</text>
+<text x="100" y="415" class="t w xs" opacity=".72">Claims · Tareas · Clientes · Pólizas</text><text x="100" y="438" class="t w xs h">Destino habitual: Dashboard</text>
+<circle cx="378" cy="359" r="15" fill="#20a073"/><text x="378" y="364" text-anchor="middle" class="t w xs h">SV</text>
+<text x="402" y="365" class="t w lab">Supervisor</text><text x="370" y="393" class="t w xs" opacity=".72">Operación + supervisión</text>
+<text x="370" y="415" class="t w xs" opacity=".72">Incluye Analytics y acciones bulk</text><text x="370" y="438" class="t w xs h">Destino habitual: Dashboard</text>
+<circle cx="648" cy="359" r="15" fill="#8359d5"/><text x="648" y="364" text-anchor="middle" class="t w xs h">PA</text>
+<text x="672" y="365" class="t w lab">Administrador de plataforma</text><text x="640" y="393" class="t w xs" opacity=".72">Configuración y recuperación</text>
+<text x="640" y="415" class="t w xs" opacity=".72">Sin operación Claims implícita</text><text x="640" y="438" class="t w xs h">Destino habitual: Workspace</text>
+<rect x="80" y="505" width="810" height="82" rx="14" fill="#0b2139" stroke="#294d70"/>
+<text x="104" y="533" class="t w xs h">CONTRATO DE SESIÓN R3</text>
+<rect x="104" y="547" width="106" height="24" rx="12" fill="#163a61"/><text x="157" y="563" text-anchor="middle" class="t w xs h">JWT staff</text>
+<rect x="220" y="547" width="118" height="24" rx="12" fill="#163a61"/><text x="279" y="563" text-anchor="middle" class="t w xs h">Bearer</text>
+<rect x="348" y="547" width="130" height="24" rx="12" fill="#163a61"/><text x="413" y="563" text-anchor="middle" class="t w xs h">900 segundos</text>
+<rect x="488" y="547" width="132" height="24" rx="12" fill="#163a61"/><text x="554" y="563" text-anchor="middle" class="t w xs h">Sin refresh</text>
+<rect x="630" y="547" width="228" height="24" rx="12" fill="#163a61"/><text x="744" y="563" text-anchor="middle" class="t w xs h">Permisos derivados del rol</text>
+<rect x="80" y="620" width="810" height="118" rx="14" fill="#0b2139" stroke="#294d70"/>
+<text x="104" y="649" class="t w sm h">Navegación después del login</text>
+<text x="104" y="675" class="t w sm" opacity=".76">Si la sesión venía de una ruta protegida y el rol puede acceder, R3 vuelve a esa ruta.</text>
+<text x="104" y="700" class="t w sm" opacity=".76">Si no, aplica el destino seguro del rol. No existe selector manual de rol.</text>
+<text x="104" y="723" class="t w xs" opacity=".58">Autenticación fallida se presenta mediante Problem Details; la contraseña se limpia tras éxito.</text>
+<g filter="url(#sh)"><rect x="1020" y="95" width="500" height="705" rx="24" fill="#fff"/></g>
+<text x="1060" y="151" class="t xs h" fill="#1469e8">ACCESO DE OPERADORES · WORKSPACE PROTEGIDO</text>
+<text x="1060" y="198" class="t title">Acceso del equipo</text>
+<text x="1060" y="228" class="t muted body">Usa tus credenciales R3. Tu rol y permisos</text>
+<text x="1060" y="249" class="t muted body">son emitidos por el API después de autenticar.</text>
+<rect x="1060" y="286" width="420" height="64" rx="10" fill="url(#soft)" stroke="#d8e5f2"/>
+<text x="1080" y="311" class="t xs h">ROL</text><text x="1080" y="334" class="t sm">No se selecciona aquí · lo resuelve el API</text>
+<text x="1060" y="390" class="t sm h">Usuario</text>
+<rect x="1060" y="403" width="420" height="52" rx="10" fill="#fff" stroke="#c8d7e7"/>
+<text x="1080" y="435" class="t muted body">usuario@staff</text>
+<text x="1060" y="493" class="t sm h">Contraseña</text>
+<rect x="1060" y="506" width="420" height="52" rx="10" fill="#fff" stroke="#c8d7e7"/>
+<text x="1080" y="538" class="t muted body">••••••••••••</text>
+<rect x="1060" y="590" width="420" height="52" rx="10" fill="#0f6fed"/>
+<text x="1270" y="622" text-anchor="middle" class="t w lab">Ingresar</text>
+<text x="1060" y="673" class="t xs muted">Durante envío: botón deshabilitado · “Autenticando…”</text>
+<line x1="1060" y1="704" x2="1480" y2="704" stroke="#e4ebf3"/>
+<text x="1270" y="744" text-anchor="middle" class="t sm h" fill="#1469e8">← Volver al sitio público</text>
+<rect x="1270" y="750" width="240" height="122" rx="18" fill="#10243d" opacity=".0"/>
+<rect x="40" y="778" width="850" height="1" fill="#ffffff" opacity=".10"/>
+<text x="80" y="813" class="t w xs" opacity=".56">Referencia canónica de Login R3 · sin MFA, SSO, recuperación, “recordarme” ni refresh token.</text>
+<rect x="905" y="645" width="104" height="208" rx="20" fill="#071727"/>
+<rect x="911" y="654" width="92" height="190" rx="15" fill="#fff"/>
+<rect x="941" y="654" width="32" height="7" rx="4" fill="#071727"/>
+<circle cx="925" cy="682" r="7" fill="#1469e8"/><text x="938" y="685" class="t" font-size="6" font-weight="700">FAR Seguros</text>
+<text x="923" y="711" class="t" font-size="7" font-weight="700">Acceso del equipo</text>
+<text x="923" y="727" class="t" font-size="5">Usuario</text><rect x="923" y="731" width="68" height="15" rx="3" fill="#fff" stroke="#c8d7e7"/>
+<text x="923" y="759" class="t" font-size="5">Contraseña</text><rect x="923" y="763" width="68" height="15" rx="3" fill="#fff" stroke="#c8d7e7"/>
+<rect x="923" y="790" width="68" height="16" rx="3" fill="#0f6fed"/><text x="957" y="801" text-anchor="middle" class="t w" font-size="5" font-weight="700">Ingresar</text>
+<text x="957" y="825" text-anchor="middle" class="t" font-size="5" fill="#1469e8">Volver al sitio público</text>
+</svg>
