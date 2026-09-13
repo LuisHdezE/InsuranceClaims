@@ -35,7 +35,7 @@ describe('OperatorShell', () => {
     cleanup();
   });
 
-  it('groups visible navigation while preserving operator permission filtering', () => {
+  it('groups visible navigation in Spanish while preserving operator permission filtering', () => {
     render(
       <MemoryRouter initialEntries={['/operator/dashboard']}>
         <OperatorShell><div>Contenido</div></OperatorShell>
@@ -48,11 +48,13 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('heading', { name: 'Clientes y pólizas' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Administración' })).toBeNull();
 
-    expect(screen.getByRole('link', { name: /Dashboard/ }).getAttribute('aria-current')).toBe('page');
-    expect(screen.getByRole('link', { name: /Claims/ })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Tasks/ })).toBeTruthy();
-    expect(screen.queryByRole('link', { name: /Analytics/ })).toBeNull();
+    expect(screen.getByRole('link', { name: /Tablero/ }).getAttribute('aria-current')).toBe('page');
+    expect(screen.getByRole('link', { name: /Siniestros/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Tareas/ })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /Analítica/ })).toBeNull();
     expect(screen.queryByRole('link', { name: /Pipelines/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /^Claims$/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /^Tasks$/ })).toBeNull();
   });
 
   it('does not elevate platform admin into Claims navigation', () => {
@@ -65,11 +67,15 @@ describe('OperatorShell', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Administración' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Analytics/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Analítica/ })).toBeTruthy();
     expect(screen.getByRole('link', { name: /Pipelines/ })).toBeTruthy();
-    expect(screen.queryByRole('link', { name: /Dashboard/ })).toBeNull();
-    expect(screen.queryByRole('link', { name: /^Claims$/ })).toBeNull();
-    expect(screen.queryByRole('link', { name: /^Tasks$/ })).toBeNull();
+    expect(screen.getByRole('link', { name: /Orientación/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Automatizaciones/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Importaciones/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Recuperación/ })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /Tablero/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /^Siniestros$/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /^Tareas$/ })).toBeNull();
   });
 
   it('keeps logout wired to the existing session action', () => {
