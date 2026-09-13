@@ -51,7 +51,7 @@ export function OperatorLoginPage() {
               <span>InsuranceClaims · Operations R3</span>
             </div>
 
-            <h1>Acceso seguro del equipo</h1>
+            <h2>Acceso seguro del equipo</h2>
             <p className="r3-login-context-lead">
               Un único ingreso. El API determina el rol, los permisos efectivos y la navegación autorizada después de autenticar.
             </p>
