@@ -41,12 +41,12 @@ jobs:
       EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-automation-pipeline-review
       IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-automation-pipeline-review
       COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
-      REVIEW_TARGET_SHA: c13abfe75db5eb2ce2895c29da1c4bdd7835e69c
+      REVIEW_TARGET_SHA: d6120822bb211e90d120dd201ccb350e4c524f42
 
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: c13abfe75db5eb2ce2895c29da1c4bdd7835e69c
+          ref: d6120822bb211e90d120dd201ccb350e4c524f42
           fetch-depth: 0
 
       - uses: actions/setup-node@v7
