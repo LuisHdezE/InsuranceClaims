@@ -1,0 +1,6 @@
+/* R3 public visual token reconciliation.
+ * Keep the public journey aligned with the canonical Blueprint accent token.
+ */
+.public-refresh-shell {
+  --landing-yellow: #fef200;
+}
