@@ -1,0 +1,313 @@
+name: R3 Task 9 Visual Review
+
+on:
+  push:
+    branches: [review/r3-task9-visual]
+
+permissions:
+  contents: read
+
+jobs:
+  visual-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_task9_visual
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_task9_visual"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_task9_visual
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-task9-visual
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-task9-visual
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+      REVIEW_TARGET_SHA: d6120822bb211e90d120dd201ccb350e4c524f42
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: d6120822bb211e90d120dd201ccb350e4c524f42
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install locked dependencies and emit contract
+        run: |
+          npm ci
+          npm run contract:emit
+
+      - name: Prepare synthetic review secrets and browser
+        shell: bash
+        run: |
+          echo "JWT_SECRET=r3-task9-visual-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-task9-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-task9-visual-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-task9-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+
+      - name: Bootstrap database and synthetic identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+
+      - name: Start runtime services
+        shell: bash
+        run: |
+          mkdir -p .runtime/task9-visual .runtime/evidence-r3-task9-visual .runtime/imports-r3-task9-visual
+          npm run start:legacy > .runtime/task9-legacy.log 2>&1 &
+          npm run start:api > .runtime/task9-api.log 2>&1 &
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/task9-web.log 2>&1 &
+          for attempt in $(seq 1 50); do
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          echo 'Runtime services did not become ready.' >&2
+          exit 1
+
+      - name: Create Task 9 synthetic definitions through real API
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const base = process.env.QA_BASE_URL.replace(/\/$/, '');
+          async function request(method, path, body, token) {
+            const response = await fetch(base + path, {
+              method,
+              headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+              ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+            });
+            const text = await response.text();
+            if (!response.ok) throw new Error(`${method} ${path} -> ${response.status}: ${text}`);
+            if (!text) return null;
+            const parsed = JSON.parse(text);
+            return parsed?.data ?? parsed;
+          }
+          const auth = await request('POST', '/api/v1/operator/auth/login', {
+            login: process.env.QA_ADMIN_LOGIN,
+            password: process.env.QA_OPERATOR_PASSWORD,
+          });
+          const token = auth.accessToken;
+          if (!token) throw new Error('Admin login did not return an access token.');
+          async function activateAndEnable(basePath, definition) {
+            const draft = definition.versions.find((version) => version.status === 'DRAFT');
+            if (!draft) throw new Error(`No DRAFT returned from ${basePath}`);
+            definition = await request('POST', `${basePath}/${definition.definitionId}/versions/${draft.versionId}/activate`, { expectedDefinitionVersion: definition.version }, token);
+            return request('PATCH', `${basePath}/${definition.definitionId}`, { expectedDefinitionVersion: definition.version, enabled: true }, token);
+          }
+          let automation = await request('POST', '/api/v1/admin/automations', {
+            key: 'qa.claim.initial.review', displayName: 'Revisión inicial de siniestro QA', sourceClassification: 'SYNTHETIC_QA',
+            content: {
+              when: { eventType: 'CLAIM_CREATED' },
+              if: [{ field: 'claim.status', operator: 'EQ', value: 'RECEIVED' }],
+              wait: { delaySeconds: 300 },
+              then: [
+                { key: 'create_initial_review', type: 'CREATE_TASK', parameters: { taskType: 'CLAIM_REVIEW', priority: 'NORMAL' } },
+                { key: 'notify_operator', type: 'NOTIFY_OPERATOR', parameters: { messageKey: 'QA_INITIAL_REVIEW' } },
+              ],
+            },
+          }, token);
+          automation = await activateAndEnable('/api/v1/admin/automations', automation);
+          await request('POST', '/api/v1/admin/automations', {
+            key: 'qa.claim.scheduled.check', displayName: 'Control programado QA', sourceClassification: 'SYNTHETIC_QA',
+            content: { when: { eventType: 'SCHEDULED_CHECK' }, if: [], wait: null, then: [{ key: 'notify_review', type: 'NOTIFY_OPERATOR', parameters: { messageKey: 'QA_SCHEDULED_CHECK' } }] },
+          }, token);
+          let pipeline = await request('POST', '/api/v1/admin/pipelines', {
+            key: 'qa.claim.standard.flow', consumerType: 'CLAIM', displayName: 'Flujo estándar de siniestros QA', sourceClassification: 'SYNTHETIC_QA',
+            stages: [
+              { stageKey: 'RECEIVED', displayName: 'Recibido', sortOrder: 1, allowedNextStageKeys: ['UNDER_REVIEW'], reportingFlags: { intake: true } },
+              { stageKey: 'UNDER_REVIEW', displayName: 'En revisión', sortOrder: 2, allowedNextStageKeys: ['RESOLVED'], reportingFlags: { workInProgress: true } },
+              { stageKey: 'RESOLVED', displayName: 'Resuelto', sortOrder: 3, allowedNextStageKeys: [], reportingFlags: { terminal: true } },
+            ],
+          }, token);
+          pipeline = await activateAndEnable('/api/v1/admin/pipelines', pipeline);
+          await request('POST', '/api/v1/admin/pipelines', {
+            key: 'qa.renewal.review.flow', consumerType: 'RENEWAL', displayName: 'Revisión de renovaciones QA', sourceClassification: 'SYNTHETIC_QA',
+            stages: [
+              { stageKey: 'PENDING_REVIEW', displayName: 'Pendiente', sortOrder: 1, allowedNextStageKeys: ['REVIEWED'], reportingFlags: { pending: true } },
+              { stageKey: 'REVIEWED', displayName: 'Revisada', sortOrder: 2, allowedNextStageKeys: [], reportingFlags: { terminal: true } },
+            ],
+          }, token);
+          const seed = {
+            automationDefinitionId: automation.definitionId,
+            automationDisplayName: automation.displayName,
+            pipelineDefinitionId: pipeline.definitionId,
+            pipelineDisplayName: pipeline.displayName,
+          };
+          fs.writeFileSync('.runtime/task9-visual/seed.json', JSON.stringify(seed, null, 2));
+          console.log(JSON.stringify({ event: 'R3_TASK9_VISUAL_SEED_READY', ...seed }));
+          NODE
+
+      - name: Capture Task 9 desktop and 390px visual evidence
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          out = Path('.runtime/task9-visual')
+          seed = json.loads((out / 'seed.json').read_text())
+          target_sha = os.environ['REVIEW_TARGET_SHA']
+
+          options = webdriver.ChromeOptions()
+          for arg in ('--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--force-device-scale-factor=1'):
+              options.add_argument(arg)
+          options.add_argument('--window-size=1440,1100')
+          options.binary_location = os.environ['BROWSER_BIN']
+          driver = webdriver.Chrome(options=options)
+          wait = WebDriverWait(driver, 20)
+          captures = []
+
+          def spa_navigate(route):
+              driver.execute_script("window.history.pushState({}, '', arguments[0]); window.dispatchEvent(new PopStateEvent('popstate'));", route)
+              wait.until(lambda d: d.current_url.startswith(base + route))
+
+          def metrics():
+              return driver.execute_script('''
+                const root = document.documentElement;
+                return {
+                  clientWidth: root.clientWidth,
+                  scrollWidth: root.scrollWidth,
+                  scrollHeight: Math.max(root.scrollHeight, document.body.scrollHeight),
+                  h1Count: document.querySelectorAll('h1').length,
+                  bodyText: document.body.innerText
+                };
+              ''')
+
+          def capture(name, route, width, marker, required_text, surface=None, primary=None):
+              driver.set_window_size(width, 1000)
+              spa_navigate(route)
+              try:
+                  wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, marker)))
+                  wait.until(lambda d: required_text in d.find_element(By.TAG_NAME, 'body').text)
+              except Exception:
+                  debug_path = out / f'{name}-{width}-debug.png'
+                  driver.save_screenshot(str(debug_path))
+                  print(json.dumps({'event': 'VISUAL_WAIT_FAILURE', 'name': name, 'width': width, 'url': driver.current_url, 'body': driver.find_element(By.TAG_NAME, 'body').text[:2000]}))
+                  raise
+              time.sleep(.35)
+              m = metrics()
+              overflow = m['scrollWidth'] - m['clientWidth']
+              assert overflow <= 2, f'{name}: horizontal overflow at {width}px = {overflow}px'
+              assert m['h1Count'] == 1, f'{name}: expected one h1 at {width}px, got {m["h1Count"]}'
+              assert required_text in m['bodyText'], f'{name}: missing expected content {required_text}'
+              if primary:
+                  primary_nodes = driver.find_elements(By.CSS_SELECTOR, primary)
+                  assert primary_nodes, f'{name}: no primary action found for {primary}'
+                  assert primary_nodes[0].rect['height'] >= 43, f'{name}: primary action below 44px target: {primary_nodes[0].rect}'
+              if surface:
+                  surfaces = driver.find_elements(By.CSS_SELECTOR, surface)
+                  assert surfaces, f'{name}: no R3 surface found for {surface}'
+                  style = driver.execute_script('''
+                    const s = getComputedStyle(arguments[0]);
+                    return { background: s.backgroundColor, radius: s.borderRadius };
+                  ''', surfaces[0])
+                  assert style['background'] == 'rgb(255, 255, 255)', f'{name}: expected white surface, got {style}'
+                  assert style['radius'] == '12px', f'{name}: expected 12px radius, got {style}'
+              height = min(max(int(m['scrollHeight']) + 40, 1000), 7000)
+              driver.set_window_size(width, height)
+              time.sleep(.2)
+              driver.execute_script('window.scrollTo(0, 0)')
+              path = out / f'{name}-{width}.png'
+              assert driver.save_screenshot(str(path))
+              captures.append({'name': name, 'route': route, 'width': width, 'height': height, 'horizontal_overflow_px': overflow, 'h1_count': m['h1Count'], 'file': str(path)})
+
+          try:
+              driver.get(base + '/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-login'))).send_keys(os.environ['QA_ADMIN_LOGIN'])
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-password'))).send_keys(os.environ['QA_OPERATOR_PASSWORD'])
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
+              wait.until(lambda d: d.current_url.startswith(base + '/operator/workspace'))
+
+              scenarios = [
+                  ('automation-directory', '/operator/admin/automations', '.aa-definition-card', seed['automationDisplayName'], '.aa-definition-card', '.aa-primary-button'),
+                  ('automation-detail', f"/operator/admin/automations/{seed['automationDefinitionId']}", '.aa-version-card', 'CUANDO', '.aa-version-card', '.aa-primary-button'),
+                  ('automation-create', '/operator/admin/automations/new', '.aa-editor-section', 'Crear automatización', None, '.aa-primary-button'),
+                  ('pipeline-directory', '/operator/admin/pipelines', '.pipeline-definition-card', seed['pipelineDisplayName'], '.pipeline-definition-card', '.pipeline-primary-button'),
+                  ('pipeline-detail', f"/operator/admin/pipelines/{seed['pipelineDefinitionId']}", '.pipeline-version-card', 'Recibido', '.pipeline-version-card', '.pipeline-primary-button'),
+                  ('pipeline-create', '/operator/admin/pipelines/new', '.pipeline-stage-editor-card', 'Nuevo pipeline', None, '.pipeline-primary-button'),
+              ]
+              for name, route, marker, required, surface, primary in scenarios:
+                  capture(name, route, 1440, marker, required, surface, primary)
+                  capture(name, route, 390, marker, required, surface, primary)
+
+              manifest = {
+                  'target_sha': target_sha,
+                  'seed': seed,
+                  'captures': captures,
+                  'assertions': {
+                      'max_horizontal_overflow_px': 2,
+                      'expected_h1_count': 1,
+                      'minimum_primary_action_height_px': 43,
+                      'directory_and_detail_surface': 'white / 12px radius',
+                  },
+              }
+              (out / 'manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
+              print(json.dumps(manifest, indent=2, ensure_ascii=False))
+          finally:
+              driver.quit()
+          PY
+
+      - name: Upload exact-head Task 9 visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-task9-visual-${{ env.REVIEW_TARGET_SHA }}
+          path: |
+            .runtime/task9-visual/**
+            .runtime/task9-*.log
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
