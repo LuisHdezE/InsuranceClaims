@@ -20,7 +20,7 @@ type FormState = {
   title: string;
   description: string;
   priority: ClaimTaskPriority;
-  assignedOperatorId: string;
+  assignToMe: boolean;
   dueAt: string;
 };
 
@@ -29,7 +29,7 @@ const INITIAL: FormState = {
   title: '',
   description: '',
   priority: 'NORMAL',
-  assignedOperatorId: '',
+  assignToMe: false,
   dueAt: '',
 };
 
@@ -47,9 +47,9 @@ export function ClaimTaskCreateForm({ claimId, onCreated }: { claimId: string; o
     description: form.description.trim() || null,
     priority: form.priority,
     queue: 'CLAIMS',
-    assignedOperatorId: form.assignedOperatorId.trim() || null,
+    assignedOperatorId: form.assignToMe ? session?.operator.id ?? null : null,
     dueAt: form.dueAt ? new Date(form.dueAt).toISOString() : null,
-  }), [form]);
+  }), [form, session?.operator.id]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -61,7 +61,7 @@ export function ClaimTaskCreateForm({ claimId, onCreated }: { claimId: string; o
     },
     onSuccess: async (result) => {
       setFailure(null);
-      setSuccess(result.idempotencyReplayed ? 'La solicitud ya había sido procesada; mostramos la Task persistida.' : 'Task creada correctamente.');
+      setSuccess(result.idempotencyReplayed ? 'La solicitud ya había sido procesada; mostramos la tarea persistida.' : 'Tarea creada correctamente.');
       idempotency.current = null;
       setForm(INITIAL);
       await Promise.all([
@@ -93,7 +93,7 @@ export function ClaimTaskCreateForm({ claimId, onCreated }: { claimId: string; o
     >
       <div className="r3-create-task-heading">
         <div>
-          <span className="ops-kicker">Nueva Task</span>
+          <span className="ops-kicker">Nueva tarea</span>
           <strong>Agregar trabajo operativo</strong>
         </div>
         <span className="r3-idempotency-badge">Idempotente</span>
@@ -124,11 +124,18 @@ export function ClaimTaskCreateForm({ claimId, onCreated }: { claimId: string; o
           <span>Descripción opcional</span>
           <textarea value={form.description} maxLength={1000} rows={3} placeholder="Contexto operativo, sin inventar decisiones de negocio" onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} />
         </label>
-        <label>
-          <span>Asignar a operator ID</span>
-          <input value={form.assignedOperatorId} placeholder="UUID o vacío" onChange={(event) => setForm((current) => ({ ...current, assignedOperatorId: event.target.value }))} />
-          <button className="r3-inline-link" type="button" onClick={() => setForm((current) => ({ ...current, assignedOperatorId: session.operator.id }))}>Asignarme</button>
-        </label>
+        <div className="r3-task-assignment-choice">
+          <span>Asignación</span>
+          <button
+            className={`r3-secondary-action ${form.assignToMe ? 'is-selected' : ''}`}
+            type="button"
+            aria-pressed={form.assignToMe}
+            onClick={() => setForm((current) => ({ ...current, assignToMe: !current.assignToMe }))}
+          >
+            {form.assignToMe ? 'Asignada a ti ✓' : 'Asignarme'}
+          </button>
+          <small>Otros operadores requieren un directorio canónico que este contrato todavía no expone.</small>
+        </div>
         <label>
           <span>Vencimiento</span>
           <input type="datetime-local" value={form.dueAt} onChange={(event) => setForm((current) => ({ ...current, dueAt: event.target.value }))} />
@@ -138,7 +145,7 @@ export function ClaimTaskCreateForm({ claimId, onCreated }: { claimId: string; o
       <div className="r3-task-form-actions">
         <small>La misma solicitud conserva su Idempotency-Key ante un retry incierto; si cambian los datos se genera una nueva clave.</small>
         <button className="ops-primary-action" type="submit" disabled={mutation.isPending || !form.title.trim()}>
-          {mutation.isPending ? 'Creando…' : 'Crear Task'}
+          {mutation.isPending ? 'Creando…' : 'Crear tarea'}
         </button>
       </div>
     </form>

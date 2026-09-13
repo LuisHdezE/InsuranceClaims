@@ -7,6 +7,7 @@ import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
+import '../r3-ui-increment-06.css';
 
 export function OperatorRenewalsPage() {
   const { session, signOut } = useOperatorSession();
@@ -29,26 +30,27 @@ export function OperatorRenewalsPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main renewal-main">
-        <div className="ops-page-heading renewal-page-heading">
+      <main className="operator-main ops-main renewal-main r3-renewals-directory">
+        <div className="ops-page-heading r3-case-page-heading">
           <div>
             <span className="ops-kicker">Policy Lifecycle</span>
             <h1>Renovaciones</h1>
-            <p>Casos R3 autoritativos con cliente, póliza, lifecycle y pipeline operativo independientes. La API actual solo expone paginación para este listado.</p>
+            <p>Casos de renovación con lifecycle y pipeline operativo separados. La bandeja usa exclusivamente la proyección publicada por la API R3.</p>
           </div>
-          <div className="renewal-heading-summary">
+          <div className="r3-case-heading-summary" aria-label="Resumen del listado">
             <span>Resultado R3</span>
             <strong>{result ? `${result.totalItems} caso(s)` : '—'}</strong>
+            <small>25 por página · sin filtros simulados</small>
           </div>
         </div>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
 
-        <section className="ops-panel renewal-list-panel" aria-labelledby="renewals-list-title">
+        <section className="ops-panel r3-case-list-panel" aria-labelledby="renewals-list-title">
           <div className="ops-panel-heading">
             <div>
               <h2 id="renewals-list-title">Bandeja de renovaciones</h2>
-              <p>No se agregan filtros simulados: la superficie respeta exactamente el contrato de listado R3.</p>
+              <p>Cliente, póliza, lifecycle y etapa operativa provienen del servidor.</p>
             </div>
             <button className="ops-refresh-button" type="button" disabled={renewalsQuery.isFetching} onClick={() => void renewalsQuery.refetch()}>
               {renewalsQuery.isFetching ? 'Actualizando…' : 'Actualizar'}
@@ -60,16 +62,16 @@ export function OperatorRenewalsPage() {
           ) : items.length === 0 ? (
             <div className="ops-compact-empty">No hay casos de renovación en la página actual.</div>
           ) : (
-            <div className="renewal-table-wrap">
-              <table className="renewal-table">
+            <div className="r3-case-table-wrap">
+              <table className="r3-case-table">
                 <thead>
-                  <tr><th>Cliente</th><th>Póliza</th><th>Lifecycle</th><th>Pipeline</th><th>Versión</th><th>Actualizado</th><th /></tr>
+                  <tr><th>Cliente</th><th>Póliza</th><th>Lifecycle</th><th>Etapa operativa</th><th>Actualizado</th><th /></tr>
                 </thead>
                 <tbody>
                   {items.map((item) => (
                     <tr key={item.renewalId}>
                       <td data-label="Cliente">
-                        <Link className="renewal-primary-link" to={`/operator/renewals/${item.renewalId}`}>{item.customer?.displayName ?? 'Cliente no resuelto'}</Link>
+                        <Link className="r3-case-primary-link" to={`/operator/renewals/${item.renewalId}`}>{item.customer?.displayName ?? 'Cliente no resuelto'}</Link>
                         <small>{item.customer?.customerRef ?? item.customerId}</small>
                       </td>
                       <td data-label="Póliza">
@@ -77,13 +79,9 @@ export function OperatorRenewalsPage() {
                         <small>{item.policy?.insurerReference ?? 'Sin referencia de aseguradora'}</small>
                       </td>
                       <td data-label="Lifecycle"><RenewalStatus value={item.status} /></td>
-                      <td data-label="Pipeline">
-                        <span className="renewal-stage">{item.pipeline?.currentStage?.displayName ?? 'Sin work item'}</span>
-                        {item.pipeline?.currentStage && <small><code>{item.pipeline.currentStage.stageKey}</code></small>}
-                      </td>
-                      <td data-label="Versión">v{item.version}{item.pipeline ? ` · p${item.pipeline.version}` : ''}</td>
-                      <td data-label="Actualizado">{formatDateTime(item.updatedAt)}</td>
-                      <td data-label="Acción"><Link className="renewal-row-action" to={`/operator/renewals/${item.renewalId}`}>Abrir caso →</Link></td>
+                      <td data-label="Etapa operativa"><span className="r3-case-stage">{item.pipeline?.currentStage?.displayName ?? 'Sin work item'}</span></td>
+                      <td data-label="Actualizado"><time dateTime={item.updatedAt}>{formatDateTime(item.updatedAt)}</time></td>
+                      <td data-label="Acción"><Link className="r3-case-row-action" to={`/operator/renewals/${item.renewalId}`}>Abrir caso →</Link></td>
                     </tr>
                   ))}
                 </tbody>
@@ -92,7 +90,7 @@ export function OperatorRenewalsPage() {
           )}
 
           {result && result.totalPages > 1 && (
-            <div className="renewal-pagination" aria-label="Paginación de renovaciones">
+            <div className="r3-case-pagination" aria-label="Paginación de renovaciones">
               <button type="button" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>← Anterior</button>
               <span>Página <strong>{result.page}</strong> de {result.totalPages}</span>
               <button type="button" disabled={page >= result.totalPages} onClick={() => setPage((value) => Math.min(result.totalPages, value + 1))}>Siguiente →</button>
@@ -106,7 +104,7 @@ export function OperatorRenewalsPage() {
 
 function RenewalStatus({ value }: { value: RenewalCaseStatus }) {
   const labels: Record<RenewalCaseStatus, string> = { OPEN: 'Abierta', COMPLETED: 'Completada', CANCELLED: 'Cancelada' };
-  return <span className={`renewal-status is-${value.toLowerCase()}`}>{labels[value]}</span>;
+  return <span className={`r3-case-status is-${value.toLowerCase()}`}>{labels[value]}</span>;
 }
 
 function formatDateTime(value: string) {

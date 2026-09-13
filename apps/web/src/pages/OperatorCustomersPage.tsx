@@ -7,6 +7,7 @@ import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
+import '../r3-ui-increment-04.css';
 
 export function OperatorCustomersPage() {
   const { session, signOut } = useOperatorSession();
@@ -32,12 +33,12 @@ export function OperatorCustomersPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main cp360-main">
+      <main className="operator-main ops-main cp360-main r3-customer-directory">
         <div className="ops-page-heading cp360-page-heading">
           <div>
-            <span className="ops-kicker">Customer 360</span>
+            <span className="ops-kicker">Clientes · Directorio</span>
             <h1>Clientes</h1>
-            <p>Directorio R3 autoritativo con referencias modernas, estado y volumen relacionado. La interfaz no agrega datos personales que el contrato no expone.</p>
+            <p>Directorio autoritativo para buscar y seleccionar clientes. El detalle y sus relaciones viven en Cliente 360.</p>
           </div>
           <Link className="cp360-switch-link" to="/operator/policies">Ver pólizas →</Link>
         </div>
@@ -67,16 +68,17 @@ export function OperatorCustomersPage() {
               <option value="INACTIVE">Inactivos</option>
             </select>
           </label>
-          <div className="cp360-result-summary">
+          <div className="cp360-result-summary" aria-live="polite">
             <span>Resultado R3</span>
             <strong>{result ? `${result.totalItems} cliente(s)` : '—'}</strong>
+            <small>Búsqueda y filtros server-side</small>
             {(search || status) && <button type="button" onClick={() => { setDraftSearch(''); setSearch(''); setStatus(''); setPage(1); }}>Restablecer</button>}
           </div>
         </section>
 
         <section className="ops-panel cp360-list-panel" aria-labelledby="customers-list-title">
           <div className="ops-panel-heading">
-            <div><h2 id="customers-list-title">Directorio de clientes</h2><p>Búsqueda y estado se resuelven en el servidor; no se simulan filtros globales en el navegador.</p></div>
+            <div><h2 id="customers-list-title">Directorio de clientes</h2><p>25 por página · filtros resueltos por el servidor.</p></div>
             <button className="ops-refresh-button" type="button" disabled={customersQuery.isFetching} onClick={() => void customersQuery.refetch()}>{customersQuery.isFetching ? 'Actualizando…' : 'Actualizar'}</button>
           </div>
 
@@ -96,7 +98,7 @@ export function OperatorCustomersPage() {
                       <td data-label="Estado"><StatusBadge value={customer.status} /></td>
                       <td data-label="Pólizas"><strong>{customer.policyCount}</strong></td>
                       <td data-label="Claims"><strong>{customer.claimCount}</strong></td>
-                      <td data-label="Versión">v{customer.version}</td>
+                      <td data-label="Versión"><span className="r3-customer-version">v{customer.version}</span></td>
                       <td data-label="Acción"><Link className="cp360-row-action" to={`/operator/customers/${customer.customerId}`}>Abrir 360 →</Link></td>
                     </tr>
                   ))}

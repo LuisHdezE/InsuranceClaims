@@ -1,0 +1,221 @@
+/* R3 UI Increment 07: Analytics + Staff Workspace
+ * Presentation-only alignment with the approved R3 references.
+ * No business data or authorization is synthesized by these styles.
+ */
+
+.r3-increment-07-workspace {
+  gap: 18px;
+}
+
+.r3-increment-07-workspace .r3-workspace-launchpad-hero {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 24px 26px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(11, 36, 64, .055);
+}
+
+.r3-increment-07-workspace .r3-workspace-launchpad-hero::after {
+  display: none;
+}
+
+.r3-increment-07-workspace .r3-workspace-launchpad-hero h1 {
+  margin: 4px 0 7px;
+  font-size: clamp(28px, 3vw, 36px);
+  line-height: 1.08;
+}
+
+.r3-increment-07-workspace .r3-workspace-launchpad-hero p {
+  max-width: 840px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.r3-increment-07-workspace .r3-workspace-meta {
+  margin-top: 16px;
+}
+
+.r3-workspace-role-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #efd69a;
+  border-radius: 10px;
+  background: #fff8e8;
+  color: #5f4b1d;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.r3-workspace-role-note::before {
+  content: "i";
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #d89a16;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.r3-workspace-groups {
+  display: grid;
+  gap: 20px;
+}
+
+.r3-workspace-group {
+  display: grid;
+  gap: 11px;
+  min-width: 0;
+}
+
+.r3-workspace-group-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5ebf2;
+}
+
+.r3-workspace-group-heading h2 {
+  margin: 0;
+  color: #66778d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+
+.r3-workspace-group-heading p {
+  max-width: 560px;
+  margin: 0;
+  color: var(--ops-muted);
+  font-size: 9px;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.r3-increment-07-workspace .r3-capability-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.r3-increment-07-workspace .r3-capability-card {
+  min-height: 164px;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 7px 22px rgba(11, 36, 64, .04);
+}
+
+.r3-increment-07-workspace .r3-capability-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.r3-increment-07-workspace .r3-capability-copy h3 {
+  margin: 4px 0 5px;
+  font-size: 14px;
+}
+
+.r3-increment-07-workspace .r3-capability-copy p {
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.r3-increment-07-workspace .r3-capability-footer {
+  min-height: 24px;
+  justify-content: flex-start;
+  padding-top: 9px;
+}
+
+.r3-increment-07-workspace .r3-capability-footer strong {
+  font-size: 9px;
+}
+
+.r3-increment-07-workspace .r3-contract-strip {
+  border-color: #d8e4f0;
+  background: #eef5fc;
+  color: var(--ops-ink);
+}
+
+.r3-increment-07-workspace .r3-contract-strip div + div {
+  border-left-color: #d8e4f0;
+}
+
+.r3-increment-07-workspace .r3-contract-strip span {
+  color: #66778d;
+}
+
+.r3-increment-07-analytics .r3-canonical-kpis {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.r3-increment-07-analytics .ops-kpi-card {
+  min-width: 0;
+  min-height: 112px;
+}
+
+.r3-increment-07-analytics .claims-analytics-note {
+  border-color: #efd69a;
+  background: #fff8e8;
+}
+
+.r3-increment-07-analytics .claims-analytics-grid {
+  align-items: start;
+}
+
+@media (max-width: 1180px) {
+  .r3-increment-07-workspace .r3-capability-grid,
+  .r3-increment-07-analytics .r3-canonical-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .r3-increment-07-workspace .r3-capability-grid,
+  .r3-increment-07-analytics .r3-canonical-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .r3-workspace-group-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .r3-workspace-group-heading p {
+    max-width: none;
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .r3-increment-07-workspace .r3-workspace-launchpad-hero {
+    padding: 19px 17px;
+  }
+
+  .r3-increment-07-workspace .r3-capability-card {
+    min-height: 146px;
+    padding: 13px;
+  }
+
+  .r3-increment-07-workspace .r3-contract-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-increment-07-workspace .r3-contract-strip div + div {
+    border-left: 0;
+    border-top: 1px solid #d8e4f0;
+  }
+}

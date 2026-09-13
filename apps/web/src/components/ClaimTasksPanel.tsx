@@ -67,7 +67,7 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
           <span className="ops-count-pill">{openCount} abierta(s)</span>
           {canManage && (
             <button className="ops-refresh-button" type="button" onClick={() => setCreating((value) => !value)}>
-              {creating ? 'Cerrar formulario' : '+ Nueva Task'}
+              {creating ? 'Cerrar formulario' : '+ Nueva tarea'}
             </button>
           )}
         </div>
@@ -89,8 +89,8 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
               </span>
               <div className="ops-task-main-copy">
                 <Link className="r3-task-title-link" to={`/operator/tasks/${task.taskId}`}><strong>{task.title}</strong></Link>
-                <span>{taskTypeLabel(task.type)} · {task.priority === 'HIGH' ? 'Prioridad alta' : 'Prioridad normal'} · v{task.version}</span>
-                <small>{task.dueAt ? `Vence ${formatDate(task.dueAt)}` : 'Sin vencimiento definido'} · {task.assignedOperatorId ? `Asignada ${shortId(task.assignedOperatorId)}` : 'Sin asignar'}</small>
+                <span>{taskTypeLabel(task.type)} · {task.priority === 'HIGH' ? 'Prioridad alta' : 'Prioridad normal'}</span>
+                <small>{task.dueAt ? `Vence ${formatDate(task.dueAt)}` : 'Sin vencimiento definido'} · {assignmentLabel(task, session.operator.id)}</small>
               </div>
               <TaskStatusBadge status={task.status} />
               <div className="r3-task-row-actions">
@@ -126,6 +126,7 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('es-UY', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 }
 
-function shortId(value: string) {
-  return value.length > 12 ? `${value.slice(0, 8)}…` : value;
+function assignmentLabel(task: ClaimTaskProjection, operatorId: string) {
+  if (!task.assignedOperatorId) return 'Sin asignar';
+  return task.assignedOperatorId === operatorId ? 'Asignada a ti' : 'Asignada a otro operador';
 }
