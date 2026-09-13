@@ -1,0 +1,1045 @@
+/* R3 Increment 09: Communication Templates + Custom Fields + Guidance
+ * Capability-scoped visual rationalization only.
+ * Business data, permissions, version lifecycle and concurrency remain API-authoritative.
+ */
+
+.r3-ui-shell .comm-admin-main,
+.r3-ui-shell .cf-admin-main,
+.r3-ui-shell .guidance-admin-main {
+  --r3-config-primary: #0f5fcc;
+  --r3-config-navy: #0b1830;
+  --r3-config-bg: #f6f9fc;
+  --r3-config-panel: #fff;
+  --r3-config-text: #172033;
+  --r3-config-muted: #667085;
+  --r3-config-border: #d6dee8;
+  --r3-config-success: #1f9d55;
+  --r3-config-warning: #b77900;
+  --r3-config-danger: #d64545;
+  --r3-config-info: #2f80ed;
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+  color: var(--r3-config-text);
+}
+
+.r3-ui-shell .comm-admin-main .ops-page-heading,
+.r3-ui-shell .cf-admin-main .ops-page-heading,
+.r3-ui-shell .guidance-admin-main .ops-page-heading {
+  align-items: flex-start;
+  gap: 16px;
+  margin: 0;
+}
+
+.r3-ui-shell .comm-admin-main .ops-page-heading h1,
+.r3-ui-shell .cf-admin-main .ops-page-heading h1,
+.r3-ui-shell .guidance-admin-main .ops-page-heading h1,
+.r3-ui-shell .comm-admin-hero h1,
+.r3-ui-shell .cf-admin-hero h1,
+.r3-ui-shell .guidance-admin-hero h1,
+.r3-ui-shell .comm-form-hero h1,
+.r3-ui-shell .cf-editor-hero h1,
+.r3-ui-shell .guidance-form-hero h1 {
+  margin: 3px 0 5px;
+  color: var(--r3-config-text);
+  font-size: clamp(25px, 2.2vw, 34px);
+  line-height: 1.08;
+  letter-spacing: -.025em;
+}
+
+.r3-ui-shell .comm-admin-main .ops-page-heading p,
+.r3-ui-shell .cf-admin-main .ops-page-heading p,
+.r3-ui-shell .guidance-admin-main .ops-page-heading p,
+.r3-ui-shell .comm-form-hero p,
+.r3-ui-shell .cf-editor-hero p,
+.r3-ui-shell .guidance-form-hero p {
+  max-width: 790px;
+  margin: 0;
+  color: var(--r3-config-muted);
+  line-height: 1.55;
+}
+
+/* Shared panels */
+.r3-ui-shell .comm-admin-main .ops-panel,
+.r3-ui-shell .cf-admin-main .ops-panel,
+.r3-ui-shell .guidance-admin-main .ops-panel,
+.r3-ui-shell .comm-admin-hero,
+.r3-ui-shell .cf-admin-hero,
+.r3-ui-shell .guidance-admin-hero,
+.r3-ui-shell .cf-contract-strip,
+.r3-ui-shell .guidance-contract-strip,
+.r3-ui-shell .guidance-admin-actions {
+  border: 1px solid var(--r3-config-border);
+  border-radius: 12px;
+  background: var(--r3-config-panel);
+  box-shadow: 0 8px 24px rgba(11, 24, 48, .045);
+}
+
+.r3-ui-shell .comm-admin-main .ops-panel,
+.r3-ui-shell .cf-admin-main .ops-panel,
+.r3-ui-shell .guidance-admin-main .ops-panel {
+  padding: 16px;
+}
+
+.r3-ui-shell .comm-admin-main .ops-panel-heading,
+.r3-ui-shell .cf-admin-main .ops-panel-heading,
+.r3-ui-shell .guidance-admin-main .ops-panel-heading {
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.r3-ui-shell .comm-admin-main .ops-panel-heading h2,
+.r3-ui-shell .cf-admin-main .ops-panel-heading h2,
+.r3-ui-shell .guidance-admin-main .ops-panel-heading h2 {
+  color: var(--r3-config-text);
+  font-size: 16px;
+}
+
+.r3-ui-shell .comm-admin-main .ops-panel-heading p,
+.r3-ui-shell .cf-admin-main .ops-panel-heading p,
+.r3-ui-shell .guidance-admin-main .ops-panel-heading p {
+  color: var(--r3-config-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Buttons and links */
+.r3-ui-shell .comm-primary-button,
+.r3-ui-shell .cf-primary-button,
+.r3-ui-shell .guidance-primary-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 15px;
+  border: 1px solid var(--r3-config-primary);
+  border-radius: 8px;
+  background: var(--r3-config-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 7px 16px rgba(15, 95, 204, .13);
+}
+
+.r3-ui-shell .comm-secondary-button,
+.r3-ui-shell .comm-pagination button,
+.r3-ui-shell .cf-secondary-button,
+.r3-ui-shell .cf-pagination button,
+.r3-ui-shell .guidance-pagination button,
+.r3-ui-shell .guidance-editor-section-heading button,
+.r3-ui-shell .cf-editor-heading button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 13px;
+  border: 1px solid var(--r3-config-border);
+  border-radius: 8px;
+  background: #fff;
+  color: #344054;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.r3-ui-shell .comm-primary-button:hover,
+.r3-ui-shell .cf-primary-button:hover,
+.r3-ui-shell .guidance-primary-button:hover,
+.r3-ui-shell .comm-secondary-button:hover,
+.r3-ui-shell .cf-secondary-button:hover,
+.r3-ui-shell .comm-pagination button:hover:not(:disabled),
+.r3-ui-shell .cf-pagination button:hover:not(:disabled),
+.r3-ui-shell .guidance-pagination button:hover:not(:disabled) {
+  filter: none;
+  transform: none;
+  border-color: #9dbbe2;
+}
+
+.r3-ui-shell .comm-primary-button:hover,
+.r3-ui-shell .cf-primary-button:hover,
+.r3-ui-shell .guidance-primary-button:hover {
+  border-color: #0c4fa9;
+  background: #0c4fa9;
+}
+
+.r3-ui-shell .comm-primary-button:focus-visible,
+.r3-ui-shell .comm-secondary-button:focus-visible,
+.r3-ui-shell .comm-state-button:focus-visible,
+.r3-ui-shell .comm-activate-button:focus-visible,
+.r3-ui-shell .comm-remove-button:focus-visible,
+.r3-ui-shell .comm-pagination button:focus-visible,
+.r3-ui-shell .comm-card-link:focus-visible,
+.r3-ui-shell .cf-primary-button:focus-visible,
+.r3-ui-shell .cf-secondary-button:focus-visible,
+.r3-ui-shell .cf-state-button:focus-visible,
+.r3-ui-shell .cf-activate-button:focus-visible,
+.r3-ui-shell .cf-pagination button:focus-visible,
+.r3-ui-shell .cf-definition-card:focus-visible,
+.r3-ui-shell .cf-editor-heading button:focus-visible,
+.r3-ui-shell .guidance-primary-button:focus-visible,
+.r3-ui-shell .guidance-state-button:focus-visible,
+.r3-ui-shell .guidance-activate-button:focus-visible,
+.r3-ui-shell .guidance-pagination button:focus-visible,
+.r3-ui-shell .guidance-definition-card:focus-visible,
+.r3-ui-shell .guidance-editor-section-heading button:focus-visible,
+.r3-ui-shell .comm-admin-main input:focus-visible,
+.r3-ui-shell .comm-admin-main select:focus-visible,
+.r3-ui-shell .comm-admin-main textarea:focus-visible,
+.r3-ui-shell .cf-admin-main input:focus-visible,
+.r3-ui-shell .cf-admin-main select:focus-visible,
+.r3-ui-shell .cf-admin-main textarea:focus-visible,
+.r3-ui-shell .guidance-admin-main input:focus-visible,
+.r3-ui-shell .guidance-admin-main select:focus-visible,
+.r3-ui-shell .guidance-admin-main textarea:focus-visible {
+  outline: 3px solid rgba(15, 95, 204, .18);
+  outline-offset: 2px;
+  border-color: var(--r3-config-primary);
+}
+
+.r3-ui-shell .comm-primary-button:disabled,
+.r3-ui-shell .comm-secondary-button:disabled,
+.r3-ui-shell .comm-state-button:disabled,
+.r3-ui-shell .comm-activate-button:disabled,
+.r3-ui-shell .comm-remove-button:disabled,
+.r3-ui-shell .comm-pagination button:disabled,
+.r3-ui-shell .cf-primary-button:disabled,
+.r3-ui-shell .cf-state-button:disabled,
+.r3-ui-shell .cf-activate-button:disabled,
+.r3-ui-shell .cf-pagination button:disabled,
+.r3-ui-shell .guidance-primary-button:disabled,
+.r3-ui-shell .guidance-state-button:disabled,
+.r3-ui-shell .guidance-activate-button:disabled,
+.r3-ui-shell .guidance-pagination button:disabled {
+  opacity: .52;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Breadcrumbs and secondary technical identifiers */
+.r3-ui-shell .comm-breadcrumbs,
+.r3-ui-shell .cf-breadcrumbs,
+.r3-ui-shell .guidance-breadcrumbs {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  color: var(--r3-config-muted);
+  font-size: 11px;
+}
+
+.r3-ui-shell .comm-breadcrumbs a,
+.r3-ui-shell .cf-breadcrumbs a,
+.r3-ui-shell .guidance-breadcrumbs a,
+.r3-ui-shell .comm-card-link,
+.r3-ui-shell .cf-card-link,
+.r3-ui-shell .guidance-card-link {
+  color: var(--r3-config-primary);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.r3-ui-shell .comm-template-card > code,
+.r3-ui-shell .comm-version-card code,
+.r3-ui-shell .comm-admin-hero-meta code,
+.r3-ui-shell .cf-version-card-heading code,
+.r3-ui-shell .cf-admin-hero-meta code,
+.r3-ui-shell .guidance-version-card-heading code,
+.r3-ui-shell .guidance-admin-hero-meta code {
+  color: #8792a2;
+  font-size: 10px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Contract strips */
+.r3-ui-shell .cf-contract-strip,
+.r3-ui-shell .guidance-contract-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.r3-ui-shell .cf-contract-strip > div,
+.r3-ui-shell .guidance-contract-strip > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  background: #fff;
+  border-right: 1px solid var(--r3-config-border);
+}
+
+.r3-ui-shell .cf-contract-strip > div:last-child,
+.r3-ui-shell .guidance-contract-strip > div:last-child {
+  border-right: 0;
+}
+
+.r3-ui-shell .cf-contract-strip strong,
+.r3-ui-shell .guidance-contract-strip strong {
+  color: var(--r3-config-muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.r3-ui-shell .cf-contract-strip span,
+.r3-ui-shell .guidance-contract-strip span {
+  color: var(--r3-config-text);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+/* Directory cards */
+.r3-ui-shell .comm-template-grid,
+.r3-ui-shell .cf-card-grid,
+.r3-ui-shell .guidance-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.r3-ui-shell .comm-template-card,
+.r3-ui-shell .cf-definition-card,
+.r3-ui-shell .guidance-definition-card {
+  min-width: 0;
+  display: grid;
+  gap: 11px;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid var(--r3-config-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--r3-config-text);
+  text-decoration: none;
+  box-shadow: 0 5px 16px rgba(11, 24, 48, .035);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.r3-ui-shell .comm-template-card:hover,
+.r3-ui-shell .cf-definition-card:hover,
+.r3-ui-shell .guidance-definition-card:hover {
+  transform: none;
+  border-color: #aac3e3;
+  box-shadow: 0 8px 20px rgba(11, 24, 48, .06);
+}
+
+.r3-ui-shell .comm-template-card h3,
+.r3-ui-shell .cf-definition-card h3,
+.r3-ui-shell .guidance-definition-card h3 {
+  margin: 0;
+  color: var(--r3-config-text);
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.r3-ui-shell .comm-template-card-top,
+.r3-ui-shell .comm-admin-hero-meta,
+.r3-ui-shell .cf-card-heading,
+.r3-ui-shell .cf-admin-hero-meta,
+.r3-ui-shell .guidance-card-heading,
+.r3-ui-shell .guidance-admin-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.r3-ui-shell .comm-channel,
+.r3-ui-shell .comm-enabled,
+.r3-ui-shell .comm-version-status,
+.r3-ui-shell .cf-target,
+.r3-ui-shell .cf-enabled,
+.r3-ui-shell .cf-version-status,
+.r3-ui-shell .cf-draft-badge,
+.r3-ui-shell .guidance-enabled,
+.r3-ui-shell .guidance-status,
+.r3-ui-shell .guidance-version-status {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  box-sizing: border-box;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  line-height: 1.15;
+}
+
+.r3-ui-shell .comm-channel.is-email,
+.r3-ui-shell .cf-target,
+.r3-ui-shell .guidance-status {
+  border-color: #c8dcf5;
+  background: #eef5ff;
+  color: #245b9e;
+}
+
+.r3-ui-shell .comm-channel.is-whatsapp,
+.r3-ui-shell .comm-enabled.is-enabled,
+.r3-ui-shell .cf-enabled.is-enabled,
+.r3-ui-shell .guidance-enabled.is-enabled,
+.r3-ui-shell .comm-version-status.is-active,
+.r3-ui-shell .cf-version-status.is-active,
+.r3-ui-shell .guidance-version-status.is-active {
+  border-color: #bfe2ce;
+  background: #edf8f2;
+  color: #176b3e;
+}
+
+.r3-ui-shell .comm-enabled.is-disabled,
+.r3-ui-shell .cf-enabled.is-disabled,
+.r3-ui-shell .guidance-enabled.is-disabled,
+.r3-ui-shell .comm-version-status.is-retired,
+.r3-ui-shell .cf-version-status.is-retired,
+.r3-ui-shell .guidance-version-status.is-retired {
+  border-color: #d9e0e8;
+  background: #f3f5f7;
+  color: #5f6b7a;
+}
+
+.r3-ui-shell .comm-version-status.is-draft,
+.r3-ui-shell .cf-version-status.is-draft,
+.r3-ui-shell .cf-draft-badge,
+.r3-ui-shell .guidance-version-status.is-draft {
+  border-color: #ecdba6;
+  background: #fff8df;
+  color: #725600;
+}
+
+.r3-ui-shell .cf-target.is-renewal {
+  border-color: #d9d2f5;
+  background: #f5f2ff;
+  color: #584b9b;
+}
+
+.r3-ui-shell .cf-target.is-collection {
+  border-color: #ead7bd;
+  background: #fff7ec;
+  color: #80581f;
+}
+
+.r3-ui-shell .comm-template-facts,
+.r3-ui-shell .cf-card-facts,
+.r3-ui-shell .guidance-card-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.r3-ui-shell .comm-template-facts span,
+.r3-ui-shell .cf-card-facts span,
+.r3-ui-shell .guidance-card-facts span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.r3-ui-shell .comm-template-facts small,
+.r3-ui-shell .cf-card-facts small,
+.r3-ui-shell .guidance-card-facts small {
+  color: var(--r3-config-muted);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .02em;
+}
+
+.r3-ui-shell .comm-template-facts strong,
+.r3-ui-shell .cf-card-facts strong,
+.r3-ui-shell .guidance-card-facts strong {
+  min-width: 0;
+  color: var(--r3-config-text);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+/* Pagination */
+.r3-ui-shell .comm-pagination,
+.r3-ui-shell .cf-pagination,
+.r3-ui-shell .guidance-pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  color: var(--r3-config-muted);
+  font-size: 11px;
+}
+
+/* Definition heroes */
+.r3-ui-shell .comm-admin-hero,
+.r3-ui-shell .cf-admin-hero,
+.r3-ui-shell .guidance-admin-hero {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px;
+  padding: 18px;
+}
+
+.r3-ui-shell .comm-admin-hero-version,
+.r3-ui-shell .cf-admin-hero-version,
+.r3-ui-shell .guidance-admin-hero-version {
+  min-width: 150px;
+  display: grid;
+  gap: 3px;
+  align-content: start;
+  padding-left: 18px;
+  border-left: 1px solid var(--r3-config-border);
+  text-align: right;
+}
+
+.r3-ui-shell .comm-admin-hero-version small,
+.r3-ui-shell .comm-admin-hero-version span,
+.r3-ui-shell .cf-admin-hero-version small,
+.r3-ui-shell .cf-admin-hero-version span,
+.r3-ui-shell .guidance-admin-hero-version small,
+.r3-ui-shell .guidance-admin-hero-version span {
+  color: var(--r3-config-muted);
+  font-size: 10px;
+}
+
+.r3-ui-shell .comm-admin-hero-version strong,
+.r3-ui-shell .cf-admin-hero-version strong,
+.r3-ui-shell .guidance-admin-hero-version strong {
+  color: var(--r3-config-text);
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+/* Governed actions */
+.r3-ui-shell .comm-admin-actions,
+.r3-ui-shell .cf-admin-actions,
+.r3-ui-shell .guidance-admin-actions {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 14px;
+  border: 1px solid var(--r3-config-border);
+  border-radius: 12px;
+  background: #fbfcfe;
+}
+
+.r3-ui-shell .comm-admin-actions > span,
+.r3-ui-shell .cf-admin-actions > span,
+.r3-ui-shell .guidance-admin-actions > span {
+  color: var(--r3-config-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.r3-ui-shell .comm-state-button,
+.r3-ui-shell .comm-activate-button,
+.r3-ui-shell .cf-state-button,
+.r3-ui-shell .cf-activate-button,
+.r3-ui-shell .guidance-state-button,
+.r3-ui-shell .guidance-activate-button {
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 13px;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.r3-ui-shell .comm-state-button.is-enable,
+.r3-ui-shell .comm-activate-button,
+.r3-ui-shell .cf-state-button.is-enable,
+.r3-ui-shell .cf-activate-button,
+.r3-ui-shell .guidance-state-button.is-enable,
+.r3-ui-shell .guidance-activate-button {
+  border: 1px solid #b8dec9;
+  background: #f2faf5;
+  color: #176b3e;
+}
+
+.r3-ui-shell .comm-state-button.is-disable,
+.r3-ui-shell .cf-state-button.is-disable,
+.r3-ui-shell .guidance-state-button.is-disable {
+  border: 1px solid #ecc7c7;
+  background: #fff6f6;
+  color: #a63838;
+}
+
+/* Version history */
+.r3-ui-shell .comm-version-list,
+.r3-ui-shell .cf-version-list,
+.r3-ui-shell .guidance-version-list {
+  display: grid;
+  gap: 11px;
+}
+
+.r3-ui-shell .comm-version-card,
+.r3-ui-shell .cf-version-card,
+.r3-ui-shell .guidance-version-card {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--r3-config-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.r3-ui-shell .comm-version-card.is-active,
+.r3-ui-shell .cf-version-card.is-active,
+.r3-ui-shell .guidance-version-card.is-active {
+  border-color: #a9c7ec;
+  box-shadow: inset 3px 0 0 var(--r3-config-primary);
+}
+
+.r3-ui-shell .comm-version-card-heading,
+.r3-ui-shell .cf-version-card-heading,
+.r3-ui-shell .guidance-version-card-heading {
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.r3-ui-shell .comm-version-card-heading h3,
+.r3-ui-shell .cf-version-card-heading h3,
+.r3-ui-shell .guidance-version-card-heading h3 {
+  margin: 6px 0 3px;
+  color: var(--r3-config-text);
+  font-size: 14px;
+}
+
+.r3-ui-shell .comm-version-facts,
+.r3-ui-shell .cf-version-facts,
+.r3-ui-shell .guidance-version-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.r3-ui-shell .comm-version-facts > div,
+.r3-ui-shell .cf-version-facts > div,
+.r3-ui-shell .guidance-version-facts > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.r3-ui-shell .comm-version-facts span,
+.r3-ui-shell .cf-version-facts span,
+.r3-ui-shell .guidance-version-facts span,
+.r3-ui-shell .comm-content-block > span,
+.r3-ui-shell .comm-variable-summary > span,
+.r3-ui-shell .cf-content-block > span,
+.r3-ui-shell .cf-token-summary > span,
+.r3-ui-shell .guidance-content-block > span,
+.r3-ui-shell .guidance-metadata-summary > span {
+  color: var(--r3-config-muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.r3-ui-shell .comm-version-facts strong,
+.r3-ui-shell .cf-version-facts strong,
+.r3-ui-shell .guidance-version-facts strong {
+  min-width: 0;
+  color: var(--r3-config-text);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.r3-ui-shell .comm-content-block,
+.r3-ui-shell .comm-variable-summary,
+.r3-ui-shell .cf-content-block,
+.r3-ui-shell .cf-token-summary,
+.r3-ui-shell .guidance-content-block,
+.r3-ui-shell .guidance-metadata-summary {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  padding: 10px 11px;
+  border: 1px solid #e7ecf2;
+  border-radius: 9px;
+  background: #fbfcfe;
+}
+
+.r3-ui-shell .comm-content-block pre {
+  margin: 0;
+  color: var(--r3-config-text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.r3-ui-shell .comm-variable-summary > div,
+.r3-ui-shell .cf-token-summary > div,
+.r3-ui-shell .guidance-metadata-summary > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.r3-ui-shell .comm-variable-summary code,
+.r3-ui-shell .cf-token-summary code,
+.r3-ui-shell .guidance-metadata-summary code {
+  max-width: 100%;
+  padding: 4px 6px;
+  border: 1px solid #dfe6ee;
+  border-radius: 6px;
+  background: #fff;
+  color: #475467;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.r3-ui-shell .guidance-content-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.r3-ui-shell .guidance-content-block ul,
+.r3-ui-shell .guidance-content-block ol {
+  margin: 0;
+  padding-left: 18px;
+  color: #344054;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Forms and editors */
+.r3-ui-shell .comm-admin-form,
+.r3-ui-shell .cf-editor-panel,
+.r3-ui-shell .cf-editor,
+.r3-ui-shell .guidance-admin-form,
+.r3-ui-shell .guidance-editor {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.r3-ui-shell .comm-form-grid,
+.r3-ui-shell .cf-form-grid,
+.r3-ui-shell .guidance-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.r3-ui-shell .comm-form-grid label,
+.r3-ui-shell .comm-variable-row label,
+.r3-ui-shell .cf-form-grid label,
+.r3-ui-shell .cf-field-full,
+.r3-ui-shell .cf-metadata-row label,
+.r3-ui-shell .guidance-key-field,
+.r3-ui-shell .guidance-editor-grid label {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  color: #344054;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.r3-ui-shell .comm-form-grid input,
+.r3-ui-shell .comm-form-grid select,
+.r3-ui-shell .comm-form-grid textarea,
+.r3-ui-shell .comm-variable-row input,
+.r3-ui-shell .comm-variable-row select,
+.r3-ui-shell .cf-form-grid input,
+.r3-ui-shell .cf-form-grid select,
+.r3-ui-shell .cf-field-full input,
+.r3-ui-shell .cf-field-full select,
+.r3-ui-shell .cf-field-full textarea,
+.r3-ui-shell .cf-metadata-row input,
+.r3-ui-shell .cf-metadata-row select,
+.r3-ui-shell .guidance-key-field input,
+.r3-ui-shell .guidance-editor-grid input,
+.r3-ui-shell .guidance-string-row input,
+.r3-ui-shell .guidance-string-row textarea,
+.r3-ui-shell .guidance-metadata-row input {
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--r3-config-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--r3-config-text);
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.r3-ui-shell .comm-form-grid textarea,
+.r3-ui-shell .cf-field-full textarea,
+.r3-ui-shell .guidance-string-row textarea {
+  min-height: 116px;
+  resize: vertical;
+}
+
+.r3-ui-shell .comm-form-grid small,
+.r3-ui-shell .cf-form-grid small,
+.r3-ui-shell .cf-field-full small,
+.r3-ui-shell .guidance-key-field small {
+  color: var(--r3-config-muted);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.r3-ui-shell .comm-form-wide,
+.r3-ui-shell .guidance-editor-wide {
+  grid-column: 1 / -1;
+}
+
+.r3-ui-shell .comm-variable-empty,
+.r3-ui-shell .cf-empty-inline,
+.r3-ui-shell .guidance-editor-empty {
+  padding: 13px;
+  border: 1px dashed #c8d3df;
+  border-radius: 9px;
+  background: #fbfcfe;
+  color: var(--r3-config-muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.r3-ui-shell .comm-variable-row,
+.r3-ui-shell .cf-metadata-row,
+.r3-ui-shell .guidance-metadata-row {
+  min-width: 0;
+}
+
+.r3-ui-shell .comm-form-actions,
+.r3-ui-shell .cf-editor-actions,
+.r3-ui-shell .guidance-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.r3-ui-shell .comm-client-error,
+.r3-ui-shell .cf-local-error,
+.r3-ui-shell .guidance-validation {
+  padding: 11px 13px;
+  border: 1px solid #efc1c1;
+  border-radius: 9px;
+  background: #fff5f5;
+  color: #9f3131;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Explanatory notes are visually secondary, never dashboard metrics. */
+.r3-ui-shell .comm-admin-contract-note,
+.r3-ui-shell .cf-admin-contract-note,
+.r3-ui-shell .guidance-admin-contract-note {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid #dbe4ef;
+  border-left: 3px solid #9bb8dc;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.r3-ui-shell .comm-admin-contract-note strong,
+.r3-ui-shell .cf-admin-contract-note strong,
+.r3-ui-shell .guidance-admin-contract-note strong {
+  color: #42526a;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.r3-ui-shell .comm-admin-contract-note p,
+.r3-ui-shell .cf-admin-contract-note p,
+.r3-ui-shell .guidance-admin-contract-note p {
+  margin: 0;
+  color: var(--r3-config-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1120px) {
+  .r3-ui-shell .comm-template-grid,
+  .r3-ui-shell .cf-card-grid,
+  .r3-ui-shell .guidance-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .r3-ui-shell .comm-version-facts,
+  .r3-ui-shell .cf-version-facts,
+  .r3-ui-shell .guidance-version-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .r3-ui-shell .comm-admin-main,
+  .r3-ui-shell .cf-admin-main,
+  .r3-ui-shell .guidance-admin-main {
+    gap: 13px;
+  }
+
+  .r3-ui-shell .comm-admin-main .ops-page-heading,
+  .r3-ui-shell .cf-admin-main .ops-page-heading,
+  .r3-ui-shell .guidance-admin-main .ops-page-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .r3-ui-shell .comm-admin-main .ops-page-heading > a,
+  .r3-ui-shell .cf-admin-main .ops-page-heading > a,
+  .r3-ui-shell .guidance-admin-main .ops-page-heading > a {
+    width: 100%;
+  }
+
+  .r3-ui-shell .cf-contract-strip,
+  .r3-ui-shell .guidance-contract-strip,
+  .r3-ui-shell .comm-template-grid,
+  .r3-ui-shell .cf-card-grid,
+  .r3-ui-shell .guidance-card-grid,
+  .r3-ui-shell .comm-form-grid,
+  .r3-ui-shell .cf-form-grid,
+  .r3-ui-shell .guidance-editor-grid,
+  .r3-ui-shell .guidance-content-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-ui-shell .cf-contract-strip > div,
+  .r3-ui-shell .guidance-contract-strip > div {
+    border-right: 0;
+    border-bottom: 1px solid var(--r3-config-border);
+  }
+
+  .r3-ui-shell .cf-contract-strip > div:last-child,
+  .r3-ui-shell .guidance-contract-strip > div:last-child {
+    border-bottom: 0;
+  }
+
+  .r3-ui-shell .comm-admin-hero,
+  .r3-ui-shell .cf-admin-hero,
+  .r3-ui-shell .guidance-admin-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-ui-shell .comm-admin-hero-version,
+  .r3-ui-shell .cf-admin-hero-version,
+  .r3-ui-shell .guidance-admin-hero-version {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 10px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--r3-config-border);
+    text-align: left;
+  }
+
+  .r3-ui-shell .comm-version-card-heading,
+  .r3-ui-shell .cf-version-card-heading,
+  .r3-ui-shell .guidance-version-card-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .r3-ui-shell .comm-version-card-heading button,
+  .r3-ui-shell .cf-version-card-heading button,
+  .r3-ui-shell .guidance-version-card-heading button {
+    width: 100%;
+  }
+
+  .r3-ui-shell .comm-form-wide,
+  .r3-ui-shell .guidance-editor-wide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .r3-ui-shell .comm-admin-main .ops-panel,
+  .r3-ui-shell .cf-admin-main .ops-panel,
+  .r3-ui-shell .guidance-admin-main .ops-panel,
+  .r3-ui-shell .comm-admin-hero,
+  .r3-ui-shell .cf-admin-hero,
+  .r3-ui-shell .guidance-admin-hero {
+    padding: 12px;
+  }
+
+  .r3-ui-shell .comm-template-grid,
+  .r3-ui-shell .cf-card-grid,
+  .r3-ui-shell .guidance-card-grid,
+  .r3-ui-shell .comm-template-facts,
+  .r3-ui-shell .cf-card-facts,
+  .r3-ui-shell .guidance-card-facts,
+  .r3-ui-shell .comm-version-facts,
+  .r3-ui-shell .cf-version-facts,
+  .r3-ui-shell .guidance-version-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-ui-shell .comm-admin-actions,
+  .r3-ui-shell .cf-admin-actions,
+  .r3-ui-shell .guidance-admin-actions,
+  .r3-ui-shell .comm-form-actions,
+  .r3-ui-shell .cf-editor-actions,
+  .r3-ui-shell .guidance-form-actions,
+  .r3-ui-shell .comm-pagination,
+  .r3-ui-shell .cf-pagination,
+  .r3-ui-shell .guidance-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .r3-ui-shell .comm-admin-actions > *,
+  .r3-ui-shell .cf-admin-actions > *,
+  .r3-ui-shell .guidance-admin-actions > *,
+  .r3-ui-shell .comm-form-actions > *,
+  .r3-ui-shell .cf-editor-actions > *,
+  .r3-ui-shell .guidance-form-actions > *,
+  .r3-ui-shell .comm-pagination button,
+  .r3-ui-shell .cf-pagination button,
+  .r3-ui-shell .guidance-pagination button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .r3-ui-shell .comm-admin-actions > span,
+  .r3-ui-shell .cf-admin-actions > span,
+  .r3-ui-shell .guidance-admin-actions > span,
+  .r3-ui-shell .comm-pagination span,
+  .r3-ui-shell .cf-pagination span,
+  .r3-ui-shell .guidance-pagination span {
+    text-align: center;
+  }
+}
