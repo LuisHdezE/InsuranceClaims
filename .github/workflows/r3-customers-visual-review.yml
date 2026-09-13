@@ -140,9 +140,11 @@ jobs:
               assert 'Synthetic QA Portal Customer' in body and 'SYN-QA-PORTAL-CUST-001' in body
               for forbidden in ('crear cliente','editar cliente','eliminar cliente','exportar clientes'): assert forbidden not in lower
               if kind == 'directory':
-                  for label in ('Clientes','Directorio de clientes','Estado','Resultado R3','Búsqueda y filtros server-side'): assert label in body, f'Directory label missing: {label}'
+                  for label in ('Clientes','Directorio de clientes','Resultado R3','Búsqueda y filtros server-side'): assert label in body, f'Directory label missing: {label}'
                   search_label = driver.find_element(By.CSS_SELECTOR, 'label[for="customer-search"]')
                   assert (search_label.get_attribute('textContent') or '').strip() == 'Buscar cliente'
+                  state_control = driver.find_element(By.CSS_SELECTOR, '.cp360-filter')
+                  assert 'Estado' in (state_control.get_attribute('textContent') or '')
                   assert len(driver.find_elements(By.CSS_SELECTOR,'.r3-customer-directory')) == 1
                   assert len(driver.find_elements(By.CSS_SELECTOR,'a.cp360-row-action')) >= 1
               else:
