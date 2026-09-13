@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StaffRole } from '../api/types';
 import { OperatorShell } from './OperatorShell';
 
@@ -29,6 +29,10 @@ describe('OperatorShell', () => {
   beforeEach(() => {
     sessionState.role = 'CLAIMS_OPERATOR';
     sessionState.signOut.mockClear();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('groups visible navigation while preserving operator permission filtering', () => {
