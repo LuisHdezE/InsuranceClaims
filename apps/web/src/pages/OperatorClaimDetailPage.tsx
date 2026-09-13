@@ -64,7 +64,7 @@ export function OperatorClaimDetailPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main">
+      <main className="operator-main ops-main r3-claim-detail-page">
         <div className="ops-detail-breadcrumbs"><Link to="/operator/claims">← Volver a Claims</Link></div>
 
         {queryFailure && queryFailure.problem?.status !== 401 && <OperatorApiErrorNotice failure={queryFailure} />}
@@ -91,10 +91,20 @@ export function OperatorClaimDetailPage() {
               }}
             />
 
+            <nav className="r3-detail-anchor-nav" aria-label="Secciones del siniestro">
+              <a href="#resumen">Resumen</a>
+              <a href="#flujo">Flujo</a>
+              <a href="#etapa">Etapa operacional</a>
+              <a href="#tareas">Tareas</a>
+              <a href="#evidencia">Evidencia</a>
+              <a href="#historial">Historial</a>
+              <a href="#auditoria">Auditoría</a>
+            </nav>
+
             {transitionFailure && <OperatorApiErrorNotice failure={transitionFailure} />}
 
             <div className="ops-detail-grid r3-claim-detail-grid">
-              <section className="ops-panel ops-summary-card" aria-labelledby="claim-summary-title">
+              <section id="resumen" className="ops-panel ops-summary-card r3-detail-section" aria-labelledby="claim-summary-title">
                 <div className="ops-panel-heading"><div><span className="ops-kicker">Resumen</span><h2 id="claim-summary-title">Información del siniestro</h2></div></div>
                 <dl className="ops-summary-list">
                   <SummaryRow icon="◇" label="Tipo de evento" value={detail.eventType} />
@@ -106,10 +116,10 @@ export function OperatorClaimDetailPage() {
                 <div className="ops-detail-description"><span className="ops-summary-icon" aria-hidden="true">≡</span><div><strong>Descripción</strong><p>{detail.description}</p></div></div>
               </section>
 
-              <section className="ops-panel ops-work-card" aria-labelledby="transition-title">
+              <section id="flujo" className="ops-panel ops-work-card r3-detail-section" aria-labelledby="transition-title">
                 <div className="ops-panel-heading">
                   <div><span className="ops-kicker">Claim lifecycle</span><h2 id="transition-title">Estado y siguiente decisión</h2></div>
-                  <span className={`status-badge status-${detail.status.toLowerCase()}`}>{detail.status}</span>
+                  <span className={`status-badge status-${detail.status.toLowerCase()}`}>{statusLabel(detail.status)}</span>
                 </div>
 
                 <div className="ops-state-overview r3-state-overview">
@@ -141,13 +151,13 @@ export function OperatorClaimDetailPage() {
                 <div className="operator-concurrency-note">`allowedTransitions` proviene del servidor. Se envía `expectedFromStatus = {detail.status}`; un 409 refresca el detalle antes de una nueva decisión.</div>
               </section>
 
-              <ClaimOperationalStagePanel claimId={claimId} trackingCode={detail.trackingCode} />
-              <ClaimTasksPanel claimId={claimId} />
-              <ClaimEvidenceAttentionPanel claimId={claimId} />
-              <ClaimTimelinePanel claimId={claimId} />
+              <div id="etapa" className="r3-detail-section"><ClaimOperationalStagePanel claimId={claimId} trackingCode={detail.trackingCode} /></div>
+              <div id="tareas" className="r3-detail-section"><ClaimTasksPanel claimId={claimId} /></div>
+              <div id="evidencia" className="r3-detail-section"><ClaimEvidenceAttentionPanel claimId={claimId} /></div>
+              <div id="historial" className="r3-detail-section"><ClaimTimelinePanel claimId={claimId} /></div>
             </div>
 
-            <details className="ops-audit-details">
+            <details id="auditoria" className="ops-audit-details r3-detail-section">
               <summary>Actividad técnica / auditoría <span>{detail.auditEvents.length} evento(s)</span></summary>
               <div className="ops-audit-table-wrap">
                 {detail.auditEvents.length === 0 ? <div className="ops-compact-empty">No hay eventos de auditoría disponibles.</div> : (
@@ -171,10 +181,10 @@ function ClaimHeader({ detail, busy, refreshBusy, onRefresh, onPrimaryTransition
 }) {
   const primary = preferredTransition(detail.status, detail.allowedTransitions);
   return (
-    <header className="ops-detail-header">
+    <header className="ops-detail-header r3-detail-hero">
       <div className="ops-detail-identity"><h1>{detail.trackingCode}</h1><span>{detail.policyReference} · {detail.vehicleReference}</span></div>
       <div className="ops-detail-stage"><span>Claim lifecycle</span><strong>{statusLabel(detail.status)}</strong><small>Separado del Pipeline operacional</small></div>
-      <div className="ops-detail-status"><span>Estado</span><strong className={`status-badge status-${detail.status.toLowerCase()}`}>{detail.status}</strong></div>
+      <div className="ops-detail-status"><span>Estado</span><strong className={`status-badge status-${detail.status.toLowerCase()}`}>{statusLabel(detail.status)}</strong></div>
       <div className="ops-detail-actions">
         {primary && <button className="ops-primary-action" type="button" disabled={busy} onClick={() => onPrimaryTransition(primary.status)}>▷ {busy ? 'Procesando…' : primary.label}</button>}
         <button className="ops-icon-button" type="button" onClick={onRefresh} disabled={refreshBusy} aria-label="Actualizar detalle">↻</button>
