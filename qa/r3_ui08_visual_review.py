@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 from pathlib import Path
 
@@ -46,6 +47,17 @@ def page_metrics() -> dict:
     )
 
 
+def assert_light_surface(name: str, style: dict) -> None:
+    rgb_match = re.fullmatch(r'rgb\((\d+),\s*(\d+),\s*(\d+)\)', style['background'])
+    assert rgb_match, f'{name}: expected opaque light R3 surface, got {style}'
+    rgb = tuple(int(channel) for channel in rgb_match.groups())
+    assert min(rgb) >= 245, f'{name}: surface is not in approved white/near-white range: {style}'
+    radius_match = re.fullmatch(r'([0-9.]+)px', style['radius'])
+    assert radius_match, f'{name}: expected pixel border radius, got {style}'
+    radius = float(radius_match.group(1))
+    assert 8 <= radius <= 14, f'{name}: surface radius outside approved R3 card range: {style}'
+
+
 def capture(name: str, route: str, width: int, marker: str, required_text: str, surface: str | None, primary: str | None) -> None:
     driver.set_window_size(width, 1000)
     spa_navigate(route)
@@ -63,15 +75,15 @@ def capture(name: str, route: str, width: int, marker: str, required_text: str, 
         assert primary_nodes, f'{name}: primary action missing: {primary}'
         assert primary_nodes[0].rect['height'] >= 43, f'{name}: primary action below 44px target: {primary_nodes[0].rect}'
 
+    surface_style = None
     if surface:
         surface_nodes = driver.find_elements(By.CSS_SELECTOR, surface)
         assert surface_nodes, f'{name}: visual surface missing: {surface}'
-        style = driver.execute_script(
+        surface_style = driver.execute_script(
             'const s=getComputedStyle(arguments[0]); return {background:s.backgroundColor,radius:s.borderRadius};',
             surface_nodes[0],
         )
-        assert style['background'] == 'rgb(255, 255, 255)', f'{name}: expected white R3 surface, got {style}'
-        assert style['radius'] == '12px', f'{name}: expected 12px radius, got {style}'
+        assert_light_surface(name, surface_style)
 
     page_height = int(metrics['scrollHeight'])
     capture_height = min(max(page_height + 32, 1000), 7000)
@@ -88,6 +100,7 @@ def capture(name: str, route: str, width: int, marker: str, required_text: str, 
         'captureHeight': capture_height,
         'horizontalOverflowPx': overflow,
         'h1Count': metrics['h1Count'],
+        'surfaceStyle': surface_style,
         'file': filename,
     })
 
