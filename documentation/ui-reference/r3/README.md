@@ -50,6 +50,7 @@ Este directorio conserva las vistas **aprobadas explícitamente** durante la rac
 | Communication Templates R3 | DIFERENCIADOR TÉCNICO / MANTENER | `communication-templates-r3-approved.svg` + `communication-templates-r3-approved.md` |
 | Custom Fields R3 | DIFERENCIADOR TÉCNICO / MANTENER | `custom-fields-r3-approved.svg` + `custom-fields-r3-approved.md` |
 | Guidance R3 | DIFERENCIADOR TÉCNICO / MANTENER | `guidance-r3-approved.svg` + `guidance-r3-approved.md` |
+| Operator Login R3 | CORE / MANTENER Y PULIR | `operator-login-r3-approved.svg` + `operator-login-r3-approved.md` |
 
 ## Principios funcionales clave
 
@@ -103,3 +104,6 @@ Responsabilidad: **extender proyecciones operacionales con campos gobernados y v
 
 ### Guidance R3
 Responsabilidad: **gobernar orientación configurable y versionada** sin inferir semántica de negocio fuera del contrato publicado. Contexto, categorías, instrucciones, documentos y metadata permanecen opacos; DRAFT, activación y enable/disable son pasos explícitos y protegidos por versión esperada.
+
+### Operator Login R3
+Responsabilidad: **autenticar staff y entregar una sesión corta cuyo rol determina la navegación autorizada**. La UI no selecciona roles ni inventa recuperación de cuenta, MFA, SSO o refresh token; si una ruta solicitada no está autorizada se usa el destino seguro del rol.
