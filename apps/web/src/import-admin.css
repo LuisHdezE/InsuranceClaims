@@ -65,9 +65,14 @@
   gap: 14px;
 }
 
+.r3-ui-shell .gi-main .ops-panel-heading > div {
+  min-width: 0;
+}
+
 .r3-ui-shell .gi-main .ops-panel-heading h2 {
   color: var(--gi-ink);
   font-size: 16px;
+  overflow-wrap: anywhere;
 }
 
 .r3-ui-shell .gi-main .ops-panel-heading p {
@@ -567,13 +572,15 @@
 }
 
 @media (max-width: 680px) {
-  .r3-ui-shell .gi-heading {
+  .r3-ui-shell .gi-heading,
+  .r3-ui-shell .gi-main .ops-panel-heading {
     align-items: stretch;
     flex-direction: column;
   }
 
   .r3-ui-shell .gi-heading .gi-primary,
-  .r3-ui-shell .gi-heading .gi-secondary {
+  .r3-ui-shell .gi-heading .gi-secondary,
+  .r3-ui-shell .gi-main .ops-panel-heading .ops-refresh-button {
     width: 100%;
   }
 
