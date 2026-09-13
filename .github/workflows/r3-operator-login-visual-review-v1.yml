@@ -1,0 +1,148 @@
+name: R3 Operator Login Visual Review V1
+on:
+  push:
+    branches: [review/r3-parallel-11-operator-login-v1]
+permissions:
+  contents: read
+jobs:
+  exact-head-login-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      REVIEW_TARGET_SHA: a20241315c7aedb13e2441767ab8a1b69091130c
+      REVIEW_DIR: .runtime/r3-operator-login-review
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: a20241315c7aedb13e2441767ab8a1b69091130c
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Verify exact product head
+        run: test "$(git rev-parse HEAD)" = "$REVIEW_TARGET_SHA"
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck web
+        run: npm run typecheck --workspace @insurance/web
+      - name: Test web
+        run: npm run test --workspace @insurance/web
+      - name: Build web
+        run: npm run build --workspace @insurance/web
+      - name: Start web
+        run: |
+          mkdir -p "$REVIEW_DIR"
+          npm run dev --workspace @insurance/web -- --host 127.0.0.1 --port 4173 > "$REVIEW_DIR/vite.log" 2>&1 &
+          echo $! > "$REVIEW_DIR/vite.pid"
+          for attempt in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:4173/operator/login >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          cat "$REVIEW_DIR/vite.log"
+          exit 1
+      - name: Install browser harness
+        run: python -m pip install --disable-pip-version-check selenium==4.35.0
+      - name: Capture and validate desktop plus mobile
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support.ui import WebDriverWait
+          from selenium.webdriver.support import expected_conditions as EC
+
+          target = os.environ['REVIEW_TARGET_SHA']
+          out = Path(os.environ['REVIEW_DIR'])
+          out.mkdir(parents=True, exist_ok=True)
+
+          options = webdriver.ChromeOptions()
+          options.add_argument('--headless=new')
+          options.add_argument('--no-sandbox')
+          options.add_argument('--disable-dev-shm-usage')
+          options.add_argument('--force-device-scale-factor=1')
+          driver = webdriver.Chrome(options=options)
+          results = []
+
+          try:
+            for label, width, height in [('desktop', 1440, 1000), ('mobile', 390, 844)]:
+              driver.set_window_size(width, height)
+              driver.get('http://127.0.0.1:4173/operator/login')
+              WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, 'operator-login')))
+
+              h1s = driver.find_elements(By.TAG_NAME, 'h1')
+              assert len(h1s) == 1, f'{label}: expected 1 h1, got {len(h1s)}'
+              assert h1s[0].text.strip() == 'Acceso del equipo', f'{label}: unexpected h1 {h1s[0].text!r}'
+
+              login = driver.find_element(By.ID, 'operator-login')
+              password = driver.find_element(By.ID, 'operator-password')
+              assert login.get_attribute('autocomplete') == 'username'
+              assert login.get_attribute('maxlength') == '160'
+              assert password.get_attribute('autocomplete') == 'current-password'
+              assert password.get_attribute('maxlength') == '256'
+              assert password.get_attribute('type') == 'password'
+              assert driver.execute_script('return document.activeElement && document.activeElement.id') == 'operator-login'
+
+              body_text = driver.find_element(By.TAG_NAME, 'body').text.lower()
+              for required in ['caso técnico no oficial', 'acceso del equipo', 'usuario', 'contraseña', 'volver al sitio público']:
+                assert required in body_text, f'{label}: missing visible text {required!r}'
+              for forbidden in ['olvidé mi contraseña', 'recuperar cuenta', 'registrarse', 'crear cuenta', 'iniciar con google', 'iniciar con microsoft', 'mfa', 'otp']:
+                assert forbidden not in body_text, f'{label}: forbidden capability surfaced {forbidden!r}'
+              assert len(driver.find_elements(By.TAG_NAME, 'select')) == 0, f'{label}: role/select control must not exist'
+
+              overflow = driver.execute_script('return Math.max(0, document.documentElement.scrollWidth - window.innerWidth)')
+              assert overflow == 0, f'{label}: horizontal overflow={overflow}'
+
+              context_display = driver.execute_script("return getComputedStyle(document.querySelector('.r3-login-context')).display")
+              if label == 'desktop':
+                assert context_display != 'none', 'desktop: context panel should be visible'
+                assert 'administrador de plataforma' in body_text
+                assert 'jwt bearer' in body_text
+              else:
+                assert context_display == 'none', f'mobile: context panel should be hidden, got {context_display}'
+
+              page_height = driver.execute_script('return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)')
+              driver.set_window_size(width, max(height, int(page_height) + 16))
+              filename = f'operator-login-{label}.png'
+              driver.save_screenshot(str(out / filename))
+              results.append({
+                'kind': label,
+                'width': width,
+                'requestedHeight': height,
+                'pageHeight': page_height,
+                'overflow': overflow,
+                'h1Count': len(h1s),
+                'contextDisplay': context_display,
+                'file': filename,
+              })
+          finally:
+            driver.quit()
+
+          summary = {
+            'review_type': 'r3_operator_login_visual_review_v1',
+            'review_target_sha': target,
+            'api_authoritative_role': True,
+            'auth_capability_expansion': False,
+            'shots': results,
+            'result': 'PASS',
+          }
+          (out / 'operator-login-visual-review.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
+          print(json.dumps(summary, indent=2))
+          PY
+      - name: Upload exact-head evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-operator-login-v1-${{ env.REVIEW_TARGET_SHA }}
+          path: |
+            .runtime/r3-operator-login-review/operator-login-desktop.png
+            .runtime/r3-operator-login-review/operator-login-mobile.png
+            .runtime/r3-operator-login-review/operator-login-visual-review.json
+            .runtime/r3-operator-login-review/vite.log
+          retention-days: 30
+      - name: Stop web
+        if: always()
+        run: |
+          [[ -f "$REVIEW_DIR/vite.pid" ]] && kill "$(cat "$REVIEW_DIR/vite.pid")" 2>/dev/null || true
