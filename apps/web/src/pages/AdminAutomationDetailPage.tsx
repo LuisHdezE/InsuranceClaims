@@ -51,14 +51,14 @@ export function AdminAutomationDetailPage() {
   return (
     <OperatorShell>
       <main className="operator-main ops-main aa-admin-main">
-        <div className="aa-breadcrumbs"><Link to="/operator/admin/automations">Automations</Link><span>/</span><span>Detalle</span></div>
+        <div className="aa-breadcrumbs"><Link to="/operator/admin/automations">Automatizaciones</Link><span>/</span><span>Detalle</span></div>
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
-        {automationQuery.isLoading && <div className="ops-compact-empty" role="status">Cargando Automation…</div>}
+        {automationQuery.isLoading && <div className="ops-compact-empty" role="status">Cargando automatización…</div>}
 
         {automation && (
           <>
             <section className="aa-detail-hero">
-              <div><span className="ops-kicker">Automation R3</span><h1>{automation.displayName}</h1><code>{automation.key}</code><p>Definición v{automation.version}. El historial es inmutable y toda mutación se fija a la versión autoritativa.</p></div>
+              <div><span className="ops-kicker">Automatización R3</span><h1>{automation.displayName}</h1><code>{automation.key}</code><p>Definición v{automation.version}. El historial es inmutable y toda mutación se fija a la versión autoritativa.</p></div>
               <div className="aa-detail-actions">
                 <span className={`aa-enabled is-${automation.enabled ? 'enabled' : 'disabled'}`}>{automation.enabled ? 'Habilitada' : 'Deshabilitada'}</span>
                 <Link className="aa-secondary-button" to={`/operator/admin/automations/${automation.definitionId}/versions/new`}>Nueva versión</Link>
@@ -66,7 +66,7 @@ export function AdminAutomationDetailPage() {
               </div>
             </section>
 
-            <section className="aa-contract-strip" aria-label="Estado de Automation"><div><strong>Definition version</strong><span>v{automation.version}</span></div><div><strong>Versión activa</strong><span>{activeLabel(automation.versions, automation.activeVersionId)}</span></div><div><strong>Versiones</strong><span>{automation.versions.length}</span></div></section>
+            <section className="aa-contract-strip" aria-label="Estado de automatización"><div><strong>Versión de definición</strong><span>v{automation.version}</span></div><div><strong>Versión activa</strong><span>{activeLabel(automation.versions, automation.activeVersionId)}</span></div><div><strong>Versiones</strong><span>{automation.versions.length}</span></div></section>
 
             <section className="ops-panel aa-version-panel" aria-labelledby="aa-version-title">
               <div className="ops-panel-heading"><div><h2 id="aa-version-title">Historial de versiones</h2><p>DRAFT puede activarse. ACTIVE/RETIRED son historia inmutable.</p></div><button className="ops-refresh-button" type="button" disabled={automationQuery.isFetching} onClick={() => void automationQuery.refetch()}>{automationQuery.isFetching ? 'Actualizando…' : 'Actualizar'}</button></div>
@@ -81,7 +81,7 @@ export function AdminAutomationDetailPage() {
               </div>
             </section>
 
-            <section className="aa-admin-contract-note"><strong>Concurrencia optimista</strong><p>Crear versión, activar y habilitar/deshabilitar usan `expectedDefinitionVersion`. Un 409 fuerza refetch de esta proyección y nunca dispara retry ciego.</p></section>
+            <section className="aa-admin-contract-note"><strong>Concurrencia optimista</strong><p>Crear versión, activar y habilitar/deshabilitar usan `expectedDefinitionVersion`. Un 409 fuerza el refresco de esta proyección y nunca dispara un reintento ciego.</p></section>
           </>
         )}
       </main>
@@ -92,7 +92,7 @@ export function AdminAutomationDetailPage() {
 function AutomationVersionReadOnly({ version }: { version: AutomationVersionProjection }) {
   return (
     <div className="aa-version-content">
-      <div className="aa-rule-summary"><span><small>WHEN</small><strong>{version.content.when.eventType}</strong></span><span><small>IF</small><strong>{version.content.if.length} condiciones</strong></span><span><small>WAIT</small><strong>{version.content.wait ? `${version.content.wait.delaySeconds}s` : '—'}</strong></span><span><small>THEN</small><strong>{version.content.then.length} acciones</strong></span></div>
+      <div className="aa-rule-summary"><span><small>CUANDO</small><strong>{version.content.when.eventType}</strong></span><span><small>SI</small><strong>{version.content.if.length} condiciones</strong></span><span><small>ESPERA</small><strong>{version.content.wait ? `${version.content.wait.delaySeconds}s` : '—'}</strong></span><span><small>ENTONCES</small><strong>{version.content.then.length} acciones</strong></span></div>
       {version.content.if.length > 0 && <div className="aa-read-block"><h4>Condiciones</h4>{version.content.if.map((condition, index) => <code key={`${condition.field}-${index}`}>{condition.field} {condition.operator}{condition.value === undefined ? '' : ` ${JSON.stringify(condition.value)}`}</code>)}</div>}
       <div className="aa-read-block"><h4>Acciones</h4>{version.content.then.map((action) => <div className="aa-read-action" key={action.key}><strong>{action.key}</strong><span>{action.type}</span><code>{JSON.stringify(action.parameters)}</code></div>)}</div>
     </div>
