@@ -49,6 +49,7 @@ Este directorio conserva las vistas **aprobadas explícitamente** durante la rac
 | Directorio de Pólizas R3 | MANTENER / SIMPLIFICAR | `policy-directory-approved.svg` + `policy-directory-approved.md` |
 | Communication Templates R3 | DIFERENCIADOR TÉCNICO / MANTENER | `communication-templates-r3-approved.svg` + `communication-templates-r3-approved.md` |
 | Custom Fields R3 | DIFERENCIADOR TÉCNICO / MANTENER | `custom-fields-r3-approved.svg` + `custom-fields-r3-approved.md` |
+| Guidance R3 | DIFERENCIADOR TÉCNICO / MANTENER | `guidance-r3-approved.svg` + `guidance-r3-approved.md` |
 
 ## Principios funcionales clave
 
@@ -99,3 +100,6 @@ Responsabilidad: **gobernar definiciones y contenido versionado de comunicación
 
 ### Custom Fields R3
 Responsabilidad: **extender proyecciones operacionales con campos gobernados y versionados** sin reemplazar identidad, estado, seguridad ni datos reservados del dominio. `fieldKey` y target son identidad estable; DRAFT, activación y enable/disable son pasos explícitos.
+
+### Guidance R3
+Responsabilidad: **gobernar orientación configurable y versionada** sin inferir semántica de negocio fuera del contrato publicado. Contexto, categorías, instrucciones, documentos y metadata permanecen opacos; DRAFT, activación y enable/disable son pasos explícitos y protegidos por versión esperada.
