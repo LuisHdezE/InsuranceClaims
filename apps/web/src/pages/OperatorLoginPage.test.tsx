@@ -1,0 +1,128 @@
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { authenticateOperator } from '../api/claims';
+import { OperatorLoginPage } from './OperatorLoginPage';
+
+const signIn = vi.fn();
+let session: null | {
+  accessToken: string;
+  expiresAt: number;
+  operator: { id: string; login: string; role: 'CLAIMS_OPERATOR' | 'CLAIMS_SUPERVISOR' | 'PLATFORM_ADMIN' };
+} = null;
+
+vi.mock('../flow/OperatorSessionContext', () => ({
+  useOperatorSession: () => ({ session, signIn, signOut: vi.fn() }),
+}));
+
+vi.mock('../api/claims', () => ({ authenticateOperator: vi.fn() }));
+
+const mockedAuthenticateOperator = vi.mocked(authenticateOperator);
+
+function renderPage(initialEntry: string = '/operator/login') {
+  return render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <Routes>
+        <Route path="/operator/login" element={<OperatorLoginPage />} />
+        <Route path="/operator/dashboard" element={<div>Dashboard destino</div>} />
+        <Route path="/operator/workspace" element={<div>Workspace destino</div>} />
+        <Route path="/operator/analytics" element={<div>Analytics destino</div>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+describe('OperatorLoginPage R3 contract', () => {
+  beforeEach(() => {
+    session = null;
+    signIn.mockReset();
+    mockedAuthenticateOperator.mockReset();
+  });
+
+  afterEach(() => cleanup());
+
+  it('renders the contract-exact credentials form without invented authentication features', () => {
+    renderPage();
+
+    const login = screen.getByLabelText('Usuario') as HTMLInputElement;
+    const password = screen.getByLabelText('Contraseña') as HTMLInputElement;
+
+    expect(login.required).toBe(true);
+    expect(login.maxLength).toBe(160);
+    expect(login.autocomplete).toBe('username');
+    expect(password.required).toBe(true);
+    expect(password.maxLength).toBe(256);
+    expect(password.autocomplete).toBe('current-password');
+    expect(password.type).toBe('password');
+    expect(screen.getByRole('button', { name: 'Ingresar al workspace' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /volver al sitio público/i })).toBeTruthy();
+
+    expect(screen.getByText(/No se selecciona aquí/i)).toBeTruthy();
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.queryByText(/recuérdame/i)).toBeNull();
+    expect(screen.queryByText(/olvidé mi contraseña/i)).toBeNull();
+    expect(screen.queryByText(/recuperar cuenta/i)).toBeNull();
+    expect(screen.queryByText(/registr/i)).toBeNull();
+    expect(screen.queryByText(/mfa|otp/i)).toBeNull();
+    expect(screen.queryByText(/google|microsoft|apple/i)).toBeNull();
+  });
+
+  it('submits only login and password, trims login, clears password and follows the API role', async () => {
+    mockedAuthenticateOperator.mockResolvedValue({
+      data: {
+        accessToken: 'platform-token',
+        tokenType: 'Bearer',
+        expiresIn: 900,
+        operator: { id: 'platform-1', login: 'admin@example.test', role: 'PLATFORM_ADMIN' },
+      },
+      requestId: 'req-login-1',
+    });
+
+    renderPage();
+    fireEvent.change(screen.getByLabelText('Usuario'), { target: { value: '  admin@example.test  ' } });
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'secret-value' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ingresar al workspace' }));
+
+    await waitFor(() => expect(mockedAuthenticateOperator).toHaveBeenCalledWith({
+      login: 'admin@example.test',
+      password: 'secret-value',
+    }));
+    expect(signIn).toHaveBeenCalledWith(expect.objectContaining({
+      accessToken: 'platform-token',
+      operator: expect.objectContaining({ role: 'PLATFORM_ADMIN' }),
+    }));
+    expect((screen.getByLabelText('Contraseña') as HTMLInputElement).value).toBe('');
+    expect(await screen.findByText('Workspace destino')).toBeTruthy();
+  });
+
+  it('keeps an authorized requested route and never lets the client override the server role', async () => {
+    mockedAuthenticateOperator.mockResolvedValue({
+      data: {
+        accessToken: 'supervisor-token',
+        tokenType: 'Bearer',
+        expiresIn: 900,
+        operator: { id: 'supervisor-1', login: 'supervisor@example.test', role: 'CLAIMS_SUPERVISOR' },
+      },
+      requestId: 'req-login-2',
+    });
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/operator/login', state: { from: '/operator/analytics' } }]}>
+        <Routes>
+          <Route path="/operator/login" element={<OperatorLoginPage />} />
+          <Route path="/operator/analytics" element={<div>Analytics destino</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('Usuario'), { target: { value: 'supervisor@example.test' } });
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'secret-value' } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Ingresar al workspace' }).closest('form')!);
+
+    expect(await screen.findByText('Analytics destino')).toBeTruthy();
+    expect(mockedAuthenticateOperator).toHaveBeenCalledTimes(1);
+    expect(signIn).toHaveBeenCalledWith(expect.objectContaining({
+      operator: expect.objectContaining({ role: 'CLAIMS_SUPERVISOR' }),
+    }));
+  });
+});
