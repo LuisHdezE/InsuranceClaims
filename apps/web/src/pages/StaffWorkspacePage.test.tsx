@@ -46,11 +46,11 @@ describe('StaffWorkspacePage', () => {
     cleanup();
   });
 
-  it('renders Platform Admin as a platform launchpad without implicit business operations', () => {
+  it('renders Platform Admin as a Spanish platform launchpad without implicit business operations', () => {
     renderWorkspace();
 
     expect(screen.getByRole('heading', { name: 'Tu espacio de trabajo' })).toBeTruthy();
-    expect(screen.getByText('Administrador de plataforma')).toBeTruthy();
+    expect(screen.getAllByText('Administrador de plataforma').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Supervisión' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Configuración de plataforma' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Operación técnica' })).toBeTruthy();
@@ -60,10 +60,10 @@ describe('StaffWorkspacePage', () => {
       'Métricas operacionales',
       'Administración de pipelines',
       'Plantillas de comunicación',
-      'Custom Fields',
-      'Guidance',
-      'Automations',
-      'Imports gobernados',
+      'Campos personalizados',
+      'Orientación',
+      'Automatizaciones',
+      'Importaciones gobernadas',
       'Integraciones y recuperación',
     ];
 
@@ -72,6 +72,10 @@ describe('StaffWorkspacePage', () => {
     }
     expect(screen.getAllByRole('link')).toHaveLength(expectedLinks.length);
 
+    expect(screen.queryByText('Custom Fields')).toBeNull();
+    expect(screen.queryByText('Guidance')).toBeNull();
+    expect(screen.queryByText('Automations')).toBeNull();
+    expect(screen.queryByText('Imports gobernados')).toBeNull();
     expect(screen.queryByText('Siniestros y trabajo operativo')).toBeNull();
     expect(screen.queryByText('Clientes y pólizas')).toBeNull();
     expect(screen.queryByText('Renovaciones')).toBeNull();
@@ -81,7 +85,7 @@ describe('StaffWorkspacePage', () => {
     expect(screen.getByText(/Sin superusuario implícito/i)).toBeTruthy();
   });
 
-  it('gives Claims Supervisor concise operations plus Analytics but no platform administration', () => {
+  it('gives Claims Supervisor concise operations plus Analítica but no platform administration', () => {
     sessionState.role = 'CLAIMS_SUPERVISOR';
     renderWorkspace();
 
@@ -96,10 +100,10 @@ describe('StaffWorkspacePage', () => {
     expect(screen.getByRole('link', { name: /Cobranzas/i })).toBeTruthy();
     expect(screen.getByRole('link', { name: /Métricas operacionales/i })).toBeTruthy();
     expect(screen.queryByText('Administración de pipelines')).toBeNull();
-    expect(screen.queryByText('Imports gobernados')).toBeNull();
+    expect(screen.queryByText('Importaciones gobernadas')).toBeNull();
   });
 
-  it('keeps Claims Operator operational and does not synthesize Analytics access', () => {
+  it('keeps Claims Operator operational and does not synthesize Analítica access', () => {
     sessionState.role = 'CLAIMS_OPERATOR';
     renderWorkspace();
 
@@ -107,6 +111,6 @@ describe('StaffWorkspacePage', () => {
     expect(screen.queryByRole('heading', { name: 'Supervisión' })).toBeNull();
     expect(screen.queryByText('Métricas operacionales')).toBeNull();
     expect(screen.queryByText('Administración de pipelines')).toBeNull();
-    expect(screen.getByText(/sin Analytics ni administración de plataforma/i)).toBeTruthy();
+    expect(screen.getByText(/sin Analítica ni administración de plataforma/i)).toBeTruthy();
   });
 });
