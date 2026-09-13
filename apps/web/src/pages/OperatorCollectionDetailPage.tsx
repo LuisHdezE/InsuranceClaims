@@ -1,24 +1,19 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import {
-  getCollection,
-  moveCollectionStage,
-  transitionCollection,
-  updateCollectionPaymentState,
-} from '../api/collections';
+import { getCollection, moveCollectionStage, transitionCollection } from '../api/collections';
 import type { CollectionCaseStatus, CollectionTerminalStatus } from '../api/collections-types';
 import type { ApiFailure } from '../api/types';
 import { hasPermission } from '../auth/staff-access';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
+import '../r3-ui-increment-06.css';
 
 export function OperatorCollectionDetailPage() {
   const { collectionId = '' } = useParams();
   const { session, signOut } = useOperatorSession();
   const queryClient = useQueryClient();
-  const [paymentState, setPaymentState] = useState('');
 
   const collectionQuery = useQuery({
     queryKey: ['operator', 'collection', collectionId],
@@ -47,19 +42,6 @@ export function OperatorCollectionDetailPage() {
     onError: handleMutationError,
   });
 
-  const paymentMutation = useMutation({
-    mutationFn: (requestedPaymentState: string) => updateCollectionPaymentState(
-      collectionId,
-      { paymentState: requestedPaymentState, expectedVersion: collectionQuery.data!.data.version },
-      session!.accessToken,
-    ),
-    onSuccess: async () => {
-      setPaymentState('');
-      await refreshCase();
-    },
-    onError: handleMutationError,
-  });
-
   const pipelineMutation = useMutation({
     mutationFn: (toStageKey: string) => moveCollectionStage(
       collectionId,
@@ -78,20 +60,15 @@ export function OperatorCollectionDetailPage() {
   if (!session) return null;
   const collection = collectionQuery.data?.data;
   const canManage = hasPermission(session.operator.role, 'collections.manage');
-  const mutationFailure = (transitionMutation.error ?? paymentMutation.error ?? pipelineMutation.error) as ApiFailure | null;
-  const mutationPending = transitionMutation.isPending || paymentMutation.isPending || pipelineMutation.isPending;
-
-  const submitPaymentState = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const normalized = paymentState.trim();
-    if (!normalized || normalized.length > 80) return;
-    paymentMutation.mutate(normalized);
-  };
+  const canReadCustomers = hasPermission(session.operator.role, 'customers.read');
+  const canReadPolicies = hasPermission(session.operator.role, 'policies.read');
+  const mutationFailure = (transitionMutation.error ?? pipelineMutation.error) as ApiFailure | null;
+  const mutationPending = transitionMutation.isPending || pipelineMutation.isPending;
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main collection-main collection-detail-main">
-        <div className="collection-breadcrumbs"><Link to="/operator/collections">Cobranzas</Link><span>/</span><span>{collectionId.slice(0, 8) || 'Caso'}</span></div>
+      <main className="operator-main ops-main collection-main r3-collection-detail">
+        <div className="r3-case-breadcrumbs"><Link to="/operator/collections">Cobranzas</Link><span>/</span><span>Caso</span></div>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
         {mutationFailure && mutationFailure.problem?.status !== 401 && <OperatorApiErrorNotice failure={mutationFailure} />}
@@ -100,47 +77,56 @@ export function OperatorCollectionDetailPage() {
           <div className="ops-compact-empty" role="status">Cargando caso de cobranza…</div>
         ) : !collection ? null : (
           <>
-            <section className="collection-hero" aria-labelledby="collection-title">
+            <section className="r3-case-hero" aria-labelledby="collection-title">
               <div>
                 <span className="ops-kicker">Collections Operations R3</span>
                 <h1 id="collection-title">{collection.customer?.displayName ?? 'Caso de cobranza'}</h1>
                 <p>{collection.policy?.policyReference ?? collection.policyId}</p>
-                <div className="collection-hero-meta">
+                <div className="r3-case-hero-meta">
                   <CollectionStatus value={collection.status} />
-                  <span>Lifecycle/Pago v{collection.version}</span>
                   <span>Actualizado {formatDateTime(collection.updatedAt)}</span>
                 </div>
               </div>
-              <div className="collection-hero-state">
+              <div className="r3-case-hero-side">
                 <small>Estado de pago autoritativo</small>
                 <strong>{collection.paymentState ?? 'Sin estado'}</strong>
-                <span>{collection.pipeline ? `pipeline v${collection.pipeline.version}` : 'sin pipeline'}</span>
+                <span>Etapa: {collection.pipeline?.currentStage?.displayName ?? 'Sin work item'}</span>
               </div>
             </section>
 
-            <div className="collection-detail-grid">
-              <section className="ops-panel collection-context-card" aria-labelledby="collection-context-title">
-                <div className="ops-panel-heading"><div><h2 id="collection-context-title">Contexto 360</h2><p>Referencias devueltas por el caso R3.</p></div></div>
-                <div className="collection-context-grid">
-                  <div><span>Cliente</span><strong>{collection.customer?.displayName ?? 'No resuelto'}</strong><code>{collection.customer?.customerRef ?? collection.customerId}</code><Link to={`/operator/customers/${collection.customerId}`}>Abrir Customer 360 →</Link></div>
-                  <div><span>Póliza</span><strong>{collection.policy?.policyReference ?? 'No resuelta'}</strong><code>{collection.policy?.insurerReference ?? collection.policyId}</code><Link to={`/operator/policies/${collection.policyId}`}>Abrir Policy 360 →</Link></div>
+            <div className="r3-case-detail-grid">
+              <section className="ops-panel r3-case-context-card" aria-labelledby="collection-context-title">
+                <div className="ops-panel-heading"><div><h2 id="collection-context-title">Contexto relacionado</h2><p>Acceso al cliente y a la póliza sin duplicar sus vistas 360.</p></div></div>
+                <div className="r3-case-context-grid">
+                  <div>
+                    <span>Cliente</span>
+                    <strong>{collection.customer?.displayName ?? 'No resuelto'}</strong>
+                    <small>{collection.customer?.customerRef ?? collection.customerId}</small>
+                    {canReadCustomers ? <Link to={`/operator/customers/${collection.customerId}`}>Abrir Cliente 360 →</Link> : <em>Sin permiso para Cliente 360</em>}
+                  </div>
+                  <div>
+                    <span>Póliza</span>
+                    <strong>{collection.policy?.policyReference ?? 'No resuelta'}</strong>
+                    <small>{collection.policy?.insurerReference ?? collection.policyId}</small>
+                    {canReadPolicies ? <Link to={`/operator/policies/${collection.policyId}`}>Abrir Póliza 360 →</Link> : <em>Sin permiso para Póliza 360</em>}
+                  </div>
                 </div>
-                <div className="collection-dates">
+                <div className="r3-case-dates">
                   <div><span>Creada</span><strong>{formatDateTime(collection.createdAt)}</strong></div>
                   <div><span>Completada</span><strong>{collection.completedAt ? formatDateTime(collection.completedAt) : '—'}</strong></div>
                   <div><span>Cancelada</span><strong>{collection.cancelledAt ? formatDateTime(collection.cancelledAt) : '—'}</strong></div>
                 </div>
               </section>
 
-              <section className="ops-panel collection-lifecycle-card" aria-labelledby="collection-lifecycle-title">
+              <section className="ops-panel r3-case-lifecycle-card" aria-labelledby="collection-lifecycle-title">
                 <div className="ops-panel-heading"><div><h2 id="collection-lifecycle-title">Lifecycle</h2><p>Estado del caso separado del pago y del pipeline operativo.</p></div></div>
-                <div className="collection-lifecycle-state"><CollectionStatus value={collection.status} /><span>Versión esperada: <strong>{collection.version}</strong></span></div>
+                <div className="r3-case-lifecycle-state"><CollectionStatus value={collection.status} /></div>
                 {collection.status === 'OPEN' && canManage ? (
-                  <div className="collection-decision-row">
+                  <div className="r3-case-decision-row">
                     {collection.allowedTransitions.map((status) => (
                       <button
                         key={status}
-                        className={`collection-decision is-${status.toLowerCase()}`}
+                        className={`r3-case-decision is-${status.toLowerCase()}`}
                         type="button"
                         disabled={mutationPending}
                         onClick={() => transitionMutation.mutate(status)}
@@ -150,84 +136,57 @@ export function OperatorCollectionDetailPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="collection-readonly-note">{collection.status === 'OPEN' ? 'Tu rol puede leer este caso, pero no cambiar su lifecycle.' : 'El caso está en un estado terminal y no admite nuevas transiciones de lifecycle.'}</p>
+                  <p className="r3-case-readonly-note">{collection.status === 'OPEN' ? 'Tu rol puede leer este caso, pero no cambiar su lifecycle.' : 'El caso está en un estado terminal y no admite nuevas transiciones.'}</p>
                 )}
               </section>
             </div>
 
-            <section className="ops-panel collection-payment-card" aria-labelledby="collection-payment-title">
+            <section className="ops-panel r3-payment-card" aria-labelledby="collection-payment-title">
               <div className="ops-panel-heading">
-                <div><h2 id="collection-payment-title">Estado de pago verificado</h2><p>El valor no es una semántica definida por la UI. El servidor solo acepta códigos presentes en su allowlist configurada.</p></div>
-                <span className="collection-version-chip">case v{collection.version}</span>
+                <div><h2 id="collection-payment-title">Estado de pago</h2><p>Valor autoritativo publicado por el servidor, independiente del lifecycle del caso.</p></div>
               </div>
-              <div className="collection-payment-layout">
-                <div className="collection-payment-current">
-                  <span>Valor actual</span>
-                  <strong>{collection.paymentState ?? 'Sin estado'}</strong>
-                  <small>La API R3 no publica el catálogo configurado de valores aprobados.</small>
-                </div>
-                {canManage ? (
-                  <form className="collection-payment-form" onSubmit={submitPaymentState}>
-                    <label htmlFor="collection-payment-state">Código de estado aprobado por el servidor</label>
-                    <div>
-                      <input
-                        id="collection-payment-state"
-                        value={paymentState}
-                        maxLength={80}
-                        autoComplete="off"
-                        placeholder="Valor configurado en el servidor"
-                        onChange={(event) => setPaymentState(event.target.value)}
-                      />
-                      <button type="submit" disabled={mutationPending || !paymentState.trim() || paymentState.trim() === collection.paymentState}>Verificar y aplicar</button>
-                    </div>
-                    <small>No se muestran opciones inventadas. Un valor no aprobado falla cerrado con VALIDATION_ERROR.</small>
-                  </form>
-                ) : (
-                  <p className="collection-readonly-note">Tu rol puede consultar el estado de pago, pero no solicitar cambios.</p>
-                )}
+              <div className="r3-payment-current">
+                <span>Valor actual</span>
+                <strong>{collection.paymentState ?? 'Sin estado'}</strong>
+                <p>La API R3 valida este valor contra una allowlist configurada, pero todavía no publica el catálogo permitido. Por eso esta interfaz no expone un selector ni una entrada manual de códigos.</p>
               </div>
             </section>
 
-            <section className="ops-panel collection-pipeline-card" aria-labelledby="collection-pipeline-title">
+            <section className="ops-panel r3-case-pipeline-card" aria-labelledby="collection-pipeline-title">
               <div className="ops-panel-heading">
-                <div><h2 id="collection-pipeline-title">Pipeline operativo</h2><p>Movimiento gobernado por la versión fijada del pipeline; los destinos vienen del servidor.</p></div>
-                {collection.pipeline && <span className="collection-version-chip">work item v{collection.pipeline.version}</span>}
+                <div><h2 id="collection-pipeline-title">Pipeline operativo</h2><p>La etapa actual conserva su nombre visible. Los destinos siguientes permanecen como claves porque el contrato solo publica sus keys.</p></div>
               </div>
 
               {!collection.pipeline ? (
                 <div className="ops-compact-empty">El caso no tiene un work item operativo disponible.</div>
               ) : (
-                <div className="collection-pipeline-layout">
-                  <div className="collection-current-stage">
+                <div className="r3-case-pipeline-layout">
+                  <div className="r3-case-current-stage">
                     <span>Etapa actual</span>
                     <strong>{collection.pipeline.currentStage?.displayName ?? 'No resuelta'}</strong>
-                    <code>{collection.pipeline.currentStage?.stageKey ?? '—'}</code>
-                    <small>Pipeline version: {collection.pipeline.pipelineVersionId}</small>
+                    {collection.pipeline.currentStage?.stageKey && <small className="r3-case-tech-line">Clave: {collection.pipeline.currentStage.stageKey}</small>}
                   </div>
-                  <div className="collection-next-stages">
+                  <div className="r3-case-next-stages">
                     <span>Próximas etapas permitidas</span>
                     {collection.pipeline.allowedNextStageKeys.length === 0 ? (
                       <p>No hay movimientos siguientes publicados por la versión fijada.</p>
                     ) : canManage ? (
-                      <div className="collection-stage-actions">
+                      <div className="r3-case-stage-actions">
                         {collection.pipeline.allowedNextStageKeys.map((stageKey) => (
-                          <button
-                            key={stageKey}
-                            type="button"
-                            disabled={mutationPending}
-                            onClick={() => pipelineMutation.mutate(stageKey)}
-                          >
-                            {stageKey}
+                          <button key={stageKey} type="button" disabled={mutationPending} onClick={() => pipelineMutation.mutate(stageKey)}>
+                            Mover a <code>{stageKey}</code>
                           </button>
                         ))}
                       </div>
                     ) : (
-                      <div className="collection-stage-list">{collection.pipeline.allowedNextStageKeys.map((stageKey) => <code key={stageKey}>{stageKey}</code>)}</div>
+                      <div className="r3-case-stage-list">{collection.pipeline.allowedNextStageKeys.map((stageKey) => <code key={stageKey}>{stageKey}</code>)}</div>
                     )}
                   </div>
                 </div>
               )}
             </section>
+
+            <p className="r3-case-contract-note">Control de concurrencia activo · versión de caso v{collection.version}{collection.pipeline ? ` · work item v${collection.pipeline.version}` : ''}. En conflicto 409 la vista vuelve a consultar el servidor.</p>
           </>
         )}
       </main>
@@ -237,7 +196,7 @@ export function OperatorCollectionDetailPage() {
 
 function CollectionStatus({ value }: { value: CollectionCaseStatus }) {
   const labels: Record<CollectionCaseStatus, string> = { OPEN: 'Abierta', COMPLETED: 'Completada', CANCELLED: 'Cancelada' };
-  return <span className={`collection-status is-${value.toLowerCase()}`}>{labels[value]}</span>;
+  return <span className={`r3-case-status is-${value.toLowerCase()}`}>{labels[value]}</span>;
 }
 
 function formatDateTime(value: string) {
