@@ -26,6 +26,7 @@ Contents
 13-governed-imports-mapping-alt-3.jpg — Mapping alternative; noncanonical.
 14-governed-imports-dryrun-commit-contract.jpg — Contract-accurate Dry-run + Commit chat rendering later promoted through the approved SVG reference.
 15-recovery-request-wrong-dryrun.jpg — Wrong screen generated while requesting Recovery Console; rejected.
+16-recovery-console-wrong-import-records.jpg — Recovery Console attempt rejected because it models correction of rejected import rows instead of the R3 Integration Event + Dead-letter contract.
 
 Notes
 -----
