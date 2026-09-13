@@ -1,0 +1,150 @@
+name: R3 Task 10 Overflow Diagnostic
+
+on:
+  push:
+    branches: [review/r3-task10-overflow-diagnostic]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_task10_overflow
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_task10_overflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_task10_overflow
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-task10-overflow
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-task10-overflow
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 9889862d88bfc5268dcd7e7fff36f719c6e44775
+          fetch-depth: 1
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Prepare
+        shell: bash
+        run: |
+          npm ci
+          npm run contract:emit
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          echo "JWT_SECRET=r3-task10-overflow-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-task10-overflow-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-task10-overflow-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-task10-overflow-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "BROWSER_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+      - name: Bootstrap
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+      - name: Start API and web
+        shell: bash
+        run: |
+          mkdir -p .runtime/imports-r3-task10-overflow .runtime/evidence-r3-task10-overflow .runtime/task10-overflow
+          npm run start:api > .runtime/task10-overflow/api.log 2>&1 &
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/task10-overflow/web.log 2>&1 &
+          for attempt in $(seq 1 50); do
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: Create import and diagnose 390px overflow
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const base='http://127.0.0.1:3000';
+          async function json(method,path,body,token,extra={}) {
+            const r=await fetch(base+path,{method,headers:{'content-type':'application/json',...(token?{authorization:`Bearer ${token}`}:{ }),...extra},...(body===undefined?{}:{body:JSON.stringify(body)})});
+            const text=await r.text(); if(!r.ok) throw new Error(`${method} ${path} -> ${r.status}: ${text}`); return text?JSON.parse(text):null;
+          }
+          const auth=await json('POST','/api/v1/operator/auth/login',{login:process.env.QA_ADMIN_LOGIN,password:process.env.QA_OPERATOR_PASSWORD});
+          const form=new FormData(); form.append('importType','SYNTHETIC_REFERENCE_RECORDS'); form.append('source',new Blob(['ref,label,class\nVIS-A,Visual Alpha,PRIMARY\nVIS-B,,SECONDARY\n'],{type:'text/csv'}),'overflow.csv');
+          let r=await fetch(base+'/api/v1/admin/import-jobs',{method:'POST',headers:{authorization:`Bearer ${auth.accessToken}`,'Idempotency-Key':'task10-overflow-create-0001'},body:form});
+          if(!r.ok) throw new Error(await r.text()); let job=await r.json();
+          job=await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/preview`,{expectedVersion:job.version},auth.accessToken);
+          job=await json('PUT',`/api/v1/admin/import-jobs/${job.importJobId}/mapping`,{expectedVersion:job.version,mapping:{externalReference:'ref',label:'label',classification:'class'}},auth.accessToken);
+          job=await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/validate`,{expectedVersion:job.version},auth.accessToken);
+          job=await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/dry-run`,{expectedVersion:job.version},auth.accessToken);
+          fs.writeFileSync('.runtime/task10-overflow/import-id.txt',job.importJobId);
+          NODE
+
+          python - <<'PY'
+          import os,time,json
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support.ui import WebDriverWait
+          from selenium.webdriver.support import expected_conditions as EC
+          base='http://127.0.0.1:5173'
+          import_id=Path('.runtime/task10-overflow/import-id.txt').read_text().strip()
+          opts=webdriver.ChromeOptions()
+          for a in ('--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--force-device-scale-factor=1'): opts.add_argument(a)
+          opts.add_argument('--window-size=390,1000')
+          opts.binary_location=os.environ['BROWSER_BIN']
+          d=webdriver.Chrome(options=opts); w=WebDriverWait(d,20)
+          try:
+            d.get(base+'/operator/login')
+            w.until(EC.visibility_of_element_located((By.ID,'operator-login'))).send_keys(os.environ['QA_ADMIN_LOGIN'])
+            w.until(EC.visibility_of_element_located((By.ID,'operator-password'))).send_keys(os.environ['QA_OPERATOR_PASSWORD'])
+            d.execute_script('arguments[0].click()',w.until(EC.presence_of_element_located((By.CSS_SELECTOR,'button.r3-login-submit'))))
+            w.until(lambda x:x.current_url.startswith(base+'/operator/workspace'))
+            route=f'/operator/admin/imports/{import_id}'
+            d.execute_script("window.history.pushState({}, '', arguments[0]); window.dispatchEvent(new PopStateEvent('popstate'));",route)
+            w.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'.gi-summary')))
+            w.until(lambda x:'Dry-run listo' in x.find_element(By.TAG_NAME,'body').text)
+            time.sleep(.4)
+            diag=d.execute_script('''
+              const root=document.documentElement, vw=root.clientWidth;
+              const all=[...document.querySelectorAll('body *')];
+              const offenders=all.map(el=>{const r=el.getBoundingClientRect();const s=getComputedStyle(el);return {tag:el.tagName,cls:el.className||'',text:(el.innerText||'').trim().slice(0,120),left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),scrollWidth:el.scrollWidth,clientWidth:el.clientWidth,display:s.display,whiteSpace:s.whiteSpace,overflowX:s.overflowX,minWidth:s.minWidth};}).filter(x=>x.right>vw+2||x.left<-2).sort((a,b)=>b.right-a.right).slice(0,30);
+              return {vw,scrollWidth:root.scrollWidth,overflow:root.scrollWidth-vw,offenders};
+            ''')
+            print('TASK10_OVERFLOW_DIAGNOSTIC='+json.dumps(diag,ensure_ascii=False))
+            d.set_window_size(390,min(max(d.execute_script('return Math.max(document.documentElement.scrollHeight,document.body.scrollHeight)')+40,1000),7000))
+            d.save_screenshot('.runtime/task10-overflow/import-detail-390-debug.png')
+            if diag['overflow'] <= 2: raise SystemExit('Expected reproduction of overflow but none occurred')
+          finally: d.quit()
+          PY
+      - name: Upload diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-task10-overflow-diagnostic
+          path: .runtime/task10-overflow/**
+          include-hidden-files: true
+          if-no-files-found: warn
