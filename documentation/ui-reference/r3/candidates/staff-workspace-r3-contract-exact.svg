@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10243d"/><stop offset="1" stop-color="#071727"/></linearGradient>
+  <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#0b2440" flood-opacity=".09"/></filter>
+  <style>
+    .t{font-family:Arial,Helvetica,sans-serif;fill:#0f2340}.w{fill:#fff}.muted{fill:#647791}.xs{font-size:11px}.sm{font-size:12px}.body{font-size:14px}.lab{font-size:14px;font-weight:700}.sec{font-size:18px;font-weight:700}.title{font-size:30px;font-weight:750}.h{font-weight:700}.tiny{font-size:10px}.cardtitle{font-size:17px;font-weight:700}
+  </style>
+</defs>
+<rect width="1600" height="900" fill="#f5f8fc"/>
+<!-- desktop sidebar -->
+<rect width="205" height="900" fill="url(#navy)"/>
+<circle cx="34" cy="31" r="17" fill="#1469e8"/><path d="M34 19l10 4v8c0 8-5 13-10 16-5-3-10-8-10-16v-8z" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="58" y="31" class="t w" font-size="19" font-weight="700">InsuranceClaims</text><text x="58" y="50" class="t w xs" opacity=".75">Gestión de Siniestros</text>
+<g class="t w body" opacity=".94">
+ <rect x="8" y="78" width="189" height="42" rx="8" fill="#155eaa"/><text x="52" y="104" class="t w lab">Workspace</text>
+ <text x="52" y="150">Analytics</text>
+ <text x="52" y="194">Pipelines</text>
+ <text x="52" y="238">Plantillas</text>
+ <text x="52" y="282">Campos</text>
+ <text x="52" y="326">Guidance</text>
+ <text x="52" y="370">Automations</text>
+ <text x="52" y="414">Importaciones</text>
+ <text x="52" y="458">Recovery</text>
+</g>
+<line x1="20" y1="494" x2="185" y2="494" stroke="#25405f"/>
+<text x="20" y="526" class="t w xs" opacity=".66">PLATFORM ADMIN</text><text x="20" y="550" class="t w sm" opacity=".9">8 capacidades habilitadas</text>
+<text x="20" y="858" class="t w xs" opacity=".7">v0.5.2</text><text x="20" y="878" class="t w xs" opacity=".7">R3 · InsuranceClaims</text>
+<!-- topbar -->
+<rect x="205" width="1395" height="60" fill="#fff"/><line x1="205" y1="60" x2="1600" y2="60" stroke="#dfe7f1"/>
+<rect x="228" y="12" width="600" height="36" rx="8" fill="#f6f9fd" stroke="#dce6f2"/><text x="252" y="35" class="t muted body">Búsqueda global · próximo corte</text>
+<circle cx="1088" cy="30" r="16" fill="#142a48"/><text x="1079" y="35" class="t w sm h">PA</text><text x="1114" y="27" class="t lab">Administrador</text><text x="1114" y="43" class="t muted xs">Platform Admin</text>
+<!-- heading -->
+<text x="230" y="105" class="t title">Tu espacio de trabajo</text>
+<text x="230" y="132" class="t muted body">Entrada única y consciente del rol para las capacidades R3 que puedes utilizar.</text>
+<rect x="230" y="153" width="166" height="32" rx="16" fill="#eaf2ff"/><text x="313" y="174" text-anchor="middle" class="t sm h" fill="#155eaa">Administrador de plataforma</text>
+<text x="410" y="174" class="t muted sm">8 permisos/capacidades de presentación sincronizados</text>
+<!-- alert -->
+<rect x="230" y="204" width="920" height="68" rx="11" fill="#fff7e8" stroke="#efd69a"/><circle cx="253" cy="238" r="8" fill="#d89a16"/><text x="272" y="231" class="t lab">Sin superusuario implícito</text><text x="272" y="250" class="t sm">Platform Admin no hereda acceso operativo a Siniestros, Tareas, Clientes, Pólizas, Renovaciones ni Cobranzas.</text>
+<!-- sections -->
+<text x="230" y="314" class="t xs h" fill="#6e7f96">SUPERVISIÓN</text>
+<g filter="url(#sh)"><rect x="230" y="330" width="290" height="136" rx="12" fill="#fff"/></g>
+<circle cx="259" cy="360" r="18" fill="#eee9ff"/><text x="259" y="366" text-anchor="middle" class="t h" fill="#7650c9">◫</text>
+<text x="288" y="356" class="t tiny h" fill="#7650c9">ANALYTICS</text><text x="288" y="380" class="t cardtitle">Métricas operacionales</text><text x="250" y="407" class="t sm muted">KPIs, estados y etapas operacionales R3.</text><rect x="250" y="428" width="118" height="26" rx="7" fill="#eaf2ff"/><text x="309" y="446" text-anchor="middle" class="t xs h" fill="#1469e8">Abrir Analytics →</text>
+<text x="230" y="502" class="t xs h" fill="#6e7f96">CONFIGURACIÓN DE PLATAFORMA</text>
+<!-- six cards -->
+<g filter="url(#sh)">
+<rect x="230" y="518" width="290" height="120" rx="12" fill="#fff"/><rect x="535" y="518" width="290" height="120" rx="12" fill="#fff"/><rect x="840" y="518" width="310" height="120" rx="12" fill="#fff"/>
+<rect x="230" y="652" width="290" height="120" rx="12" fill="#fff"/><rect x="535" y="652" width="290" height="120" rx="12" fill="#fff"/><rect x="840" y="652" width="310" height="120" rx="12" fill="#fff"/>
+</g>
+<g class="t">
+<text x="250" y="545" class="tiny h" fill="#c18914">PIPELINES</text><text x="250" y="570" class="cardtitle">Pipelines</text><text x="250" y="593" class="sm muted">Versiones y activación gobernada.</text><text x="250" y="620" class="xs h" fill="#1469e8">Administrar →</text>
+<text x="555" y="545" class="tiny h" fill="#1c8a59">COMMUNICATIONS</text><text x="555" y="570" class="cardtitle">Plantillas</text><text x="555" y="593" class="sm muted">EMAIL / WHATSAPP versionados.</text><text x="555" y="620" class="xs h" fill="#1469e8">Administrar →</text>
+<text x="860" y="545" class="tiny h" fill="#1469e8">CUSTOM FIELDS</text><text x="860" y="570" class="cardtitle">Campos personalizados</text><text x="860" y="593" class="sm muted">CLAIM, RENEWAL y COLLECTION.</text><text x="860" y="620" class="xs h" fill="#1469e8">Administrar →</text>
+<text x="250" y="679" class="tiny h" fill="#1c8a59">GUIDANCE</text><text x="250" y="704" class="cardtitle">Guidance</text><text x="250" y="727" class="sm muted">Orientación configurada y versionada.</text><text x="250" y="754" class="xs h" fill="#1469e8">Administrar →</text>
+<text x="555" y="679" class="tiny h" fill="#7650c9">AUTOMATIONS</text><text x="555" y="704" class="cardtitle">Automations</text><text x="555" y="727" class="sm muted">Reglas versionadas y allowlisted.</text><text x="555" y="754" class="xs h" fill="#1469e8">Administrar →</text>
+<text x="860" y="679" class="tiny h" fill="#c18914">OPERACIÓN TÉCNICA</text><text x="860" y="704" class="cardtitle">Importaciones + Recovery</text><text x="860" y="727" class="sm muted">Imports gobernados e integraciones/dead letters.</text><text x="860" y="754" class="xs h" fill="#1469e8">Abrir herramientas →</text>
+</g>
+<!-- contract strip -->
+<rect x="230" y="792" width="920" height="72" rx="11" fill="#eef5fc" stroke="#d8e4f0"/>
+<text x="250" y="817" class="t sm h">Rol explícito</text><text x="250" y="840" class="t xs muted">PLATFORM_ADMIN</text>
+<text x="495" y="817" class="t sm h">API autoritativa</text><text x="495" y="840" class="t xs muted">La UI anticipa acceso, no lo concede.</text>
+<text x="790" y="817" class="t sm h">Sin capacidades ocultas</text><text x="790" y="840" class="t xs muted">Solo lo realmente productizado y permitido.</text>
+<!-- mobile shell -->
+<rect x="1180" y="72" width="360" height="800" rx="42" fill="#0d1827"/><rect x="1192" y="88" width="336" height="768" rx="31" fill="#fff"/><rect x="1278" y="88" width="164" height="24" rx="12" fill="#0d1827"/>
+<text x="1214" y="126" class="t sm h">9:41</text><circle cx="1235" cy="166" r="13" fill="#1469e8"/><text x="1257" y="164" class="t lab">InsuranceClaims</text><text x="1257" y="181" class="t muted xs">Platform Admin</text>
+<text x="1213" y="224" class="t" font-size="23" font-weight="750">Workspace</text><text x="1213" y="244" class="t muted sm">Capacidades disponibles para tu rol</text>
+<rect x="1213" y="260" width="286" height="52" rx="9" fill="#fff7e8" stroke="#efd69a"/><text x="1228" y="281" class="t xs h">Sin superusuario implícito</text><text x="1228" y="299" class="t tiny muted">No hereda operación de negocio.</text>
+<text x="1213" y="340" class="t xs h" fill="#6e7f96">SUPERVISIÓN</text>
+<rect x="1213" y="354" width="286" height="84" rx="10" fill="#fff" stroke="#dfe7f1"/><text x="1230" y="379" class="t tiny h" fill="#7650c9">ANALYTICS</text><text x="1230" y="401" class="t lab">Métricas operacionales</text><text x="1230" y="421" class="t xs muted">Abrir Analytics →</text>
+<text x="1213" y="469" class="t xs h" fill="#6e7f96">PLATAFORMA</text>
+<g fill="#fff" stroke="#dfe7f1"><rect x="1213" y="483" width="137" height="74" rx="10"/><rect x="1362" y="483" width="137" height="74" rx="10"/><rect x="1213" y="569" width="137" height="74" rx="10"/><rect x="1362" y="569" width="137" height="74" rx="10"/><rect x="1213" y="655" width="137" height="74" rx="10"/><rect x="1362" y="655" width="137" height="74" rx="10"/></g>
+<g class="t sm h"><text x="1230" y="510">Pipelines</text><text x="1379" y="510">Plantillas</text><text x="1230" y="596">Campos</text><text x="1379" y="596">Guidance</text><text x="1230" y="682">Automations</text><text x="1379" y="682">Imports</text></g>
+<g class="t tiny muted"><text x="1230" y="533">Versiones</text><text x="1379" y="533">EMAIL / WA</text><text x="1230" y="619">R3</text><text x="1379" y="619">Versionada</text><text x="1230" y="705">Reglas</text><text x="1379" y="705">Gobernados</text></g>
+<rect x="1213" y="742" width="286" height="52" rx="10" fill="#eef5fc" stroke="#d8e4f0"/><text x="1230" y="764" class="t sm h">Recovery</text><text x="1230" y="781" class="t tiny muted">Integration Events + Dead letters</text>
+<line x1="1192" y1="816" x2="1528" y2="816" stroke="#dfe7f1"/><g class="t tiny"><text x="1221" y="840">Workspace</text><text x="1286" y="840">Analytics</text><text x="1355" y="840">Admin</text><text x="1411" y="840">Recovery</text><text x="1472" y="840">Más</text></g>
+</svg>
