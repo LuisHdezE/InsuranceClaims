@@ -166,8 +166,9 @@ jobs:
       - name: Create Task 9 synthetic definitions through real API
         shell: bash
         run: |
-          node <<'NODE'
-          const fs = require('node:fs');
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
           const base = process.env.QA_BASE_URL.replace(/\/$/, '');
           const login = process.env.QA_ADMIN_LOGIN;
           const password = process.env.QA_OPERATOR_PASSWORD;
@@ -183,11 +184,14 @@ jobs:
             });
             const text = await response.text();
             if (!response.ok) throw new Error(`${method} ${path} -> ${response.status}: ${text}`);
-            return text ? JSON.parse(text) : null;
+            if (!text) return null;
+            const parsed = JSON.parse(text);
+            return parsed?.data ?? parsed;
           }
 
           const auth = await request('POST', '/api/v1/operator/auth/login', { login, password });
           const token = auth.accessToken;
+          if (!token) throw new Error('Admin login did not return an access token.');
 
           async function activateAndEnable(basePath, definition) {
             const draft = definition.versions.find((version) => version.status === 'DRAFT');
@@ -392,5 +396,6 @@ jobs:
           path: |
             .runtime/automation-pipeline-review/**
             .runtime/r3-automation-pipeline-*.log
-          if-no-files-found: error
+          include-hidden-files: true
+          if-no-files-found: warn
           retention-days: 30
