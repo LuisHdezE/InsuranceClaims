@@ -1,0 +1,163 @@
+name: R3 Parallel Sync Static QA
+
+on:
+  push:
+    branches: [review/r3-parallel-sync-final-v1]
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_parallel_sync
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_parallel_sync"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      REVIEW_TARGET_SHA: 4fc840e8eaeca52934ab4fbddfe5305c9b67820a
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_parallel_sync
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-parallel-sync
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-parallel-sync
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 4fc840e8eaeca52934ab4fbddfe5305c9b67820a
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Verify exact synchronized head
+        run: test "$(git rev-parse HEAD)" = "$REVIEW_TARGET_SHA"
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Typecheck production code
+        run: npm run typecheck
+
+      - name: Run core automated tests
+        run: npm run test
+
+      - name: Typecheck web client
+        run: npm run typecheck --workspace=@insurance/web
+
+      - name: Run web client tests
+        run: npm run test --workspace=@insurance/web
+
+      - name: Build web client
+        run: npm run build --workspace=@insurance/web
+
+      - name: Validate architecture and QA invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run architecture:check
+          npm run ci:qa:validate
+          node scripts/validate-design-system.mjs
+          node scripts/validate-interface-inventory.mjs
+
+      - name: Validate OpenAPI R3
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run openapi:check:r3
+          npx --yes @redocly/cli@2.51.2 lint --extends=spec openapi.yaml
+          mkdir -p .runtime
+          npx --yes @redocly/cli@2.51.2 bundle openapi.yaml --dereferenced --output .runtime/openapi.bundle.json
+          npm run openapi:validate:r3
+          git diff --exit-code -- openapi.yaml openapi/r3
+
+      - name: Validate Postman R3
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run postman:check:r3
+          npm run postman:validate:r3
+
+      - name: Prepare synthetic runtime secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "JWT_SECRET=r3-parallel-sync-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-parallel-sync-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-parallel-sync-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-parallel-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+
+      - name: Bootstrap PostgreSQL and synthetic identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+
+      - name: Start fresh legacy simulator and API
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .runtime/r3-parallel-sync "$EVIDENCE_STORAGE_DIR" "$IMPORT_SOURCE_STORAGE_DIR"
+          npm run start:legacy > .runtime/r3-parallel-sync/legacy.log 2>&1 &
+          echo $! > .runtime/r3-parallel-sync/legacy.pid
+          npm run start:api > .runtime/r3-parallel-sync/api.log 2>&1 &
+          echo $! > .runtime/r3-parallel-sync/api.pid
+          for attempt in $(seq 1 60); do
+            legacy_ok=0; api_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          cat .runtime/r3-parallel-sync/api.log || true
+          exit 1
+
+      - name: Execute fresh baseline API runtime QA
+        run: node qa/runtime-qa.mjs
+
+      - name: Assert no unhandled API errors
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -q 'UNHANDLED_API_ERROR' .runtime/r3-parallel-sync/api.log; then
+            cat .runtime/r3-parallel-sync/api.log
+            exit 1
+          fi
+
+      - name: Upload QA logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-parallel-sync-static-qa-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/r3-parallel-sync
+          if-no-files-found: warn
