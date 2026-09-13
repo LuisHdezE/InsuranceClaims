@@ -109,7 +109,7 @@ describe('OperatorPolicyDetailPage R3 Policy 360', () => {
 
   it('keeps record version secondary and excludes commercial or mutating fields outside the R3 contract', async () => {
     renderPage();
-    await screen.findByText('POL-API-008');
+    await screen.findByRole('heading', { name: 'Póliza 360' });
 
     expect(screen.getByText('Versión de registro: v7')).toBeTruthy();
     expect(screen.getByText('SYNTHETIC_API')).toBeTruthy();
