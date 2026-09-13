@@ -26,7 +26,7 @@ jobs:
           --health-timeout 5s
           --health-retries 20
     env:
-      REVIEW_TARGET_SHA: c3df3f7f779b5dd0d2a2eae3503632f99b1d7ecf
+      REVIEW_TARGET_SHA: ec03d5bd9371029aad9d23591312b63dc2a0ac51
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_parallel_sync_v2
       LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
       LEGACY_SIMULATOR_PORT: '3200'
@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: c3df3f7f779b5dd0d2a2eae3503632f99b1d7ecf
+          ref: ec03d5bd9371029aad9d23591312b63dc2a0ac51
           fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
