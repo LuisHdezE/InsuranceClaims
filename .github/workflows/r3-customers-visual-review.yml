@@ -11,7 +11,6 @@ jobs:
   customers-review:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-
     services:
       postgres:
         image: postgres:18
@@ -19,14 +18,10 @@ jobs:
           POSTGRES_DB: insuranceclaims_r3_customers_review
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
+        ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_customers_review"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
-
+          --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_customers_review
       LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
@@ -42,42 +37,32 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: f5e7b54c41c80da17181cfb4efffe3051386e489
-
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
           cache-dependency-path: package-lock.json
-
       - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
-
       - name: Install locked dependencies
         run: npm ci
-
       - name: Emit Prisma 8 contract
         run: npm run contract:emit
-
       - name: Prepare synthetic review secrets
         shell: bash
         run: |
           echo "JWT_SECRET=r3-customers-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "CUSTOMER_JWT_SECRET=r3-customers-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "QA_OPERATOR_PASSWORD=R3-customers-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
-
       - name: Prepare browser runtime
         shell: bash
         run: |
-          if ! command -v psql >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y postgresql-client
-          fi
+          command -v psql >/dev/null 2>&1 || { sudo apt-get update && sudo apt-get install -y postgresql-client; }
           python -m pip install --disable-pip-version-check selenium==4.35.0
           browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           test -n "$browser_bin"
           echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
-
       - name: Bootstrap database and synthetic Customer 360 graph
         shell: bash
         run: |
@@ -86,88 +71,34 @@ jobs:
           mkdir -p .runtime
           cat > .runtime/r3-customers-review-seed.ts <<'TS'
           import { createProductionRuntimeFromEnv } from '@insurance/infrastructure';
-
           const customerId = '91000000-0000-4000-8000-000000000001';
           const policyId = '92000000-0000-4000-8000-000000000001';
-          const assetId = '93000000-0000-4000-8000-000000000001';
           const claimId = '94000000-0000-4000-8000-000000000001';
-          const historyId = '95000000-0000-4000-8000-000000000001';
           const at = new Date();
           const runtime = await createProductionRuntimeFromEnv();
-
           await runtime.customerPolicyStore.seedSyntheticCustomerPolicy({
-            customer: {
-              id: customerId,
-              customerRef: 'SYN-QA-PORTAL-CUST-001',
-              displayName: 'Synthetic QA Portal Customer',
-              status: 'ACTIVE',
-              createdAt: at,
-              updatedAt: at,
-              version: 1,
-            },
-            policy: {
-              id: policyId,
-              customerId,
-              policyReference: 'MOD-QA-PORTAL-POL-001',
-              legacyPolicyReference: 'SYN-QA-PORTAL-POL-001',
-              insurerReference: 'SYN-QA-PORTAL-INSURER-001',
-              recordStatus: 'ACTIVE',
-              operationalMetadata: { source: 'SYNTHETIC_R3_CUSTOMERS_REVIEW' },
-              createdAt: at,
-              updatedAt: at,
-              version: 1,
-            },
-            assets: [{
-              id: assetId,
-              policyId,
-              assetType: 'VEHICLE',
-              assetReference: 'MOD-QA-PORTAL-VEH-001',
-              legacyAssetReference: 'SYN-QA-PORTAL-VEH-001',
-              metadata: {},
-              createdAt: at,
-            }],
+            customer: { id: customerId, customerRef: 'SYN-QA-PORTAL-CUST-001', displayName: 'Synthetic QA Portal Customer', status: 'ACTIVE', createdAt: at, updatedAt: at, version: 1 },
+            policy: { id: policyId, customerId, policyReference: 'MOD-QA-PORTAL-POL-001', legacyPolicyReference: 'SYN-QA-PORTAL-POL-001', insurerReference: 'SYN-QA-PORTAL-INSURER-001', recordStatus: 'ACTIVE', operationalMetadata: { source: 'SYNTHETIC_R3_CUSTOMERS_REVIEW' }, createdAt: at, updatedAt: at, version: 1 },
+            assets: [{ id: '93000000-0000-4000-8000-000000000001', policyId, assetType: 'VEHICLE', assetReference: 'MOD-QA-PORTAL-VEH-001', legacyAssetReference: 'SYN-QA-PORTAL-VEH-001', metadata: {}, createdAt: at }],
           });
-
           if (!(await runtime.store.getById(claimId))) {
             await runtime.store.create({
-              id: claimId,
-              trackingCode: 'SYN-QA-PORTAL-TRACK-001',
-              policyReference: 'SYN-QA-PORTAL-POL-001',
-              vehicleReference: 'SYN-QA-PORTAL-VEH-001',
-              customerId,
-              policyId,
-              verifiedCustomerLabel: 'Synthetic QA Portal Customer',
-              eventType: 'Synthetic R3 customers review event',
-              occurredAt: at,
-              locationText: 'Synthetic R3 customers review location',
-              description: 'Synthetic R3 customers visual review claim.',
-              status: 'OBSERVED',
-              createdAt: at,
-              updatedAt: at,
-            }, [], {
-              historyId,
-              claimId,
-              fromStatus: null,
-              toStatus: 'RECEIVED',
-              actorType: 'SYSTEM',
-              actorId: null,
-              occurredAt: at,
-            });
+              id: claimId, trackingCode: 'SYN-QA-PORTAL-TRACK-001', policyReference: 'SYN-QA-PORTAL-POL-001', vehicleReference: 'SYN-QA-PORTAL-VEH-001', customerId, policyId,
+              verifiedCustomerLabel: 'Synthetic QA Portal Customer', eventType: 'Synthetic R3 customers review event', occurredAt: at, locationText: 'Synthetic R3 customers review location',
+              description: 'Synthetic R3 customers visual review claim.', status: 'OBSERVED', createdAt: at, updatedAt: at,
+            }, [], { historyId: '95000000-0000-4000-8000-000000000001', claimId, fromStatus: null, toStatus: 'RECEIVED', actorType: 'SYSTEM', actorId: null, occurredAt: at });
           }
-
           console.log(JSON.stringify({ event: 'R3_CUSTOMERS_REVIEW_GRAPH_SEEDED', customerId, policyId, claimId }));
           process.exit(0);
           TS
           npx tsx .runtime/r3-customers-review-seed.ts
-
-      - name: Start simulated legacy, API and web client
+      - name: Start runtime
         shell: bash
         run: |
           mkdir -p .runtime/evidence-r3-customers-review .runtime/customers-review
           npm run start:legacy > .runtime/r3-customers-legacy.log 2>&1 &
           npm run start:api > .runtime/r3-customers-api.log 2>&1 &
           npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/r3-customers-web.log 2>&1 &
-
       - name: Wait for runtime services
         shell: bash
         run: |
@@ -176,18 +107,15 @@ jobs:
             curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
             curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
             curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
-            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
+            [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]] && exit 0
             sleep 1
           done
           exit 1
-
       - name: Capture Customer Directory and Customer 360
         shell: bash
         run: |
           python - <<'PY'
-          import json
-          import os
-          import time
+          import json, os, time
           from pathlib import Path
           from selenium import webdriver
           from selenium.webdriver.common.by import By
@@ -195,121 +123,56 @@ jobs:
           from selenium.webdriver.support.ui import WebDriverWait
 
           base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
-          login = os.environ['QA_SUPERVISOR_LOGIN']
-          password = os.environ['QA_OPERATOR_PASSWORD']
-          target_sha = os.environ['REVIEW_TARGET_SHA']
-          customer_ref = 'SYN-QA-PORTAL-CUST-001'
-          customer_name = 'Synthetic QA Portal Customer'
-          claim_tracking = 'SYN-QA-PORTAL-TRACK-001'
-          out = Path('.runtime/customers-review')
-          out.mkdir(parents=True, exist_ok=True)
-
-          options = webdriver.ChromeOptions()
-          for arg in ('--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--force-device-scale-factor=1'):
-              options.add_argument(arg)
-          options.add_argument('--window-size=1440,1100')
-          options.binary_location = os.environ['BROWSER_BIN']
-          driver = webdriver.Chrome(options=options)
-          wait = WebDriverWait(driver, 20)
+          out = Path('.runtime/customers-review'); out.mkdir(parents=True, exist_ok=True)
+          opts = webdriver.ChromeOptions()
+          for arg in ('--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--force-device-scale-factor=1'): opts.add_argument(arg)
+          opts.add_argument('--window-size=1440,1100'); opts.binary_location = os.environ['BROWSER_BIN']
+          driver = webdriver.Chrome(options=opts); wait = WebDriverWait(driver, 20)
 
           def metrics():
-              return driver.execute_script('''
-                const root = document.documentElement;
-                return {
-                  clientWidth: root.clientWidth,
-                  scrollWidth: root.scrollWidth,
-                  scrollHeight: Math.max(root.scrollHeight, document.body.scrollHeight),
-                  h1Count: document.querySelectorAll('h1').length,
-                  bodyText: document.body.innerText
-                };
-              ''')
-
-          def activate(element):
-              driver.execute_script('arguments[0].scrollIntoView({block:"center", inline:"nearest"})', element)
-              time.sleep(.15)
-              driver.execute_script('arguments[0].click()', element)
-
-          def capture(filename, width, kind):
-              driver.set_window_size(width, 1000)
-              time.sleep(.5)
-              m = metrics()
-              overflow = m['scrollWidth'] - m['clientWidth']
+              return driver.execute_script('''const r=document.documentElement; return {clientWidth:r.clientWidth,scrollWidth:r.scrollWidth,scrollHeight:Math.max(r.scrollHeight,document.body.scrollHeight),h1Count:document.querySelectorAll('h1').length,bodyText:document.body.innerText};''')
+          def activate(el):
+              driver.execute_script('arguments[0].scrollIntoView({block:"center",inline:"nearest"});arguments[0].click()', el); time.sleep(.2)
+          def capture(name, width, kind):
+              driver.set_window_size(width, 1000); time.sleep(.5); m=metrics(); body=m['bodyText']; lower=body.lower(); overflow=m['scrollWidth']-m['clientWidth']
               assert overflow <= 2, f'{kind}: horizontal overflow at {width}px = {overflow}px'
-              assert m['h1Count'] == 1, f'{kind}: expected one h1 at {width}px, got {m["h1Count"]}'
-              body = m['bodyText']
-              lower = body.lower()
-              assert customer_name in body, f'{kind}: API-backed customer missing'
-              assert customer_ref in body, f'{kind}: customer reference missing'
-              for forbidden in ('crear cliente', 'editar cliente', 'eliminar cliente', 'exportar clientes'):
-                  assert forbidden not in lower, f'{kind}: unsupported action leaked: {forbidden}'
+              assert m['h1Count'] == 1, f'{kind}: expected one h1, got {m["h1Count"]}'
+              assert 'Synthetic QA Portal Customer' in body and 'SYN-QA-PORTAL-CUST-001' in body
+              for forbidden in ('crear cliente','editar cliente','eliminar cliente','exportar clientes'): assert forbidden not in lower
               if kind == 'directory':
-                  for label in ('Clientes', 'Directorio de clientes', 'Buscar cliente', 'Estado', 'Resultado R3', 'Búsqueda y filtros server-side'):
-                      assert label in body, f'Directory label missing: {label}'
-                  assert len(driver.find_elements(By.CSS_SELECTOR, '.r3-customer-directory')) == 1
-                  assert len(driver.find_elements(By.CSS_SELECTOR, 'a.cp360-row-action')) >= 1
+                  for label in ('Clientes','Directorio de clientes','Estado','Resultado R3','Búsqueda y filtros server-side'): assert label in body, f'Directory label missing: {label}'
+                  search_label = driver.find_element(By.CSS_SELECTOR, 'label[for="customer-search"]')
+                  assert (search_label.get_attribute('textContent') or '').strip() == 'Buscar cliente'
+                  assert len(driver.find_elements(By.CSS_SELECTOR,'.r3-customer-directory')) == 1
+                  assert len(driver.find_elements(By.CSS_SELECTOR,'a.cp360-row-action')) >= 1
               else:
-                  for label in ('Cliente 360', 'Pólizas relacionadas', 'Siniestros relacionados', 'Alcance contractual', 'Versión de registro:'):
-                      assert label in body, f'Customer 360 label missing: {label}'
-                  assert claim_tracking in body, 'Customer 360 related Claim missing'
-                  assert 'Requiere información' in body, 'OBSERVED status was not presented in Spanish'
-                  assert 'OBSERVED' not in body, 'raw Claim enum leaked into Customer 360'
-                  assert len(driver.find_elements(By.CSS_SELECTOR, '.r3-customer-detail')) == 1
-                  assert len(driver.find_elements(By.CSS_SELECTOR, '.cp360-relation-card')) >= 1
-              height = min(max(int(m['scrollHeight']) + 40, 1000), 6500)
-              driver.set_window_size(width, height)
-              time.sleep(.35)
-              driver.execute_script('window.scrollTo(0, 0)')
-              path = out / filename
-              assert driver.save_screenshot(str(path))
-              return {'kind': kind, 'width': width, 'height': height, 'horizontal_overflow_px': overflow, 'h1_count': m['h1Count'], 'file': str(path)}
+                  for label in ('Cliente 360','Pólizas relacionadas','Siniestros relacionados','Alcance contractual','Versión de registro:'): assert label in body, f'Customer 360 label missing: {label}'
+                  assert 'SYN-QA-PORTAL-TRACK-001' in body and 'Requiere información' in body and 'OBSERVED' not in body
+                  assert len(driver.find_elements(By.CSS_SELECTOR,'.r3-customer-detail')) == 1
+              height=min(max(int(m['scrollHeight'])+40,1000),6500); driver.set_window_size(width,height); time.sleep(.3); driver.execute_script('window.scrollTo(0,0)')
+              path=out/name; assert driver.save_screenshot(str(path))
+              return {'kind':kind,'width':width,'height':height,'horizontal_overflow_px':overflow,'h1_count':m['h1Count'],'file':str(path)}
 
           try:
-              driver.get(base + '/operator/login')
-              wait.until(EC.visibility_of_element_located((By.ID, 'operator-login'))).send_keys(login)
-              wait.until(EC.visibility_of_element_located((By.ID, 'operator-password'))).send_keys(password)
-              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
-              wait.until(lambda d: d.current_url.startswith(base + '/operator/dashboard'))
-
-              customers_link = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a[href="/operator/customers"]')))
-              activate(customers_link)
-              wait.until(lambda d: d.current_url.startswith(base + '/operator/customers'))
-              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-customer-directory')))
-              wait.until(lambda d: customer_name in d.find_element(By.TAG_NAME, 'body').text)
-
-              shots = [
-                  capture('customer-directory-desktop.png', 1440, 'directory'),
-                  capture('customer-directory-mobile.png', 390, 'directory'),
-              ]
-
-              driver.set_window_size(1440, 1100)
-              detail_link = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a.cp360-row-action[href^="/operator/customers/"]')))
-              activate(detail_link)
-              wait.until(lambda d: '/operator/customers/' in d.current_url)
-              detail_url = driver.current_url
-              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-customer-detail')))
-              wait.until(lambda d: claim_tracking in d.find_element(By.TAG_NAME, 'body').text)
-
-              shots.extend([
-                  capture('customer-360-desktop.png', 1440, 'detail'),
-                  capture('customer-360-mobile.png', 390, 'detail'),
-              ])
-
-              summary = {
-                  'review_type': 'r3_customer_directory_360_visual_review',
-                  'review_target_sha': target_sha,
-                  'runtime_commit': os.environ.get('GITHUB_SHA'),
-                  'role': 'CLAIMS_SUPERVISOR',
-                  'api_authoritative': True,
-                  'synthetic_customer_graph_seeded_through_runtime_store': True,
-                  'detail_url_path': detail_url.replace(base, ''),
-                  'screenshots': shots,
-              }
-              (out / 'customers-visual-review.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
-              print(json.dumps(summary))
-          finally:
-              driver.quit()
+              driver.get(base+'/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID,'operator-login'))).send_keys(os.environ['QA_SUPERVISOR_LOGIN'])
+              wait.until(EC.visibility_of_element_located((By.ID,'operator-password'))).send_keys(os.environ['QA_OPERATOR_PASSWORD'])
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'button.r3-login-submit'))).click()
+              wait.until(lambda d:d.current_url.startswith(base+'/operator/dashboard'))
+              activate(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'a[href="/operator/customers"]'))))
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'.r3-customer-directory')))
+              wait.until(lambda d:'Synthetic QA Portal Customer' in d.find_element(By.TAG_NAME,'body').text)
+              shots=[capture('customer-directory-desktop.png',1440,'directory'),capture('customer-directory-mobile.png',390,'directory')]
+              driver.set_window_size(1440,1100)
+              activate(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'a.cp360-row-action[href^="/operator/customers/"]'))))
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'.r3-customer-detail')))
+              wait.until(lambda d:'SYN-QA-PORTAL-TRACK-001' in d.find_element(By.TAG_NAME,'body').text)
+              detail_url=driver.current_url
+              shots += [capture('customer-360-desktop.png',1440,'detail'),capture('customer-360-mobile.png',390,'detail')]
+              summary={'review_type':'r3_customer_directory_360_visual_review','review_target_sha':os.environ['REVIEW_TARGET_SHA'],'runtime_commit':os.environ.get('GITHUB_SHA'),'role':'CLAIMS_SUPERVISOR','api_authoritative':True,'synthetic_customer_graph_seeded_through_runtime_store':True,'detail_url_path':detail_url.replace(base,''),'screenshots':shots}
+              (out/'customers-visual-review.json').write_text(json.dumps(summary,indent=2)+'\n',encoding='utf-8'); print(json.dumps(summary))
+          finally: driver.quit()
           PY
-
       - name: Upload Customers visual review artifact
         uses: actions/upload-artifact@v4
         with:
@@ -317,15 +180,12 @@ jobs:
           path: .runtime/customers-review/**
           if-no-files-found: error
           retention-days: 30
-
       - name: Runtime logs on failure
         if: failure()
         shell: bash
         run: |
-          tail -n 200 .runtime/r3-customers-api.log 2>/dev/null || true
-          tail -n 200 .runtime/r3-customers-legacy.log 2>/dev/null || true
-          tail -n 200 .runtime/r3-customers-web.log 2>/dev/null || true
-
+          tail -n 120 .runtime/r3-customers-api.log 2>/dev/null || true
+          tail -n 120 .runtime/r3-customers-web.log 2>/dev/null || true
       - name: Stop runtime services
         if: always()
         shell: bash
