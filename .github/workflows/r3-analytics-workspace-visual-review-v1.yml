@@ -31,11 +31,9 @@ jobs:
       QA_WEB_BASE_URL: http://127.0.0.1:5173
       QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
       QA_ADMIN_LOGIN: qa.admin@example.invalid
-      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
       JWT_SECRET: review-${{ github.run_id }}-${{ github.sha }}-jwt
       CUSTOMER_JWT_SECRET: review-${{ github.run_id }}-${{ github.sha }}-customer-jwt
       QA_OPERATOR_PASSWORD: Review-${{ github.run_id }}-${{ github.run_attempt }}-Aa1!
-      QA_CUSTOMER_PASSWORD: Customer-${{ github.run_id }}-${{ github.run_attempt }}-Aa1!
       REVIEW_TARGET_SHA: 439562d69a6a42121143c67cc6ff4fa91dfbc503
 
     steps:
@@ -73,7 +71,7 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
-          npx tsx qa/seed.ts
+          QA_CUSTOMER_PASSWORD= npx tsx qa/seed.ts
       - name: Start services
         shell: bash
         run: |
