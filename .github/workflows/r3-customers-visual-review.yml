@@ -63,6 +63,7 @@ jobs:
         shell: bash
         run: |
           echo "JWT_SECRET=r3-customers-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-customers-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "QA_OPERATOR_PASSWORD=R3-customers-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
 
       - name: Prepare browser runtime
