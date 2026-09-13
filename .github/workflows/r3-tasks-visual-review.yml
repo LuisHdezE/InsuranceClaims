@@ -1,0 +1,272 @@
+name: R3 Tasks Visual Review
+
+on:
+  push:
+    branches: [review/r3-ui-increment-03-tasks]
+
+permissions:
+  contents: read
+
+jobs:
+  tasks-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_tasks_review
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_tasks_review"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_tasks_review
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-tasks-review
+      REVIEW_TARGET_SHA: bc017189da21c7cc770ed351d3ad54705f3e20d4
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: bc017189da21c7cc770ed351d3ad54705f3e20d4
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Prepare synthetic review secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=r3-tasks-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-tasks-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-tasks-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+
+      - name: Prepare browser runtime
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+
+      - name: Bootstrap database and synthetic identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          npx tsx qa/seed.ts
+
+      - name: Start simulated legacy, API and web client
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-r3-tasks-review .runtime/tasks-review
+          npm run start:legacy > .runtime/r3-tasks-legacy.log 2>&1 &
+          npm run start:api > .runtime/r3-tasks-api.log 2>&1 &
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/r3-tasks-web.log 2>&1 &
+
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 50); do
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Create authoritative synthetic claim through real API client
+        run: npx tsx qa/web-digital-claim-intake-runtime.ts
+
+      - name: Capture Tasks Workspace and Task Detail
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          login = os.environ['QA_SUPERVISOR_LOGIN']
+          password = os.environ['QA_OPERATOR_PASSWORD']
+          target_sha = os.environ['REVIEW_TARGET_SHA']
+          task_title = 'Revisar documentación R3 API'
+          out = Path('.runtime/tasks-review')
+          out.mkdir(parents=True, exist_ok=True)
+
+          options = webdriver.ChromeOptions()
+          for arg in ('--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--force-device-scale-factor=1'):
+              options.add_argument(arg)
+          options.add_argument('--window-size=1440,1100')
+          options.binary_location = os.environ['BROWSER_BIN']
+          driver = webdriver.Chrome(options=options)
+          wait = WebDriverWait(driver, 20)
+
+          def metrics():
+              return driver.execute_script('''
+                const root = document.documentElement;
+                return {
+                  clientWidth: root.clientWidth,
+                  scrollWidth: root.scrollWidth,
+                  scrollHeight: Math.max(root.scrollHeight, document.body.scrollHeight),
+                  h1Count: document.querySelectorAll('h1').length,
+                  bodyText: document.body.innerText
+                };
+              ''')
+
+          def capture(filename, width, kind):
+              driver.set_window_size(width, 1000)
+              time.sleep(.5)
+              m = metrics()
+              overflow = m['scrollWidth'] - m['clientWidth']
+              assert overflow <= 2, f'{kind}: horizontal overflow at {width}px = {overflow}px'
+              assert m['h1Count'] == 1, f'{kind}: expected one h1 at {width}px, got {m["h1Count"]}'
+              body = m['bodyText']
+              lower = body.lower()
+              assert task_title in body, f'{kind}: authoritative Task title missing'
+              assert 'operator id' not in lower, f'{kind}: manual operator id leaked into UI'
+              assert 'expectedversion' not in lower, f'{kind}: technical concurrency field leaked into UI'
+              assert 'uuid o vacío' not in lower, f'{kind}: UUID input leaked into UI'
+              if kind == 'workspace':
+                  for label in ('Tareas operativas', 'Mis tareas', 'Todas', 'Vencidas', 'Completadas', 'Cola de trabajo', 'Asignada a ti'):
+                      assert label in body, f'Workspace label missing: {label}'
+                  assert len(driver.find_elements(By.CSS_SELECTOR, '.r3-task-master-detail')) == 1
+                  assert len(driver.find_elements(By.CSS_SELECTOR, '.r3-task-inline-detail')) == 1
+              else:
+                  for label in ('Siniestro asociado', 'Prioridad y vencimiento', 'Cerrar trabajo', 'Completar tarea', 'Cancelar tarea', 'Asignada a ti'):
+                      assert label in body, f'Detail label missing: {label}'
+                  assert len(driver.find_elements(By.CSS_SELECTOR, '.r3-task-detail-hero')) == 1
+                  assert len(driver.find_elements(By.CSS_SELECTOR, 'input[placeholder*="UUID"]')) == 0
+              height = min(max(int(m['scrollHeight']) + 40, 1000), 7000)
+              driver.set_window_size(width, height)
+              time.sleep(.35)
+              driver.execute_script('window.scrollTo(0, 0)')
+              path = out / filename
+              assert driver.save_screenshot(str(path))
+              return {'kind': kind, 'width': width, 'height': height, 'horizontal_overflow_px': overflow, 'h1_count': m['h1Count'], 'file': str(path)}
+
+          try:
+              driver.get(base + '/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-login'))).send_keys(login)
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-password'))).send_keys(password)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
+              wait.until(lambda d: d.current_url.startswith(base + '/operator/dashboard'))
+
+              # Preserve the in-memory staff session with React Router navigation.
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[href="/operator/claims"]'))).click()
+              wait.until(lambda d: d.current_url.startswith(base + '/operator/claims'))
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.ops-kanban')))
+              wait.until(lambda d: 'SYN-POL-001' in d.find_element(By.TAG_NAME, 'body').text)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a.ops-claim-card'))).click()
+              wait.until(lambda d: '/operator/claims/' in d.current_url)
+              wait.until(EC.visibility_of_element_located((By.ID, 'tareas')))
+
+              # Open the real Task form inside Claim Detail and assert the UUID UX is absent.
+              new_task = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(normalize-space(.), 'Nueva tarea')]")))
+              driver.execute_script('arguments[0].scrollIntoView({block:"center"})', new_task)
+              new_task.click()
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-create-task-form')))
+              form_text = driver.find_element(By.CSS_SELECTOR, '.r3-create-task-form').text.lower()
+              assert 'operator id' not in form_text and 'uuid' not in form_text
+              title_input = wait.until(EC.visibility_of_element_located((By.XPATH, "//label[.//span[normalize-space()='Título']]//input")))
+              title_input.send_keys(task_title)
+              wait.until(EC.element_to_be_clickable((By.XPATH, "//form[contains(@class,'r3-create-task-form')]//button[normalize-space()='Asignarme']"))).click()
+              wait.until(EC.element_to_be_clickable((By.XPATH, "//form[contains(@class,'r3-create-task-form')]//button[normalize-space()='Crear tarea']"))).click()
+              wait.until(lambda d: task_title in d.find_element(By.ID, 'tareas').text)
+
+              # Navigate to Tasks using the SPA shell so the operator session remains alive.
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[href="/operator/tasks"]'))).click()
+              wait.until(lambda d: d.current_url.startswith(base + '/operator/tasks'))
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-task-master-detail')))
+              wait.until(lambda d: task_title in d.find_element(By.TAG_NAME, 'body').text)
+
+              shots = [
+                  capture('tasks-workspace-desktop.png', 1440, 'workspace'),
+                  capture('tasks-workspace-mobile.png', 390, 'workspace'),
+              ]
+
+              driver.set_window_size(1440, 1100)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.r3-task-inline-actions a[href^="/operator/tasks/"]'))).click()
+              wait.until(lambda d: '/operator/tasks/' in d.current_url)
+              detail_url = driver.current_url
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-task-detail-hero')))
+
+              shots.extend([
+                  capture('task-detail-desktop.png', 1440, 'detail'),
+                  capture('task-detail-mobile.png', 390, 'detail'),
+              ])
+
+              summary = {
+                  'review_type': 'r3_tasks_workspace_detail_visual_review',
+                  'review_target_sha': target_sha,
+                  'runtime_commit': os.environ.get('GITHUB_SHA'),
+                  'role': 'CLAIMS_SUPERVISOR',
+                  'api_authoritative': True,
+                  'task_created_through_product_ui': True,
+                  'detail_url_path': detail_url.replace(base, ''),
+                  'screenshots': shots,
+              }
+              (out / 'tasks-visual-review.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+              print(json.dumps(summary))
+          finally:
+              driver.quit()
+          PY
+
+      - name: Upload Tasks visual review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-tasks-visual-review-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/tasks-review/**
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          tail -n 200 .runtime/r3-tasks-api.log 2>/dev/null || true
+          tail -n 200 .runtime/r3-tasks-legacy.log 2>/dev/null || true
+          tail -n 200 .runtime/r3-tasks-web.log 2>/dev/null || true
+
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          pkill -f 'tsx apps/api/src/main.ts' 2>/dev/null || true
+          pkill -f 'tsx apps/legacy-simulator/src/main.ts' 2>/dev/null || true
+          pkill -f 'vite --host 127.0.0.1' 2>/dev/null || true
