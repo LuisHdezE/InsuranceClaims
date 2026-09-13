@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { getPolicy } from '../api/customer-policy';
 import type { PolicyRecordStatus, RelatedClaimProjection } from '../api/customer-policy-types';
-import type { ApiFailure } from '../api/types';
+import type { ApiFailure, ClaimStatus } from '../api/types';
 import { hasPermission } from '../auth/staff-access';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
+import '../r3-ui-increment-05.css';
 
 export function OperatorPolicyDetailPage() {
   const { policyId = '' } = useParams();
@@ -30,40 +31,74 @@ export function OperatorPolicyDetailPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main cp360-main">
+      <main className="operator-main ops-main cp360-main r3-policy-detail">
         <div className="cp360-breadcrumbs"><Link to="/operator/policies">Pólizas</Link><span>/</span><span>{policy?.policyReference ?? 'Detalle'}</span></div>
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
 
-        {policyQuery.isLoading ? <div className="ops-panel ops-loading" role="status">Cargando Policy 360…</div> : policy ? (
+        {policyQuery.isLoading ? <div className="ops-panel ops-loading" role="status">Cargando Póliza 360…</div> : policy ? (
           <>
+            <div className="r3-policy-detail-title">
+              <div><span className="ops-kicker">Pólizas</span><h1 id="policy-detail-title">Póliza 360</h1></div>
+              <StatusBadge value={policy.recordStatus} />
+            </div>
+
             <section className="cp360-detail-hero cp360-policy-hero" aria-labelledby="policy-detail-title">
-              <div className="cp360-detail-identity"><span className="cp360-avatar is-policy" aria-hidden="true">▱</span><div><span className="ops-kicker">Policy 360</span><h1 id="policy-detail-title">{policy.policyReference}</h1><div className="cp360-hero-meta"><span>Legacy: <code>{policy.legacyPolicyReference}</code></span><StatusBadge value={policy.recordStatus} /><span>v{policy.version}</span></div></div></div>
-              <div className="cp360-detail-facts"><div><small>Assets</small><strong>{policy.assets.length}</strong></div><div><small>Claims</small><strong>{policy.claims.length}</strong></div><div><small>Aseguradora ref.</small><strong>{policy.insurerReference ?? '—'}</strong></div></div>
+              <div className="cp360-detail-identity">
+                <span className="cp360-avatar is-policy" aria-hidden="true">▱</span>
+                <div>
+                  <h2>{policy.policyReference}</h2>
+                  <div className="cp360-hero-meta"><span>Legacy</span><code>{policy.legacyPolicyReference}</code><span>Referencia autoritativa de póliza</span></div>
+                </div>
+              </div>
+              <div className="cp360-detail-facts">
+                <div><small>Assets relacionados</small><strong>{policy.assets.length}</strong><span>según Policy 360</span></div>
+                <div><small>Siniestros relacionados</small><strong>{policy.claims.length}</strong><span>correlacionados por backend</span></div>
+                <div><small>Aseguradora ref.</small><strong>{policy.insurerReference ?? '—'}</strong><span>dato transportado por R3</span></div>
+              </div>
             </section>
 
             <div className="cp360-detail-grid">
               <section className="ops-panel cp360-relation-panel" aria-labelledby="policy-customer-title">
                 <div className="ops-panel-heading"><div><h2 id="policy-customer-title">Cliente relacionado</h2><p>Identidad resumida devuelta por Policy 360.</p></div></div>
-                {policy.customer ? <div className="cp360-customer-summary"><span className="cp360-avatar is-small" aria-hidden="true">{initials(policy.customer.displayName)}</span><div><strong>{policy.customer.displayName}</strong><code>{policy.customer.customerRef}</code><StatusBadge value={policy.customer.status} /></div>{canReadCustomers && <Link to={`/operator/customers/${policy.customer.customerId}`}>Abrir Customer 360 →</Link>}</div> : <div className="ops-compact-empty">El API no devolvió un cliente relacionado.</div>}
+                {policy.customer ? (
+                  <div className="cp360-customer-summary">
+                    <span className="cp360-avatar is-small" aria-hidden="true">{initials(policy.customer.displayName)}</span>
+                    <div><strong>{policy.customer.displayName}</strong><code>{policy.customer.customerRef}</code><StatusBadge value={policy.customer.status} /></div>
+                    {canReadCustomers ? <Link to={`/operator/customers/${policy.customer.customerId}`}>Abrir Cliente 360 →</Link> : <span className="cp360-readonly-note">Tu rol no puede abrir Cliente 360.</span>}
+                  </div>
+                ) : <div className="ops-compact-empty">El API no devolvió un cliente relacionado.</div>}
               </section>
 
               <section className="ops-panel cp360-relation-panel" aria-labelledby="policy-metadata-title">
-                <div className="ops-panel-heading"><div><h2 id="policy-metadata-title">Metadata operacional</h2><p>Campos opacos transportados por R3; la UI los presenta sin reinterpretarlos.</p></div></div>
+                <div className="ops-panel-heading"><div><h2 id="policy-metadata-title">Metadata operacional</h2><p>Datos opacos transportados por R3; la UI no les atribuye reglas de negocio.</p></div></div>
                 <MetadataGrid value={policy.operationalMetadata} emptyLabel="Sin metadata operacional." />
               </section>
             </div>
 
             <section className="ops-panel cp360-relation-panel" aria-labelledby="policy-assets-title">
               <div className="ops-panel-heading"><div><h2 id="policy-assets-title">Assets cubiertos por el registro</h2><p>Referencias modernas y legacy persistidas para esta póliza.</p></div></div>
-              {policy.assets.length === 0 ? <div className="ops-compact-empty">No hay assets asociados.</div> : <div className="cp360-assets-grid">{policy.assets.map((asset) => <article className="cp360-asset-card" key={asset.assetId}><span className="cp360-asset-glyph" aria-hidden="true">◇</span><div><small>{asset.assetType}</small><strong>{asset.assetReference}</strong><span>Legacy: {asset.legacyAssetReference}</span></div><MetadataGrid value={asset.metadata} compact emptyLabel="Sin metadata" /></article>)}</div>}
+              {policy.assets.length === 0 ? <div className="ops-compact-empty">No hay assets asociados.</div> : (
+                <div className="cp360-assets-grid">
+                  {policy.assets.map((asset) => (
+                    <article className="cp360-asset-card" key={asset.assetId}>
+                      <span className="cp360-asset-glyph" aria-hidden="true">◇</span>
+                      <div><small>{assetTypeLabel(asset.assetType)}</small><strong>{asset.assetReference}</strong><span>Legacy: {asset.legacyAssetReference}</span></div>
+                      <MetadataGrid value={asset.metadata} compact emptyLabel="Sin metadata" />
+                    </article>
+                  ))}
+                </div>
+              )}
             </section>
 
             <section className="ops-panel cp360-relation-panel" aria-labelledby="policy-claims-title">
-              <div className="ops-panel-heading"><div><h2 id="policy-claims-title">Claims relacionados</h2><p>Proyección correlacionada directamente por Policy 360.</p></div>{canReadClaims && <Link to="/operator/claims">Abrir Claims →</Link>}</div>
-              {policy.claims.length === 0 ? <div className="ops-compact-empty">No hay Claims relacionados.</div> : <div className="cp360-claim-list">{policy.claims.map((claim) => <ClaimRow claim={claim} canOpen={canReadClaims} key={claim.claimId} />)}</div>}
+              <div className="ops-panel-heading"><div><h2 id="policy-claims-title">Siniestros relacionados</h2><p>Proyección correlacionada directamente por Policy 360.</p></div>{canReadClaims && <Link to="/operator/claims">Workspace →</Link>}</div>
+              {policy.claims.length === 0 ? <div className="ops-compact-empty">No hay siniestros relacionados.</div> : <div className="cp360-claim-list">{policy.claims.map((claim) => <ClaimRow claim={claim} canOpen={canReadClaims} key={claim.claimId} />)}</div>}
             </section>
 
-            <section className="cp360-contract-note"><strong>Read-only por contrato</strong><span>R3 expone lectura 360 en este corte. No presentamos edición de cliente, póliza, asset o metadata porque no existe operación autoritativa para ello.</span></section>
+            <section className="cp360-contract-note">
+              <div><strong>Alcance contractual</strong><span>Vista de contexto y navegación. No edita póliza, cliente, assets, metadata ni siniestros, y no infiere campos ausentes del contrato R3.</span></div>
+              <small className="r3-policy-tech-meta">Versión de registro: v{policy.version}</small>
+            </section>
           </>
         ) : null}
       </main>
@@ -78,12 +113,29 @@ function MetadataGrid({ value, compact = false, emptyLabel }: { value: Record<st
 }
 
 function ClaimRow({ claim, canOpen }: { claim: RelatedClaimProjection; canOpen: boolean }) {
-  const content = <><div><strong>{claim.trackingCode}</strong><small>{claim.vehicleReference}</small></div><span className={`cp360-claim-status is-${claim.status.toLowerCase()}`}>{claim.status.replaceAll('_', ' ')}</span><time dateTime={claim.occurredAt}>{formatDate(claim.occurredAt)}</time>{canOpen && <span aria-hidden="true">›</span>}</>;
+  const content = <><div><strong>{claim.trackingCode}</strong><small>{claim.policyReference} · {claim.vehicleReference}</small></div><span className={`cp360-claim-status is-${claim.status.toLowerCase()}`}>{claimStatusLabel(claim.status)}</span><time dateTime={claim.occurredAt}>{formatDate(claim.occurredAt)}</time>{canOpen && <span aria-hidden="true">›</span>}</>;
   return canOpen ? <Link className="cp360-claim-row" to={`/operator/claims/${claim.claimId}`}>{content}</Link> : <div className="cp360-claim-row">{content}</div>;
 }
 
 function StatusBadge({ value }: { value: PolicyRecordStatus }) {
   return <span className={`cp360-status is-${value.toLowerCase()}`}>{value === 'ACTIVE' ? 'Activa' : 'Inactiva'}</span>;
+}
+
+const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
+  RECEIVED: 'Recibido',
+  UNDER_REVIEW: 'En revisión',
+  OBSERVED: 'Requiere información',
+  APPROVED: 'Aprobado',
+  IN_REPAIR: 'En reparación',
+  CLOSED: 'Cerrado',
+};
+
+function claimStatusLabel(value: ClaimStatus) {
+  return CLAIM_STATUS_LABELS[value];
+}
+
+function assetTypeLabel(value: string) {
+  return value === 'VEHICLE' ? 'Vehículo' : value;
 }
 
 function formatMetadata(value: unknown) {
