@@ -1,0 +1,297 @@
+name: R3 Claims Visual Review
+
+on:
+  push:
+    branches: [review/r3-ui-increment-02-claims]
+
+permissions:
+  contents: read
+
+jobs:
+  claims-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_claims_review
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_claims_review"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_claims_review
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-claims-review
+      REVIEW_TARGET_SHA: 5fef90f697235a4d04d0bc85ae17b29368c87842
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 5fef90f697235a4d04d0bc85ae17b29368c87842
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Prepare synthetic review secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=r3-claims-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-claims-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-claims-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+
+      - name: Prepare browser runtime
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$browser_bin" ]]; then
+            echo "No supported Chrome/Chromium binary found on runner" >&2
+            exit 1
+          fi
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+
+      - name: Bootstrap database and synthetic identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          npx tsx qa/seed.ts
+
+      - name: Start simulated legacy, API and web client
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-r3-claims-review .runtime/claims-review
+          npm run start:legacy > .runtime/r3-claims-legacy.log 2>&1 &
+          echo $! > .runtime/r3-claims-legacy.pid
+          npm run start:api > .runtime/r3-claims-api.log 2>&1 &
+          echo $! > .runtime/r3-claims-api.pid
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/r3-claims-web.log 2>&1 &
+          echo $! > .runtime/r3-claims-web.pid
+
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 50); do
+            legacy_ok=0
+            api_ok=0
+            web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' \
+              -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' \
+              http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$legacy_ok" == "1" && "$api_ok" == "1" && "$web_ok" == "1" ]]; then exit 0; fi
+            if [[ "$attempt" == "50" ]]; then
+              cat .runtime/r3-claims-legacy.log || true
+              cat .runtime/r3-claims-api.log || true
+              cat .runtime/r3-claims-web.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Create authoritative synthetic claim through real API client
+        run: npx tsx qa/web-digital-claim-intake-runtime.ts
+
+      - name: Capture Claims Workspace and Claim Detail
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          login = os.environ['QA_SUPERVISOR_LOGIN']
+          password = os.environ['QA_OPERATOR_PASSWORD']
+          target_sha = os.environ['REVIEW_TARGET_SHA']
+          out = Path('.runtime/claims-review')
+          out.mkdir(parents=True, exist_ok=True)
+
+          options = webdriver.ChromeOptions()
+          options.add_argument('--headless=new')
+          options.add_argument('--no-sandbox')
+          options.add_argument('--disable-dev-shm-usage')
+          options.add_argument('--disable-gpu')
+          options.add_argument('--force-device-scale-factor=1')
+          options.add_argument('--window-size=1440,1100')
+          browser_bin = os.environ.get('BROWSER_BIN')
+          if browser_bin:
+              options.binary_location = browser_bin
+
+          driver = webdriver.Chrome(options=options)
+          wait = WebDriverWait(driver, 20)
+
+          def page_metrics():
+              return driver.execute_script('''
+                const root = document.documentElement;
+                return {
+                  clientWidth: root.clientWidth,
+                  scrollWidth: root.scrollWidth,
+                  scrollHeight: Math.max(root.scrollHeight, document.body.scrollHeight),
+                  h1Count: document.querySelectorAll('h1').length,
+                  bodyText: document.body.innerText
+                };
+              ''')
+
+          def capture(filename: str, width: int, kind: str):
+              driver.set_window_size(width, 1000)
+              time.sleep(0.45)
+              metrics = page_metrics()
+              overflow = metrics['scrollWidth'] - metrics['clientWidth']
+              if overflow > 2:
+                  raise AssertionError(f'{kind}: horizontal overflow at {width}px = {overflow}px')
+              if metrics['h1Count'] != 1:
+                  raise AssertionError(f'{kind}: expected one h1 at {width}px, found {metrics["h1Count"]}')
+
+              body = metrics['bodyText']
+              if kind == 'workspace':
+                  if 'Gestión de siniestros' not in body:
+                      raise AssertionError('Workspace heading missing')
+                  if 'SYN-POL-001' not in body or 'SYN-VEH-001' not in body:
+                      raise AssertionError('Authoritative synthetic Claim is not visible in Workspace')
+                  if 'Nuevo siniestro' in body:
+                      raise AssertionError('Unsupported New Claim action is visible')
+                  if len(driver.find_elements(By.CSS_SELECTOR, '.ops-claim-card')) < 1:
+                      raise AssertionError('Expected at least one API-backed Claim card')
+              else:
+                  required = ['Información del siniestro', 'Estado y siguiente decisión', 'Etapa operacional', 'Tareas', 'Evidencia', 'Historial', 'Auditoría']
+                  for label in required:
+                      if label not in body:
+                          raise AssertionError(f'Detail required section missing: {label}')
+                  if 'Comunicaciones' in body:
+                      raise AssertionError('Unsupported Communications capability is visible in Claim Detail')
+                  nav = driver.find_element(By.CSS_SELECTOR, '.r3-detail-anchor-nav')
+                  hrefs = [a.get_attribute('href').split('#')[-1] for a in nav.find_elements(By.TAG_NAME, 'a')]
+                  if hrefs != ['resumen', 'flujo', 'etapa', 'tareas', 'evidencia', 'historial', 'auditoria']:
+                      raise AssertionError(f'Unexpected detail anchors: {hrefs}')
+                  transition = driver.find_element(By.ID, 'transition-target')
+                  options_values = [o.get_attribute('value') for o in transition.find_elements(By.TAG_NAME, 'option')]
+                  if options_values != ['', 'UNDER_REVIEW']:
+                      raise AssertionError(f'Expected API-authoritative RECEIVED transition set, got {options_values}')
+
+              height = min(max(int(metrics['scrollHeight']) + 40, 1000), 7000)
+              driver.set_window_size(width, height)
+              time.sleep(0.35)
+              driver.execute_script('window.scrollTo(0, 0)')
+              path = out / filename
+              if not driver.save_screenshot(str(path)):
+                  raise AssertionError(f'Unable to capture {filename}')
+              return {
+                  'kind': kind,
+                  'width': width,
+                  'height': height,
+                  'horizontal_overflow_px': overflow,
+                  'h1_count': metrics['h1Count'],
+                  'file': str(path),
+              }
+
+          try:
+              driver.get(base + '/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-login'))).send_keys(login)
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-password'))).send_keys(password)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
+              wait.until(lambda d: d.current_url.startswith(base + '/operator/dashboard'))
+
+              driver.get(base + '/operator/claims')
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.ops-kanban')))
+              wait.until(lambda d: 'SYN-POL-001' in d.find_element(By.TAG_NAME, 'body').text)
+              first_claim = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.ops-claim-card')))
+              detail_url = first_claim.get_attribute('href')
+
+              shots = [
+                  capture('claims-workspace-desktop.png', 1440, 'workspace'),
+                  capture('claims-workspace-mobile.png', 390, 'workspace'),
+              ]
+
+              driver.set_window_size(1440, 1100)
+              driver.get(detail_url)
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-detail-hero')))
+              wait.until(EC.visibility_of_element_located((By.ID, 'transition-target')))
+              wait.until(lambda d: 'Información del siniestro' in d.find_element(By.TAG_NAME, 'body').text)
+
+              shots.extend([
+                  capture('claim-detail-desktop.png', 1440, 'detail'),
+                  capture('claim-detail-mobile.png', 390, 'detail'),
+              ])
+
+              summary = {
+                  'review_type': 'r3_claims_workspace_detail_visual_review',
+                  'review_target_sha': target_sha,
+                  'runtime_commit': os.environ.get('GITHUB_SHA'),
+                  'role': 'CLAIMS_SUPERVISOR',
+                  'api_authoritative': True,
+                  'detail_url_path': detail_url.replace(base, ''),
+                  'screenshots': shots,
+              }
+              (out / 'claims-visual-review.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+              print(json.dumps(summary))
+          finally:
+              driver.quit()
+          PY
+
+      - name: Upload Claims visual review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-claims-visual-review-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/claims-review/**
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          echo '=== API LOG ==='
+          tail -n 250 .runtime/r3-claims-api.log 2>/dev/null || true
+          echo '=== LEGACY LOG ==='
+          tail -n 250 .runtime/r3-claims-legacy.log 2>/dev/null || true
+          echo '=== WEB LOG ==='
+          tail -n 250 .runtime/r3-claims-web.log 2>/dev/null || true
+
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          pkill -f 'tsx apps/api/src/main.ts' 2>/dev/null || true
+          pkill -f 'tsx apps/legacy-simulator/src/main.ts' 2>/dev/null || true
+          pkill -f 'vite --host 127.0.0.1' 2>/dev/null || true
+          [[ -f .runtime/r3-claims-web.pid ]] && kill "$(cat .runtime/r3-claims-web.pid)" 2>/dev/null || true
+          [[ -f .runtime/r3-claims-api.pid ]] && kill "$(cat .runtime/r3-claims-api.pid)" 2>/dev/null || true
+          [[ -f .runtime/r3-claims-legacy.pid ]] && kill "$(cat .runtime/r3-claims-legacy.pid)" 2>/dev/null || true
