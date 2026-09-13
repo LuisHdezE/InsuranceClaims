@@ -1,90 +1,72 @@
 # Insurance Claims Legacy Modernization
 
-**Portfolio modernization case study showing how an insurance-claims workflow can evolve incrementally while keeping the modern product decoupled from a simulated legacy dependency.**
+**A governed modernization case study that turns a legacy-dependent insurance claims workflow into a modern, role-aware, testable product without coupling the new platform to the legacy system.**
 
 [![API QA](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/api-qa.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/api-qa.yml)
 [![Integration QA](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/integration-qa-web.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/integration-qa-web.yml)
-[![Operations Observability](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/operations-observability.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/operations-observability.yml)
-[![OpenAPI Validation](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/openapi-validation.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/openapi-validation.yml)
+[![R3 Final Closure](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-final-closure.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-final-closure.yml)
+[![R3 Full Product Closure](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-full-product-technical-closure.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-full-product-technical-closure.yml)
 
-> **Case-study disclaimer**  
-> This is an unofficial technical case study inspired by publicly observable insurance workflows. There is no affiliation with FAR Seguros. All policy, claim, operator and operational data are synthetic/demo data. Legacy coexistence is **SIMULATED**.
+> **Portfolio case-study disclaimer**  
+> This is an unofficial technical case study with no affiliation with FAR Seguros. All policy, claim, operator and operational data are synthetic/demo data. Delivery mode is **GREENFIELD** and legacy coexistence is **SIMULATED**.
+
+## Why this project matters
+
+Legacy modernization is rarely just a UI rewrite. The hard part is introducing better customer and operator experiences while keeping business rules, security, persistence and legacy integration under explicit boundaries.
+
+This project demonstrates that transition as an end-to-end product: public claim intake and tracking, staff operations, customer and policy 360, renewals, collections, analytics, governed administration, async processing and recovery, all backed by executable architecture and QA evidence.
 
 ## At a glance
 
 | | |
 |---|---|
-| **Current release** | **v0.2.0 — Claims Operations Experience** |
-| **Historical MVP baseline** | **v0.1.0** |
-| **Delivery model** | GREENFIELD modernization with simulated legacy coexistence |
-| **Blueprint consumer baseline** | Software Development Blueprint **0.5.2** |
+| **Current product state** | **R3 — Full Product Technical Closure completed** |
+| **Latest published release** | **v0.2.0 — Claims Operations Experience** |
+| **Next planned release** | **v0.3.0 — pending separate release formalization** |
+| **API revision** | `api-v1-r3` |
+| **REST surface** | **90 operations · 76 paths · 16 families** |
+| **Productized web surfaces** | **22** |
+| **Backend test baseline** | **91 tests** |
 | **Architecture** | Clean Architecture + Ports & Adapters |
 | **Backend** | Node.js 24 · NestJS 12 · TypeScript |
 | **Frontend** | React 19 · Vite 7 · TypeScript |
-| **Persistence** | PostgreSQL 18, authoritative for the modern claims workflow |
+| **Persistence** | PostgreSQL 18 |
 | **Contracts** | REST `/api/v1` · OpenAPI 3.1 · Postman · separate read-only MCP boundary |
-| **Effective API revision** | `api-v1-r2` — **15 operations** = 10 immutable base + 5 additive |
-| **Historical MVP web slices** | **3 / 3 accepted** |
-| **Claims Operations review** | Chrome 152 · desktop/mobile · **12 committed screenshots** |
-| **Published release** | [`v0.2.0`](https://github.com/LuisHdezE/InsuranceClaims/releases/tag/v0.2.0) |
+| **Blueprint consumer** | Software Development Blueprint **0.5.2** |
+| **Legacy coexistence** | **SIMULATED** behind an adapter boundary |
 
-## Release evolution
+## Release candidate scope
 
-### v0.1.0 — governed modernization MVP
+The historical MVP Release Gate remains preserved as accepted evidence. R3 does not rewrite that decision: it is a later governed product evolution whose technical closure is recorded separately. The latest published release is still `v0.2.0`; `v0.3.0` remains pending its own formalization and publication gates.
 
-The historical MVP established three accepted user journeys:
-
-1. **Digital Claim Intake** — policy/vehicle verification, claim creation, evidence submission, idempotency and validation.
-2. **Customer Claim Tracking** — proof-bound, customer-safe claim status projection with degraded/offline handling.
-3. **Claims Backoffice** — operator authentication, claim list/detail, evidence download, lifecycle transitions, RBAC and concurrency protection.
-
-That baseline completed the governed lifecycle through Release Gate and Operations. Its accepted evidence remains preserved instead of being rewritten by later increments.
-
-### v0.2.0 — Claims Operations Experience
-
-The post-MVP increment adds:
-
-- operations Dashboard;
-- Claims Workspace with an operational Kanban projection;
-- Claim Operations Detail;
-- Tasks Workspace;
-- real `ClaimTask` lifecycle;
-- Claim Timeline read projection;
-- Evidence Attention projection;
-- customer-safe Public Tracking continuity;
-- responsive Claim Detail and mobile disclosure continuity.
-
-A core invariant is intentionally preserved:
-
-> Completing a ClaimTask does **not** change Claim status automatically. Claim lifecycle mutation remains explicit and server-authoritative.
-
-The curated review proved:
-
-- open tasks: `2 → 1`;
-- pending evidence attention: `1 → 0`;
-- Claim status after completing `EVIDENCE_REVIEW`: `RECEIVED`;
-- Claim status after explicit lifecycle transition: `UNDER_REVIEW`;
-- Public Tracking after that transition: `UNDER_REVIEW`.
-
-## Product walkthrough
+## Product experience
 
 <table>
   <tr>
-    <td width="50%"><strong>Operations dashboard</strong><br><img src="documentation/claims-operations/review/generated/assets/02-dashboard-desktop.png" alt="Operations dashboard"></td>
-    <td width="50%"><strong>Claims workspace</strong><br><img src="documentation/claims-operations/review/generated/assets/04-claims-kanban-desktop.png" alt="Claims workspace Kanban projection"></td>
-  </tr>
-  <tr>
-    <td width="50%"><strong>Claim operations detail</strong><br><img src="documentation/claims-operations/review/generated/assets/06-claim-detail-desktop.png" alt="Claim operations detail"></td>
-    <td width="50%"><strong>Tasks workspace</strong><br><img src="documentation/claims-operations/review/generated/assets/09-tasks-desktop.png" alt="Claims tasks workspace"></td>
+    <td width="50%"><strong>Claims workspace</strong><br><img src="documentation/ui-reference/r3/claims-workspace-kanban-approved.jpg" alt="R3 claims workspace"></td>
+    <td width="50%"><strong>Claim detail</strong><br><img src="documentation/ui-reference/r3/claim-detail-approved.jpg" alt="R3 claim detail"></td>
   </tr>
 </table>
 
-The increment review includes desktop/mobile evidence, including `390×844`, under [`documentation/claims-operations/review/generated/assets`](documentation/claims-operations/review/generated/assets). Historical v0.1.0 visual evidence remains under [`documentation/visual-functional-review/generated/assets`](documentation/visual-functional-review/generated/assets).
+R3 productization covers:
 
-## Architecture
+- public claim intake and public tracking;
+- operator login and role-aware Staff Workspace;
+- operations dashboard, Claims Workspace, Claim Detail and Tasks;
+- customer directory and Customer 360;
+- policy directory and Policy 360;
+- renewals and collections;
+- analytics;
+- pipeline, automation, communication-template, custom-field and guidance administration;
+- governed imports;
+- recovery operations and dead-letter handling.
+
+The final presentation reconciliation keeps visible product language consistent in Spanish while preserving literal contract vocabulary where it carries technical meaning.
+
+## Modernization architecture
 
 <p align="center">
-  <img src="documentation/portfolio/architecture-overview.svg" alt="Insurance Claims Legacy Modernization architecture overview" width="100%">
+  <img src="documentation/portfolio/architecture-overview.svg" alt="Insurance Claims modernization architecture" width="100%">
 </p>
 
 ```mermaid
@@ -102,141 +84,86 @@ flowchart LR
     LegacyAdapter --> Legacy[Simulated Legacy HTTP Service]
 ```
 
-Dependency direction:
+The essential rule is directional:
 
 ```text
-REST -> Application -> Ports -> Infrastructure
-MCP  -> Application -> Ports -> Infrastructure
-React -> REST API
-Legacy Adapter -> Legacy Port
+Presentation -> Application -> Ports <- Infrastructure
 ```
 
-Forbidden shortcuts:
+The modern product never reaches PostgreSQL or the simulated legacy service directly from the React client. Legacy concerns stay localized behind the adapter boundary, making future replacement or evolution a boundary problem instead of a product-wide rewrite.
 
-```text
-React -X-> PostgreSQL
-React -X-> Legacy
-MCP   -X-> PostgreSQL
-```
+## R3 capability evolution
 
-PostgreSQL is authoritative for the modern claims workflow. The simulated legacy service is authoritative only for its synthetic policy/vehicle eligibility dataset.
+R3 expands the governed API to **90 effective REST operations across 76 paths and 16 operation families**. The revision contains 15 inherited operations, 75 new operations and 7 changed existing operations, with deterministic runtime reconciliation at 90/90.
 
-See [`documentation/architecture/ARCHITECTURE.md`](documentation/architecture/ARCHITECTURE.md) and [`documentation/architecture/ARCHITECTURE_IMPLEMENTATION_CONFORMANCE.md`](documentation/architecture/ARCHITECTURE_IMPLEMENTATION_CONFORMANCE.md).
+The platform now spans claims operations plus staff identity/RBAC, operational projections and metrics, pipelines, customer/policy 360, communication foundations, integration events, automation, async workers, dead-letter recovery, guidance, governed imports, renewals, collections, custom fields and bulk-action API capability.
 
-## API evolution
-
-`api-v1-r2` preserves the immutable `api-v1-r1` contract and composes it with five additive operator operations.
-
-### Immutable base — 10 operations
-
-Core business operations include:
-
-| Operation ID | Purpose |
-|---|---|
-| `verifyPolicyVehicle` | Verify synthetic policy/vehicle eligibility through the legacy adapter |
-| `createClaim` | Create a modern claim with idempotency protection |
-| `trackClaim` | Return a proof-bound customer-safe claim projection |
-| `authenticateOperator` | Authenticate a backoffice operator |
-| `listClaims` | List authorized backoffice claims |
-| `getClaimDetail` | Retrieve protected claim detail |
-| `downloadClaimEvidence` | Download protected synthetic evidence |
-| `transitionClaimStatus` | Transition Claim lifecycle with concurrency protection |
-
-The base contract also contains operational routes, producing 10 total r1 operations.
-
-### r2 additions — 5 operations
-
-| Operation ID | Method | Path |
-|---|---|---|
-| `listTasks` | GET | `/api/v1/operator/tasks` |
-| `listClaimTasks` | GET | `/api/v1/operator/claims/{claimId}/tasks` |
-| `completeClaimTask` | POST | `/api/v1/operator/tasks/{taskId}/complete` |
-| `getClaimTimeline` | GET | `/api/v1/operator/claims/{claimId}/timeline` |
-| `getClaimEvidenceAttention` | GET | `/api/v1/operator/claims/{claimId}/evidence-attention` |
-
-Effective r2 surface: **15 operations = 10 base + 5 additive**.
-
-The change is governed by `API-IMPACT-001` as `platform_cross_cutting`, with platform revalidation and preservation of unrelated accepted `0.1.0` evidence.
-
-- Base OpenAPI: [`openapi.yaml`](openapi.yaml)
-- Revision r2: [`documentation/api/post-mvp/API_CONTRACT_REVISION_R2.json`](documentation/api/post-mvp/API_CONTRACT_REVISION_R2.json)
-- r2 additions: [`documentation/api/post-mvp/API_ENDPOINT_INVENTORY_R2_ADDITIONS.json`](documentation/api/post-mvp/API_ENDPOINT_INVENTORY_R2_ADDITIONS.json)
-- Postman: [`postman/`](postman/)
+OpenAPI and Postman are generated/validated against the frozen R3 inventory. The historical read-only MCP `get_claim_status` tool remains a separate presentation contract and is intentionally excluded from REST counts.
 
 ## Security and reliability
 
-- short-lived JWT operator authentication;
-- API-side RBAC and permission enforcement;
+The solution demonstrates:
+
+- short-lived JWT authentication and API-side RBAC;
+- server-authoritative permissions and role-aware navigation;
 - Argon2id password hashing;
-- idempotent claim creation using `Idempotency-Key`;
-- optimistic concurrency guards for Claim and ClaimTask transitions;
+- idempotency and concurrency protection;
 - RFC 9457 Problem Details;
-- request/audit correlation;
-- safe error sanitization and secret non-leakage assertions;
-- protected evidence download behind a storage port;
+- request and durable-audit correlation;
+- safe error sanitization and secret non-leakage checks;
+- protected evidence access through a storage port;
 - rate limiting;
-- PostgreSQL backup/restore proof with `pg_dump` and `pg_restore`;
-- liveness/readiness and executable observability checks.
+- PostgreSQL persistence/runtime QA;
+- worker, integration-event and dead-letter recovery behavior;
+- backup/restore and executable observability evidence.
 
-See [`documentation/security/SECURITY_THREAT_MODEL.md`](documentation/security/SECURITY_THREAT_MODEL.md).
+## Verification, not screenshot theater
 
-## Verification evidence
+The repository contains executable evidence for:
 
-The repository contains automation and committed evidence for:
+- backend tests and architecture-boundary checks;
+- real PostgreSQL 18 API QA;
+- R3 runtime reconciliation at 90/90;
+- OpenAPI zero drift;
+- Postman semantic coverage at 90/90;
+- browser integration journeys;
+- responsive/accessibility checks;
+- degraded/offline behavior;
+- authentication, authorization, idempotency, concurrency and rate limiting;
+- async/recovery flows;
+- production web build and strict typecheck;
+- full-product technical closure on the exact approved head.
 
-- Domain/Application/API tests;
-- architecture boundary checks;
-- OpenAPI and Postman validation;
-- real PostgreSQL runtime API QA;
-- real Chrome functional journeys;
-- authorization/security behavior;
-- responsive/accessibility behavior;
-- degraded/offline states;
-- idempotency/concurrency behavior;
-- `pg_dump` / `pg_restore` recoverability;
-- request/audit correlation and secret non-leakage observability;
-- fresh Claims Operations review with **12 screenshots**.
+R3 was closed technically through PR #90. The accepted merge commit is `54f791707d6a4e2f9425f57d0a18e20e139fb518`.
 
-The v0.2.0 curated review used PostgreSQL 18, simulated legacy coexistence, the real API, the real React client and Chrome 152.
+## Deliberate product boundaries
 
-Evidence:
+Three capabilities are intentionally not productized as standalone R3 UI surfaces:
 
-- [`documentation/claims-operations/CLAIMS_OPERATIONS_INCREMENT_REVIEW.md`](documentation/claims-operations/CLAIMS_OPERATIONS_INCREMENT_REVIEW.md)
-- [`documentation/claims-operations/review/generated/claims-operations-increment-review.json`](documentation/claims-operations/review/generated/claims-operations-increment-review.json)
-- [`documentation/integration-qa/`](documentation/integration-qa/)
-- [`documentation/operations/`](documentation/operations/)
+1. **Authenticated Customer Portal UI** — public R3 productization remains claim intake plus claim tracking.
+2. **Operator Communications UI** — sending requires a template-version contract and permissions that Claims Operator/Supervisor do not hold; no manual UUID or privilege bypass was invented.
+3. **Standalone Bulk Actions UI** — API capability exists for Claims Supervisor but is not exposed as an independent R3 view.
 
-## Blueprint journey
+These are explicit product decisions, not hidden gaps.
 
-This repository is a worked consumer of **Software Development Blueprint 0.5.2**.
+## Release history
 
-The historical v0.1.0 MVP traversed the complete governed lifecycle:
+- **v0.1.0** — governed modernization MVP.
+- **v0.2.0** — Claims Operations Experience, published and immutable.
+- **R3** — full product technically closed; release formalization to **v0.3.0** is intentionally a separate human-governed task.
 
-```text
-Discovery
-  -> Target Definition
-  -> Requirements & Domain
-  -> Interface Scope Baseline
-  -> Architecture / Security / Data
-  -> API Contract Design
-  -> API Implementation
-  -> OpenAPI Validation
-  -> Postman Contract
-  -> API QA
-  -> API Gate
-  -> Interface Inventory
-  -> Visual Identity
-  -> Design System
-  -> Client Architecture
-  -> Functional Interface Slices
-  -> Visual & Functional Review
-  -> Integration QA
-  -> Human Acceptance
-  -> Release Gate
-  -> Operations & Maintenance
-```
+The repository does not move or rewrite historical tags to make newer work appear released retroactively.
 
-The v0.2.0 Claims Operations increment was governed as post-MVP evolution. It preserved frozen v0.1.0 evidence, introduced `api-v1-r2`, captured fresh browser evidence, required human review, and was formalized and published through separate human-controlled merge and publication gates.
+## Release documentation and evidence
+
+- [R3 Technical Case Study](documentation/portfolio/CASE_STUDY.md)
+- [R3 Portfolio Hardening record](documentation/portfolio/R3_PORTFOLIO_HARDENING.md)
+- [Full Product Technical Closure](documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.md)
+- [R3 API Final Closure](documentation/api-implementation/r3/FINAL_CLOSURE_INCREMENT_22.md)
+- [R3 UI reference index](documentation/ui-reference/r3/README.md)
+- [Architecture](documentation/architecture/ARCHITECTURE.md)
+- [Security threat model](documentation/security/SECURITY_THREAT_MODEL.md)
+- [Published v0.2.0 release](https://github.com/LuisHdezE/InsuranceClaims/releases/tag/v0.2.0)
 
 ## Local verification
 
@@ -254,67 +181,16 @@ npm run contract:emit
 npm run typecheck
 npm test
 npm run architecture:check
-npm --workspace @insurance/web test
-npm --workspace @insurance/web run build
-npm audit --omit=dev --audit-level=high
+npm run api:reconcile:r3
+npm run openapi:check:r3
+npm run postman:check:r3
+npm run r3:closure:validate
+npm run r3:product-closure:validate
+npm run typecheck --workspace=@insurance/web
+npm test --workspace=@insurance/web
+npm run build --workspace=@insurance/web
 ```
 
-### Run locally
+---
 
-Copy `.env.example` to a local environment file and replace demo secrets locally. Never commit real credentials.
-
-```bash
-npm run start:legacy
-npm run start:api
-npm run start:mcp
-npm --workspace @insurance/web run dev
-```
-
-Default ports from `.env.example`: API `3000`, MCP `3100`, legacy simulator `3200`.
-
-## Historical Release candidate scope
-
-The original **Release candidate scope** belonged to the governed v0.1.0 MVP. It covered the three accepted web slices and the supporting platform that subsequently received explicit human Release Gate approval and completed the Operations lifecycle.
-
-That historical candidate evidence remains frozen. The published `v0.2.0` release is not being reclassified as a candidate by preserving this marker.
-
-## Release documentation
-
-Historical v0.1.0 readiness, release-gate and Operations evidence remain available under [`documentation/release/`](documentation/release/) and [`documentation/operations/`](documentation/operations/).
-
-Current v0.2.0 publication artifacts:
-
-- [Historical MVP v0.1.0 release notes](documentation/portfolio/RELEASE_NOTES_v0.1.0.md)
-- [Claims Operations v0.2.0 release notes](documentation/portfolio/RELEASE_NOTES_v0.2.0.md)
-- [Claims Operations release formalization](documentation/release/CLAIMS_OPERATIONS_RELEASE_0.2.0.md)
-- [Published GitHub Release v0.2.0](https://github.com/LuisHdezE/InsuranceClaims/releases/tag/v0.2.0)
-
-## Intentional limitations
-
-This repository is a **portfolio modernization technical case study**, not a production deployment for FAR Seguros or any insurer.
-
-It does **not** claim:
-
-- FAR production infrastructure or private internal processes;
-- real insurer/customer data;
-- production monitoring or on-call topology;
-- production SLO/SLA or alert thresholds;
-- production HA, replication, autoscaling or disaster-recovery topology;
-- production backup schedules, RPO or RTO;
-- production object storage or regulatory retention policy.
-
-All business data are synthetic/demo data, and legacy coexistence is simulated by design.
-
-## Release record
-
-`v0.2.0` is the current published release.
-
-- annotated tag: `v0.2.0`;
-- release commit: `9265417849f398f5d1efa56b7cd8ff365b950dbb`;
-- tag object: `1a946e7fc4a20d20b97876826e6a699ec8412f28`;
-- GitHub Release ID: `384441015`;
-- published at: `2026-09-08T04:09:58Z`;
-- draft: `false`;
-- prerelease: `false`.
-
-The tag is the immutable release pointer for `0.2.0`. Later documentation changes on `main` do not move or recreate that tag.
+**Modernize the experience without surrendering the architecture.**

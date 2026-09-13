@@ -1,30 +1,36 @@
-# Insurance Claims Legacy Modernization — Technical Case Study
+# Insurance Claims Legacy Modernization — R3 Technical Case Study
 
 ## Executive summary
 
-Insurance Claims Legacy Modernization is a portfolio MVP that demonstrates how a claims experience can be modernized incrementally while insulating the new application from a legacy dependency.
+Insurance Claims Legacy Modernization is a portfolio case study showing how an insurance claims workflow can evolve from a narrow modernization MVP into a broader operational platform while keeping the modern product decoupled from a simulated legacy dependency.
 
-The implementation is deliberately GREENFIELD, with legacy coexistence **SIMULATED**. It is an unofficial technical case study with no affiliation with FAR Seguros. All policy, claim, operator and operational data are synthetic/demo data.
+The implementation is deliberately **GREENFIELD** with legacy coexistence **SIMULATED**. It is an unofficial technical case study with no affiliation with FAR Seguros. All policy, claim, customer, staff and operational data are synthetic/demo data.
 
-The project completed the Software Development Blueprint 0.5.2 lifecycle, including three accepted web slices, Integration QA, Human Acceptance, Release Gate `PASS`, and Operations `COMPLETE / 100%` with executable observability evidence.
+The current product state is **R3 Full Product Technical Closure**. R3 exposes **90 REST operations across 76 paths and 16 operation families**, productizes **22 web surfaces**, and preserves Clean Architecture + Ports & Adapters across API, web, MCP, persistence, workers and legacy integration.
 
-## The modernization problem
+The latest published GitHub release remains **v0.2.0**. R3 release formalization as `v0.3.0` is intentionally a separate human-governed step.
 
-A legacy-dependent claims workflow creates a useful modernization challenge: introduce a modern customer and operator experience without allowing the frontend, domain model or modern persistence layer to become structurally coupled to the legacy system.
+## The challenge
 
-The MVP therefore treats modernization as a boundary-design problem, not merely a UI rewrite.
+A legacy-dependent claims workflow creates two risks during modernization:
 
-### Core engineering goals
+1. the new UI becomes a prettier shell around old coupling; or
+2. a big-bang rewrite replaces one set of risks with another.
 
-- expose modern claim intake, tracking and backoffice experiences;
-- keep PostgreSQL authoritative for the modern claims workflow;
-- isolate legacy eligibility behind an application port and infrastructure adapter;
-- keep MCP as a separate read-only presentation boundary;
-- enforce Clean Architecture + Ports & Adapters across API, frontend, MCP and legacy integration;
-- prove behavior with executable QA rather than portfolio-only screenshots;
-- preserve explicit synthetic/demo and simulated-legacy boundaries.
+This project takes a third path: modernize incrementally around explicit boundaries.
 
-## Solution architecture
+The modern platform owns its claim workflow and persistence. Legacy eligibility remains isolated behind an application port and infrastructure adapter. Product interfaces consume authoritative application behavior rather than duplicating business decisions in the client.
+
+## What the solution is designed to prove
+
+- A modern claims experience can coexist with a legacy dependency without structural coupling.
+- Clean Architecture can remain enforceable as product scope grows.
+- API evolution can be governed and reconciled deterministically instead of drifting silently.
+- Operator UX can become role-aware without making the frontend authoritative for permissions.
+- Async automation and recovery can be introduced without creating a second domain model.
+- Portfolio evidence can be executable, not merely screenshots and claims.
+
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -40,16 +46,15 @@ flowchart LR
     Infra --> PG[(PostgreSQL 18)]
     Infra --> Evidence[Private Evidence Storage]
     Infra --> LegacyAdapter[Legacy Eligibility Adapter]
+    Infra --> Worker[Async Worker / Integration Events]
     LegacyAdapter --> Legacy[Simulated Legacy HTTP Service]
 ```
 
-The critical architectural rule is directional:
+The dependency rule remains:
 
 ```text
-Presentation -> Application -> Ports -> Infrastructure
+Presentation -> Application -> Ports <- Infrastructure
 ```
-
-The web client talks to REST. MCP talks to the Application layer through its own presentation boundary. Infrastructure implements the application ports. The simulated legacy service is reached only through the legacy adapter.
 
 Forbidden shortcuts include:
 
@@ -59,133 +64,181 @@ React -X-> Legacy
 MCP   -X-> PostgreSQL
 ```
 
-This keeps legacy replacement or evolution localized to the adapter boundary rather than spreading legacy assumptions through the product.
+This matters because a future legacy replacement should primarily affect an adapter, not every layer of the product.
 
-## Functional scope
+## Product experience
 
-### 1. Digital Claim Intake
+R3 is no longer only three MVP slices. The productized surface includes:
 
-The customer can verify synthetic policy/vehicle eligibility, create a claim and submit evidence. The flow includes validation, idempotency and resilient error behavior.
+### Public experience
 
-### 2. Customer Claim Tracking
+- Public Claim Intake
+- Public Claim Tracking
 
-The customer can retrieve a proof-bound, customer-safe projection of claim status. The interface also covers invalid-proof and degraded/offline states.
+### Claims operations
 
-### 3. Claims Backoffice
+- Operator Login
+- Staff Workspace
+- Operations Dashboard
+- Claims Workspace
+- Claim Detail
+- Tasks
 
-Authorized operators can authenticate, list claims, inspect claim detail, download protected evidence and transition the claim lifecycle. State transitions include authorization and stale-state concurrency protection.
+### Customer and policy operations
 
-## Contract surface
+- Customer Directory
+- Customer 360
+- Policy Directory
+- Policy 360
+- Renewals
+- Collections
 
-The REST API exposes eight business operations:
+### Platform operations and administration
 
-| Operation | Responsibility |
-|---|---|
-| `verifyPolicyVehicle` | Verify synthetic policy/vehicle eligibility through the legacy adapter |
-| `createClaim` | Create a modern claim with idempotency protection |
-| `trackClaim` | Return a proof-bound customer-safe projection |
-| `authenticateOperator` | Authenticate a backoffice operator |
-| `listClaims` | List authorized claims |
-| `getClaimDetail` | Retrieve protected claim detail |
-| `downloadClaimEvidence` | Download protected synthetic evidence |
-| `transitionClaimStatus` | Transition claim lifecycle with concurrency protection |
+- Analytics
+- Pipeline Administration
+- Automation Administration
+- Communication Template Administration
+- Custom Field Administration
+- Guidance Administration
+- Governed Imports
+- Recovery Operations / Dead Letters
 
-Operational routes provide liveness and readiness. The MCP tool remains a separate read-only presentation contract rather than being disguised as another REST endpoint.
+The final R3 presentation reconciliation keeps visible user-facing language consistent in Spanish while preserving literal contract vocabulary such as enums, permission identifiers, `dry-run`, `commit` and `dead-letter` where translation would weaken technical meaning.
 
-## Security and reliability design
+## API and contract evolution
 
-The MVP includes:
+R3 uses contract revision `api-v1-r3`:
+
+| Metric | R3 |
+|---|---:|
+| Effective REST operations | **90** |
+| Effective REST paths | **76** |
+| Operation families | **16** |
+| Inherited operations | **15** |
+| New operations | **75** |
+| Changed existing operations | **7** |
+| Runtime reconciliation | **90/90** |
+| Postman semantic coverage | **90/90** |
+
+The historical MCP `get_claim_status` tool remains outside REST OpenAPI/Postman counting because it is a separate read-only presentation boundary.
+
+R3 capability evolution includes ClaimTask lifecycle, staff identity and RBAC, claim pipeline projection, operational queries/metrics, pipeline administration, Customer/Policy 360, communication foundations, integration events, automation, async workers, dead-letter administration, insurer guidance, governed imports, renewals, collections, custom fields and bulk-action API capability.
+
+## Security and server authority
+
+The platform demonstrates:
 
 - short-lived JWT operator authentication;
 - API-side RBAC and permission enforcement;
 - Argon2id password hashing;
-- idempotent claim creation using `Idempotency-Key`;
-- expected-state concurrency protection for lifecycle transitions;
+- idempotency controls;
+- optimistic/concurrency protection where required;
 - RFC 9457 Problem Details;
-- request and durable-audit correlation;
-- safe error sanitization and secret non-leakage assertions;
-- protected evidence download behind a private evidence-storage port;
+- request/audit correlation;
+- safe error sanitization and non-leakage checks;
+- protected evidence access behind a storage port;
 - rate limiting;
-- PostgreSQL backup/restore proof using `pg_dump` and `pg_restore`;
-- liveness, readiness and executable observability checks.
+- route and presentation guards that do not silently elevate users.
 
-## Delivery and governance
+The UI is role-aware, but the server remains authoritative. R3 explicitly protects against treating a Platform Admin visual shell, a route guard or a hidden button as a substitute for backend authorization.
 
-The project was developed as a governed consumer of Software Development Blueprint 0.5.2:
+## Data, async work and recovery
 
-```text
-Discovery
-  -> Target Definition
-  -> Requirements & Domain
-  -> Interface Scope Baseline
-  -> Architecture / Security / Data
-  -> API Contract Design
-  -> API Implementation
-  -> OpenAPI Validation
-  -> Postman Contract
-  -> API QA
-  -> API Gate
-  -> Interface Inventory
-  -> Visual Identity
-  -> Design System
-  -> Client Architecture
-  -> Functional Interface Slices
-  -> Visual & Functional Review
-  -> Integration QA
-  -> Human Acceptance
-  -> Release Gate
-  -> Operations & Maintenance
-```
+PostgreSQL 18 is authoritative for the modern claims workflow. The simulated legacy service is authoritative only for its synthetic eligibility dataset.
 
-All three web slices reached `ACCEPTED`. Release Gate reached `PASS`. Operations reached `COMPLETE / 100%`.
-
-Git/PR governance was kept separate from lifecycle approval. Human approval of a Blueprint gate did not implicitly authorize merging a pull request.
+R3 also contains worker runtime, integration events, automation execution, dead-letter handling and recovery semantics. Those capabilities are validated through backend/API/integration evidence rather than through a separate parallel implementation.
 
 ## Verification strategy
 
-The repository demonstrates more than unit-level correctness. Its evidence includes:
+The project deliberately avoids “screenshot theater”. Its evidence includes:
 
-- Domain/Application/API tests;
-- executable architecture-boundary checks;
-- OpenAPI validation;
-- Postman contract validation;
-- API QA against PostgreSQL;
-- browser journeys in Chrome;
-- API transport fidelity checks;
-- authorization/security behavior;
-- responsive and accessibility verification;
+- backend test baseline of **91 tests**;
+- architecture conformance checks;
+- real PostgreSQL 18 runtime API QA;
+- R3 runtime endpoint reconciliation at **90/90**;
+- OpenAPI R3 zero drift;
+- Postman R3 zero drift and **90/90** semantic coverage;
+- browser journeys against the real API and React client;
+- responsive/accessibility verification;
 - degraded/offline behavior;
-- idempotency and concurrency behavior;
-- PostgreSQL backup/restore recoverability;
-- request/audit correlation and secret non-leakage observability checks.
+- auth/RBAC/security behavior;
+- idempotency, concurrency and rate-limit behavior;
+- durable audit/persistence invariants;
+- async and dead-letter/recovery behavior;
+- production builds and strict typechecks;
+- exact-head full-product closure validation.
 
-## Intentional limitations
+The final technical closure was merged through PR #90 as commit:
 
-This is a modernization MVP and technical case study, not a production insurer deployment.
+`54f791707d6a4e2f9425f57d0a18e20e139fb518`
 
-It does not claim:
+## Delivery governance
 
-- FAR production infrastructure or internal processes;
-- real insurer/customer data;
-- production SLO/SLA or alert thresholds;
+The project is a worked consumer of Software Development Blueprint **0.5.2**. It started with the full governed MVP lifecycle and later evolved through explicit post-MVP increments and API impact analysis.
+
+Important governance decisions include:
+
+- human gate approval and Git merge approval are separate decisions;
+- historical release evidence is preserved rather than rewritten;
+- R1/R2/R3 contract evolution is explicit;
+- post-MVP validation reuses accepted evidence only where that reuse is justified;
+- product scope is reduced or deferred instead of bypassing missing permissions/contracts;
+- Blueprint Master is not modified in the middle of the consumer project.
+
+## Deliberate exclusions
+
+R3 preserves three explicit UI exclusions:
+
+1. **Authenticated Customer Portal UI**. Public productization is claim intake plus claim tracking.
+2. **Operator Communications UI**. Sending requires a `templateVersionId`; Claims Operator/Supervisor do not hold `communications.admin`, so the product does not invent manual UUID entry or privilege elevation.
+3. **Standalone Bulk Actions UI**. Bulk action capability exists API-side for Claims Supervisor but is not exposed as a standalone R3 view.
+
+These boundaries demonstrate a core modernization principle: do not fabricate capability merely to make a portfolio surface look more complete.
+
+## Trade-offs
+
+This is a technical modernization case study, not a production insurer deployment. It intentionally does not claim:
+
+- real insurer production infrastructure or private processes;
+- production customer or claims data;
+- insurer-specific production business rules;
+- production SLO/SLA thresholds;
 - production monitoring/on-call topology;
 - production HA, replication or autoscaling;
-- production disaster-recovery topology;
-- production backup schedules, RPO or RTO;
-- production regulatory retention policy.
+- production DR topology, RPO or RTO;
+- regulatory retention rules that were not provided.
 
-Those boundaries are intentional. The project demonstrates architecture, delivery discipline and verifiable modernization mechanics without inventing unavailable production facts.
+The value is in the architecture, evolution discipline, testability, governance and product mechanics that can be demonstrated honestly.
+
+## Why this is useful as a portfolio project
+
+The project shows more than framework familiarity. It demonstrates the ability to:
+
+- reason about modernization boundaries;
+- evolve a contract without erasing history;
+- connect backend architecture to actual operator/customer UX;
+- design for security and operational failure modes;
+- use CI as evidence rather than ceremony;
+- handle scope pressure without inventing unauthorized functionality;
+- carry a product from discovery through technical closure.
 
 ## Evidence map
 
 - [Repository overview](../../README.md)
+- [R3 Full Product Technical Closure](../product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.md)
+- [R3 API Final Closure](../api-implementation/r3/FINAL_CLOSURE_INCREMENT_22.md)
+- [R3 API contract](../api/r3/API_CONTRACT_R3.md)
+- [R3 endpoint inventory](../api/r3/API_ENDPOINT_INVENTORY_R3.json)
+- [R3 UI reference index](../ui-reference/r3/README.md)
+- [Full-system presentation reconciliation](../ui-reference/r3/task12-full-system-reconciliation-note.md)
 - [Architecture](../architecture/ARCHITECTURE.md)
 - [Architecture implementation conformance](../architecture/ARCHITECTURE_IMPLEMENTATION_CONFORMANCE.md)
-- [API contract](../api/API_CONTRACT.md)
 - [Security threat model](../security/SECURITY_THREAT_MODEL.md)
 - [Integration QA](../integration-qa/)
-- [Release readiness](../release/RELEASE_READINESS.md)
-- [Release Gate approval](../release/RELEASE_GATE_APPROVAL.md)
-- [Operations observability evidence](../operations/OPERATIONS_OBSERVABILITY_EVIDENCE.md)
-- [Visual & Functional Review assets](../visual-functional-review/generated/assets/)
-- [Machine-readable Blueprint state](../../.blueprint/status.yaml)
+- [Operations evidence](../operations/)
+- [Blueprint observations](../blueprint-observations/OBSERVATIONS.md)
+
+## Release state
+
+`v0.2.0` remains the latest published release and immutable historical pointer. R3 is technically closed, but `v0.3.0` is **not** claimed here as published. Version alignment, release notes, tag creation and GitHub Release publication belong to the next separately governed roadmap task.
