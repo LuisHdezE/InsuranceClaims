@@ -286,15 +286,13 @@ function KpiCard({ label, value, tone, hint, glyph }: { label: string; value: nu
 }
 
 function TaskActionItem({ task }: { task: ClaimTaskProjection }) {
-  const overdue = Boolean(task.dueAt && new Date(task.dueAt).getTime() < Date.now());
-
   return (
     <li>
       <Link to={`/operator/tasks/${task.taskId}`}>
-        <span className={`ops-action-mark${overdue ? ' is-overdue' : ''}`} aria-hidden="true">{overdue ? '!' : '•'}</span>
+        <span className="ops-action-mark" aria-hidden="true">•</span>
         <span className="ops-action-copy">
           <strong>{task.title}</strong>
-          <small>{task.trackingCode ?? task.claimId.slice(0, 8)} · {taskTypeLabel(task.type)}{task.dueAt ? ` · ${overdue ? 'Vencida' : 'Vence'} ${formatDate(task.dueAt)}` : ''}</small>
+          <small>{task.trackingCode ?? task.claimId.slice(0, 8)} · {taskTypeLabel(task.type)}{task.dueAt ? ` · Vence ${formatDate(task.dueAt)}` : ''}</small>
         </span>
         <span className={`ops-priority is-${task.priority.toLowerCase()}`}>{task.priority === 'HIGH' ? 'Alta' : 'Normal'}</span>
         <span aria-hidden="true">›</span>
