@@ -90,15 +90,17 @@ jobs:
           cat .runtime/r3-increment07-v1-api.log || true
           cat .runtime/r3-increment07-v1-web.log || true
           exit 1
-      - name: Verify direct protected Analytics contract
+      - name: Verify protected Analytics and admin identity contracts
         shell: bash
         run: |
-          response=$(curl -fsS -X POST -H 'content-type: application/json' -d "{\"login\":\"$QA_SUPERVISOR_LOGIN\",\"password\":\"$QA_OPERATOR_PASSWORD\"}" http://127.0.0.1:3000/api/v1/operator/auth/login)
-          token=$(node -e 'const x=JSON.parse(process.argv[1]);if(x.operator?.role!=="CLAIMS_SUPERVISOR"||!x.accessToken)process.exit(1);process.stdout.write(x.accessToken)' "$response")
+          supervisor_response=$(curl -fsS -X POST -H 'content-type: application/json' -d "{\"login\":\"$QA_SUPERVISOR_LOGIN\",\"password\":\"$QA_OPERATOR_PASSWORD\"}" http://127.0.0.1:3000/api/v1/operator/auth/login)
+          supervisor_token=$(node -e 'const x=JSON.parse(process.argv[1]);if(x.operator?.role!=="CLAIMS_SUPERVISOR"||!x.accessToken)process.exit(1);process.stdout.write(x.accessToken)' "$supervisor_response")
           from=$(node -e 'process.stdout.write(new Date(Date.now()-30*86400000).toISOString())')
           to=$(node -e 'process.stdout.write(new Date().toISOString())')
-          analytics=$(curl -fsS -G -H "Authorization: Bearer $token" --data-urlencode "from=$from" --data-urlencode "to=$to" http://127.0.0.1:3000/api/v1/operator/analytics/claims)
+          analytics=$(curl -fsS -G -H "Authorization: Bearer $supervisor_token" --data-urlencode "from=$from" --data-urlencode "to=$to" http://127.0.0.1:3000/api/v1/operator/analytics/claims)
           node -e 'const x=JSON.parse(process.argv[1]);const keys=["window","generatedAt","openClaims","reportedInWindow","claimsByStatus","claimsByOperationalStage","evidencePendingReviewClaims","openTasks","overdueTasks","closedClaims"];if(!keys.every(k=>Object.prototype.hasOwnProperty.call(x,k)))process.exit(1);const statuses=["RECEIVED","UNDER_REVIEW","OBSERVED","APPROVED","IN_REPAIR","CLOSED"];if(!statuses.every(s=>Object.prototype.hasOwnProperty.call(x.claimsByStatus||{},s)))process.exit(1);console.log(JSON.stringify({event:"ANALYTICS_CONTRACT_OK",openClaims:x.openClaims,reportedInWindow:x.reportedInWindow,closedClaims:x.closedClaims}))' "$analytics"
+          admin_response=$(curl -fsS -X POST -H 'content-type: application/json' -d "{\"login\":\"$QA_ADMIN_LOGIN\",\"password\":\"$QA_OPERATOR_PASSWORD\"}" http://127.0.0.1:3000/api/v1/operator/auth/login)
+          node -e 'const x=JSON.parse(process.argv[1]);if(x.operator?.role!=="PLATFORM_ADMIN"||!x.accessToken)process.exit(1);console.log(JSON.stringify({event:"ADMIN_ROLE_OK",role:x.operator.role}))' "$admin_response"
       - name: Capture exact-head Analytics and Workspace views
         run: python .review-harness/qa/r3_increment07_visual_review.py
       - name: Upload exact-head visual evidence
@@ -106,8 +108,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: r3-analytics-workspace-v1-439562d69a6a42121143c67cc6ff4fa91dfbc503
-          path: |
-            .runtime/increment07-review-v1/*.png
-            .runtime/increment07-review-v1/increment07-visual-review.json
+          path: .runtime/increment07-review-v1/*
           if-no-files-found: warn
           retention-days: 14
