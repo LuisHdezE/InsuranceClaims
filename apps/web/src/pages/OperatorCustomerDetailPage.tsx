@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { getCustomer } from '../api/customer-policy';
 import type { CustomerRecordStatus, RelatedClaimProjection } from '../api/customer-policy-types';
-import type { ApiFailure } from '../api/types';
+import type { ApiFailure, ClaimStatus } from '../api/types';
 import { hasPermission } from '../auth/staff-access';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
+import '../r3-ui-increment-04.css';
 
 export function OperatorCustomerDetailPage() {
   const { customerId = '' } = useParams();
@@ -30,33 +31,41 @@ export function OperatorCustomerDetailPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main cp360-main">
+      <main className="operator-main ops-main cp360-main r3-customer-detail">
         <div className="cp360-breadcrumbs"><Link to="/operator/customers">Clientes</Link><span>/</span><span>{customer?.customerRef ?? 'Detalle'}</span></div>
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
 
-        {customerQuery.isLoading ? <div className="ops-panel ops-loading" role="status">Cargando Customer 360…</div> : customer ? (
+        {customerQuery.isLoading ? <div className="ops-panel ops-loading" role="status">Cargando Cliente 360…</div> : customer ? (
           <>
+            <div className="r3-customer-detail-title">
+              <div><span className="ops-kicker">Clientes</span><h1 id="customer-detail-title">Cliente 360</h1></div>
+              <StatusBadge value={customer.status} />
+            </div>
+
             <section className="cp360-detail-hero" aria-labelledby="customer-detail-title">
               <div className="cp360-detail-identity">
                 <span className="cp360-avatar" aria-hidden="true">{initials(customer.displayName)}</span>
-                <div><span className="ops-kicker">Customer 360</span><h1 id="customer-detail-title">{customer.displayName}</h1><div className="cp360-hero-meta"><code>{customer.customerRef}</code><StatusBadge value={customer.status} /><span>v{customer.version}</span></div></div>
+                <div><h2>{customer.displayName}</h2><div className="cp360-hero-meta"><code>{customer.customerRef}</code><span>Referencia autoritativa del cliente</span></div></div>
               </div>
               <div className="cp360-detail-facts">
-                <div><small>Pólizas relacionadas</small><strong>{customer.policies.length}</strong></div>
-                <div><small>Claims relacionados</small><strong>{customer.claims.length}</strong></div>
-                <div><small>Actualizado</small><strong>{formatDate(customer.updatedAt)}</strong></div>
+                <div><small>Pólizas relacionadas</small><strong>{customer.policies.length}</strong><span>según Customer 360</span></div>
+                <div><small>Siniestros relacionados</small><strong>{customer.claims.length}</strong><span>correlacionados por backend</span></div>
+                <div><small>Actualizado</small><strong>{formatDate(customer.updatedAt)}</strong><span>dato autoritativo</span></div>
               </div>
             </section>
 
             <div className="cp360-detail-grid">
               <section className="ops-panel cp360-relation-panel" aria-labelledby="customer-policies-title">
-                <div className="ops-panel-heading"><div><h2 id="customer-policies-title">Pólizas</h2><p>Relaciones persistidas devueltas por Customer 360.</p></div>{canReadPolicies && <Link to="/operator/policies">Directorio →</Link>}</div>
+                <div className="ops-panel-heading"><div><h2 id="customer-policies-title">Pólizas relacionadas</h2><p>Contexto de cobertura disponible para este cliente.</p></div>{canReadPolicies && <Link to="/operator/policies">Directorio →</Link>}</div>
                 {customer.policies.length === 0 ? <div className="ops-compact-empty">No hay pólizas relacionadas.</div> : (
                   <div className="cp360-card-list">
                     {customer.policies.map((policy) => (
                       <article className="cp360-relation-card" key={policy.policyId}>
                         <div className="cp360-relation-card-head"><span className="cp360-policy-icon" aria-hidden="true">▱</span><div><strong>{policy.policyReference}</strong><small>Legacy: {policy.legacyPolicyReference}</small></div><StatusBadge value={policy.recordStatus} /></div>
-                        <div className="cp360-mini-facts"><span><small>Assets</small><strong>{policy.assets.length}</strong></span><span><small>Aseguradora ref.</small><strong>{policy.insurerReference ?? '—'}</strong></span><span><small>Versión</small><strong>v{policy.version}</strong></span></div>
+                        <div className="cp360-mini-facts r3-customer-policy-facts">
+                          <span><small>Assets</small><strong>{policy.assets.length}</strong></span>
+                          {policy.insurerReference && <span><small>Aseguradora ref.</small><strong>{policy.insurerReference}</strong></span>}
+                        </div>
                         {canReadPolicies ? <Link className="cp360-card-action" to={`/operator/policies/${policy.policyId}`}>Abrir póliza 360 →</Link> : <span className="cp360-readonly-note">Tu rol no puede abrir el recurso Policy 360.</span>}
                       </article>
                     ))}
@@ -65,14 +74,17 @@ export function OperatorCustomerDetailPage() {
               </section>
 
               <section className="ops-panel cp360-relation-panel" aria-labelledby="customer-claims-title">
-                <div className="ops-panel-heading"><div><h2 id="customer-claims-title">Claims</h2><p>Claims correlacionados por el backend R3, sin reconstrucción local.</p></div>{canReadClaims && <Link to="/operator/claims">Workspace →</Link>}</div>
-                {customer.claims.length === 0 ? <div className="ops-compact-empty">No hay Claims relacionados.</div> : (
+                <div className="ops-panel-heading"><div><h2 id="customer-claims-title">Siniestros relacionados</h2><p>Proyección correlacionada por el backend R3.</p></div>{canReadClaims && <Link to="/operator/claims">Workspace →</Link>}</div>
+                {customer.claims.length === 0 ? <div className="ops-compact-empty">No hay siniestros relacionados.</div> : (
                   <div className="cp360-claim-list">{customer.claims.map((claim) => <ClaimRow claim={claim} canOpen={canReadClaims} key={claim.claimId} />)}</div>
                 )}
               </section>
             </div>
 
-            <section className="cp360-contract-note"><strong>Alcance contractual</strong><span>Customer 360 expone referencia, nombre de presentación, estado, versión y relaciones. No inferimos datos de contacto ni atributos ausentes.</span></section>
+            <section className="cp360-contract-note">
+              <div><strong>Alcance contractual</strong><span>Vista de contexto y navegación. No edita cliente, pólizas ni siniestros y no infiere datos ausentes del contrato R3.</span></div>
+              <small className="r3-customer-tech-meta">Versión de registro: v{customer.version}</small>
+            </section>
           </>
         ) : null}
       </main>
@@ -81,12 +93,25 @@ export function OperatorCustomerDetailPage() {
 }
 
 function ClaimRow({ claim, canOpen }: { claim: RelatedClaimProjection; canOpen: boolean }) {
-  const content = <><div><strong>{claim.trackingCode}</strong><small>{claim.policyReference} · {claim.vehicleReference}</small></div><span className={`cp360-claim-status is-${claim.status.toLowerCase()}`}>{claim.status.replaceAll('_', ' ')}</span><time dateTime={claim.occurredAt}>{formatDate(claim.occurredAt)}</time>{canOpen && <span aria-hidden="true">›</span>}</>;
+  const content = <><div><strong>{claim.trackingCode}</strong><small>{claim.policyReference} · {claim.vehicleReference}</small></div><span className={`cp360-claim-status is-${claim.status.toLowerCase()}`}>{claimStatusLabel(claim.status)}</span><time dateTime={claim.occurredAt}>{formatDate(claim.occurredAt)}</time>{canOpen && <span aria-hidden="true">›</span>}</>;
   return canOpen ? <Link className="cp360-claim-row" to={`/operator/claims/${claim.claimId}`}>{content}</Link> : <div className="cp360-claim-row">{content}</div>;
 }
 
 function StatusBadge({ value }: { value: CustomerRecordStatus }) {
   return <span className={`cp360-status is-${value.toLowerCase()}`}>{value === 'ACTIVE' ? 'Activo' : 'Inactivo'}</span>;
+}
+
+const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
+  RECEIVED: 'Recibido',
+  UNDER_REVIEW: 'En revisión',
+  OBSERVED: 'Requiere información',
+  APPROVED: 'Aprobado',
+  IN_REPAIR: 'En reparación',
+  CLOSED: 'Cerrado',
+};
+
+function claimStatusLabel(value: ClaimStatus) {
+  return CLAIM_STATUS_LABELS[value];
 }
 
 function formatDate(value: string) {
