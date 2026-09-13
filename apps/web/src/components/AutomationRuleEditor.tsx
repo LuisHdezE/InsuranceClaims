@@ -182,13 +182,13 @@ export function AutomationRuleEditor({ value, onChange, disabled = false }: { va
   return (
     <div className="aa-rule-editor">
       <section className="aa-editor-section">
-        <div className="aa-section-heading"><div><span>WHEN</span><h3>Trigger aprobado</h3></div><small>Allowlist R3 cerrada</small></div>
+        <div className="aa-section-heading"><div><span>CUANDO</span><h3>Disparador aprobado</h3></div><small>Lista R3 cerrada</small></div>
         <label className="aa-field"><span>eventType</span><select value={value.eventType} disabled={disabled} onChange={(event) => onChange({ ...value, eventType: event.target.value as AutomationTriggerEvent })}>{AUTOMATION_TRIGGER_EVENTS.map((item) => <option value={item} key={item}>{item}</option>)}</select></label>
       </section>
 
       <section className="aa-editor-section">
-        <div className="aa-section-heading"><div><span>IF</span><h3>Condiciones</h3></div><button type="button" disabled={disabled || value.conditions.length >= 20} onClick={() => onChange({ ...value, conditions: [...value.conditions, { field: '', operator: 'EQ', values: [emptyScalar()] }] })}>+ Condición</button></div>
-        {value.conditions.length === 0 && <p className="aa-empty-note">Sin condiciones: el contrato permite que el trigger continúe directamente a wait/then.</p>}
+        <div className="aa-section-heading"><div><span>SI</span><h3>Condiciones</h3></div><button type="button" disabled={disabled || value.conditions.length >= 20} onClick={() => onChange({ ...value, conditions: [...value.conditions, { field: '', operator: 'EQ', values: [emptyScalar()] }] })}>+ Condición</button></div>
+        {value.conditions.length === 0 && <p className="aa-empty-note">Sin condiciones: el contrato permite que el disparador continúe directamente a la espera o a las acciones.</p>}
         {value.conditions.map((condition, index) => {
           const noValue = condition.operator === 'EXISTS' || condition.operator === 'NOT_EXISTS';
           const listValue = condition.operator === 'IN' || condition.operator === 'NOT_IN';
@@ -211,12 +211,12 @@ export function AutomationRuleEditor({ value, onChange, disabled = false }: { va
       </section>
 
       <section className="aa-editor-section">
-        <div className="aa-section-heading"><div><span>WAIT</span><h3>Espera opcional</h3></div><label className="aa-toggle-label"><input type="checkbox" checked={value.waitEnabled} disabled={disabled} onChange={(event) => onChange({ ...value, waitEnabled: event.target.checked })} /> Usar wait</label></div>
+        <div className="aa-section-heading"><div><span>ESPERA</span><h3>Espera opcional</h3></div><label className="aa-toggle-label"><input type="checkbox" checked={value.waitEnabled} disabled={disabled} onChange={(event) => onChange({ ...value, waitEnabled: event.target.checked })} /> Usar espera</label></div>
         {value.waitEnabled && <label className="aa-field"><span>delaySeconds</span><input type="number" min={60} max={2592000} step={1} value={value.delaySeconds} disabled={disabled} onChange={(event) => onChange({ ...value, delaySeconds: event.target.value })} /><small>60 segundos a 2.592.000 segundos (30 días).</small></label>}
       </section>
 
       <section className="aa-editor-section">
-        <div className="aa-section-heading"><div><span>THEN</span><h3>Acciones aprobadas</h3></div><button type="button" disabled={disabled || value.actions.length >= 20} onClick={() => onChange({ ...value, actions: [...value.actions, { key: `action_${value.actions.length + 1}`, type: 'CREATE_TASK', parameters: [] }] })}>+ Acción</button></div>
+        <div className="aa-section-heading"><div><span>ENTONCES</span><h3>Acciones aprobadas</h3></div><button type="button" disabled={disabled || value.actions.length >= 20} onClick={() => onChange({ ...value, actions: [...value.actions, { key: `action_${value.actions.length + 1}`, type: 'CREATE_TASK', parameters: [] }] })}>+ Acción</button></div>
         {value.actions.map((action, index) => (
           <article className="aa-action-card" key={`action-${index}`}>
             <div className="aa-row-heading"><strong>Acción {index + 1}</strong><button type="button" disabled={disabled || value.actions.length <= 1} onClick={() => onChange({ ...value, actions: value.actions.filter((_, itemIndex) => itemIndex !== index) })}>Eliminar</button></div>
@@ -226,7 +226,7 @@ export function AutomationRuleEditor({ value, onChange, disabled = false }: { va
             </div>
             <div className="aa-parameter-list">
               <div className="aa-parameter-heading"><strong>parameters</strong><button type="button" disabled={disabled || action.parameters.length >= 20} onClick={() => updateAction(index, { ...action, parameters: [...action.parameters, { key: '', scalar: emptyScalar() }] })}>+ Parámetro</button></div>
-              {action.parameters.length === 0 && <p className="aa-empty-note">Sin parámetros. R3 no publica un schema específico por action type.</p>}
+              {action.parameters.length === 0 && <p className="aa-empty-note">Sin parámetros. R3 no publica un schema específico por tipo de acción.</p>}
               {action.parameters.map((parameter, parameterIndex) => (
                 <div className="aa-parameter-row" key={`action-${index}-parameter-${parameterIndex}`}>
                   <label className="aa-field"><span>parameter key</span><input value={parameter.key} maxLength={80} disabled={disabled} onChange={(event) => updateAction(index, { ...action, parameters: action.parameters.map((item, itemIndex) => itemIndex === parameterIndex ? { ...item, key: event.target.value } : item) })} /></label>
