@@ -1,0 +1,43 @@
+name: R3 Task 10 Dead Letter Mobile Fix
+
+on:
+  push:
+    branches: [review/r3-task10-dead-letter-mobile-fix]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/r3-parallel-11-imports-recovery
+          fetch-depth: 0
+      - name: Verify expected product head
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "eabe704f7d916d0b325148919aa2ade714057189"
+      - name: Apply narrow mobile containment correction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('apps/web/src/recovery-admin.css')
+          source=path.read_text()
+          old=""".r3-ui-shell .recovery-admin-hero h1 {\n  margin: 3px 0 5px;\n  color: var(--recovery-ink);\n  font-size: clamp(25px, 2.2vw, 34px);\n  line-height: 1.08;\n  letter-spacing: -.025em;\n}\n"""
+          new=""".r3-ui-shell .recovery-admin-hero > div:first-child {\n  min-width: 0;\n}\n\n.r3-ui-shell .recovery-admin-hero h1 {\n  margin: 3px 0 5px;\n  color: var(--recovery-ink);\n  font-size: clamp(25px, 2.2vw, 34px);\n  line-height: 1.08;\n  letter-spacing: -.025em;\n  overflow-wrap: anywhere;\n}\n"""
+          if source.count(old) != 1:
+              raise SystemExit(f'Expected one hero heading block, found {source.count(old)}')
+          path.write_text(source.replace(old,new))
+          PY
+          git diff --check
+          git diff -- apps/web/src/recovery-admin.css
+      - name: Commit and push product fix
+        shell: bash
+        run: |
+          git config user.name "MSc Luis A. Hernández Elias"
+          git config user.email "88979457+LuisHdezE@users.noreply.github.com"
+          git add apps/web/src/recovery-admin.css
+          git commit -m "fix(web): contain dead-letter heading on mobile"
+          git push origin HEAD:feat/r3-parallel-11-imports-recovery
