@@ -46,6 +46,7 @@ Este directorio conserva las vistas **aprobadas explícitamente** durante la rac
 | Analytics R3 | MANTENER / SIMPLIFICAR | `analytics-r3-approved.svg` + `analytics-r3-approved.md` |
 | Staff Workspace R3 | MANTENER / SIMPLIFICAR | `staff-workspace-r3-approved.svg` + `staff-workspace-r3-approved.md` |
 | Directorio de Clientes R3 | MANTENER / SIMPLIFICAR | `customer-directory-approved.svg` + `customer-directory-approved.md` |
+| Directorio de Pólizas R3 | MANTENER / SIMPLIFICAR | `policy-directory-approved.svg` + `policy-directory-approved.md` |
 
 ## Principios funcionales clave
 
@@ -66,6 +67,9 @@ Responsabilidad: **contexto rápido de lectura**. No se inventa edición ni atri
 
 ### Directorio de Clientes R3
 Responsabilidad: **buscar y seleccionar clientes** mediante filtros server-side y abrir Cliente 360. No crea, edita ni elimina clientes.
+
+### Directorio de Pólizas R3
+Responsabilidad: **localizar y seleccionar pólizas** mediante filtros server-side y abrir Póliza 360. La referencia moderna es primaria y la referencia legacy queda como contexto; no crea, edita ni elimina pólizas.
 
 ### Renovaciones / Cobranzas
 Responsabilidad: **gestionar casos de negocio propios** sin duplicar los 360. Lifecycle y pipeline permanecen separados. En Cobranzas, el estado de pago es una tercera dimensión autoritativa independiente.
