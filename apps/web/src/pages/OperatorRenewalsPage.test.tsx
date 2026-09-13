@@ -76,8 +76,8 @@ describe('OperatorRenewalsPage R3', () => {
   it('renders only authoritative renewal list data with visible pipeline naming', async () => {
     renderPage();
 
-    expect(await screen.findByRole('heading', { name: 'Renovaciones' })).toBeTruthy();
-    expect(screen.getByText('Cliente Renovación API')).toBeTruthy();
+    expect(await screen.findByText('Cliente Renovación API')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Renovaciones' })).toBeTruthy();
     expect(screen.getByText('CUS-R3-001')).toBeTruthy();
     expect(screen.getByText('POL-R3-001')).toBeTruthy();
     expect(screen.getByText('Abierta')).toBeTruthy();
@@ -89,7 +89,7 @@ describe('OperatorRenewalsPage R3', () => {
 
   it('does not invent filters, pricing or commercial actions absent from the contract', async () => {
     renderPage();
-    await screen.findByRole('heading', { name: 'Renovaciones' });
+    await screen.findByText('Cliente Renovación API');
 
     expect(screen.queryByRole('textbox')).toBeNull();
     expect(screen.queryByRole('combobox')).toBeNull();
