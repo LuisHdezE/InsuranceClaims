@@ -1,0 +1,110 @@
+name: R3 Lane Sync Resolver
+
+on:
+  push:
+    branches:
+      - review/r3-lane-sync-resolver
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout synchronization branch
+        uses: actions/checkout@v4
+        with:
+          ref: sync/r3-08-12-main-20260913
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Reconcile main into parallel synchronization branch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          EXPECTED_PARALLEL="a99cd627221c4e0877d9dab923b9690d0d9f8f65"
+          EXPECTED_MAIN="e2011e51d0116f7c4c15d42da2ee22b719f106d6"
+
+          current="$(git rev-parse HEAD)"
+          if [ "$current" != "$EXPECTED_PARALLEL" ]; then
+            echo "Unexpected sync branch head: $current"
+            exit 1
+          fi
+
+          git fetch origin main
+          main_head="$(git rev-parse origin/main)"
+          if [ "$main_head" != "$EXPECTED_MAIN" ]; then
+            echo "main moved unexpectedly: $main_head"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          set +e
+          git merge --no-ff --no-commit origin/main
+          merge_status=$?
+          set -e
+
+          mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+          allowed=(
+            "apps/web/src/automation-admin.css"
+            "apps/web/src/components/AutomationRuleEditor.tsx"
+            "apps/web/src/pages/AdminAutomationCreatePage.tsx"
+            "apps/web/src/pages/AdminAutomationDetailPage.tsx"
+            "apps/web/src/pages/AdminAutomationVersionCreatePage.tsx"
+            "apps/web/src/pages/AdminAutomationsPage.tsx"
+            "apps/web/src/pipeline-admin.css"
+            "packages/infrastructure/src/automation-store.ts"
+          )
+
+          for conflict in "${conflicts[@]}"; do
+            permitted=false
+            for candidate in "${allowed[@]}"; do
+              if [ "$conflict" = "$candidate" ]; then
+                permitted=true
+                break
+              fi
+            done
+            if [ "$permitted" != true ]; then
+              echo "Unexpected conflict outside governed overlap: $conflict"
+              exit 1
+            fi
+          done
+
+          echo "merge_status=$merge_status"
+          printf 'conflict=%s\n' "${conflicts[@]}"
+
+          # PR #86 is the later canonical implementation of the exact same
+          # Pipelines + Automations contract. Keep its eight overlapping files
+          # byte-for-byte while retaining every non-overlapping parallel change.
+          for file in "${allowed[@]}"; do
+            git checkout origin/main -- "$file"
+            git add "$file"
+          done
+
+          if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+            echo "Unresolved merge conflicts remain."
+            git diff --name-only --diff-filter=U
+            exit 1
+          fi
+
+          for file in "${allowed[@]}"; do
+            if ! git diff --quiet origin/main -- "$file"; then
+              echo "Governed overlap does not match main exactly: $file"
+              exit 1
+            fi
+          done
+
+          git add -A
+          git commit -m "chore: synchronize main into R3 parallel lane"
+
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo "main is not an ancestor of the synchronized result."
+            exit 1
+          fi
+
+          git push origin HEAD:sync/r3-08-12-main-20260913
+          echo "SYNCHRONIZED_SHA=$(git rev-parse HEAD)"
