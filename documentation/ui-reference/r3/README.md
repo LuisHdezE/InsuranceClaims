@@ -44,6 +44,7 @@ Este directorio conserva las vistas **aprobadas explícitamente** durante la rac
 | Importaciones Gobernadas R3 | DIFERENCIADOR TÉCNICO / MANTENER | `governed-imports-dryrun-commit-approved.svg` + `governed-imports-dryrun-commit-approved.md` |
 | Recovery Operations / Dead Letters | DIFERENCIADOR TÉCNICO / MANTENER | `recovery-operations-approved.svg` + `recovery-operations-approved.md` |
 | Analytics R3 | MANTENER / SIMPLIFICAR | `analytics-r3-approved.svg` + `analytics-r3-approved.md` |
+| Staff Workspace R3 | MANTENER / SIMPLIFICAR | `staff-workspace-r3-approved.svg` + `staff-workspace-r3-approved.md` |
 
 ## Principios funcionales clave
 
@@ -79,3 +80,6 @@ Responsabilidad: **diagnosticar Integration Events y recuperar trabajos dead-let
 
 ### Analytics R3
 Responsabilidad: **supervisar métricas operacionales agregadas**. `reportedInWindow` representa Claims creados en `[from,to)`; los demás conteos son snapshots al `generatedAt` y no se reinterpretan como totales de la ventana.
+
+### Staff Workspace R3
+Responsabilidad: **orientar por rol hacia capacidades realmente autorizadas y productizadas**. No es un segundo dashboard ni un duplicado del sidebar; `PLATFORM_ADMIN` no hereda operación de negocio como superusuario implícito.
