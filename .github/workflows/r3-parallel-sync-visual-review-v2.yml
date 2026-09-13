@@ -26,7 +26,7 @@ jobs:
           --health-timeout 5s
           --health-retries 20
     env:
-      REVIEW_TARGET_SHA: c3df3f7f779b5dd0d2a2eae3503632f99b1d7ecf
+      REVIEW_TARGET_SHA: ec03d5bd9371029aad9d23591312b63dc2a0ac51
       REVIEW_DIR: .runtime/r3-parallel-sync-visual-v2
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_parallel_visual_v2
       LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: c3df3f7f779b5dd0d2a2eae3503632f99b1d7ecf
+          ref: ec03d5bd9371029aad9d23591312b63dc2a0ac51
           fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
@@ -165,8 +165,8 @@ jobs:
                   wait.until(EC.visibility_of_element_located((By.ID,'operator-login')))
                   assert driver.find_element(By.ID,'operator-login').get_attribute('autocomplete')=='username'
                   assert driver.find_element(By.ID,'operator-password').get_attribute('autocomplete')=='current-password'
-                  body=driver.find_element(By.TAG_NAME,'body').text.lower()
-                  assert 'sin renovación automática de sesión' in body
+                  session_contract=driver.find_element(By.CSS_SELECTOR,'.r3-login-session-note').get_attribute('textContent').lower()
+                  assert 'sin renovación automática de sesión' in session_contract
                   save(f'operator-login-{label}',width,height)
 
               driver.set_window_size(1440,1000)
