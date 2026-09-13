@@ -53,11 +53,25 @@ const detailResponse = {
     vehicleReference: 'UY-API-123',
     verifiedCustomerLabel: 'Cliente API',
     allowedTransitions: ['UNDER_REVIEW' as const],
+    evidence: [],
+    history: [],
     auditEvents: [],
     createdAt: '2026-09-12T16:05:00.000Z',
     updatedAt: '2026-09-12T17:00:00.000Z',
   },
   requestId: 'req-detail',
+};
+
+const transitionResponse = {
+  data: {
+    claimId: 'claim-api-1',
+    fromStatus: 'RECEIVED' as const,
+    toStatus: 'UNDER_REVIEW' as const,
+    status: 'UNDER_REVIEW' as const,
+    allowedTransitions: ['OBSERVED' as const, 'APPROVED' as const],
+    transitionedAt: '2026-09-12T17:05:00.000Z',
+  },
+  requestId: 'req-transition',
 };
 
 function renderPage() {
@@ -84,7 +98,7 @@ describe('OperatorClaimDetailPage R3 detail', () => {
     mockedGetClaimDetail.mockReset();
     mockedTransition.mockReset();
     mockedGetClaimDetail.mockResolvedValue(detailResponse);
-    mockedTransition.mockResolvedValue({ data: { claimId: 'claim-api-1', status: 'UNDER_REVIEW' }, requestId: 'req-transition' } as never);
+    mockedTransition.mockResolvedValue(transitionResponse);
   });
 
   afterEach(() => cleanup());
@@ -93,7 +107,7 @@ describe('OperatorClaimDetailPage R3 detail', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: detailResponse.data.trackingCode })).toBeTruthy();
-    expect(screen.getByText(detailResponse.data.policyReference, { exact: false })).toBeTruthy();
+    expect(screen.getAllByText(detailResponse.data.policyReference, { exact: false }).length).toBeGreaterThan(0);
     expect(screen.getByText(detailResponse.data.description)).toBeTruthy();
     expect(screen.getByText(detailResponse.data.verifiedCustomerLabel)).toBeTruthy();
 
