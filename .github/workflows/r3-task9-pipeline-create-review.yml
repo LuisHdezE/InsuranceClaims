@@ -1,0 +1,150 @@
+name: R3 Task 9 Pipeline Create Review
+
+on:
+  push:
+    branches: [review/r3-task9-pipeline-create]
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline-create-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_task9_pipeline_create
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_task9_pipeline_create"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_task9_pipeline_create
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      PORT: '3000'
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '[]'
+      REVIEW_TARGET_SHA: d6120822bb211e90d120dd201ccb350e4c524f42
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: d6120822bb211e90d120dd201ccb350e4c524f42
+          fetch-depth: 1
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Prepare runtime
+        shell: bash
+        run: |
+          npm ci
+          npm run contract:emit
+          echo "JWT_SECRET=r3-task9-pipeline-create-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-task9-pipeline-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-task9-pipeline-create-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-task9-pipeline-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+      - name: Bootstrap database
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+      - name: Start API and web
+        shell: bash
+        run: |
+          mkdir -p .runtime/task9-pipeline-create
+          npm run start:api > .runtime/task9-pipeline-create/api.log 2>&1 &
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/task9-pipeline-create/web.log 2>&1 &
+          for attempt in $(seq 1 50); do
+            api_ok=0; web_ok=0
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Capture pipeline create desktop and mobile
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          out = Path('.runtime/task9-pipeline-create')
+          options = webdriver.ChromeOptions()
+          for arg in ('--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--force-device-scale-factor=1'):
+              options.add_argument(arg)
+          options.binary_location = os.environ['BROWSER_BIN']
+          driver = webdriver.Chrome(options=options)
+          wait = WebDriverWait(driver, 20)
+          captures = []
+          try:
+              driver.get(base + '/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-login'))).send_keys(os.environ['QA_ADMIN_LOGIN'])
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-password'))).send_keys(os.environ['QA_OPERATOR_PASSWORD'])
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
+              wait.until(lambda d: d.current_url.startswith(base + '/operator/workspace'))
+              for width in (1440, 390):
+                  driver.set_window_size(width, 1000)
+                  route = '/operator/admin/pipelines/new'
+                  driver.execute_script("window.history.pushState({}, '', arguments[0]); window.dispatchEvent(new PopStateEvent('popstate'));", route)
+                  wait.until(lambda d: d.current_url.startswith(base + route))
+                  wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.pipeline-stage-editor-card')))
+                  wait.until(lambda d: 'Crear pipeline' in d.find_element(By.TAG_NAME, 'body').text)
+                  time.sleep(.35)
+                  m = driver.execute_script('''const r=document.documentElement; return {clientWidth:r.clientWidth,scrollWidth:r.scrollWidth,scrollHeight:Math.max(r.scrollHeight,document.body.scrollHeight),h1Count:document.querySelectorAll('h1').length};''')
+                  overflow = m['scrollWidth'] - m['clientWidth']
+                  assert overflow <= 2, f'horizontal overflow {width}px = {overflow}px'
+                  assert m['h1Count'] == 1, f'expected one h1, got {m["h1Count"]}'
+                  button = driver.find_element(By.CSS_SELECTOR, '.pipeline-primary-button')
+                  assert button.rect['height'] >= 43, f'primary action below target: {button.rect}'
+                  height = min(max(int(m['scrollHeight']) + 40, 1000), 7000)
+                  driver.set_window_size(width, height)
+                  time.sleep(.2)
+                  driver.execute_script('window.scrollTo(0,0)')
+                  path = out / f'pipeline-create-{width}.png'
+                  assert driver.save_screenshot(str(path))
+                  captures.append({'name':'pipeline-create','route':route,'width':width,'height':height,'horizontal_overflow_px':overflow,'h1_count':m['h1Count'],'file':str(path)})
+              manifest = {'target_sha': os.environ['REVIEW_TARGET_SHA'], 'captures': captures, 'assertions': {'max_horizontal_overflow_px':2,'expected_h1_count':1,'minimum_primary_action_height_px':43,'expected_text':'Crear pipeline'}}
+              (out/'manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
+              print(json.dumps(manifest, indent=2, ensure_ascii=False))
+          finally:
+              driver.quit()
+          PY
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-task9-pipeline-create-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/task9-pipeline-create/**
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
