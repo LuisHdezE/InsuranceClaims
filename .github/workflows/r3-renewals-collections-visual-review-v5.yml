@@ -152,6 +152,11 @@ jobs:
           def settled():
               b=driver.find_element(By.TAG_NAME,'body').text
               return all(x not in b for x in ('Cargando renovaciones…','Cargando cobranzas…','Cargando caso de renovación…','Cargando caso de cobranza…'))
+          def spa_go(path,selector):
+              driver.execute_script("history.pushState({}, '', arguments[0]); window.dispatchEvent(new PopStateEvent('popstate'));", path)
+              wait.until(lambda d:d.execute_script('return location.pathname')==path)
+              wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,selector)))
+              wait.until(lambda d:settled())
           def capture(prefix,width,kind):
               driver.set_window_size(width,1000);time.sleep(.45);m=metrics();h=min(max(int(m['scrollHeight'])+40,1000),6500);driver.set_window_size(width,h);time.sleep(.2);driver.execute_script('window.scrollTo(0,0)');p=out/f'{prefix}-{"desktop" if width==1440 else "mobile"}.png';assert driver.save_screenshot(str(p));shots.append({'kind':kind,'width':width,'height':h,'horizontal_overflow_px':m['scrollWidth']-m['clientWidth'],'h1_count':m['h1Count'],'file':str(p)});return m
           def validate(kind,m):
@@ -176,12 +181,11 @@ jobs:
               (out/'login-trace.json').write_text(json.dumps(diagnostics,indent=2)+'\n',encoding='utf-8')
               if not driver.current_url.startswith(base+'/operator/dashboard'):
                   driver.save_screenshot(str(out/'login-failure.png')); raise AssertionError(f'login did not reach dashboard: {driver.current_url}')
-              driver.get(base+'/operator/renewals')
               cases=[('/operator/renewals','.r3-renewals-directory','renewals-directory','renewals-directory'),('/operator/renewals/b1000000-0000-4000-8000-000000000006','.r3-renewal-detail','renewal-detail','renewal-detail'),('/operator/collections','.r3-collections-directory','collections-directory','collections-directory'),('/operator/collections/c1000000-0000-4000-8000-000000000006','.r3-collection-detail','collection-detail','collection-detail')]
               for path,selector,kind,prefix in cases:
-                  driver.get(base+path);wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,selector)));wait.until(lambda d:settled())
+                  spa_go(path,selector)
                   for width in (1440,390):validate(kind,capture(prefix,width,kind))
-              summary={'review_type':'r3_renewals_collections_visual_review_v5','review_target_sha':os.environ['REVIEW_TARGET_SHA'],'role':'CLAIMS_SUPERVISOR','api_authoritative':True,'screenshots':shots,'result':'PASS'};(out/'cases-visual-review.json').write_text(json.dumps(summary,indent=2)+'\n',encoding='utf-8');print(json.dumps(summary))
+              summary={'review_type':'r3_renewals_collections_visual_review_v5','review_target_sha':os.environ['REVIEW_TARGET_SHA'],'role':'CLAIMS_SUPERVISOR','api_authoritative':True,'navigation':'spa_preserves_in_memory_session','screenshots':shots,'result':'PASS'};(out/'cases-visual-review.json').write_text(json.dumps(summary,indent=2)+'\n',encoding='utf-8');print(json.dumps(summary))
           except Exception as exc:
               fail={'review_target_sha':os.environ['REVIEW_TARGET_SHA'],'current_url':driver.current_url,'error':repr(exc),'traceback':traceback.format_exc(),'diagnostics':diagnostics,'screenshots':shots,'result':'FAIL'};(out/'failure.json').write_text(json.dumps(fail,indent=2)+'\n',encoding='utf-8');print(json.dumps(fail));raise
           finally:driver.quit()
