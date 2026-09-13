@@ -73,20 +73,20 @@ export function AdminAutomationVersionCreatePage() {
   return (
     <OperatorShell>
       <main className="operator-main ops-main aa-admin-main">
-        <div className="aa-breadcrumbs"><Link to="/operator/admin/automations">Automations</Link><span>/</span>{automation && <Link to={`/operator/admin/automations/${automation.definitionId}`}>{automation.key}</Link>}<span>/</span><span>Nueva versión</span></div>
+        <div className="aa-breadcrumbs"><Link to="/operator/admin/automations">Automatizaciones</Link><span>/</span>{automation && <Link to={`/operator/admin/automations/${automation.definitionId}`}>{automation.key}</Link>}<span>/</span><span>Nueva versión</span></div>
         {localError && <div className="aa-local-error" role="alert">{localError}</div>}
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
         {automationQuery.isLoading && <div className="ops-compact-empty" role="status">Cargando definición…</div>}
 
         {automation && (
           <>
-            <section className="aa-editor-hero"><div><span className="ops-kicker">Versión inmutable R3</span><h1>Nueva versión de {automation.displayName}</h1><p>Se crea una DRAFT nueva sobre definition version v{automation.version}. Key y displayName permanecen en la definición.</p></div><span className="aa-draft-badge">Nueva DRAFT</span></section>
+            <section className="aa-editor-hero"><div><span className="ops-kicker">Versión inmutable R3</span><h1>Nueva versión de {automation.displayName}</h1><p>Se crea una DRAFT nueva sobre la versión de definición v{automation.version}. Key y displayName permanecen en la definición.</p></div><span className="aa-draft-badge">Nueva DRAFT</span></section>
             <section className="ops-panel aa-editor-panel">
               <label className="aa-field"><span>sourceClassification</span><input value={sourceClassification} maxLength={80} disabled={mutation.isPending} onChange={(event) => setSourceClassification(event.target.value)} /></label>
               <AutomationRuleEditor value={rule} onChange={setRule} disabled={mutation.isPending} />
               <div className="aa-editor-actions"><button className="aa-primary-button" type="button" disabled={mutation.isPending} onClick={submit}>{mutation.isPending ? 'Creando…' : 'Crear DRAFT vNext'}</button><Link className="aa-secondary-button" to={`/operator/admin/automations/${automation.definitionId}`}>Cancelar</Link></div>
             </section>
-            <section className="aa-admin-contract-note"><strong>Sin edición histórica</strong><p>Las versiones existentes no se modifican. Si el definition version cambia mientras editas, el API responde 409 y esta vista refresca la proyección autoritativa sin reintentar.</p></section>
+            <section className="aa-admin-contract-note"><strong>Sin edición histórica</strong><p>Las versiones existentes no se modifican. Si la versión de definición cambia mientras editas, el API responde 409 y esta vista refresca la proyección autoritativa sin reintentar.</p></section>
           </>
         )}
       </main>

@@ -48,15 +48,15 @@ export function AdminAutomationCreatePage() {
     try {
       mutation.mutate({ key: normalizedKey, displayName: normalizedName, sourceClassification: normalizedSource, content: buildAutomationContent(rule) });
     } catch (error) {
-      setLocalError(error instanceof Error ? error.message : 'No se pudo validar la Automation.');
+      setLocalError(error instanceof Error ? error.message : 'No se pudo validar la automatización.');
     }
   };
 
   return (
     <OperatorShell>
       <main className="operator-main ops-main aa-admin-main">
-        <div className="aa-breadcrumbs"><Link to="/operator/admin/automations">Automations</Link><span>/</span><span>Nueva</span></div>
-        <section className="aa-editor-hero"><div><span className="ops-kicker">Nueva definición R3</span><h1>Crear Automation</h1><p>La definición nace deshabilitada con su primera versión DRAFT. Activar una versión y habilitar la definición son pasos separados.</p></div><span className="aa-draft-badge">Primera versión · DRAFT</span></section>
+        <div className="aa-breadcrumbs"><Link to="/operator/admin/automations">Automatizaciones</Link><span>/</span><span>Nueva</span></div>
+        <section className="aa-editor-hero"><div><span className="ops-kicker">Nueva definición R3</span><h1>Crear automatización</h1><p>La definición nace deshabilitada con su primera versión DRAFT. Activar una versión y habilitar la definición son pasos separados.</p></div><span className="aa-draft-badge">Primera versión · DRAFT</span></section>
 
         {localError && <div className="aa-local-error" role="alert">{localError}</div>}
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
