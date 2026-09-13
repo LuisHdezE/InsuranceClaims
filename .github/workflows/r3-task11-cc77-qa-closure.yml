@@ -1,0 +1,92 @@
+name: R3 Task 11 CC77 QA Closure
+on:
+  push:
+    branches: [review/r3-task11-cc77-qa-closure]
+permissions:
+  contents: read
+jobs:
+  baseline-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_task11_qa
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_task11_qa"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_task11_qa
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-task11-qa
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-task11-qa
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+      REVIEW_TARGET_SHA: cc7797e47b2054787c598bad04ed07f4316903d1
+      JWT_SECRET: task11-synthetic-jwt-value-for-review-only
+      CUSTOMER_JWT_SECRET: task11-synthetic-customer-jwt-value-for-review-only
+      QA_OPERATOR_PASSWORD: task11-synthetic-operator-pass
+      QA_CUSTOMER_PASSWORD: task11-synthetic-customer-pass
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: cc7797e47b2054787c598bad04ed07f4316903d1
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Verify exact product head
+        run: test "$(git rev-parse HEAD)" = "$REVIEW_TARGET_SHA"
+      - name: Install and emit contract
+        run: |
+          npm ci
+          npm run contract:emit
+      - name: Bootstrap PostgreSQL
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+      - name: Start fresh runtime
+        run: |
+          mkdir -p .runtime/evidence-task11-qa .runtime/imports-task11-qa .runtime/task11-qa
+          npm run start:legacy > .runtime/task11-qa/legacy.log 2>&1 &
+          echo $! > .runtime/task11-qa/legacy.pid
+          npm run start:api > .runtime/task11-qa/api.log 2>&1 &
+          echo $! > .runtime/task11-qa/api.pid
+          for attempt in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: Execute baseline runtime QA
+        run: node qa/runtime-qa.mjs
+      - name: Assert no unhandled API errors
+        run: '! grep -q UNHANDLED_API_ERROR .runtime/task11-qa/api.log'
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-task11-cc77-qa-closure
+          path: .runtime/task11-qa/**
+          retention-days: 30
+      - name: Stop runtime
+        if: always()
+        run: |
+          [[ -f .runtime/task11-qa/api.pid ]] && kill "$(cat .runtime/task11-qa/api.pid)" 2>/dev/null || true
+          [[ -f .runtime/task11-qa/legacy.pid ]] && kill "$(cat .runtime/task11-qa/legacy.pid)" 2>/dev/null || true
