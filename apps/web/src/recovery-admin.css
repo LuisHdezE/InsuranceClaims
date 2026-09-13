@@ -43,12 +43,17 @@
   padding: 18px;
 }
 
+.r3-ui-shell .recovery-admin-hero > div:first-child {
+  min-width: 0;
+}
+
 .r3-ui-shell .recovery-admin-hero h1 {
   margin: 3px 0 5px;
   color: var(--recovery-ink);
   font-size: clamp(25px, 2.2vw, 34px);
   line-height: 1.08;
   letter-spacing: -.025em;
+  overflow-wrap: anywhere;
 }
 
 .r3-ui-shell .recovery-admin-hero p {
