@@ -129,28 +129,37 @@ jobs:
           opts.add_argument('--window-size=1440,1100'); opts.binary_location = os.environ['BROWSER_BIN']
           driver = webdriver.Chrome(options=opts); wait = WebDriverWait(driver, 20)
 
+          def text(selector):
+              value = driver.find_element(By.CSS_SELECTOR, selector).get_attribute('textContent') or ''
+              return ' '.join(value.split())
           def metrics():
-              return driver.execute_script('''const r=document.documentElement; return {clientWidth:r.clientWidth,scrollWidth:r.scrollWidth,scrollHeight:Math.max(r.scrollHeight,document.body.scrollHeight),h1Count:document.querySelectorAll('h1').length,bodyText:document.body.innerText};''')
+              return driver.execute_script('''const r=document.documentElement; return {clientWidth:r.clientWidth,scrollWidth:r.scrollWidth,scrollHeight:Math.max(r.scrollHeight,document.body.scrollHeight),h1Count:document.querySelectorAll('h1').length};''')
           def activate(el):
               driver.execute_script('arguments[0].scrollIntoView({block:"center",inline:"nearest"});arguments[0].click()', el); time.sleep(.2)
           def capture(name, width, kind):
-              driver.set_window_size(width, 1000); time.sleep(.5); m=metrics(); body=m['bodyText']; lower=body.lower(); overflow=m['scrollWidth']-m['clientWidth']
+              driver.set_window_size(width, 1000); time.sleep(.5); m=metrics(); overflow=m['scrollWidth']-m['clientWidth']
               assert overflow <= 2, f'{kind}: horizontal overflow at {width}px = {overflow}px'
               assert m['h1Count'] == 1, f'{kind}: expected one h1, got {m["h1Count"]}'
-              assert 'Synthetic QA Portal Customer' in body and 'SYN-QA-PORTAL-CUST-001' in body
+              body_text = text('body'); lower = body_text.lower()
+              assert 'Synthetic QA Portal Customer' in body_text and 'SYN-QA-PORTAL-CUST-001' in body_text
               for forbidden in ('crear cliente','editar cliente','eliminar cliente','exportar clientes'): assert forbidden not in lower
               if kind == 'directory':
-                  for label in ('Clientes','Directorio de clientes','Resultado R3','Búsqueda y filtros server-side'): assert label in body, f'Directory label missing: {label}'
-                  search_label = driver.find_element(By.CSS_SELECTOR, 'label[for="customer-search"]')
-                  assert (search_label.get_attribute('textContent') or '').strip() == 'Buscar cliente'
-                  state_control = driver.find_element(By.CSS_SELECTOR, '.cp360-filter')
-                  assert 'Estado' in (state_control.get_attribute('textContent') or '')
-                  assert len(driver.find_elements(By.CSS_SELECTOR,'.r3-customer-directory')) == 1
+                  assert text('.r3-customer-directory h1') == 'Clientes'
+                  assert text('#customers-list-title') == 'Directorio de clientes'
+                  assert text('label[for="customer-search"]') == 'Buscar cliente'
+                  assert 'Estado' in text('.cp360-filter')
+                  assert text('.cp360-result-summary > span') == 'Resultado R3'
+                  assert 'Búsqueda y filtros server-side' in text('.cp360-result-summary > small')
                   assert len(driver.find_elements(By.CSS_SELECTOR,'a.cp360-row-action')) >= 1
               else:
-                  for label in ('Cliente 360','Pólizas relacionadas','Siniestros relacionados','Alcance contractual','Versión de registro:'): assert label in body, f'Customer 360 label missing: {label}'
-                  assert 'SYN-QA-PORTAL-TRACK-001' in body and 'Requiere información' in body and 'OBSERVED' not in body
-                  assert len(driver.find_elements(By.CSS_SELECTOR,'.r3-customer-detail')) == 1
+                  assert text('.r3-customer-detail h1') == 'Cliente 360'
+                  assert text('#customer-policies-title') == 'Pólizas relacionadas'
+                  assert text('#customer-claims-title') == 'Siniestros relacionados'
+                  assert 'Alcance contractual' in text('.cp360-contract-note')
+                  assert 'Versión de registro:' in text('.r3-customer-tech-meta')
+                  assert 'SYN-QA-PORTAL-TRACK-001' in body_text
+                  assert text('.cp360-claim-status') == 'Requiere información'
+                  assert 'OBSERVED' not in body_text
               height=min(max(int(m['scrollHeight'])+40,1000),6500); driver.set_window_size(width,height); time.sleep(.3); driver.execute_script('window.scrollTo(0,0)')
               path=out/name; assert driver.save_screenshot(str(path))
               return {'kind':kind,'width':width,'height':height,'horizontal_overflow_px':overflow,'h1_count':m['h1Count'],'file':str(path)}
@@ -163,12 +172,12 @@ jobs:
               wait.until(lambda d:d.current_url.startswith(base+'/operator/dashboard'))
               activate(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'a[href="/operator/customers"]'))))
               wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'.r3-customer-directory')))
-              wait.until(lambda d:'Synthetic QA Portal Customer' in d.find_element(By.TAG_NAME,'body').text)
+              wait.until(lambda d:'Synthetic QA Portal Customer' in text('body'))
               shots=[capture('customer-directory-desktop.png',1440,'directory'),capture('customer-directory-mobile.png',390,'directory')]
               driver.set_window_size(1440,1100)
               activate(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'a.cp360-row-action[href^="/operator/customers/"]'))))
               wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'.r3-customer-detail')))
-              wait.until(lambda d:'SYN-QA-PORTAL-TRACK-001' in d.find_element(By.TAG_NAME,'body').text)
+              wait.until(lambda d:'SYN-QA-PORTAL-TRACK-001' in text('body'))
               detail_url=driver.current_url
               shots += [capture('customer-360-desktop.png',1440,'detail'),capture('customer-360-mobile.png',390,'detail')]
               summary={'review_type':'r3_customer_directory_360_visual_review','review_target_sha':os.environ['REVIEW_TARGET_SHA'],'runtime_commit':os.environ.get('GITHUB_SHA'),'role':'CLAIMS_SUPERVISOR','api_authoritative':True,'synthetic_customer_graph_seeded_through_runtime_store':True,'detail_url_path':detail_url.replace(base,''),'screenshots':shots}
