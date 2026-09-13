@@ -1,13 +1,13 @@
-import { Link } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import { PublicIcon } from './PublicIcon';
 import '../public-refresh.css';
 import '../public-refresh-fixes.css';
 import '../hero-hq.css';
+import '../public-customer-journey-r3.css';
 
 export function PublicShell({ children }: { children: ReactNode }) {
   return (
-    <div className="public-shell public-refresh-shell">
+    <div className="public-shell public-refresh-shell public-customer-journey-r3">
       <header className="site-header refreshed-header">
         <div className="container-shell refreshed-header-row">
           <Link className="refreshed-brand" to="/" aria-label="Ir al inicio">
@@ -15,22 +15,26 @@ export function PublicShell({ children }: { children: ReactNode }) {
           </Link>
 
           <nav className="refreshed-nav" aria-label="Navegación principal">
-            <Link className="is-active" to="/">Inicio</Link>
-            <span className="nav-reference" aria-disabled="true" title="Referencia visual fuera del alcance funcional">Productos</span>
-            <Link to="/claims/new/verify">Siniestros</Link>
-            <Link to="/claims/track">Reclamos</Link>
-            <a href="#contacto">Contacto</a>
+            <NavLink end to="/" className={({ isActive }) => isActive ? 'is-active' : undefined}>Inicio</NavLink>
+            <NavLink to="/claims/new/verify" className={({ isActive }) => isActive ? 'is-active' : undefined}>Reportar</NavLink>
+            <NavLink to="/claims/track" className={({ isActive }) => isActive ? 'is-active' : undefined}>Seguimiento</NavLink>
           </nav>
 
           <div className="refreshed-header-actions">
-            <span className="header-search" aria-hidden="true"><PublicIcon kind="search" /></span>
             <Link className="client-area-btn" to="/operator/login">
-              <span className="client-area-icon" aria-hidden="true">♙</span>
-              Área de clientes
+              Acceso equipo
             </Link>
           </div>
         </div>
       </header>
+
+      <div className="public-case-strip" role="note">
+        <div className="container-shell">
+          <strong>Caso técnico no oficial</strong>
+          <span aria-hidden="true">·</span>
+          <span>Experiencia demostrativa con datos exclusivamente sintéticos.</span>
+        </div>
+      </div>
 
       {children}
 
@@ -50,9 +54,9 @@ export function PublicShell({ children }: { children: ReactNode }) {
 
           <div className="footer-column">
             <h2>Enlaces útiles</h2>
-            <Link to="/claims/new/verify">Siniestros</Link>
-            <Link to="/claims/track">Seguimiento</Link>
-            <Link to="/operator/login">Operadores</Link>
+            <Link to="/claims/new/verify">Reportar un siniestro</Link>
+            <Link to="/claims/track">Dar seguimiento</Link>
+            <Link to="/operator/login">Acceso equipo</Link>
           </div>
 
           <div className="footer-column footer-case-column">

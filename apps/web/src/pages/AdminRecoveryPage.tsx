@@ -53,7 +53,7 @@ export function AdminRecoveryPage() {
     setLookupClientError(null);
     integrationLookup.reset();
     if (!UUID_PATTERN.test(value)) {
-      setLookupClientError('Ingresa un eventId UUID válido. R3 no publica búsqueda por texto ni un directorio de Integration Events.');
+      setLookupClientError('Ingresa un eventId UUID válido. R3 no publica búsqueda por texto ni un directorio de eventos de integración.');
       return;
     }
     integrationLookup.mutate(value);
@@ -78,7 +78,7 @@ export function AdminRecoveryPage() {
           <article className="ops-panel recovery-lookup-panel" aria-labelledby="integration-lookup-title">
             <div className="ops-panel-heading">
               <div>
-                <h2 id="integration-lookup-title">Diagnóstico de Integration Event</h2>
+                <h2 id="integration-lookup-title">Diagnóstico de evento de integración</h2>
                 <p>El contrato R3 expone consulta por <code>eventId</code>; no publica un listado administrativo.</p>
               </div>
             </div>
@@ -114,10 +114,10 @@ export function AdminRecoveryPage() {
                 <dl className="recovery-facts">
                   <div><dt>eventId</dt><dd><code>{event.eventId}</code></dd></div>
                   <div><dt>externalEventId</dt><dd><code>{event.externalEventId}</code></dd></div>
-                  <div><dt>Ingestion</dt><dd>{event.ingestionStatus}</dd></div>
+                  <div><dt>Ingesta</dt><dd>{event.ingestionStatus}</dd></div>
                   <div><dt>Aceptado</dt><dd>{formatDateTime(event.acceptedAt)}</dd></div>
                   <div><dt>Procesado</dt><dd>{event.processedAt ? formatDateTime(event.processedAt) : '—'}</dd></div>
-                  <div><dt>Failure category</dt><dd>{event.failureCategory ?? '—'}</dd></div>
+                  <div><dt>Categoría de fallo</dt><dd>{event.failureCategory ?? '—'}</dd></div>
                 </dl>
               </div>
             )}
@@ -142,8 +142,8 @@ export function AdminRecoveryPage() {
         <section className="ops-panel recovery-dead-letter-panel" aria-labelledby="dead-letter-title">
           <div className="ops-panel-heading">
             <div>
-              <h2 id="dead-letter-title">Dead-letter queue</h2>
-              <p>Solo paginación de servidor. R3 no publica filtros por job type, categoría o fecha.</p>
+              <h2 id="dead-letter-title">Cola de dead letters</h2>
+              <p>Solo paginación de servidor. R3 no publica filtros por tipo de job, categoría o fecha.</p>
             </div>
             <button className="ops-refresh-button" type="button" disabled={deadLettersQuery.isFetching} onClick={() => void deadLettersQuery.refetch()}>
               {deadLettersQuery.isFetching ? 'Actualizando…' : 'Actualizar'}
@@ -160,7 +160,7 @@ export function AdminRecoveryPage() {
           ) : (
             <div className="recovery-table-wrap">
               <table className="recovery-table">
-                <thead><tr><th>Job</th><th>Intentos</th><th>Failure</th><th>Disponible</th><th>Versión</th><th /></tr></thead>
+                <thead><tr><th>Job</th><th>Intentos</th><th>Fallo</th><th>Disponible</th><th>Versión</th><th /></tr></thead>
                 <tbody>
                   {deadLetters.items.map((item) => (
                     <tr key={item.deadLetterId}>

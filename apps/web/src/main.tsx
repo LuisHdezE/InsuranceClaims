@@ -15,6 +15,7 @@ import './claims-tasks.css';
 import './claims-timeline.css';
 import './claims-evidence-attention.css';
 import './public-refresh.css';
+import './r3-public-token-alignment.css';
 import './hero-fix.css';
 import './r3-productization.css';
 import './r3-claims-work.css';

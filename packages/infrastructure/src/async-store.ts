@@ -202,7 +202,7 @@ export class PrismaAsyncOperationsStore implements AsyncOperationsRepository {
   }
 
   async listDeadLetters(input: { page: number; pageSize: number }) {
-    const rows = await this.db.orm.public.AsyncJob.all({ status: 'DEAD_LETTER' });
+    const rows = await this.db.orm.public.AsyncJob.where({ status: 'DEAD_LETTER' }).all();
     const all = rows.map(jobRow).sort((a: AsyncJobProps, b: AsyncJobProps) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0) || a.id.localeCompare(b.id));
     const offset = (input.page - 1) * input.pageSize;
     return { items: all.slice(offset, offset + input.pageSize), totalItems: all.length };

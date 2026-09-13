@@ -79,7 +79,7 @@ export function AdminDeadLetterDetailPage() {
                 </div>
               </div>
               <div className="recovery-version-card">
-                <small>Optimistic version</small>
+                <small>Versión optimista</small>
                 <strong>v{item.version}</strong>
                 <span>{item.attemptCount} / {item.maxAttempts} intentos</span>
               </div>
@@ -93,14 +93,14 @@ export function AdminDeadLetterDetailPage() {
                 </button>
               </div>
               <dl className="recovery-facts is-detail">
-                <div><dt>Job type</dt><dd>{item.jobType}</dd></div>
-                <div><dt>Status</dt><dd>{item.status}</dd></div>
+                <div><dt>Tipo de job</dt><dd>{item.jobType}</dd></div>
+                <div><dt>Estado</dt><dd>{item.status}</dd></div>
                 <div><dt>Intentos</dt><dd>{item.attemptCount} / {item.maxAttempts}</dd></div>
-                <div><dt>Available at</dt><dd>{formatDateTime(item.availableAt)}</dd></div>
-                <div><dt>Failure category</dt><dd>{item.failureCategory ?? '—'}</dd></div>
-                <div><dt>Correlation ID</dt><dd>{item.correlationId ? <code>{item.correlationId}</code> : '—'}</dd></div>
-                <div><dt>Completed at</dt><dd>{item.completedAt ? formatDateTime(item.completedAt) : '—'}</dd></div>
-                <div><dt>Version</dt><dd>v{item.version}</dd></div>
+                <div><dt>Disponible desde</dt><dd>{formatDateTime(item.availableAt)}</dd></div>
+                <div><dt>Categoría de fallo</dt><dd>{item.failureCategory ?? '—'}</dd></div>
+                <div><dt>ID de correlación</dt><dd>{item.correlationId ? <code>{item.correlationId}</code> : '—'}</dd></div>
+                <div><dt>Completado</dt><dd>{item.completedAt ? formatDateTime(item.completedAt) : '—'}</dd></div>
+                <div><dt>Versión</dt><dd>v{item.version}</dd></div>
               </dl>
             </section>
 
@@ -115,7 +115,7 @@ export function AdminDeadLetterDetailPage() {
               {canManage ? (
                 <div className="recovery-actions">
                   <button className="recovery-action-button is-requeue" type="button" disabled={mutationPending} onClick={() => requeueMutation.mutate()}>
-                    {requeueMutation.isPending ? 'Reencolando…' : 'Requeue para nuevo intento'}
+                    {requeueMutation.isPending ? 'Reencolando…' : 'Reencolar para nuevo intento'}
                   </button>
                   <button className="recovery-action-button is-resolve" type="button" disabled={mutationPending} onClick={() => resolveMutation.mutate()}>
                     {resolveMutation.isPending ? 'Resolviendo…' : 'Resolver administrativamente'}

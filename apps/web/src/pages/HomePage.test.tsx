@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { HomePage } from './HomePage';
 
 describe('HomePage', () => {
-  it('renders the approved public landing identity and active intake CTA', () => {
+  it('renders only the approved R3 public customer journeys', () => {
     render(
       <MemoryRouter>
         <HomePage />
@@ -12,7 +12,7 @@ describe('HomePage', () => {
     );
 
     expect(screen.getByRole('img', { name: 'FAR Seguros' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: /Protección simple/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /Un proceso claro, de principio a fin/i })).toBeTruthy();
 
     const intakeLinks = screen.getAllByRole('link', { name: 'Reportar un siniestro' });
     expect(intakeLinks.length).toBeGreaterThan(0);
@@ -20,6 +20,21 @@ describe('HomePage', () => {
       expect(link.getAttribute('href')).toBe('/claims/new/verify');
     }
 
-    expect(screen.getByText(/Caso técnico no oficial/i)).toBeTruthy();
+    const trackingLinks = screen.getAllByRole('link', { name: 'Dar seguimiento' });
+    expect(trackingLinks.length).toBeGreaterThan(0);
+    for (const link of trackingLinks) {
+      expect(link.getAttribute('href')).toBe('/claims/track');
+    }
+
+    const staffLinks = screen.getAllByRole('link', { name: 'Acceso equipo' });
+    expect(staffLinks.length).toBeGreaterThan(0);
+    for (const link of staffLinks) {
+      expect(link.getAttribute('href')).toBe('/operator/login');
+    }
+
+    expect(screen.getAllByText(/Caso técnico no oficial/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Cotiza tu seguro/i)).toBeNull();
+    expect(screen.queryByText(/Pagos web/i)).toBeNull();
+    expect(screen.queryByText(/Área de clientes/i)).toBeNull();
   });
 });
