@@ -8,35 +8,45 @@ import {
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import '../operator-shell-disclosure.css';
 
+type NavGroup = 'operations' | 'portfolio' | 'administration';
+
 type NavItem = {
   to: string;
   label: string;
   glyph: string;
+  group: NavGroup;
   allOf?: readonly StaffPermission[];
 };
 
+const navGroups: Array<{ key: NavGroup; label: string }> = [
+  { key: 'operations', label: 'Operación' },
+  { key: 'portfolio', label: 'Clientes y pólizas' },
+  { key: 'administration', label: 'Administración' },
+];
+
 const navItems: NavItem[] = [
-  { to: '/operator/workspace', label: 'Workspace', glyph: '◇' },
+  { to: '/operator/workspace', label: 'Workspace', glyph: '◇', group: 'operations' },
   {
     to: '/operator/dashboard',
     label: 'Dashboard',
     glyph: '⌂',
+    group: 'operations',
     allOf: ['claims.backoffice.read', 'claims.tasks.read'],
   },
-  { to: '/operator/analytics', label: 'Analytics', glyph: '◫', allOf: ['claims.analytics.read'] },
-  { to: '/operator/claims', label: 'Claims', glyph: '▱', allOf: ['claims.backoffice.read'] },
-  { to: '/operator/tasks', label: 'Tasks', glyph: '☑', allOf: ['claims.tasks.read'] },
-  { to: '/operator/customers', label: 'Clientes', glyph: '◎', allOf: ['customers.read'] },
-  { to: '/operator/policies', label: 'Pólizas', glyph: '▤', allOf: ['policies.read'] },
-  { to: '/operator/renewals', label: 'Renovaciones', glyph: '↻', allOf: ['renewals.read'] },
-  { to: '/operator/collections', label: 'Cobranzas', glyph: '¤', allOf: ['collections.read'] },
-  { to: '/operator/admin/pipelines', label: 'Pipelines', glyph: '⌘', allOf: ['pipelines.admin'] },
-  { to: '/operator/admin/communication-templates', label: 'Plantillas', glyph: '✉', allOf: ['communications.admin'] },
-  { to: '/operator/admin/custom-fields', label: 'Campos', glyph: '⊞', allOf: ['custom_fields.admin'] },
-  { to: '/operator/admin/guidance', label: 'Guidance', glyph: '◈', allOf: ['guidance.admin'] },
-  { to: '/operator/admin/automations', label: 'Automations', glyph: '⚙', allOf: ['automations.admin'] },
-  { to: '/operator/admin/imports', label: 'Imports', glyph: '⇧', allOf: ['imports.execute'] },
-  { to: '/operator/admin/recovery', label: 'Recovery', glyph: '↺', allOf: ['operations.integration.read', 'operations.dead_letters.read'] },
+  { to: '/operator/analytics', label: 'Analytics', glyph: '◫', group: 'operations', allOf: ['claims.analytics.read'] },
+  { to: '/operator/claims', label: 'Claims', glyph: '▱', group: 'operations', allOf: ['claims.backoffice.read'] },
+  { to: '/operator/tasks', label: 'Tasks', glyph: '☑', group: 'operations', allOf: ['claims.tasks.read'] },
+  { to: '/operator/customers', label: 'Clientes', glyph: '◎', group: 'portfolio', allOf: ['customers.read'] },
+  { to: '/operator/policies', label: 'Pólizas', glyph: '▤', group: 'portfolio', allOf: ['policies.read'] },
+  { to: '/operator/renewals', label: 'Renovaciones', glyph: '↻', group: 'portfolio', allOf: ['renewals.read'] },
+  { to: '/operator/collections', label: 'Cobranzas', glyph: '¤', group: 'portfolio', allOf: ['collections.read'] },
+  { to: '/operator/admin/pipelines', label: 'Pipelines', glyph: '⌘', group: 'administration', allOf: ['pipelines.admin'] },
+  { to: '/operator/admin/communication-templates', label: 'Plantillas', glyph: '✉', group: 'administration', allOf: ['communications.admin'] },
+  { to: '/operator/admin/custom-fields', label: 'Campos', glyph: '⊞', group: 'administration', allOf: ['custom_fields.admin'] },
+  { to: '/operator/admin/guidance', label: 'Guidance', glyph: '◈', group: 'administration', allOf: ['guidance.admin'] },
+  { to: '/operator/admin/automations', label: 'Automations', glyph: '⚙', group: 'administration', allOf: ['automations.admin'] },
+  { to: '/operator/admin/imports', label: 'Imports', glyph: '⇧', group: 'administration', allOf: ['imports.execute'] },
+  { to: '/operator/admin/recovery', label: 'Recovery', glyph: '↺', group: 'administration', allOf: ['operations.integration.read', 'operations.dead_letters.read'] },
 ];
 
 export function OperatorShell({ children }: { children: ReactNode }) {
@@ -49,27 +59,42 @@ export function OperatorShell({ children }: { children: ReactNode }) {
   const topbarContext = contextForPath(location.pathname);
 
   return (
-    <div className="operator-shell operator-ops-shell">
-      <aside className="ops-sidebar" aria-label="Navegación principal de Insurance Operations">
-        <Link className="ops-brand" to="/operator/workspace" aria-label="Ir al workspace de Insurance Operations">
-          <span className="ops-brand-name">FAR <strong>demo</strong></span>
-          <span className="ops-brand-tagline">Personas. Procesos. Confianza.</span>
+    <div className="operator-shell operator-ops-shell r3-ui-shell">
+      <aside className="ops-sidebar r3-ui-sidebar" aria-label="Navegación principal de Insurance Operations">
+        <Link className="ops-brand r3-ui-brand" to="/operator/workspace" aria-label="Ir al workspace de Insurance Operations">
+          <span className="r3-ui-brand-mark" aria-hidden="true">IC</span>
+          <span className="r3-ui-brand-copy">
+            <strong className="r3-ui-brand-name">InsuranceClaims</strong>
+            <span className="r3-ui-brand-tagline">Centro de Operaciones</span>
+          </span>
         </Link>
 
-        <nav className="ops-nav">
-          {visibleNavItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => `ops-nav-link${isActive ? ' is-active' : ''}`}
-            >
-              <span className="ops-nav-icon" aria-hidden="true">{item.glyph}</span>
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+        <nav className="ops-nav r3-ui-nav">
+          {navGroups.map((group) => {
+            const items = visibleNavItems.filter((item) => item.group === group.key);
+            if (items.length === 0) return null;
+
+            return (
+              <section className="r3-ui-nav-group" aria-labelledby={`r3-nav-${group.key}`} key={group.key}>
+                <h2 id={`r3-nav-${group.key}`} className="r3-ui-nav-label">{group.label}</h2>
+                <div className="r3-ui-nav-links">
+                  {items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) => `ops-nav-link${isActive ? ' is-active' : ''}`}
+                    >
+                      <span className="ops-nav-icon" aria-hidden="true">{item.glyph}</span>
+                      <span>{item.label}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </nav>
 
-        <div className="ops-sidebar-footer">
+        <div className="ops-sidebar-footer r3-ui-sidebar-footer">
           <Link className="ops-public-link" to="/">Sitio público ↗</Link>
           <strong>Insurance Operations R3</strong>
           <span>Caso técnico no oficial · No oficial · Sin afiliación</span>
@@ -77,10 +102,10 @@ export function OperatorShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="ops-workspace">
-        <header className="operator-header ops-topbar">
-          <div className="ops-topbar-title">
-            <strong>Insurance Operations</strong>
+      <div className="ops-workspace r3-ui-workspace">
+        <header className="operator-header ops-topbar r3-ui-topbar">
+          <div className="ops-topbar-title r3-ui-topbar-title">
+            <strong>Centro de Operaciones</strong>
             <span>{topbarContext}</span>
             <small className="ops-mobile-disclosure">
               Caso técnico no oficial · No oficial · Sin afiliación
@@ -89,12 +114,12 @@ export function OperatorShell({ children }: { children: ReactNode }) {
             </small>
           </div>
 
-          <label className="ops-global-search">
+          <label className="ops-global-search r3-ui-global-search">
             <span className="sr-only">Búsqueda global</span>
             <input type="search" placeholder="Búsqueda global · próximo corte" disabled />
           </label>
 
-          <div className="ops-operator-area">
+          <div className="ops-operator-area r3-ui-operator-area">
             <span className="ops-avatar" aria-hidden="true">{operatorInitials(session?.operator.login)}</span>
             <span className="r3-operator-copy">
               <strong className="operator-identity">{session?.operator.login}</strong>
