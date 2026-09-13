@@ -1,4 +1,4 @@
-# Guidance R3 — candidate contract-exact
+# Guidance R3 — approved contract-exact
 
 ## Decisión
 **DIFERENCIADOR TÉCNICO / MANTENER**.
