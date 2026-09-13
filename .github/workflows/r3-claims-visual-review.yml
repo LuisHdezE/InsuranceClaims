@@ -36,12 +36,12 @@ jobs:
       QA_WEB_BASE_URL: http://127.0.0.1:5173
       QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
       EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-claims-review
-      REVIEW_TARGET_SHA: 5fef90f697235a4d04d0bc85ae17b29368c87842
+      REVIEW_TARGET_SHA: ac959b4b8e304f69f7b553b983a0d61b8b4ba424
 
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: 5fef90f697235a4d04d0bc85ae17b29368c87842
+          ref: ac959b4b8e304f69f7b553b983a0d61b8b4ba424
 
       - uses: actions/setup-node@v7
         with:
@@ -171,6 +171,9 @@ jobs:
                   transition = driver.find_element(By.ID, 'transition-target')
                   values = [o.get_attribute('value') for o in transition.find_elements(By.TAG_NAME, 'option')]
                   assert values == ['', 'UNDER_REVIEW'], values
+                  identity = driver.find_element(By.CSS_SELECTOR, '.r3-detail-hero .ops-detail-identity h1')
+                  identity_width = driver.execute_script('return {client: arguments[0].clientWidth, scroll: arguments[0].scrollWidth};', identity)
+                  assert identity_width['scroll'] <= identity_width['client'] + 2, f'Claim identity spills its grid cell at {width}px: {identity_width}'
               height = min(max(int(m['scrollHeight']) + 40, 1000), 7000)
               driver.set_window_size(width, height)
               time.sleep(.35)
@@ -186,7 +189,6 @@ jobs:
               wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
               wait.until(lambda d: d.current_url.startswith(base + '/operator/dashboard'))
 
-              # Preserve the in-memory operator session by navigating through React Router links.
               wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[href="/operator/claims"]'))).click()
               wait.until(lambda d: d.current_url.startswith(base + '/operator/claims'))
               wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.ops-kanban')))
