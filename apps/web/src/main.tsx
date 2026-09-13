@@ -30,6 +30,7 @@ import './guidance-admin.css';
 import './automation-admin.css';
 import './import-admin.css';
 import './r3-ui-increment-01.css';
+import './r3-ui-increment-01-mobile-fix.css';
 import './r3-mobile-nav-containment.css';
 
 const queryClient = new QueryClient({
