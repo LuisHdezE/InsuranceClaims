@@ -39,7 +39,7 @@ const WORKSPACE_GROUPS: Array<{
   {
     key: 'platform',
     label: 'Configuración de plataforma',
-    description: 'Definiciones y reglas administrables únicamente cuando el rol dispone de la capability correspondiente.',
+    description: 'Definiciones y reglas administrables únicamente cuando el rol dispone de la capacidad correspondiente.',
   },
   {
     key: 'technical',
@@ -51,9 +51,9 @@ const WORKSPACE_GROUPS: Array<{
 const WORKSPACE_CARDS: WorkspaceCard[] = [
   {
     group: 'operations',
-    kicker: 'Claims Operations',
+    kicker: 'Operación de siniestros',
     title: 'Siniestros y trabajo operativo',
-    description: 'Dashboard operativo con Siniestros y Tareas respaldados por datos autoritativos.',
+    description: 'Tablero operativo con Siniestros y Tareas respaldados por datos autoritativos.',
     permissions: ['claims.backoffice.read', 'claims.tasks.read'],
     href: '/operator/dashboard',
     action: 'Abrir operaciones',
@@ -61,19 +61,19 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
   },
   {
     group: 'operations',
-    kicker: 'Customer 360',
+    kicker: 'Cliente 360',
     title: 'Clientes y pólizas',
     description: 'Acceso R3 a clientes y pólizas cuando ambas capacidades de lectura están habilitadas.',
     permissions: ['customers.read', 'policies.read'],
     href: '/operator/customers',
-    action: 'Abrir Customer 360',
+    action: 'Abrir Cliente 360',
     tone: 'blue',
   },
   {
     group: 'operations',
-    kicker: 'Policy Lifecycle',
+    kicker: 'Ciclo de póliza',
     title: 'Renovaciones',
-    description: 'Lifecycle y pipeline operativo de renovaciones gobernados por el contrato R3.',
+    description: 'Ciclo de vida y pipeline operativo de renovaciones gobernados por el contrato R3.',
     permissions: ['renewals.read'],
     href: '/operator/renewals',
     action: 'Abrir renovaciones',
@@ -81,9 +81,9 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
   },
   {
     group: 'operations',
-    kicker: 'Collections',
+    kicker: 'Cobranzas',
     title: 'Cobranzas',
-    description: 'Lifecycle, estado de pago y pipeline operativo presentados como estados independientes.',
+    description: 'Ciclo de vida, estado de pago y pipeline operativo presentados como estados independientes.',
     permissions: ['collections.read'],
     href: '/operator/collections',
     action: 'Abrir cobranzas',
@@ -91,12 +91,12 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
   },
   {
     group: 'supervision',
-    kicker: 'Analytics',
+    kicker: 'Analítica',
     title: 'Métricas operacionales',
-    description: 'KPIs, estados y etapas operacionales agregados desde el endpoint autoritativo de Analytics.',
+    description: 'KPIs, estados y etapas operacionales agregados desde el endpoint autoritativo de analítica.',
     permissions: ['claims.analytics.read'],
     href: '/operator/analytics',
-    action: 'Abrir Analytics',
+    action: 'Abrir analítica',
     tone: 'violet',
   },
   {
@@ -111,9 +111,9 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
   },
   {
     group: 'platform',
-    kicker: 'Communications',
+    kicker: 'Comunicaciones',
     title: 'Plantillas de comunicación',
-    description: 'Plantillas EMAIL/WHATSAPP versionadas y administradas por la capability de plataforma.',
+    description: 'Plantillas EMAIL/WHATSAPP versionadas y administradas por la capacidad de plataforma.',
     permissions: ['communications.admin'],
     href: '/operator/admin/communication-templates',
     action: 'Administrar plantillas',
@@ -121,39 +121,39 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
   },
   {
     group: 'platform',
-    kicker: 'Custom Fields',
-    title: 'Custom Fields',
+    kicker: 'Campos personalizados',
+    title: 'Campos personalizados',
     description: 'Campos versionados para CLAIM, RENEWAL y COLLECTION con límites de dominio explícitos.',
     permissions: ['custom_fields.admin'],
     href: '/operator/admin/custom-fields',
-    action: 'Administrar Custom Fields',
+    action: 'Administrar campos',
     tone: 'blue',
   },
   {
     group: 'platform',
-    kicker: 'Guidance',
-    title: 'Guidance',
+    kicker: 'Orientación',
+    title: 'Orientación',
     description: 'Orientación configurada y versionada sin semántica adicional inventada por la UI.',
     permissions: ['guidance.admin'],
     href: '/operator/admin/guidance',
-    action: 'Administrar Guidance',
+    action: 'Administrar orientación',
     tone: 'green',
   },
   {
     group: 'platform',
-    kicker: 'Automations',
-    title: 'Automations',
-    description: 'Reglas versionadas con triggers y acciones limitadas por el contrato R3.',
+    kicker: 'Automatizaciones',
+    title: 'Automatizaciones',
+    description: 'Reglas versionadas con disparadores y acciones limitadas por el contrato R3.',
     permissions: ['automations.admin'],
     href: '/operator/admin/automations',
-    action: 'Administrar Automations',
+    action: 'Administrar automatizaciones',
     tone: 'violet',
   },
   {
     group: 'technical',
-    kicker: 'Governed Imports',
-    title: 'Imports gobernados',
-    description: 'Upload, preview, mapping, validación, dry-run y commit mediante el flujo ya productizado.',
+    kicker: 'Importaciones gobernadas',
+    title: 'Importaciones gobernadas',
+    description: 'Carga, vista previa, mapeo, validación, dry-run y commit mediante el flujo ya productizado.',
     permissions: ['imports.execute'],
     href: '/operator/admin/imports',
     action: 'Abrir importaciones',
@@ -161,12 +161,12 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
   },
   {
     group: 'technical',
-    kicker: 'Recovery',
+    kicker: 'Recuperación',
     title: 'Integraciones y recuperación',
-    description: 'Integration Events y dead letters con lectura y recuperación gobernadas por permisos explícitos.',
+    description: 'Eventos de integración y trabajos en dead-letter con lectura y recuperación gobernadas por permisos explícitos.',
     permissions: ['operations.integration.read', 'operations.dead_letters.read'],
     href: '/operator/admin/recovery',
-    action: 'Abrir Recovery',
+    action: 'Abrir recuperación',
     tone: 'blue',
   },
 ];
@@ -183,7 +183,7 @@ export function StaffWorkspacePage() {
       <main className="operator-main ops-main r3-workspace-main r3-increment-07-workspace">
         <section className="r3-workspace-hero r3-workspace-launchpad-hero" aria-labelledby="workspace-title">
           <div className="r3-workspace-hero-copy">
-            <span className="ops-kicker">Insurance Operations R3</span>
+            <span className="ops-kicker">Operaciones R3</span>
             <h1 id="workspace-title">Tu espacio de trabajo</h1>
             <p>
               Entrada compacta y consciente del rol a capacidades R3 realmente productizadas.
@@ -233,7 +233,7 @@ export function StaffWorkspacePage() {
         </div>
 
         <section className="r3-contract-strip" aria-label="Principios de acceso">
-          <div><strong>Rol explícito</strong><span>{role}</span></div>
+          <div><strong>Rol explícito</strong><span>{STAFF_ROLE_LABELS[role]}</span></div>
           <div><strong>API autoritativa</strong><span>La UI anticipa acceso, no lo concede</span></div>
           <div><strong>Solo producto disponible</strong><span>No se presentan capacidades sin una ruta utilizable</span></div>
         </section>
@@ -247,7 +247,7 @@ function roleMessage(role: 'CLAIMS_OPERATOR' | 'CLAIMS_SUPERVISOR' | 'PLATFORM_A
     return 'Sin superusuario implícito: Administrador de plataforma no hereda acceso operativo a Siniestros, Tareas, Clientes, Pólizas, Renovaciones ni Cobranzas.';
   }
   if (role === 'CLAIMS_SUPERVISOR') {
-    return 'La supervisión añade Analytics a las capacidades operativas autorizadas sin ampliar permisos de plataforma.';
+    return 'La supervisión añade Analítica a las capacidades operativas autorizadas sin ampliar permisos de plataforma.';
   }
-  return 'El rol operador recibe un acceso conciso al trabajo operativo productizado, sin Analytics ni administración de plataforma.';
+  return 'El rol operador recibe un acceso conciso al trabajo operativo productizado, sin Analítica ni administración de plataforma.';
 }
