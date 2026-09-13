@@ -149,6 +149,11 @@ jobs:
                 };
               ''')
 
+          def activate(element):
+              driver.execute_script('arguments[0].scrollIntoView({block:"center", inline:"nearest"})', element)
+              time.sleep(.15)
+              driver.execute_script('arguments[0].click()', element)
+
           def capture(filename, width, kind):
               driver.set_window_size(width, 1000)
               time.sleep(.5)
@@ -196,21 +201,24 @@ jobs:
               wait.until(lambda d: '/operator/claims/' in d.current_url)
               wait.until(EC.visibility_of_element_located((By.ID, 'tareas')))
 
-              # Open the real Task form inside Claim Detail and assert the UUID UX is absent.
-              new_task = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(normalize-space(.), 'Nueva tarea')]")))
-              driver.execute_script('arguments[0].scrollIntoView({block:"center"})', new_task)
-              new_task.click()
+              # Open the real Task form inside Claim Detail. Use DOM activation so sticky
+              # navigation cannot intercept a physical pointer click in the review harness.
+              new_task = wait.until(EC.presence_of_element_located((By.XPATH, "//button[contains(normalize-space(.), 'Nueva tarea')]")))
+              activate(new_task)
               wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-create-task-form')))
               form_text = driver.find_element(By.CSS_SELECTOR, '.r3-create-task-form').text.lower()
               assert 'operator id' not in form_text and 'uuid' not in form_text
               title_input = wait.until(EC.visibility_of_element_located((By.XPATH, "//label[.//span[normalize-space()='Título']]//input")))
               title_input.send_keys(task_title)
-              wait.until(EC.element_to_be_clickable((By.XPATH, "//form[contains(@class,'r3-create-task-form')]//button[normalize-space()='Asignarme']"))).click()
-              wait.until(EC.element_to_be_clickable((By.XPATH, "//form[contains(@class,'r3-create-task-form')]//button[normalize-space()='Crear tarea']"))).click()
+              assign_button = wait.until(EC.presence_of_element_located((By.XPATH, "//form[contains(@class,'r3-create-task-form')]//button[normalize-space()='Asignarme']")))
+              activate(assign_button)
+              create_button = wait.until(EC.presence_of_element_located((By.XPATH, "//form[contains(@class,'r3-create-task-form')]//button[normalize-space()='Crear tarea']")))
+              activate(create_button)
               wait.until(lambda d: task_title in d.find_element(By.ID, 'tareas').text)
 
               # Navigate to Tasks using the SPA shell so the operator session remains alive.
-              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[href="/operator/tasks"]'))).click()
+              tasks_link = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a[href="/operator/tasks"]')))
+              activate(tasks_link)
               wait.until(lambda d: d.current_url.startswith(base + '/operator/tasks'))
               wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-task-master-detail')))
               wait.until(lambda d: task_title in d.find_element(By.TAG_NAME, 'body').text)
@@ -221,7 +229,8 @@ jobs:
               ]
 
               driver.set_window_size(1440, 1100)
-              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.r3-task-inline-actions a[href^="/operator/tasks/"]'))).click()
+              detail_link = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.r3-task-inline-actions a[href^="/operator/tasks/"]')))
+              activate(detail_link)
               wait.until(lambda d: '/operator/tasks/' in d.current_url)
               detail_url = driver.current_url
               wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-task-detail-hero')))
