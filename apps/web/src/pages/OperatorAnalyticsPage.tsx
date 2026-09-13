@@ -5,6 +5,7 @@ import type { ClaimStatus, ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
+import '../r3-ui-increment-07.css';
 
 const WINDOW_OPTIONS = [7, 30, 90] as const;
 type WindowDays = (typeof WINDOW_OPTIONS)[number];
@@ -51,7 +52,7 @@ export function OperatorAnalyticsPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main claims-analytics-main">
+      <main className="operator-main ops-main claims-analytics-main r3-increment-07-analytics">
         <div className="ops-page-heading claims-analytics-heading">
           <div>
             <span className="ops-kicker">Claims Analytics</span>
