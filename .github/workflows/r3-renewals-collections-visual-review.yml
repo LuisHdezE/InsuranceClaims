@@ -1,0 +1,246 @@
+name: R3 Renewals Collections Visual Review
+
+on:
+  push:
+    branches: [review/r3-ui-increment-06-renewals-collections]
+
+permissions:
+  contents: read
+
+jobs:
+  renewals-collections-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_cases_review
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_cases_review"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_cases_review
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-cases-review
+      REVIEW_TARGET_SHA: f6cd81a92c5681cca4b2076f850e7ea766098820
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["PENDING_REVIEW"]'
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: f6cd81a92c5681cca4b2076f850e7ea766098820
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+      - name: Prepare synthetic review secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=r3-cases-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-cases-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-cases-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+      - name: Prepare browser runtime
+        shell: bash
+        run: |
+          command -v psql >/dev/null 2>&1 || { sudo apt-get update && sudo apt-get install -y postgresql-client; }
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+      - name: Bootstrap canonical R3 schema and synthetic graph
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          QA_CUSTOMER_PASSWORD= npx tsx qa/seed.ts
+          mkdir -p .runtime
+          cat > .runtime/r3-cases-review-seed.ts <<'TS'
+          import { createProductionRuntimeFromEnv } from '@insurance/infrastructure';
+          const at = new Date();
+          const runtime = await createProductionRuntimeFromEnv();
+          await runtime.customerPolicyStore.seedSyntheticCustomerPolicy({
+            customer: {
+              id: 'a1000000-0000-4000-8000-000000000006',
+              customerRef: 'SYN-QA-CASE-CUST-006',
+              displayName: 'Synthetic R3 Case Customer',
+              status: 'ACTIVE',
+              createdAt: at,
+              updatedAt: at,
+              version: 2,
+            },
+            policy: {
+              id: 'a2000000-0000-4000-8000-000000000006',
+              customerId: 'a1000000-0000-4000-8000-000000000006',
+              policyReference: 'MOD-QA-CASE-POL-006',
+              legacyPolicyReference: 'SYN-QA-CASE-POL-006',
+              insurerReference: 'SYN-QA-INSURER-006',
+              recordStatus: 'ACTIVE',
+              operationalMetadata: { source: 'SYNTHETIC_R3_CASES_REVIEW' },
+              createdAt: at,
+              updatedAt: at,
+              version: 3,
+            },
+            assets: [],
+          });
+          console.log(JSON.stringify({ event: 'R3_CASES_CUSTOMER_POLICY_SEEDED' }));
+          process.exit(0);
+          TS
+          npx tsx .runtime/r3-cases-review-seed.ts
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO renewal_cases (id, customer_id, policy_id, status, version)
+          VALUES ('b1000000-0000-4000-8000-000000000006','a1000000-0000-4000-8000-000000000006','a2000000-0000-4000-8000-000000000006','OPEN',4);
+          INSERT INTO collection_cases (id, customer_id, policy_id, status, payment_state, version)
+          VALUES ('c1000000-0000-4000-8000-000000000006','a1000000-0000-4000-8000-000000000006','a2000000-0000-4000-8000-000000000006','OPEN','PENDING_REVIEW',5);
+
+          INSERT INTO pipeline_definitions (id,pipeline_key,consumer_type,display_name,enabled,created_at,updated_at,version)
+          VALUES
+            ('b2000000-0000-4000-8000-000000000006','SYN_R3_RENEWAL_REVIEW','RENEWAL','Synthetic Renewal Review',true,now(),now(),1),
+            ('c2000000-0000-4000-8000-000000000006','SYN_R3_COLLECTION_REVIEW','COLLECTION','Synthetic Collection Review',true,now(),now(),1);
+          INSERT INTO pipeline_versions (id,pipeline_definition_id,version_number,status,created_by_type,created_by_id,source_classification,created_at,activated_at)
+          VALUES
+            ('b2100000-0000-4000-8000-000000000006','b2000000-0000-4000-8000-000000000006',1,'ACTIVE','SYSTEM',NULL,'SYNTHETIC_TEST_SEED',now(),now()),
+            ('c2100000-0000-4000-8000-000000000006','c2000000-0000-4000-8000-000000000006',1,'ACTIVE','SYSTEM',NULL,'SYNTHETIC_TEST_SEED',now(),now());
+          UPDATE pipeline_definitions SET active_version_id='b2100000-0000-4000-8000-000000000006' WHERE id='b2000000-0000-4000-8000-000000000006';
+          UPDATE pipeline_definitions SET active_version_id='c2100000-0000-4000-8000-000000000006' WHERE id='c2000000-0000-4000-8000-000000000006';
+          INSERT INTO pipeline_stages (id,pipeline_version_id,stage_key,display_name,sort_order,reporting_flags,allowed_next_stage_keys)
+          VALUES
+            ('b2200000-0000-4000-8000-000000000006','b2100000-0000-4000-8000-000000000006','CONTACT_CUSTOMER','Contactar cliente',1,'{}','["REVIEW_OFFER"]'),
+            ('b2210000-0000-4000-8000-000000000006','b2100000-0000-4000-8000-000000000006','REVIEW_OFFER','Revisar propuesta',2,'{}','[]'),
+            ('c2200000-0000-4000-8000-000000000006','c2100000-0000-4000-8000-000000000006','CONTACT_ACCOUNT','Contactar cuenta',1,'{}','["FOLLOW_UP"]'),
+            ('c2210000-0000-4000-8000-000000000006','c2100000-0000-4000-8000-000000000006','FOLLOW_UP','Seguimiento',2,'{}','[]');
+          INSERT INTO pipeline_work_items (id,consumer_type,consumer_id,pipeline_definition_id,pipeline_version_id,current_stage_id,version)
+          VALUES
+            ('b2300000-0000-4000-8000-000000000006','RENEWAL','b1000000-0000-4000-8000-000000000006','b2000000-0000-4000-8000-000000000006','b2100000-0000-4000-8000-000000000006','b2200000-0000-4000-8000-000000000006',7),
+            ('c2300000-0000-4000-8000-000000000006','COLLECTION','c1000000-0000-4000-8000-000000000006','c2000000-0000-4000-8000-000000000006','c2100000-0000-4000-8000-000000000006','c2200000-0000-4000-8000-000000000006',9);
+          INSERT INTO pipeline_work_item_history (id,work_item_id,from_stage_id,to_stage_id,pipeline_version_id,actor_type,actor_id,correlation_id,occurred_at)
+          VALUES
+            ('b2400000-0000-4000-8000-000000000006','b2300000-0000-4000-8000-000000000006',NULL,'b2200000-0000-4000-8000-000000000006','b2100000-0000-4000-8000-000000000006','SYSTEM',NULL,'r3-review',now()),
+            ('c2400000-0000-4000-8000-000000000006','c2300000-0000-4000-8000-000000000006',NULL,'c2200000-0000-4000-8000-000000000006','c2100000-0000-4000-8000-000000000006','SYSTEM',NULL,'r3-review',now());
+          SQL
+      - name: Start runtime
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-r3-cases-review .runtime/cases-review
+          npm run start:legacy > .runtime/r3-cases-legacy.log 2>&1 &
+          npm run start:api > .runtime/r3-cases-api.log 2>&1 &
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/r3-cases-web.log 2>&1 &
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 50); do
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]] && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: Capture Renewals and Collections
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          out = Path('.runtime/cases-review'); out.mkdir(parents=True, exist_ok=True)
+          opts = webdriver.ChromeOptions()
+          for arg in ('--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--force-device-scale-factor=1'): opts.add_argument(arg)
+          opts.add_argument('--window-size=1440,1100'); opts.binary_location = os.environ['BROWSER_BIN']
+          driver = webdriver.Chrome(options=opts); wait = WebDriverWait(driver, 20)
+
+          def metrics():
+              return driver.execute_script('''const r=document.documentElement;return {clientWidth:r.clientWidth,scrollWidth:r.scrollWidth,scrollHeight:Math.max(r.scrollHeight,document.body.scrollHeight),h1Count:document.querySelectorAll('h1').length,bodyText:document.body.innerText};''')
+
+          def capture(name, width, kind):
+              driver.set_window_size(width,1000); time.sleep(.5); m=metrics(); body=m['bodyText']; lower=body.lower(); overflow=m['scrollWidth']-m['clientWidth']
+              assert overflow <= 2, f'{kind}: horizontal overflow {overflow}px at {width}px'
+              assert m['h1Count'] == 1, f'{kind}: expected one h1, got {m["h1Count"]}'
+              assert 'Synthetic R3 Case Customer' in body
+              assert 'MOD-QA-CASE-POL-006' in body
+              for forbidden in ('Prima anual','Exportar renovaciones','Exportar cobranzas','Importe adeudado','Factura','Recibo','Fecha de vencimiento'):
+                  assert forbidden.lower() not in lower, f'{kind}: unsupported text {forbidden}'
+              if kind == 'renewals-directory':
+                  assert 'Renovaciones' in body and 'Contactar cliente' in body
+                  assert 'CONTACT_CUSTOMER' not in body
+              elif kind == 'renewal-detail':
+                  assert 'Lifecycle' in body and 'Pipeline operativo' in body and 'Contactar cliente' in body
+                  assert 'Clave: CONTACT_CUSTOMER' in body and 'REVIEW_OFFER' in body
+              elif kind == 'collections-directory':
+                  assert 'Cobranzas' in body and 'PENDING_REVIEW' in body and 'Contactar cuenta' in body
+                  assert 'CONTACT_ACCOUNT' not in body
+              else:
+                  assert 'Estado de pago' in body and 'PENDING_REVIEW' in body
+                  assert 'todavía no publica el catálogo permitido' in body
+                  assert 'Lifecycle' in body and 'Pipeline operativo' in body and 'Clave: CONTACT_ACCOUNT' in body
+                  assert len(driver.find_elements(By.CSS_SELECTOR,'input[type="text"], select')) == 0
+                  assert 'Verificar y aplicar' not in body
+              height=min(max(int(m['scrollHeight'])+40,1000),6500); driver.set_window_size(width,height); time.sleep(.25); driver.execute_script('window.scrollTo(0,0)')
+              path=out/name; assert driver.save_screenshot(str(path))
+              return {'kind':kind,'width':width,'height':height,'horizontal_overflow_px':overflow,'h1_count':m['h1Count'],'file':str(path)}
+
+          try:
+              driver.get(base+'/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID,'operator-login'))).send_keys(os.environ['QA_SUPERVISOR_LOGIN'])
+              wait.until(EC.visibility_of_element_located((By.ID,'operator-password'))).send_keys(os.environ['QA_OPERATOR_PASSWORD'])
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'button.r3-login-submit'))).click()
+              wait.until(lambda d:d.current_url.startswith(base+'/operator/dashboard'))
+              shots=[]
+              for path, selector, marker, kind, prefix in [
+                  ('/operator/renewals','.r3-renewals-directory','Synthetic R3 Case Customer','renewals-directory','renewals-directory'),
+                  ('/operator/renewals/b1000000-0000-4000-8000-000000000006','.r3-renewal-detail','Clave: CONTACT_CUSTOMER','renewal-detail','renewal-detail'),
+                  ('/operator/collections','.r3-collections-directory','PENDING_REVIEW','collections-directory','collections-directory'),
+                  ('/operator/collections/c1000000-0000-4000-8000-000000000006','.r3-collection-detail','todavía no publica el catálogo permitido','collection-detail','collection-detail'),
+              ]:
+                  driver.get(base+path)
+                  wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,selector)))
+                  wait.until(lambda d,m=marker: m in d.find_element(By.TAG_NAME,'body').text)
+                  shots += [capture(prefix+'-desktop.png',1440,kind),capture(prefix+'-mobile.png',390,kind)]
+              summary={'review_type':'r3_renewals_collections_visual_review','review_target_sha':os.environ['REVIEW_TARGET_SHA'],'runtime_commit':os.environ.get('GITHUB_SHA'),'role':'CLAIMS_SUPERVISOR','api_authoritative':True,'canonical_migrations_used':['20260909_01_renewals_r3.sql','20260909_02_collections_r3.sql'],'screenshots':shots}
+              (out/'cases-visual-review.json').write_text(json.dumps(summary,indent=2)+'\n',encoding='utf-8'); print(json.dumps(summary))
+          finally:
+              driver.quit()
+          PY
+      - name: Upload cases visual review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-renewals-collections-visual-review-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/cases-review/**
+          if-no-files-found: error
+          retention-days: 30
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          tail -n 140 .runtime/r3-cases-api.log 2>/dev/null || true
+          tail -n 120 .runtime/r3-cases-web.log 2>/dev/null || true
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          pkill -f 'tsx apps/api/src/main.ts' 2>/dev/null || true
+          pkill -f 'tsx apps/legacy-simulator/src/main.ts' 2>/dev/null || true
+          pkill -f 'vite --host 127.0.0.1' 2>/dev/null || true
