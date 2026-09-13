@@ -139,7 +139,7 @@ function contextForPath(path: string) {
   if (path === '/operator/workspace') return 'Espacio de trabajo por rol · Solo capacidades autorizadas y productizadas';
   if (path === '/operator/dashboard') return 'Tablero de Operaciones R3 · Priorización del trabajo que requiere atención';
   if (path === '/operator/analytics') return 'Analítica de siniestros R3 · Métricas agregadas sin elevar permisos de negocio';
-  if (path === '/operator/claims') return 'Listado autoritativo del API · Espacio de siniestros protegido y consciente del rol';
+  if (path.startsWith('/operator/claims')) return 'Listado autoritativo del API · Espacio de siniestros protegido y consciente del rol';
   if (path.startsWith('/operator/tasks')) return 'Tareas R3 · Trabajo operativo independiente del ciclo de vida del siniestro';
   if (path.startsWith('/operator/customers')) return 'Cliente 360 R3 · Relaciones autoritativas y solo lectura';
   if (path.startsWith('/operator/policies')) return 'Póliza 360 R3 · Referencias modernas y legacy';
