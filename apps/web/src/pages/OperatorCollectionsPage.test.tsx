@@ -77,8 +77,8 @@ describe('OperatorCollectionsPage R3', () => {
   it('renders server-authoritative payment state and named operational stage', async () => {
     renderPage();
 
-    expect(await screen.findByRole('heading', { name: 'Cobranzas' })).toBeTruthy();
-    expect(screen.getByText('Cliente Cobranza API')).toBeTruthy();
+    expect(await screen.findByText('Cliente Cobranza API')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Cobranzas' })).toBeTruthy();
     expect(screen.getByText('POL-COL-001')).toBeTruthy();
     expect(screen.getByText('SERVER_STATE_ALPHA')).toBeTruthy();
     expect(screen.getByText('Contactar cuenta')).toBeTruthy();
@@ -89,7 +89,7 @@ describe('OperatorCollectionsPage R3', () => {
 
   it('does not invent financial fields, filters or unsupported actions', async () => {
     renderPage();
-    await screen.findByRole('heading', { name: 'Cobranzas' });
+    await screen.findByText('Cliente Cobranza API');
 
     expect(screen.queryByRole('textbox')).toBeNull();
     expect(screen.queryByRole('combobox')).toBeNull();
