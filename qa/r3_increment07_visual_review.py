@@ -89,20 +89,29 @@ def write_workspace_debug(driver, body):
     assert driver.save_screenshot(str(OUT / 'workspace-debug.png'))
 
 
+def assert_visible_text(body, required_items, forbidden_items=()):
+    visible = body.casefold()
+    for required in required_items:
+        assert required.casefold() in visible, required
+    for forbidden in forbidden_items:
+        assert forbidden.casefold() not in visible, forbidden
+
+
 supervisor = make_driver()
 try:
     wait = login(supervisor, os.environ['QA_SUPERVISOR_LOGIN'])
     spa_go(supervisor, wait, '/operator/analytics', '.claims-analytics-main')
     wait.until(lambda d: 'Cargando métricas autoritativas' not in d.find_element(By.TAG_NAME, 'body').text)
     body = supervisor.find_element(By.TAG_NAME, 'body').text
-    for required in (
-        'Métricas operacionales', 'Claims abiertos', 'Claims cerrados', 'Tareas abiertas',
-        'Tareas vencidas', 'Evidencia pendiente', 'Distribución por estado',
-        'Etapas operacionales', 'Respuesta R3 autoritativa',
-    ):
-        assert required in body, required
-    for forbidden in ('Exportar', 'Comparar períodos', 'Forecast'):
-        assert forbidden not in body, forbidden
+    assert_visible_text(
+        body,
+        (
+            'Métricas operacionales', 'Claims abiertos', 'Claims cerrados', 'Tareas abiertas',
+            'Tareas vencidas', 'Evidencia pendiente', 'Distribución por estado',
+            'Etapas operacionales', 'Respuesta R3 autoritativa',
+        ),
+        ('Exportar', 'Comparar períodos', 'Forecast'),
+    )
     options = [element.text for element in supervisor.find_elements(By.CSS_SELECTOR, '.r3-window-control option')]
     assert options == ['Últimos 7 días', 'Últimos 30 días', 'Últimos 90 días'], options
     capture(supervisor, 'analytics', 1440, 'analytics')
@@ -118,19 +127,22 @@ try:
     time.sleep(0.5)
     body = admin.find_element(By.TAG_NAME, 'body').text
     write_workspace_debug(admin, body)
-    for required in (
-        'Tu espacio de trabajo', 'Administrador de plataforma', 'Supervisión',
-        'Configuración de plataforma', 'Operación técnica', 'Métricas operacionales',
-        'Administración de pipelines', 'Plantillas de comunicación', 'Custom Fields',
-        'Guidance', 'Automations', 'Imports gobernados', 'Integraciones y recuperación',
-        'Sin superusuario implícito',
-    ):
-        assert required in body, required
-    for forbidden in (
-        'Siniestros y trabajo operativo', 'Clientes y pólizas', 'Renovaciones', 'Cobranzas',
-        'UI planificada', 'permisos de presentación sincronizados',
-    ):
-        assert forbidden not in body, forbidden
+    assert_visible_text(
+        body,
+        (
+            'Tu espacio de trabajo', 'Administrador de plataforma', 'Supervisión',
+            'Configuración de plataforma', 'Operación técnica', 'Métricas operacionales',
+            'Administración de pipelines', 'Plantillas de comunicación', 'Custom Fields',
+            'Guidance', 'Automations', 'Imports gobernados', 'Integraciones y recuperación',
+            'Sin superusuario implícito',
+        ),
+        (
+            'Siniestros y trabajo operativo', 'Clientes y pólizas', 'Renovaciones', 'Cobranzas',
+            'UI planificada', 'permisos de presentación sincronizados',
+        ),
+    )
+    (OUT / 'workspace-debug.json').unlink(missing_ok=True)
+    (OUT / 'workspace-debug.png').unlink(missing_ok=True)
     capture(admin, 'workspace-platform-admin', 1440, 'workspace-platform-admin')
     capture(admin, 'workspace-platform-admin', 390, 'workspace-platform-admin')
 finally:
