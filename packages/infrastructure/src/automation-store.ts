@@ -268,7 +268,7 @@ export class PrismaAutomationStore implements AutomationAdminRepository, Automat
   async getDefinition(definitionId: string) { const row = await this.db.orm.public.AutomationDefinition.first({ id: definitionId }); return row ? definitionRow(row) : null; }
   async findDefinitionByKey(key: string) { const row = await this.db.orm.public.AutomationDefinition.first({ ruleKey: key }); return row ? definitionRow(row) : null; }
   async listVersions(definitionId: string) {
-    const rows = await this.db.orm.public.AutomationVersion.all({ automationDefinitionId: definitionId });
+    const rows = await this.db.orm.public.AutomationVersion.where({ automationDefinitionId: definitionId }).all();
     return rows.map(versionRow).sort((a: AutomationVersionRecord, b: AutomationVersionRecord) => a.versionNumber - b.versionNumber || a.id.localeCompare(b.id));
   }
   async getVersion(versionId: string) { const row = await this.db.orm.public.AutomationVersion.first({ id: versionId }); return row ? versionRow(row) : null; }
