@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <rect width="1440" height="900" fill="#f5f8fc"/>
+  <rect width="210" height="900" fill="#12263a"/>
+  <text x="24" y="42" font-family="Arial" font-size="24" font-weight="700" fill="#ffffff">InsuranceClaims</text>
+  <text x="24" y="68" font-family="Arial" font-size="12" fill="#b9c6d5">Gestión de Siniestros</text>
+  <g font-family="Arial" font-size="14" fill="#dce7f4">
+    <text x="30" y="130">Tablero</text><text x="30" y="172">Siniestros</text><text x="30" y="214">Tareas</text><text x="30" y="256">Clientes</text><text x="30" y="298">Pólizas</text><text x="30" y="340">Renovaciones</text><text x="30" y="382">Cobranzas</text><text x="30" y="424">Pipelines</text>
+  </g>
+  <rect x="10" y="438" width="190" height="44" rx="8" fill="#155da8"/><text x="30" y="466" font-family="Arial" font-size="14" fill="#ffffff">Automatizaciones</text>
+  <rect x="210" width="1230" height="66" fill="#ffffff"/><rect x="240" y="17" width="560" height="34" rx="7" fill="#f2f6fb" stroke="#d6e2ef"/><text x="258" y="39" font-family="Arial" font-size="13" fill="#51667e">Buscar reglas, eventos, acciones…</text>
+  <text x="240" y="112" font-family="Arial" font-size="30" font-weight="700" fill="#0f1f33">Automatizaciones (R3)</text>
+  <text x="240" y="138" font-family="Arial" font-size="14" fill="#52667c">Reglas versionadas: CUANDO → SI → ESPERA → ENTONCES</text>
+  <rect x="1165" y="90" width="205" height="42" rx="8" fill="#0a6df2"/><text x="1210" y="116" font-family="Arial" font-size="14" font-weight="700" fill="#fff">+ Nueva automatización</text>
+  <g font-family="Arial">
+    <rect x="240" y="160" width="250" height="74" rx="10" fill="#ffffff" stroke="#dbe6f2"/><text x="260" y="185" font-size="12" fill="#66798f">Definiciones</text><text x="260" y="215" font-size="26" font-weight="700" fill="#10233a">18</text>
+    <rect x="505" y="160" width="250" height="74" rx="10" fill="#ffffff" stroke="#dbe6f2"/><text x="525" y="185" font-size="12" fill="#66798f">Habilitadas</text><text x="525" y="215" font-size="26" font-weight="700" fill="#14834e">12</text>
+    <rect x="770" y="160" width="250" height="74" rx="10" fill="#ffffff" stroke="#dbe6f2"/><text x="790" y="185" font-size="12" fill="#66798f">Con versión activa</text><text x="790" y="215" font-size="26" font-weight="700" fill="#0a6df2">15</text>
+    <rect x="1035" y="160" width="335" height="74" rx="10" fill="#ffffff" stroke="#dbe6f2"/><text x="1055" y="185" font-size="12" fill="#66798f">Contrato</text><text x="1055" y="210" font-size="14" font-weight="700" fill="#10233a">6 triggers · 8 acciones</text>
+  </g>
+  <rect x="240" y="254" width="710" height="580" rx="12" fill="#ffffff" stroke="#dbe6f2"/>
+  <text x="262" y="286" font-family="Arial" font-size="18" font-weight="700" fill="#10233a">Definiciones</text>
+  <g font-family="Arial" font-size="12" fill="#66798f"><text x="270" y="324">Nombre</text><text x="480" y="324">Trigger</text><text x="635" y="324">Estado</text><text x="735" y="324">Versión activa</text><text x="845" y="324">Acciones</text></g>
+  <line x1="260" y1="338" x2="930" y2="338" stroke="#e4ebf3"/>
+  <g font-family="Arial" font-size="13">
+    <text x="270" y="375" font-weight="700" fill="#14365b">Crear tarea por nuevo siniestro</text><text x="480" y="375" fill="#52667c">CLAIM_CREATED</text><rect x="628" y="354" width="78" height="26" rx="13" fill="#d9f6e6"/><text x="645" y="372" fill="#16794a">Habilitada</text><text x="760" y="375" fill="#14365b">v3</text><text x="865" y="375" fill="#14365b">2</text>
+    <text x="270" y="435" font-weight="700" fill="#14365b">Notificar renovación próxima</text><text x="480" y="435" fill="#52667c">SCHEDULED_CHECK</text><rect x="628" y="414" width="78" height="26" rx="13" fill="#d9f6e6"/><text x="645" y="432" fill="#16794a">Habilitada</text><text x="760" y="435" fill="#14365b">v2</text><text x="865" y="435" fill="#14365b">1</text>
+    <text x="270" y="495" font-weight="700" fill="#14365b">Escalar siniestro sin movimiento</text><text x="480" y="495" fill="#52667c">CLAIM_STATE_TRANSITIONED</text><rect x="628" y="474" width="90" height="26" rx="13" fill="#eef2f7"/><text x="644" y="492" fill="#687b90">Deshabilitada</text><text x="760" y="495" fill="#14365b">v4</text><text x="865" y="495" fill="#14365b">3</text>
+  </g>
+  <rect x="970" y="254" width="400" height="580" rx="12" fill="#ffffff" stroke="#dbe6f2"/>
+  <text x="992" y="286" font-family="Arial" font-size="18" font-weight="700" fill="#10233a">Detalle de la regla</text>
+  <text x="992" y="315" font-family="Arial" font-size="14" font-weight="700" fill="#14365b">Notificar renovación próxima</text>
+  <rect x="992" y="340" width="356" height="64" rx="8" fill="#eef6ff"/><text x="1008" y="364" font-family="Arial" font-size="11" fill="#55708b">CUANDO</text><text x="1008" y="388" font-family="Arial" font-size="14" font-weight="700" fill="#0a6df2">SCHEDULED_CHECK</text>
+  <rect x="992" y="418" width="356" height="96" rx="8" fill="#fafbfc" stroke="#e2eaf2"/><text x="1008" y="442" font-family="Arial" font-size="11" fill="#55708b">SI</text><text x="1008" y="468" font-family="Arial" font-size="13" fill="#14365b">renewal.days_to_due IN [30, 15, 7]</text><text x="1008" y="492" font-family="Arial" font-size="13" fill="#14365b">renewal.status EQ OPEN</text>
+  <rect x="992" y="528" width="356" height="66" rx="8" fill="#fff9ec"/><text x="1008" y="552" font-family="Arial" font-size="11" fill="#7d6a42">ESPERA</text><text x="1008" y="578" font-family="Arial" font-size="14" font-weight="700" fill="#8a6500">60 segundos</text>
+  <rect x="992" y="608" width="356" height="124" rx="8" fill="#f2fbf6"/><text x="1008" y="632" font-family="Arial" font-size="11" fill="#55708b">ENTONCES</text><text x="1008" y="658" font-family="Arial" font-size="13" font-weight="700" fill="#16794a">NOTIFY_OPERATOR</text><text x="1008" y="685" font-family="Arial" font-size="13" font-weight="700" fill="#16794a">CREATE_TASK</text><text x="1008" y="712" font-family="Arial" font-size="13" font-weight="700" fill="#16794a">SCHEDULE_CHECK</text>
+  <rect x="992" y="754" width="166" height="40" rx="8" fill="#0a6df2"/><text x="1031" y="779" font-family="Arial" font-size="13" font-weight="700" fill="#fff">Nueva versión</text><rect x="1170" y="754" width="178" height="40" rx="8" fill="#ffffff" stroke="#b7c8db"/><text x="1212" y="779" font-family="Arial" font-size="13" font-weight="700" fill="#14365b">Deshabilitar</text>
+</svg>

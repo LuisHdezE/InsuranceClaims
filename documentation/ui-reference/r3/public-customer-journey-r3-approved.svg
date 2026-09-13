@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#0b2745"/>
+    <stop offset="1" stop-color="#154d7f"/>
+  </linearGradient>
+  <filter id="sh"><feDropShadow dx="0" dy="5" stdDeviation="12" flood-color="#0b2440" flood-opacity=".10"/></filter>
+  <style>
+    .t{font-family:Arial,Helvetica,sans-serif;fill:#10233d}.w{fill:#fff}.muted{fill:#667991}
+    .xs{font-size:11px}.sm{font-size:12px}.body{font-size:14px}.lab{font-size:14px;font-weight:700}
+    .sec{font-size:18px;font-weight:700}.title{font-size:30px;font-weight:760}.h{font-weight:700}
+  </style>
+</defs>
+
+<rect width="1600" height="900" fill="#f5f8fc"/>
+
+<!-- public header -->
+<rect x="0" y="0" width="1600" height="66" fill="#fff"/>
+<line x1="0" y1="66" x2="1600" y2="66" stroke="#dce6f1"/>
+<circle cx="54" cy="33" r="18" fill="#1469e8"/>
+<path d="M54 21l10 4v8c0 8-5 13-10 16-5-3-10-8-10-16v-8z" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="82" y="31" class="t" font-size="20" font-weight="700">FAR Seguros</text>
+<text x="82" y="47" class="t muted xs">InsuranceClaims · caso técnico</text>
+<g class="t sm h">
+<text x="690" y="39">Inicio</text><text x="760" y="39">Reportar siniestro</text><text x="900" y="39">Seguimiento</text>
+</g>
+<rect x="1382" y="17" width="150" height="34" rx="8" fill="#eef5fd" stroke="#d5e2ef"/>
+<text x="1457" y="39" text-anchor="middle" class="t sm h">Acceso equipo</text>
+
+<!-- section 1 landing -->
+<g filter="url(#sh)"><rect x="36" y="90" width="480" height="738" rx="18" fill="#fff"/></g>
+<rect x="36" y="90" width="480" height="278" rx="18" fill="url(#hero)"/>
+<circle cx="440" cy="145" r="120" fill="#fff" opacity=".05"/>
+<text x="68" y="132" class="t w xs h">INICIO PÚBLICO · R3</text>
+<text x="68" y="178" class="t w" font-size="34" font-weight="760">Reporta y sigue</text>
+<text x="68" y="216" class="t w" font-size="34" font-weight="760">tu siniestro</text>
+<text x="68" y="249" class="t w body" opacity=".8">Dos acciones reales. Sin promesas de</text>
+<text x="68" y="271" class="t w body" opacity=".8">cotización, pagos o portal de clientes.</text>
+<rect x="68" y="298" width="180" height="42" rx="9" fill="#0f6fed"/>
+<text x="158" y="324" text-anchor="middle" class="t w sm h">Reportar un siniestro</text>
+<rect x="262" y="298" width="160" height="42" rx="9" fill="#fff" opacity=".98"/>
+<text x="342" y="324" text-anchor="middle" class="t sm h">Dar seguimiento</text>
+
+<text x="68" y="407" class="t sec">Journey público</text>
+<text x="68" y="432" class="t muted sm">Entrada simple y trazable</text>
+
+<!-- action cards -->
+<rect x="68" y="460" width="416" height="110" rx="12" fill="#f8fbff" stroke="#dce7f2"/>
+<circle cx="100" cy="493" r="18" fill="#e7f1ff"/><text x="100" y="499" text-anchor="middle" class="t h" fill="#1469e8">1</text>
+<text x="132" y="490" class="t lab">Reportar un siniestro</text>
+<text x="132" y="514" class="t xs muted">Verificar → Datos → Revisar → Confirmación</text>
+<text x="132" y="538" class="t xs h" fill="#1469e8">Comenzar →</text>
+
+<rect x="68" y="584" width="416" height="110" rx="12" fill="#f8fbff" stroke="#dce7f2"/>
+<circle cx="100" cy="617" r="18" fill="#e8f7ef"/><text x="100" y="623" text-anchor="middle" class="t h" fill="#168b59">2</text>
+<text x="132" y="614" class="t lab">Consultar un reporte</text>
+<text x="132" y="638" class="t xs muted">Código de seguimiento + referencia de póliza</text>
+<text x="132" y="662" class="t xs h" fill="#1469e8">Consultar →</text>
+
+<rect x="68" y="712" width="416" height="82" rx="12" fill="#fff8e8" stroke="#ead7a9"/>
+<text x="88" y="738" class="t xs h" fill="#9a6810">CASO TÉCNICO NO OFICIAL</text>
+<text x="88" y="760" class="t xs muted">Datos exclusivamente sintéticos.</text>
+<text x="88" y="779" class="t xs muted">No expone funcionalidades fuera del MVP.</text>
+
+<!-- section 2 report flow -->
+<g filter="url(#sh)"><rect x="542" y="90" width="620" height="738" rx="18" fill="#fff"/></g>
+<text x="574" y="128" class="t xs h" fill="#1469e8">REPORTE DE SINIESTRO</text>
+<text x="574" y="162" class="t title">Flujo en 4 pasos</text>
+<text x="574" y="187" class="t muted sm">La verificación precede a cualquier creación autoritativa.</text>
+
+<!-- progress -->
+<line x1="596" y1="226" x2="1088" y2="226" stroke="#d7e3ef" stroke-width="4"/>
+<g>
+<circle cx="596" cy="226" r="17" fill="#1469e8"/><text x="596" y="231" text-anchor="middle" class="t w xs h">1</text>
+<circle cx="760" cy="226" r="17" fill="#1469e8"/><text x="760" y="231" text-anchor="middle" class="t w xs h">2</text>
+<circle cx="924" cy="226" r="17" fill="#1469e8"/><text x="924" y="231" text-anchor="middle" class="t w xs h">3</text>
+<circle cx="1088" cy="226" r="17" fill="#20a073"/><text x="1088" y="231" text-anchor="middle" class="t w xs h">4</text>
+</g>
+<g class="t xs h">
+<text x="596" y="257" text-anchor="middle">Verificar</text><text x="760" y="257" text-anchor="middle">Datos</text>
+<text x="924" y="257" text-anchor="middle">Revisar</text><text x="1088" y="257" text-anchor="middle">Confirmar</text>
+</g>
+
+<!-- step 1 -->
+<rect x="574" y="292" width="270" height="180" rx="12" fill="#f8fbff" stroke="#dbe7f2"/>
+<text x="594" y="320" class="t sm h">1 · Póliza y vehículo</text>
+<text x="594" y="345" class="t xs muted">Referencia de póliza</text>
+<rect x="594" y="354" width="230" height="32" rx="6" fill="#fff" stroke="#cbd9e7"/>
+<text x="606" y="375" class="t xs muted">SYN-POL-001</text>
+<text x="594" y="409" class="t xs muted">Referencia del vehículo</text>
+<rect x="594" y="418" width="230" height="32" rx="6" fill="#fff" stroke="#cbd9e7"/>
+<text x="606" y="439" class="t xs muted">SYN-VEH-001</text>
+<text x="594" y="463" class="t xs h" fill="#1469e8">Elegibilidad: autoridad del API</text>
+
+<!-- step 2 -->
+<rect x="860" y="292" width="270" height="180" rx="12" fill="#f8fbff" stroke="#dbe7f2"/>
+<text x="880" y="320" class="t sm h">2 · Datos + evidencia</text>
+<text x="880" y="345" class="t xs muted">Tipo · Fecha/hora · Ubicación</text>
+<text x="880" y="368" class="t xs muted">Descripción hasta 4.000 caracteres</text>
+<rect x="880" y="391" width="230" height="48" rx="8" fill="#fff" stroke="#cbd9e7"/>
+<text x="895" y="411" class="t xs h">Evidencia opcional</text>
+<text x="895" y="429" class="t xs muted">JPEG · PNG · PDF</text>
+<text x="880" y="463" class="t xs h" fill="#1469e8">Máx. 5 archivos · 5 MiB c/u</text>
+
+<!-- review -->
+<rect x="574" y="494" width="556" height="128" rx="12" fill="#fff8e8" stroke="#ead7a9"/>
+<text x="594" y="522" class="t sm h">3 · Revisar antes de confirmar</text>
+<text x="594" y="547" class="t xs muted">Póliza · Vehículo · Evento · Fecha/hora · Ubicación · Descripción · Evidencia</text>
+<rect x="594" y="567" width="210" height="34" rx="7" fill="#0f6fed"/>
+<text x="699" y="589" text-anchor="middle" class="t w xs h">Confirmar y enviar</text>
+<text x="824" y="578" class="t xs h">Idempotency-Key</text>
+<text x="824" y="598" class="t xs muted">Una sola intención, mismo contenido</text>
+
+<!-- success -->
+<rect x="574" y="645" width="556" height="150" rx="12" fill="#f1fbf6" stroke="#cce9da"/>
+<circle cx="606" cy="678" r="18" fill="#20a073"/><text x="606" y="684" text-anchor="middle" class="t w h">✓</text>
+<text x="638" y="675" class="t lab">4 · Siniestro reportado</text>
+<text x="638" y="697" class="t xs muted">Estado inicial autoritativo: RECEIVED</text>
+<text x="594" y="729" class="t xs muted">Código de seguimiento</text>
+<text x="594" y="752" class="t sec">CLM-7F4A9X</text>
+<text x="780" y="729" class="t xs muted">Próximos pasos</text>
+<text x="780" y="751" class="t xs">Publicados por el API</text>
+<text x="594" y="779" class="t xs h" fill="#1469e8">Dar seguimiento →</text>
+
+<!-- section 3 tracking -->
+<g filter="url(#sh)"><rect x="1188" y="90" width="376" height="738" rx="18" fill="#fff"/></g>
+<text x="1218" y="128" class="t xs h" fill="#1469e8">SEGUIMIENTO PÚBLICO</text>
+<text x="1218" y="160" class="t sec">Consulta segura</text>
+<text x="1218" y="184" class="t xs muted">Dos datos forman una única prueba.</text>
+
+<text x="1218" y="226" class="t xs h">Código de seguimiento</text>
+<rect x="1218" y="236" width="316" height="38" rx="8" fill="#fff" stroke="#cbd9e7"/>
+<text x="1234" y="260" class="t xs muted">CLM-7F4A9X</text>
+<text x="1218" y="305" class="t xs h">Referencia de póliza</text>
+<rect x="1218" y="315" width="316" height="38" rx="8" fill="#fff" stroke="#cbd9e7"/>
+<text x="1234" y="339" class="t xs muted">SYN-POL-001</text>
+<rect x="1218" y="374" width="316" height="38" rx="8" fill="#0f6fed"/>
+<text x="1376" y="398" text-anchor="middle" class="t w sm h">Consultar estado</text>
+<text x="1218" y="438" class="t xs muted">Combinación inválida → “no encontrado”.</text>
+<text x="1218" y="456" class="t xs muted">No revela cuál dato falló.</text>
+
+<line x1="1218" y1="488" x2="1534" y2="488" stroke="#e0e8f1"/>
+<text x="1218" y="521" class="t sm h">Estado actual</text>
+<rect x="1218" y="537" width="316" height="74" rx="10" fill="#e9f4ff" stroke="#cbdff3"/>
+<text x="1236" y="560" class="t xs muted">Proyección pública</text>
+<text x="1236" y="588" class="t sec">En revisión</text>
+<rect x="1433" y="553" width="83" height="24" rx="12" fill="#dcecff"/>
+<text x="1474" y="569" text-anchor="middle" class="t xs h" fill="#1469e8">UNDER_REVIEW</text>
+
+<text x="1218" y="644" class="t xs h">Resumen visible</text>
+<text x="1218" y="667" class="t xs muted">Vehículo · Tipo de evento · Fecha</text>
+<text x="1218" y="695" class="t xs h">Historial visible</text>
+<text x="1218" y="718" class="t xs muted">Estados públicos con fecha/hora</text>
+<text x="1218" y="746" class="t xs h">Próximos pasos</text>
+<text x="1218" y="769" class="t xs muted">Solo lo publicado por trackClaim</text>
+<rect x="1218" y="787" width="150" height="26" rx="7" fill="#eef5fd"/>
+<text x="1293" y="804" text-anchor="middle" class="t xs h">Actualizar estado</text>
+
+<!-- footer note -->
+<text x="36" y="868" class="t xs muted">Customer Journey público R3 · acciones reales: reportar y seguir · sin portal de clientes, pagos, cotización, MFA ni datos internos.</text>
+</svg>

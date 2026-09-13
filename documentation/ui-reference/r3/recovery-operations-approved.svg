@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10243d"/><stop offset="1" stop-color="#08182b"/></linearGradient>
+  <filter id="shadow"><feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#0b2440" flood-opacity=".08"/></filter>
+  <style>
+    .t{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#10233d}.w{fill:#fff}.muted{fill:#60738d}.xs{font-size:11px}.sm{font-size:12px}.body{font-size:14px}.lab{font-size:14px;font-weight:600}.sec{font-size:18px;font-weight:700}.title{font-size:29px;font-weight:750}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.h{font-weight:700}
+  </style>
+</defs>
+<rect width="1600" height="900" fill="#f5f8fc"/>
+<rect width="205" height="900" fill="url(#navy)"/>
+<circle cx="34" cy="31" r="17" fill="#1469e8"/><path d="M34 19l10 4v8c0 8-5 13-10 16-5-3-10-8-10-16v-8z" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="58" y="31" class="t w" font-size="19" font-weight="700">InsuranceClaims</text><text x="58" y="50" class="t w xs" opacity=".75">Gestión de Siniestros</text>
+<g class="t w body" opacity=".92"><text x="52" y="101">Tablero</text><text x="52" y="145">Siniestros</text><text x="52" y="189">Tareas</text><text x="52" y="233">Clientes</text><text x="52" y="277">Pólizas</text><text x="52" y="321">Renovaciones</text><text x="52" y="365">Cobranzas</text><text x="52" y="409">Automatizaciones</text><text x="52" y="453">Importaciones</text></g>
+<rect x="8" y="474" width="189" height="44" rx="8" fill="#155eaa"/><text x="52" y="502" class="t w lab">Recovery</text>
+<g class="t w body" opacity=".92"><text x="52" y="555">Reportes</text><text x="52" y="599">Administración</text></g>
+<g stroke="#c4d6ea" fill="none" stroke-width="1.7" opacity=".9"><path d="M26 94h14v13H26zM28 91h10"/><rect x="27" y="134" width="13" height="16" rx="2"/><rect x="26" y="177" width="15" height="16" rx="2"/><circle cx="33" cy="226" r="7"/><path d="M26 266l7-4 7 4v8c0 6-4 10-7 12-3-2-7-6-7-12z"/><rect x="27" y="310" width="14" height="16" rx="2"/><circle cx="33" cy="354" r="7"/><path d="M26 396h14l-8 10h8l-12 13 4-10h-7z"/><path d="M26 443h14v16H26z"/><circle cx="33" cy="496" r="7"/><path d="M28 496h10M33 491v10"/><path d="M26 544h14v14H26z"/><circle cx="33" cy="588" r="7"/></g>
+<text x="20" y="858" class="t w xs" opacity=".7">v0.5.2</text><text x="20" y="878" class="t w xs" opacity=".7">R3 · InsuranceClaims</text>
+<rect x="205" width="1395" height="60" fill="#fff"/><line x1="205" y1="60" x2="1600" y2="60" stroke="#dfe7f1"/>
+<rect x="228" y="12" width="600" height="36" rx="8" fill="#f6f9fd" stroke="#dce6f2"/><circle cx="250" cy="30" r="6" fill="none" stroke="#496a91" stroke-width="1.6"/><line x1="254" y1="34" x2="259" y2="39" stroke="#496a91" stroke-width="1.6"/><text x="270" y="35" class="t muted body">Buscar siniestros, tareas, clientes o pólizas...</text>
+<circle cx="1088" cy="30" r="16" fill="#142a48"/><text x="1079" y="35" class="t w sm h">LM</text><text x="1114" y="27" class="t lab">Luis Martínez</text><text x="1114" y="43" class="t muted xs">Operaciones</text>
+<text x="230" y="98" class="t title">Integraciones y recuperación</text><text x="230" y="123" class="t muted body">Diagnóstico explícito de Integration Events y recuperación gobernada de trabajos en dead-letter.</text>
+<g filter="url(#shadow)"><rect x="230" y="145" width="610" height="245" rx="12" fill="#fff"/></g>
+<text x="250" y="177" class="t sec">Diagnóstico de Integration Event</text><text x="250" y="198" class="t muted sm">R3 expone consulta por eventId UUID. No existe búsqueda textual ni directorio administrativo.</text>
+<text x="250" y="229" class="t xs h">eventId</text><rect x="250" y="239" width="402" height="38" rx="8" fill="#f9fbfe" stroke="#cfdae8"/><text x="264" y="263" class="t mono sm">88888888-8888-4888-8888-888888888888</text>
+<rect x="664" y="239" width="150" height="38" rx="8" fill="#0f6fed"/><text x="739" y="263" text-anchor="middle" class="t w lab">Consultar evento</text>
+<rect x="250" y="293" width="564" height="78" rx="9" fill="#f6f9fd" stroke="#dce6f2"/>
+<text x="266" y="315" class="t sm h">CLAIM_EXPORTED</text><rect x="690" y="300" width="102" height="22" rx="11" fill="#dff4ea"/><text x="716" y="315" class="t xs" fill="#147a4f">PROCESSED</text>
+<text x="266" y="338" class="t xs muted">eventId</text><text x="324" y="338" class="t mono xs">88888888-8888-4888-8888-888888888888</text><text x="266" y="356" class="t xs muted">externalEventId</text><text x="358" y="356" class="t mono xs">EXT-2026-00981</text>
+<text x="545" y="338" class="t xs muted">Ingestion</text><text x="606" y="338" class="t xs h">ACCEPTED</text><text x="545" y="356" class="t xs muted">Failure category</text><text x="642" y="356" class="t xs">—</text>
+<g filter="url(#shadow)"><rect x="855" y="145" width="295" height="245" rx="12" fill="#fff"/></g>
+<text x="875" y="177" class="t sec">Frontera de recuperación</text>
+<g class="t sm"><text x="875" y="212">• <tspan class="mono">operations.dead_letters.read</tspan></text><text x="890" y="232" class="muted">permite inspección.</text><text x="875" y="262">• <tspan class="mono">operations.dead_letters.manage</tspan></text><text x="890" y="282" class="muted">habilita Requeue / Resolve.</text><text x="875" y="312">• Conflicto 409 → refetch.</text><text x="890" y="332" class="muted">Nunca reintentar una versión obsoleta.</text><text x="875" y="362">• Sin payloads internos inventados.</text></g>
+<g filter="url(#shadow)"><rect x="230" y="410" width="920" height="420" rx="12" fill="#fff"/></g>
+<text x="250" y="442" class="t sec">Dead-letter queue</text><text x="250" y="463" class="t muted sm">Paginación de servidor. R3 no publica filtros por job type, categoría o fecha.</text>
+<rect x="1030" y="428" width="100" height="34" rx="8" fill="#fff" stroke="#cfdbea"/><text x="1080" y="449" text-anchor="middle" class="t sm">Actualizar</text>
+<rect x="244" y="480" width="892" height="36" fill="#f3f7fc"/><g class="t xs h"><text x="258" y="503">Job</text><text x="465" y="503">Intentos</text><text x="560" y="503">Failure</text><text x="700" y="503">Disponible</text><text x="850" y="503">Versión</text><text x="958" y="503">Acción</text></g>
+<g class="t sm">
+<text x="258" y="543" class="h">CLAIM_EXPORT_JOB</text><text x="258" y="559" class="mono xs muted">dlq-7f12a8c1…</text><text x="465" y="550">3 / 3</text><text x="560" y="550">REMOTE_TIMEOUT</text><text x="700" y="550">12 sep, 18:40</text><text x="850" y="550">v4</text><text x="958" y="550" fill="#0f6fed">Inspeccionar →</text>
+<line x1="244" y1="574" x2="1136" y2="574" stroke="#e8eef5"/>
+<text x="258" y="605" class="h">POLICY_SYNC_JOB</text><text x="258" y="621" class="mono xs muted">dlq-a8310d4e…</text><text x="465" y="612">2 / 2</text><text x="560" y="612">VALIDATION</text><text x="700" y="612">12 sep, 18:22</text><text x="850" y="612">v2</text><text x="958" y="612" fill="#0f6fed">Inspeccionar →</text>
+<line x1="244" y1="636" x2="1136" y2="636" stroke="#e8eef5"/>
+<text x="258" y="667" class="h">CUSTOMER_PUSH_JOB</text><text x="258" y="683" class="mono xs muted">dlq-c40f81bd…</text><text x="465" y="674">5 / 5</text><text x="560" y="674">REMOTE_REJECTED</text><text x="700" y="674">12 sep, 17:58</text><text x="850" y="674">v7</text><text x="958" y="674" fill="#0f6fed">Inspeccionar →</text>
+<line x1="244" y1="698" x2="1136" y2="698" stroke="#e8eef5"/>
+<text x="258" y="729" class="h">DOCUMENT_DELIVERY_JOB</text><text x="258" y="745" class="mono xs muted">dlq-15ae02b3…</text><text x="465" y="736">3 / 3</text><text x="560" y="736">REMOTE_TIMEOUT</text><text x="700" y="736">12 sep, 17:41</text><text x="850" y="736">v3</text><text x="958" y="736" fill="#0f6fed">Inspeccionar →</text>
+</g>
+<text x="250" y="796" class="t sm muted">Página 1 de 3 · 63 registros</text><rect x="760" y="775" width="92" height="34" rx="8" fill="#fff" stroke="#cfdbea"/><text x="806" y="796" text-anchor="middle" class="t sm">← Anterior</text><rect x="862" y="775" width="92" height="34" rx="8" fill="#fff" stroke="#cfdbea"/><text x="908" y="796" text-anchor="middle" class="t sm">Siguiente →</text>
+<rect x="1180" y="78" width="360" height="780" rx="42" fill="#0d1827"/><rect x="1192" y="94" width="336" height="748" rx="31" fill="#fff"/><rect x="1277" y="94" width="165" height="24" rx="12" fill="#0d1827"/>
+<text x="1214" y="130" class="t sm h">9:41</text><circle cx="1235" cy="169" r="12" fill="#1469e8"/><text x="1255" y="166" class="t lab">InsuranceClaims</text><text x="1255" y="181" class="t muted xs">Operaciones</text>
+<text x="1213" y="221" class="t" font-size="23" font-weight="750">Dead Letter</text><text x="1213" y="242" class="t muted sm">Proyección autoritativa R3</text>
+<text x="1213" y="276" class="t xs muted">JOB TYPE</text><text x="1213" y="297" class="t lab">CLAIM_EXPORT_JOB</text><rect x="1396" y="278" width="103" height="22" rx="11" fill="#ffe5e5"/><text x="1415" y="293" class="t xs" fill="#b82c2c">DEAD_LETTER</text>
+<rect x="1212" y="318" width="288" height="240" rx="10" fill="#f8fbfe" stroke="#dce6f2"/>
+<g class="t sm"><text x="1228" y="344" class="muted">deadLetterId</text><text x="1228" y="362" class="mono xs">7f12a8c1-4c26-4b36…</text><text x="1228" y="392" class="muted">Intentos</text><text x="1368" y="392" class="h">3 / 3</text><text x="1228" y="423" class="muted">Available at</text><text x="1342" y="423">12 sep, 18:40</text><text x="1228" y="454" class="muted">Failure category</text><text x="1348" y="454">REMOTE_TIMEOUT</text><text x="1228" y="485" class="muted">Correlation ID</text><text x="1348" y="485" class="mono xs">corr-8a19…</text><text x="1228" y="516" class="muted">Completed at</text><text x="1348" y="516">—</text><text x="1228" y="547" class="muted">Version</text><text x="1368" y="547" class="h">v4</text></g>
+<rect x="1212" y="574" width="288" height="82" rx="10" fill="#fff7e8" stroke="#f2d48b"/><text x="1228" y="598" class="t sm h">Concurrencia R3</text><text x="1228" y="619" class="t xs">Ambas mutaciones usan expectedVersion = 4.</text><text x="1228" y="638" class="t xs">Si responde 409, se recarga la proyección vigente.</text>
+<rect x="1212" y="676" width="288" height="46" rx="9" fill="#0f6fed"/><text x="1356" y="704" text-anchor="middle" class="t w lab">Requeue para nuevo intento</text>
+<rect x="1212" y="734" width="288" height="46" rx="9" fill="#fff" stroke="#c43d3d"/><text x="1356" y="762" text-anchor="middle" class="t lab" fill="#b82c2c">Resolver administrativamente</text>
+<text x="1213" y="813" class="t xs muted">Permiso requerido: operations.dead_letters.manage</text>
+</svg>

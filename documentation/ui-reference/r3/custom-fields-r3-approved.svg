@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10243d"/><stop offset="1" stop-color="#071727"/></linearGradient>
+  <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#0b2440" flood-opacity=".08"/></filter>
+  <style>
+    .t{font-family:Arial,Helvetica,sans-serif;fill:#10233d}.w{fill:#fff}.muted{fill:#60738d}
+    .xs{font-size:11px}.sm{font-size:12px}.body{font-size:14px}.lab{font-size:14px;font-weight:700}
+    .sec{font-size:18px;font-weight:700}.title{font-size:29px;font-weight:750}.h{font-weight:700}.mono{font-family:Consolas,monospace}
+  </style>
+</defs>
+<rect width="1600" height="900" fill="#f5f8fc"/>
+
+<!-- desktop shell -->
+<rect width="205" height="900" fill="url(#navy)"/>
+<circle cx="34" cy="31" r="17" fill="#1469e8"/><path d="M34 19l10 4v8c0 8-5 13-10 16-5-3-10-8-10-16v-8z" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="58" y="31" class="t w" font-size="19" font-weight="700">InsuranceClaims</text><text x="58" y="50" class="t w xs" opacity=".75">Gestión de Siniestros</text>
+<g class="t w body" opacity=".94">
+<text x="52" y="101">Workspace</text><text x="52" y="145">Analytics</text><text x="52" y="189">Pipelines</text><text x="52" y="233">Plantillas</text>
+<rect x="8" y="254" width="189" height="42" rx="8" fill="#155eaa"/><text x="52" y="280" class="t w lab">Campos</text>
+<text x="52" y="325">Guidance</text><text x="52" y="369">Automations</text><text x="52" y="413">Importaciones</text><text x="52" y="457">Recovery</text>
+</g>
+<text x="20" y="858" class="t w xs" opacity=".7">v0.5.2</text><text x="20" y="878" class="t w xs" opacity=".7">R3 · InsuranceClaims</text>
+
+<rect x="205" width="1395" height="60" fill="#fff"/><line x1="205" y1="60" x2="1600" y2="60" stroke="#dfe7f1"/>
+<rect x="228" y="12" width="600" height="36" rx="8" fill="#f6f9fd" stroke="#dce6f2"/><text x="252" y="35" class="t muted body">Búsqueda global · próximo corte</text>
+<circle cx="1088" cy="30" r="16" fill="#142a48"/><text x="1078" y="35" class="t w sm h">PA</text><text x="1114" y="27" class="t lab">Administrador</text><text x="1114" y="43" class="t muted xs">Custom Fields R3</text>
+
+<text x="230" y="104" class="t title">Custom Fields</text>
+<text x="230" y="130" class="t muted body">Campos versionados para CLAIM, RENEWAL y COLLECTION con límites de dominio y activación gobernada.</text>
+<rect x="980" y="87" width="170" height="40" rx="8" fill="#0f6fed"/><text x="1065" y="112" text-anchor="middle" class="t w lab">+ Nuevo Custom Field</text>
+
+<!-- contract strip -->
+<g filter="url(#sh)"><rect x="230" y="151" width="920" height="70" rx="11" fill="#fff"/></g>
+<text x="250" y="176" class="t xs h">TARGETS</text><text x="250" y="199" class="t sm">CLAIM · RENEWAL · COLLECTION</text>
+<text x="500" y="176" class="t xs h">TIPOS</text><text x="500" y="199" class="t sm">STRING · NUMBER · BOOLEAN · DATE · ENUM</text>
+<text x="820" y="176" class="t xs h">VERSIONADO</text><text x="820" y="199" class="t sm">DRAFT → ACTIVE → RETIRED</text>
+
+<!-- directory -->
+<g filter="url(#sh)"><rect x="230" y="241" width="920" height="270" rx="12" fill="#fff"/></g>
+<text x="250" y="274" class="t sec">Definiciones</text><text x="250" y="295" class="t muted sm">9 definiciones · solo paginación server-side</text>
+<rect x="1020" y="257" width="110" height="34" rx="8" fill="#fff" stroke="#cad7e6"/><text x="1075" y="279" text-anchor="middle" class="t sm h">Actualizar</text>
+
+<!-- cards -->
+<g filter="url(#sh)">
+<rect x="250" y="317" width="270" height="150" rx="11" fill="#fff"/>
+<rect x="535" y="317" width="270" height="150" rx="11" fill="#fff"/>
+<rect x="820" y="317" width="310" height="150" rx="11" fill="#fff"/>
+</g>
+
+<rect x="266" y="333" width="58" height="22" rx="11" fill="#e6f1ff"/><text x="295" y="348" text-anchor="middle" class="xs h" fill="#1469e8">CLAIM</text>
+<rect x="334" y="333" width="78" height="22" rx="11" fill="#dff5e9"/><text x="373" y="348" text-anchor="middle" class="xs h" fill="#16754a">Habilitado</text>
+<text x="266" y="384" class="t lab">claim.review_lane</text><text x="266" y="405" class="t xs muted">Activa v3 · Último tipo ENUM</text>
+<text x="266" y="429" class="t xs muted">Definition v4 · 4 versiones</text><text x="266" y="452" class="t xs h" fill="#1469e8">Administrar →</text>
+
+<rect x="551" y="333" width="72" height="22" rx="11" fill="#eee9ff"/><text x="587" y="348" text-anchor="middle" class="xs h" fill="#7650c9">RENEWAL</text>
+<rect x="633" y="333" width="92" height="22" rx="11" fill="#edf1f5"/><text x="679" y="348" text-anchor="middle" class="xs h" fill="#647791">Deshabilitado</text>
+<text x="551" y="384" class="t lab">renewal.priority</text><text x="551" y="405" class="t xs muted">Sin activa · Último tipo NUMBER</text>
+<text x="551" y="429" class="t xs muted">Definition v2 · 2 versiones</text><text x="551" y="452" class="t xs h" fill="#1469e8">Administrar →</text>
+
+<rect x="836" y="333" width="84" height="22" rx="11" fill="#fff0dc"/><text x="878" y="348" text-anchor="middle" class="xs h" fill="#b66c13">COLLECTION</text>
+<rect x="930" y="333" width="78" height="22" rx="11" fill="#dff5e9"/><text x="969" y="348" text-anchor="middle" class="xs h" fill="#16754a">Habilitado</text>
+<text x="836" y="384" class="t lab">collection.followup_note</text><text x="836" y="405" class="t xs muted">Activa v2 · Último tipo STRING</text>
+<text x="836" y="429" class="t xs muted">Definition v3 · 3 versiones</text><text x="836" y="452" class="t xs h" fill="#1469e8">Administrar →</text>
+
+<rect x="250" y="476" width="104" height="28" rx="8" fill="#fff" stroke="#d3deea"/><text x="302" y="495" text-anchor="middle" class="t sm">← Anterior</text>
+<text x="690" y="495" text-anchor="middle" class="t sm">Página <tspan class="h">1</tspan> / 1</text>
+<rect x="1025" y="476" width="105" height="28" rx="8" fill="#fff" stroke="#d3deea"/><text x="1077" y="495" text-anchor="middle" class="t sm">Siguiente →</text>
+
+<!-- detail -->
+<text x="230" y="550" class="t xs h" fill="#6e7f96">DETALLE DE DEFINICIÓN · EJEMPLO GOBERNADO</text>
+<g filter="url(#sh)"><rect x="230" y="566" width="920" height="292" rx="12" fill="#fff"/></g>
+<text x="250" y="602" class="t sec">claim.review_lane</text>
+<rect x="250" y="614" width="58" height="22" rx="11" fill="#e6f1ff"/><text x="279" y="629" text-anchor="middle" class="xs h" fill="#1469e8">CLAIM</text>
+<rect x="318" y="614" width="78" height="22" rx="11" fill="#dff5e9"/><text x="357" y="629" text-anchor="middle" class="xs h" fill="#16754a">Habilitado</text>
+<text x="408" y="629" class="t mono xs muted">definition v4</text>
+<rect x="892" y="582" width="145" height="36" rx="8" fill="#0f6fed"/><text x="964" y="605" text-anchor="middle" class="t w sm h">+ Nueva versión</text>
+<rect x="1047" y="582" width="83" height="36" rx="8" fill="#fff7e8" stroke="#efd69a"/><text x="1088" y="605" text-anchor="middle" class="t xs h" fill="#9a6810">Deshabilitar</text>
+
+<rect x="250" y="660" width="880" height="62" rx="8" fill="#fff8e8" stroke="#efdbac"/>
+<rect x="266" y="676" width="50" height="22" rx="11" fill="#fff0c7"/><text x="291" y="691" text-anchor="middle" class="xs h" fill="#9a6810">DRAFT</text>
+<text x="332" y="688" class="t lab">Versión 4</text>
+<text x="420" y="688" class="t xs muted">ENUM · STAFF_ONLY · “Carril de revisión” · 4 valores · 2 metadata</text>
+<rect x="1010" y="675" width="102" height="32" rx="8" fill="#0f6fed"/><text x="1061" y="696" text-anchor="middle" class="t w xs h">Activar DRAFT</text>
+
+<rect x="250" y="731" width="880" height="54" rx="8" fill="#f1fbf6" stroke="#cce9da"/>
+<rect x="266" y="747" width="52" height="22" rx="11" fill="#dff5e9"/><text x="292" y="762" text-anchor="middle" class="xs h" fill="#16754a">ACTIVE</text>
+<text x="332" y="759" class="t lab">Versión 3</text><text x="420" y="759" class="t xs muted">ENUM · STAFF_ONLY · histórica e inmutable</text><text x="1031" y="759" class="t xs muted">Sin edición</text>
+
+<rect x="250" y="794" width="880" height="48" rx="8" fill="#eef5fc" stroke="#d8e4f0"/>
+<text x="266" y="815" class="t xs h">Protección de dominio</text><text x="266" y="833" class="t xs muted">fieldKey y target son identidad estable. Claves protegidas: autoridad del API. 409 → refetch autoritativo.</text>
+
+<!-- mobile -->
+<rect x="1180" y="72" width="360" height="800" rx="42" fill="#0d1827"/><rect x="1192" y="88" width="336" height="768" rx="31" fill="#fff"/><rect x="1278" y="88" width="164" height="24" rx="12" fill="#0d1827"/>
+<text x="1214" y="126" class="t sm h">9:41</text><circle cx="1235" cy="166" r="13" fill="#1469e8"/><text x="1257" y="164" class="t lab">InsuranceClaims</text><text x="1257" y="181" class="t muted xs">Platform Admin</text>
+<text x="1213" y="220" class="t" font-size="22" font-weight="750">Custom Fields</text><text x="1213" y="242" class="t muted sm">Configuración versionada R3</text>
+<rect x="1368" y="207" width="131" height="38" rx="8" fill="#0f6fed"/><text x="1433" y="231" text-anchor="middle" class="t w xs h">+ Nuevo campo</text>
+
+<rect x="1213" y="263" width="286" height="60" rx="10" fill="#eef5fc" stroke="#d8e4f0"/>
+<text x="1229" y="286" class="t xs h">CLAIM · RENEWAL · COLLECTION</text><text x="1229" y="305" class="t tiny muted">STRING · NUMBER · BOOLEAN · DATE · ENUM</text>
+
+<text x="1213" y="354" class="t sm h">claim.review_lane</text>
+<rect x="1213" y="366" width="286" height="100" rx="10" fill="#fff" stroke="#dfe7f1"/>
+<rect x="1229" y="382" width="58" height="21" rx="10" fill="#e6f1ff"/><text x="1258" y="397" text-anchor="middle" class="xs h" fill="#1469e8">CLAIM</text>
+<rect x="1297" y="382" width="78" height="21" rx="10" fill="#dff5e9"/><text x="1336" y="397" text-anchor="middle" class="xs h" fill="#16754a">Habilitado</text>
+<text x="1229" y="425" class="t xs">Activa <tspan class="h">v3</tspan> · Último tipo <tspan class="h">ENUM</tspan></text><text x="1229" y="447" class="t xs h" fill="#1469e8">Administrar →</text>
+
+<text x="1213" y="500" class="t sm h">Versión DRAFT</text>
+<rect x="1213" y="512" width="286" height="108" rx="10" fill="#fff8e8" stroke="#efdbac"/>
+<rect x="1229" y="528" width="50" height="21" rx="10" fill="#fff0c7"/><text x="1254" y="543" text-anchor="middle" class="xs h" fill="#9a6810">DRAFT</text>
+<text x="1291" y="543" class="t lab">Versión 4</text>
+<text x="1229" y="568" class="t xs muted">ENUM · STAFF_ONLY</text><text x="1229" y="588" class="t xs muted">4 valores · 2 validationMetadata</text>
+<rect x="1229" y="595" width="120" height="25" rx="7" fill="#0f6fed"/><text x="1289" y="612" text-anchor="middle" class="t w xs h">Activar DRAFT</text>
+
+<rect x="1213" y="640" width="286" height="84" rx="10" fill="#f1fbf6" stroke="#cce9da"/>
+<rect x="1229" y="655" width="52" height="21" rx="10" fill="#dff5e9"/><text x="1255" y="670" text-anchor="middle" class="xs h" fill="#16754a">ACTIVE</text>
+<text x="1293" y="670" class="t lab">Versión 3</text><text x="1229" y="699" class="t xs muted">Histórica e inmutable · sin edición</text>
+
+<rect x="1213" y="743" width="286" height="64" rx="10" fill="#fff7e8" stroke="#efd69a"/>
+<text x="1229" y="765" class="t xs h">Dominio protegido</text><text x="1229" y="783" class="t tiny muted">La UI no revela claves reservadas.</text><text x="1229" y="799" class="t tiny muted">409 → refrescar, nunca reintentar a ciegas.</text>
+</svg>
