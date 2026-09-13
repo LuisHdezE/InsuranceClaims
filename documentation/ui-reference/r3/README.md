@@ -39,7 +39,11 @@ Este directorio conserva las vistas **aprobadas explícitamente** durante la rac
 | Póliza 360 | MANTENER / SIMPLIFICAR | `policy-360-approved.svg` + `policy-360-approved.md` |
 | Renovaciones | MANTENER / SIMPLIFICAR | `renewals-approved.svg` + `renewals-approved.md` |
 | Cobranzas | MANTENER / SIMPLIFICAR | `collections-approved.svg` + `collections-approved.md` |
-| Administración de Pipelines | MANTENER | `pipelines-admin-approved.svg` + `pipelines-admin-approved.md` |
+| Administración de Pipelines | DIFERENCIADOR TÉCNICO / MANTENER | `pipelines-admin-approved.svg` + `pipelines-admin-approved.md` |
+| Automatizaciones R3 | DIFERENCIADOR TÉCNICO / MANTENER | `automations-admin-approved.svg` + `automations-admin-approved.md` |
+| Importaciones Gobernadas R3 | DIFERENCIADOR TÉCNICO / MANTENER | `governed-imports-dryrun-commit-approved.svg` + `governed-imports-dryrun-commit-approved.md` |
+| Recovery Operations / Dead Letters | DIFERENCIADOR TÉCNICO / MANTENER | `recovery-operations-approved.svg` + `recovery-operations-approved.md` |
+| Analytics R3 | MANTENER / SIMPLIFICAR | `analytics-r3-approved.svg` + `analytics-r3-approved.md` |
 
 ## Principios funcionales clave
 
@@ -63,3 +67,15 @@ Responsabilidad: **gestionar casos de negocio propios** sin duplicar los 360. Li
 
 ### Administración de Pipelines
 Responsabilidad: **gobernar configuración versionada** para `CLAIM`, `RENEWAL` y `COLLECTION`. Las versiones son inmutables; DRAFT, activación y enable/disable son pasos explícitos y gobernados.
+
+### Automatizaciones R3
+Responsabilidad: **gobernar reglas operacionales versionadas** usando el modelo CUANDO → SI → ESPERA → ENTONCES, sin convertir métricas o acciones ilustrativas de mockups en capacidades reales.
+
+### Importaciones Gobernadas R3
+Responsabilidad: **migrar datos sintéticos de referencia bajo un workflow controlado**: Subida → Preview → Mapping → Validación → Dry-run → Commit. El commit es una mutación de riesgo explícita y el conflicto 409 exige refetch autoritativo.
+
+### Recovery Operations / Dead Letters
+Responsabilidad: **diagnosticar Integration Events y recuperar trabajos dead-letter de forma gobernada**. Requeue y Resolve usan versión esperada; no existe reintento ciego ante 409.
+
+### Analytics R3
+Responsabilidad: **supervisar métricas operacionales agregadas**. `reportedInWindow` representa Claims creados en `[from,to)`; los demás conteos son snapshots al `generatedAt` y no se reinterpretan como totales de la ventana.
