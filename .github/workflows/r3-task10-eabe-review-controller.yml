@@ -1,0 +1,67 @@
+name: R3 Task 10 EABE Review Controller
+
+on:
+  push:
+    branches: [review/r3-task10-eabe-review-controller]
+
+permissions:
+  contents: write
+
+jobs:
+  retarget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: review/r3-task10-eabe-qa
+          path: qa-review
+          fetch-depth: 0
+      - uses: actions/checkout@v7
+        with:
+          ref: review/r3-task10-eabe-visual
+          path: visual-review
+          fetch-depth: 0
+      - name: Retarget final QA
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('qa-review/.github/workflows/r3-task10-final-qa.yml')
+          s=p.read_text()
+          pairs={
+            'review/r3-task10-final-qa':'review/r3-task10-eabe-qa',
+            'f89544dd0b409b64171a1264f8189ba5eb3ee0b2':'eabe704f7d916d0b325148919aa2ade714057189',
+          }
+          for old,new in pairs.items():
+              if old not in s: raise SystemExit(f'Missing expected QA token: {old}')
+              s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          git -C qa-review diff --check
+          git -C qa-review config user.name "MSc Luis A. Hernández Elias"
+          git -C qa-review config user.email "88979457+LuisHdezE@users.noreply.github.com"
+          git -C qa-review add .github/workflows/r3-task10-final-qa.yml
+          git -C qa-review commit -m "ci(review): validate Task 10 ORM fix head"
+          git -C qa-review push origin HEAD:review/r3-task10-eabe-qa
+      - name: Retarget final visual review
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('visual-review/.github/workflows/r3-task10-final-visual.yml')
+          s=p.read_text()
+          pairs={
+            'review/r3-task10-final-visual':'review/r3-task10-eabe-visual',
+            'f89544dd0b409b64171a1264f8189ba5eb3ee0b2':'eabe704f7d916d0b325148919aa2ade714057189',
+          }
+          for old,new in pairs.items():
+              if old not in s: raise SystemExit(f'Missing expected visual token: {old}')
+              s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          git -C visual-review diff --check
+          git -C visual-review config user.name "MSc Luis A. Hernández Elias"
+          git -C visual-review config user.email "88979457+LuisHdezE@users.noreply.github.com"
+          git -C visual-review add .github/workflows/r3-task10-final-visual.yml
+          git -C visual-review commit -m "ci(review): capture Task 10 ORM fix visuals"
+          git -C visual-review push origin HEAD:review/r3-task10-eabe-visual
