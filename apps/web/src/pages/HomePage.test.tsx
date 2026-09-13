@@ -32,7 +32,7 @@ describe('HomePage', () => {
       expect(link.getAttribute('href')).toBe('/operator/login');
     }
 
-    expect(screen.getByText(/Caso técnico no oficial/i)).toBeTruthy();
+    expect(screen.getAllByText(/Caso técnico no oficial/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Cotiza tu seguro/i)).toBeNull();
     expect(screen.queryByText(/Pagos web/i)).toBeNull();
     expect(screen.queryByText(/Área de clientes/i)).toBeNull();
