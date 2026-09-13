@@ -1,0 +1,641 @@
+/* R3 Task 11: contract-exact public customer journey.
+ * Scope is presentation only. Public API, claim flow and tracking proof remain authoritative.
+ */
+.public-customer-journey-r3 {
+  --journey-primary: #078aa5;
+  --journey-primary-strong: #056f86;
+  --journey-ink: #112f48;
+  --journey-muted: #60758a;
+  --journey-border: #d8e5ec;
+  --journey-soft: #f5fafc;
+  --journey-soft-cyan: #edfaff;
+  --journey-panel: #ffffff;
+  --journey-focus: #005fcc;
+  color: var(--journey-ink);
+}
+
+.public-customer-journey-r3 *,
+.public-customer-journey-r3 *::before,
+.public-customer-journey-r3 *::after {
+  box-sizing: border-box;
+}
+
+.public-customer-journey-r3 main,
+.public-customer-journey-r3 section,
+.public-customer-journey-r3 aside,
+.public-customer-journey-r3 form,
+.public-customer-journey-r3 dl,
+.public-customer-journey-r3 div {
+  min-width: 0;
+}
+
+.public-customer-journey-r3 a:focus-visible,
+.public-customer-journey-r3 button:focus-visible,
+.public-customer-journey-r3 input:focus-visible,
+.public-customer-journey-r3 textarea:focus-visible {
+  outline: 3px solid rgba(0, 95, 204, .22);
+  outline-offset: 2px;
+}
+
+.public-case-strip {
+  border-bottom: 1px solid #dce9ef;
+  background: #f5fafc;
+  color: #5d7285;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.public-case-strip .container-shell {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  text-align: center;
+}
+
+.public-case-strip strong {
+  color: #334e63;
+}
+
+.public-customer-journey-r3 .refreshed-header-row {
+  grid-template-columns: 220px minmax(0, 1fr) auto;
+  gap: 24px;
+}
+
+.public-customer-journey-r3 .refreshed-nav {
+  gap: 8px;
+}
+
+.public-customer-journey-r3 .refreshed-nav a {
+  min-height: 44px;
+  padding: 0 15px;
+  border-radius: 10px;
+}
+
+.public-customer-journey-r3 .refreshed-nav a:hover {
+  background: #f4fbfd;
+}
+
+.public-customer-journey-r3 .refreshed-nav a.is-active::after {
+  left: 14px;
+  right: 14px;
+}
+
+.public-customer-journey-r3 .client-area-btn {
+  min-height: 44px;
+  border-radius: 10px;
+  padding: 0 17px;
+  white-space: nowrap;
+}
+
+.public-customer-journey-r3 .landing-hero-copy {
+  width: min(650px, 53%);
+}
+
+.public-customer-journey-r3 .landing-actions {
+  align-items: stretch;
+}
+
+.public-customer-journey-r3 .landing-btn {
+  min-height: 52px;
+  border-radius: 12px;
+}
+
+.public-customer-journey-r3 .landing-btn-primary {
+  min-width: 250px;
+  background: var(--landing-yellow);
+  color: var(--landing-navy);
+}
+
+.public-customer-journey-r3 .landing-btn-secondary {
+  min-width: 210px;
+  background: rgba(255, 255, 255, .96);
+}
+
+.public-customer-journey-r3 .landing-trust-badge {
+  max-width: 300px;
+}
+
+.landing-journeys {
+  padding: 26px 0 30px;
+  background: #fff;
+}
+
+.landing-section-heading {
+  max-width: 720px;
+  margin: 0 auto 18px;
+  text-align: center;
+}
+
+.landing-section-heading .landing-kicker {
+  font-size: 10px;
+  letter-spacing: .24em;
+}
+
+.landing-section-heading h2 {
+  margin: 8px 0 6px;
+  color: var(--landing-navy);
+  font-size: clamp(25px, 3vw, 34px);
+  line-height: 1.08;
+  letter-spacing: -.03em;
+}
+
+.landing-section-heading p {
+  margin: 0;
+  color: var(--journey-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.landing-journey-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.landing-journey-card {
+  min-height: 108px;
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid #d9e8ef;
+  border-radius: 16px;
+  background: #fff;
+  color: var(--journey-ink);
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgba(14, 54, 78, .055);
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.landing-journey-card:hover {
+  transform: translateY(-2px);
+  border-color: #9fd9e4;
+  box-shadow: 0 14px 32px rgba(14, 54, 78, .09);
+}
+
+.landing-journey-icon {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--journey-soft-cyan);
+  color: var(--journey-primary);
+}
+
+.landing-journey-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.landing-journey-card > span:nth-child(2) {
+  display: grid;
+  gap: 5px;
+}
+
+.landing-journey-card strong {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.landing-journey-card small {
+  color: var(--journey-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.landing-journey-arrow {
+  color: var(--journey-primary);
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* Report + tracking surfaces */
+.public-customer-journey-r3 .flow-main {
+  padding: 34px 0 54px;
+  background: linear-gradient(180deg, #f8fcfd 0%, #f3f8fb 100%);
+}
+
+.public-customer-journey-r3 .flow-grid {
+  grid-template-columns: minmax(0, 1fr) 286px;
+  gap: 18px;
+}
+
+.public-customer-journey-r3 .flow-panel,
+.public-customer-journey-r3 .step-card,
+.public-customer-journey-r3 .tracking-timeline-panel .quick-card {
+  border: 1px solid var(--journey-border);
+  border-radius: 14px;
+  background: var(--journey-panel);
+  box-shadow: 0 10px 28px rgba(14, 54, 78, .045);
+}
+
+.public-customer-journey-r3 .flow-panel {
+  padding: clamp(22px, 3vw, 32px);
+}
+
+.public-customer-journey-r3 .flow-panel .eyebrow {
+  min-height: 28px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--journey-soft-cyan);
+  color: var(--journey-primary-strong);
+  font-size: 11px;
+  letter-spacing: .02em;
+}
+
+.public-customer-journey-r3 .flow-panel h1 {
+  margin-top: 10px;
+  color: var(--journey-ink);
+  font-size: clamp(28px, 3.3vw, 38px);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.public-customer-journey-r3 .flow-panel .lead {
+  max-width: 780px;
+  margin-bottom: 22px;
+  color: var(--journey-muted);
+  font-size: 14px;
+  line-height: 1.58;
+}
+
+.public-customer-journey-r3 .step-card {
+  padding: 18px;
+  background: #fbfdfe;
+}
+
+.public-customer-journey-r3 .step-card h2 {
+  margin-bottom: 15px;
+  color: var(--journey-ink);
+}
+
+.public-customer-journey-r3 .step-list {
+  gap: 10px;
+}
+
+.public-customer-journey-r3 .step-list li {
+  min-height: 34px;
+  align-items: center;
+}
+
+.public-customer-journey-r3 .step-dot {
+  width: 28px;
+  height: 28px;
+  flex-basis: 28px;
+  border-color: #bedee6;
+  background: #fff;
+}
+
+.public-customer-journey-r3 .step-list li.current .step-dot {
+  background: var(--landing-yellow);
+  border-color: #e9d900;
+}
+
+.public-customer-journey-r3 .form-grid {
+  gap: 16px;
+}
+
+.public-customer-journey-r3 .field {
+  gap: 6px;
+}
+
+.public-customer-journey-r3 .field label {
+  color: #314b60;
+  font-size: 13px;
+}
+
+.public-customer-journey-r3 .input,
+.public-customer-journey-r3 .textarea {
+  min-height: 46px;
+  border-color: #cddbe4;
+  border-radius: 9px;
+  color: var(--journey-ink);
+}
+
+.public-customer-journey-r3 .input:focus,
+.public-customer-journey-r3 .textarea:focus {
+  border-color: #79bdcb;
+  box-shadow: 0 0 0 3px rgba(7, 138, 165, .10);
+}
+
+.public-customer-journey-r3 .field .hint,
+.public-customer-journey-r3 .request-id {
+  color: #758899;
+  font-size: 11px;
+}
+
+.public-customer-journey-r3 .btn {
+  min-height: 46px;
+  border-radius: 9px;
+  padding-inline: 18px;
+  font-size: 13px;
+}
+
+.public-customer-journey-r3 .btn-primary {
+  background: var(--landing-yellow);
+  color: #1c3447;
+  box-shadow: none;
+}
+
+.public-customer-journey-r3 .btn-ghost {
+  border-color: #bddce4;
+  color: var(--journey-primary-strong);
+}
+
+.public-customer-journey-r3 .alert {
+  margin: 14px 0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12px;
+}
+
+.public-customer-journey-r3 .verification-card,
+.public-customer-journey-r3 .review-card,
+.public-customer-journey-r3 .receipt-card {
+  border-color: #dce7ed;
+  border-radius: 12px;
+  background: #f9fbfc;
+  padding: 17px;
+}
+
+.public-customer-journey-r3 .verification-card dl,
+.public-customer-journey-r3 .review-card dl {
+  font-size: 13px;
+}
+
+.public-customer-journey-r3 .evidence-list li {
+  min-width: 0;
+  border-color: #dfe8ed;
+  background: #fff;
+}
+
+.public-customer-journey-r3 .evidence-list li span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.public-customer-journey-r3 .tracking-code {
+  max-width: 100%;
+  border-radius: 10px;
+  background: #17364f;
+  font-size: clamp(22px, 4vw, 31px);
+  letter-spacing: .045em;
+  overflow-wrap: anywhere;
+}
+
+.public-customer-journey-r3 .tracking-lookup-shell {
+  max-width: 800px;
+}
+
+.public-customer-journey-r3 .tracking-status-grid {
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 18px;
+}
+
+.public-customer-journey-r3 .status-hero-card {
+  padding: 17px;
+  border-color: #b8dfe7;
+  border-radius: 12px;
+  background: #f0fbfd;
+}
+
+.public-customer-journey-r3 .status-hero-card strong {
+  color: var(--journey-ink);
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.public-customer-journey-r3 .status-code {
+  max-width: 100%;
+  border-radius: 8px;
+  background: #e9f1f5;
+  color: #587083;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.public-customer-journey-r3 .tracking-timeline-panel {
+  top: 92px;
+}
+
+.public-customer-journey-r3 .tracking-timeline-panel .quick-card {
+  min-height: 0;
+  padding: 18px;
+}
+
+.public-customer-journey-r3 .tracking-timeline-panel .quick-card h2 {
+  margin: 0;
+  color: var(--journey-ink);
+  font-size: 15px;
+}
+
+.public-customer-journey-r3 code,
+.public-customer-journey-r3 .request-id {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .public-customer-journey-r3 .refreshed-header-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand actions"
+      "nav nav";
+    gap: 0 14px;
+    padding-top: 8px;
+  }
+
+  .public-customer-journey-r3 .refreshed-brand { grid-area: brand; }
+  .public-customer-journey-r3 .refreshed-header-actions { grid-area: actions; }
+
+  .public-customer-journey-r3 .refreshed-nav {
+    grid-area: nav;
+    min-height: 46px;
+    display: flex;
+    justify-content: flex-start;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .public-customer-journey-r3 .refreshed-nav::-webkit-scrollbar { display: none; }
+
+  .public-customer-journey-r3 .refreshed-nav a {
+    min-height: 42px;
+    flex: 0 0 auto;
+  }
+
+  .public-customer-journey-r3 .refreshed-nav a.is-active::after {
+    bottom: 2px;
+  }
+
+  .public-customer-journey-r3 .landing-hero-copy {
+    width: 100%;
+  }
+
+  .landing-journey-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-customer-journey-r3 .flow-grid,
+  .public-customer-journey-r3 .tracking-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-customer-journey-r3 .flow-side {
+    position: static;
+    order: -1;
+  }
+
+  .public-customer-journey-r3 .step-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .public-customer-journey-r3 .step-list li {
+    display: grid;
+    justify-items: center;
+    align-content: start;
+    gap: 5px;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.25;
+  }
+
+  .public-customer-journey-r3 .tracking-timeline-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .public-case-strip .container-shell {
+    min-height: 38px;
+    flex-wrap: wrap;
+    gap: 2px 6px;
+    padding-block: 6px;
+  }
+
+  .public-customer-journey-r3 .public-refresh-shell .brand-logo,
+  .public-customer-journey-r3 .brand-logo {
+    width: 145px;
+  }
+
+  .public-customer-journey-r3 .client-area-btn {
+    min-height: 44px;
+    padding-inline: 12px;
+    font-size: 11px;
+  }
+
+  .public-customer-journey-r3 .landing-hero {
+    min-height: 660px;
+  }
+
+  .public-customer-journey-r3 .landing-hero h1 {
+    font-size: clamp(38px, 11.5vw, 50px);
+  }
+
+  .public-customer-journey-r3 .landing-hero-photo {
+    inset: 344px 0 0 0;
+  }
+
+  .public-customer-journey-r3 .landing-trust-badge {
+    left: 12px;
+    right: 12px;
+  }
+
+  .landing-journeys {
+    padding: 22px 0;
+  }
+
+  .landing-journey-card {
+    min-height: 102px;
+    grid-template-columns: 44px minmax(0, 1fr) 16px;
+    gap: 11px;
+    padding: 15px;
+    border-radius: 13px;
+  }
+
+  .landing-journey-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .landing-journey-card strong {
+    font-size: 14px;
+  }
+
+  .landing-journey-card small {
+    font-size: 11px;
+  }
+
+  .public-customer-journey-r3 .flow-main {
+    padding: 18px 0 34px;
+  }
+
+  .public-customer-journey-r3 .flow-grid {
+    gap: 12px;
+  }
+
+  .public-customer-journey-r3 .flow-panel,
+  .public-customer-journey-r3 .step-card,
+  .public-customer-journey-r3 .tracking-timeline-panel .quick-card {
+    border-radius: 12px;
+  }
+
+  .public-customer-journey-r3 .flow-panel {
+    padding: 18px;
+  }
+
+  .public-customer-journey-r3 .flow-panel h1 {
+    font-size: clamp(27px, 8.5vw, 34px);
+  }
+
+  .public-customer-journey-r3 .form-grid.two {
+    grid-template-columns: 1fr;
+  }
+
+  .public-customer-journey-r3 .form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .public-customer-journey-r3 .form-actions .btn {
+    width: 100%;
+  }
+
+  .public-customer-journey-r3 .verification-card dl,
+  .public-customer-journey-r3 .review-card dl {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .public-customer-journey-r3 .verification-card dd,
+  .public-customer-journey-r3 .review-card dd {
+    margin-bottom: 9px;
+  }
+
+  .public-customer-journey-r3 .evidence-list li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .public-customer-journey-r3 .evidence-list button {
+    align-self: stretch;
+    border: 1px solid #f0caca;
+    border-radius: 8px;
+  }
+
+  .public-customer-journey-r3 .status-hero-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .public-customer-journey-r3 .tracking-code {
+    display: block;
+    width: 100%;
+  }
+}
