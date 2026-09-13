@@ -31,21 +31,21 @@ export function AdminAutomationsPage() {
       <main className="operator-main ops-main aa-admin-main">
         <div className="ops-page-heading aa-directory-heading">
           <div>
-            <span className="ops-kicker">Platform Automation R3</span>
-            <h1>Automations</h1>
-            <p>Reglas versionadas sobre triggers y acciones aprobadas. La API mantiene la autoridad sobre activación, concurrencia y seguridad del contenido.</p>
+            <span className="ops-kicker">Automatizaciones R3</span>
+            <h1>Automatizaciones</h1>
+            <p>Reglas versionadas sobre disparadores y acciones aprobadas. La API mantiene la autoridad sobre activación, concurrencia y seguridad del contenido.</p>
           </div>
-          <Link className="aa-primary-button" to="/operator/admin/automations/new">+ Nueva Automation</Link>
+          <Link className="aa-primary-button" to="/operator/admin/automations/new">+ Nueva automatización</Link>
         </div>
 
-        <section className="aa-contract-strip" aria-label="Frontera de Automations">
-          <div><strong>Triggers</strong><span>6 eventos R3 aprobados</span></div>
-          <div><strong>Actions</strong><span>8 tipos permitidos</span></div>
+        <section className="aa-contract-strip" aria-label="Frontera de automatizaciones">
+          <div><strong>Disparadores</strong><span>6 eventos R3 aprobados</span></div>
+          <div><strong>Acciones</strong><span>8 tipos permitidos</span></div>
           <div><strong>Listado</strong><span>Solo paginación del servidor</span></div>
         </section>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
-        {automationsQuery.isLoading && <div className="ops-compact-empty" role="status">Cargando Automations…</div>}
+        {automationsQuery.isLoading && <div className="ops-compact-empty" role="status">Cargando automatizaciones…</div>}
 
         {result && (
           <>
@@ -56,7 +56,7 @@ export function AdminAutomationsPage() {
               </div>
 
               {result.items.length === 0 ? (
-                <div className="ops-compact-empty">No hay Automations configuradas.</div>
+                <div className="ops-compact-empty">No hay automatizaciones configuradas.</div>
               ) : (
                 <div className="aa-card-grid">
                   {result.items.map((automation) => {
@@ -68,7 +68,7 @@ export function AdminAutomationsPage() {
                         <h3>{automation.displayName}</h3>
                         <code>{automation.key}</code>
                         <div className="aa-card-facts">
-                          <span><small>Definition version</small><strong>v{automation.version}</strong></span>
+                          <span><small>Versión de definición</small><strong>v{automation.version}</strong></span>
                           <span><small>Versiones</small><strong>{automation.versions.length}</strong></span>
                           <span><small>Activa</small><strong>{active ? `v${active.versionNumber}` : '—'}</strong></span>
                           <span><small>Acciones</small><strong>{(active ?? latest)?.content.then.length ?? 0}</strong></span>
@@ -81,7 +81,7 @@ export function AdminAutomationsPage() {
               )}
             </section>
 
-            <nav className="aa-pagination" aria-label="Paginación de Automations">
+            <nav className="aa-pagination" aria-label="Paginación de automatizaciones">
               <button type="button" disabled={page <= 1 || automationsQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>← Anterior</button>
               <span>Página {result.page} / {result.totalPages}</span>
               <button type="button" disabled={page >= result.totalPages || automationsQuery.isFetching} onClick={() => setPage((current) => current + 1)}>Siguiente →</button>
@@ -89,7 +89,7 @@ export function AdminAutomationsPage() {
           </>
         )}
 
-        <section className="aa-admin-contract-note"><strong>Sin filtros ni semántica inventada</strong><p>R3 publica paginación, no filtros por trigger, action type, key o estado. Los parámetros de acciones permanecen opacos salvo los límites de seguridad explícitos del contrato.</p></section>
+        <section className="aa-admin-contract-note"><strong>Sin filtros ni semántica inventada</strong><p>R3 publica paginación, no filtros por disparador, tipo de acción, key o estado. Los parámetros de acciones permanecen opacos salvo los límites de seguridad explícitos del contrato.</p></section>
       </main>
     </OperatorShell>
   );
