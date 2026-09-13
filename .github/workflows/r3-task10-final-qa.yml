@@ -1,0 +1,133 @@
+name: R3 Task 10 Final QA
+
+on:
+  push:
+    branches: [review/r3-task10-final-qa]
+
+permissions:
+  contents: read
+
+jobs:
+  final-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_task10_final
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_task10_final"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_task10_final
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-task10-final
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-task10-final
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+      REVIEW_TARGET_SHA: f89544dd0b409b64171a1264f8189ba5eb3ee0b2
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: f89544dd0b409b64171a1264f8189ba5eb3ee0b2
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Locked install and contract
+        run: |
+          npm ci
+          npm run contract:emit
+      - name: Full code and contract QA
+        run: |
+          npm run typecheck
+          npm run test
+          npm run typecheck --workspace=@insurance/web
+          npm run test --workspace=@insurance/web
+          npm run build --workspace=@insurance/web
+          npm run architecture:check
+          npm run ci:qa:validate
+          node scripts/validate-design-system.mjs
+          node scripts/validate-interface-inventory.mjs
+          npm run openapi:check:r3
+          npx --yes @redocly/cli@2.51.2 lint --extends=spec openapi.yaml
+          mkdir -p .runtime
+          npx --yes @redocly/cli@2.51.2 bundle openapi.yaml --dereferenced --output .runtime/openapi.bundle.json
+          npm run openapi:validate:r3
+          git diff --exit-code -- openapi.yaml openapi/r3
+          npm run postman:check:r3
+          npm run postman:validate:r3
+      - name: Prepare QA secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=r3-task10-final-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-task10-final-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-task10-final-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-task10-final-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+      - name: Bootstrap PostgreSQL
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+      - name: Start runtime
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-r3-task10-final .runtime/imports-r3-task10-final
+          npm run start:legacy > .runtime/task10-final-legacy.log 2>&1 &
+          npm run start:api > .runtime/task10-final-api.log 2>&1 &
+          for attempt in $(seq 1 50); do
+            legacy_ok=0; api_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Runtime QA and governed import lifecycle
+        shell: bash
+        run: |
+          node qa/runtime-qa.mjs
+          node --input-type=module <<'NODE'
+          const base=process.env.QA_BASE_URL;
+          async function json(method,path,body,token){const r=await fetch(base+path,{method,headers:{'content-type':'application/json',...(token?{authorization:`Bearer ${token}`}:{})},...(body===undefined?{}:{body:JSON.stringify(body)})});const t=await r.text();if(!r.ok)throw new Error(`${method} ${path} -> ${r.status}: ${t}`);return t?JSON.parse(t):null;}
+          const auth=await json('POST','/api/v1/operator/auth/login',{login:process.env.QA_ADMIN_LOGIN,password:process.env.QA_OPERATOR_PASSWORD});
+          const form=new FormData();form.append('importType','SYNTHETIC_REFERENCE_RECORDS');form.append('source',new Blob(['ref,label,class\nFINAL-A,Final Alpha,PRIMARY\nFINAL-B,,SECONDARY\n'],{type:'text/csv'}),'task10-final.csv');
+          let r=await fetch(base+'/api/v1/admin/import-jobs',{method:'POST',headers:{authorization:`Bearer ${auth.accessToken}`,'Idempotency-Key':'task10-final-create-0001'},body:form});if(!r.ok)throw new Error(await r.text());let job=await r.json();
+          job=await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/preview`,{expectedVersion:job.version},auth.accessToken);
+          job=await json('PUT',`/api/v1/admin/import-jobs/${job.importJobId}/mapping`,{expectedVersion:job.version,mapping:{externalReference:'ref',label:'label',classification:'class'}},auth.accessToken);
+          job=await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/validate`,{expectedVersion:job.version},auth.accessToken);
+          job=await json('POST',`/api/v1/admin/import-jobs/${job.importJobId}/dry-run`,{expectedVersion:job.version},auth.accessToken);
+          if(job.status!=='DRY_RUN_READY')throw new Error(`Expected DRY_RUN_READY, got ${job.status}`);
+          const rows=await json('GET',`/api/v1/admin/import-jobs/${job.importJobId}/rows?page=1&pageSize=10`,undefined,auth.accessToken);
+          if(rows.totalItems!==2)throw new Error(`Expected 2 rows, got ${rows.totalItems}`);
+          console.log(JSON.stringify({event:'R3_TASK10_FINAL_QA_PASS',head:process.env.REVIEW_TARGET_SHA,status:job.status,rows:rows.totalItems}));
+          NODE
+      - name: Upload runtime logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-task10-final-runtime-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/task10-final-*.log
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
