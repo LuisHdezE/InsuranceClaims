@@ -123,7 +123,7 @@ jobs:
           response=$(curl -fsS -X POST -H 'content-type: application/json' \
             -d "{\"login\":\"$QA_SUPERVISOR_LOGIN\",\"password\":\"$QA_OPERATOR_PASSWORD\"}" \
             http://127.0.0.1:3000/api/v1/operator/auth/login)
-          node -e 'const x=JSON.parse(process.argv[1]); if(x.data?.operator?.role!=="CLAIMS_SUPERVISOR" || !x.data?.accessToken) process.exit(1); console.log(JSON.stringify({event:"LOGIN_PREFLIGHT_OK",role:x.data.operator.role,expiresIn:x.data.expiresIn}))' "$response"
+          node -e 'const x=JSON.parse(process.argv[1]); if(x.operator?.role!=="CLAIMS_SUPERVISOR" || !x.accessToken || x.tokenType!=="Bearer" || x.expiresIn!==900) process.exit(1); console.log(JSON.stringify({event:"LOGIN_PREFLIGHT_OK",role:x.operator.role,expiresIn:x.expiresIn}))' "$response"
       - name: Capture and validate
         shell: bash
         run: |
