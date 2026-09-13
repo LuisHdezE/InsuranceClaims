@@ -1,0 +1,272 @@
+name: R3 Dashboard Visual Review
+
+on:
+  push:
+    branches: [review/r3-ui-increment-01-dashboard]
+
+permissions:
+  contents: read
+
+jobs:
+  dashboard-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_dashboard_review
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_dashboard_review"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_dashboard_review
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-dashboard-review
+      REVIEW_TARGET_SHA: 3251f0e19b6cc219662e8e063607a8a4aa5b7542
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Prepare synthetic review secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=r3-dashboard-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-dashboard-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-dashboard-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+
+      - name: Prepare browser runtime
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$browser_bin" ]]; then
+            echo "No supported Chrome/Chromium binary found on runner" >&2
+            exit 1
+          fi
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+
+      - name: Bootstrap database and synthetic identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          npx tsx qa/seed.ts
+
+      - name: Start simulated legacy, API and web client
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-r3-dashboard-review .runtime/dashboard-review
+          npm run start:legacy > .runtime/r3-dashboard-legacy.log 2>&1 &
+          echo $! > .runtime/r3-dashboard-legacy.pid
+          npm run start:api > .runtime/r3-dashboard-api.log 2>&1 &
+          echo $! > .runtime/r3-dashboard-api.pid
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/r3-dashboard-web.log 2>&1 &
+          echo $! > .runtime/r3-dashboard-web.pid
+
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 50); do
+            legacy_ok=0
+            api_ok=0
+            web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' \
+              -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' \
+              http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$legacy_ok" == "1" && "$api_ok" == "1" && "$web_ok" == "1" ]]; then exit 0; fi
+            if [[ "$attempt" == "50" ]]; then
+              cat .runtime/r3-dashboard-legacy.log || true
+              cat .runtime/r3-dashboard-api.log || true
+              cat .runtime/r3-dashboard-web.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Create authoritative synthetic claim through real API client
+        run: npx tsx qa/web-digital-claim-intake-runtime.ts
+
+      - name: Capture dashboard desktop and mobile
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          login = os.environ['QA_SUPERVISOR_LOGIN']
+          password = os.environ['QA_OPERATOR_PASSWORD']
+          target_sha = os.environ['REVIEW_TARGET_SHA']
+          out = Path('.runtime/dashboard-review')
+          out.mkdir(parents=True, exist_ok=True)
+
+          options = webdriver.ChromeOptions()
+          options.add_argument('--headless=new')
+          options.add_argument('--no-sandbox')
+          options.add_argument('--disable-dev-shm-usage')
+          options.add_argument('--disable-gpu')
+          options.add_argument('--force-device-scale-factor=1')
+          options.add_argument('--window-size=1440,1100')
+          browser_bin = os.environ.get('BROWSER_BIN')
+          if browser_bin:
+              options.binary_location = browser_bin
+
+          driver = webdriver.Chrome(options=options)
+          wait = WebDriverWait(driver, 20)
+
+          def full_capture(filename: str, width: int):
+              driver.set_window_size(width, 1000)
+              time.sleep(0.35)
+              metrics = driver.execute_script('''
+                const root = document.documentElement;
+                const viewport = root.clientWidth;
+                const offenders = [...document.querySelectorAll('body *')]
+                  .map((el) => {
+                    const r = el.getBoundingClientRect();
+                    return {
+                      tag: el.tagName,
+                      className: typeof el.className === 'string' ? el.className : '',
+                      id: el.id || '',
+                      left: Math.round(r.left),
+                      right: Math.round(r.right),
+                      width: Math.round(r.width),
+                      scrollWidth: el.scrollWidth,
+                      clientWidth: el.clientWidth
+                    };
+                  })
+                  .filter((x) => x.right > viewport + 2 || x.left < -2)
+                  .sort((a, b) => (b.right - viewport) - (a.right - viewport))
+                  .slice(0, 12);
+                return {
+                  clientWidth: viewport,
+                  scrollWidth: root.scrollWidth,
+                  scrollHeight: Math.max(root.scrollHeight, document.body.scrollHeight),
+                  h1Count: document.querySelectorAll('h1').length,
+                  kpiCount: document.querySelectorAll('.r3-ui-kpi-card').length,
+                  bodyText: document.body.innerText,
+                  offenders
+                };
+              ''')
+              overflow = metrics['scrollWidth'] - metrics['clientWidth']
+              if overflow > 2:
+                  raise AssertionError(
+                      f'Horizontal overflow at {width}px: {overflow}px; offenders={json.dumps(metrics["offenders"])}'
+                  )
+              if metrics['h1Count'] != 1:
+                  raise AssertionError(f'Expected one h1 at {width}px, found {metrics["h1Count"]}')
+              if metrics['kpiCount'] != 6:
+                  raise AssertionError(f'Expected six API-backed KPI cards, found {metrics["kpiCount"]}')
+              if 'Claims abiertos' not in metrics['bodyText'] or 'Reportados 30d' not in metrics['bodyText']:
+                  raise AssertionError('Expected authoritative dashboard KPI labels were not rendered')
+              height = min(max(int(metrics['scrollHeight']) + 40, 1000), 6000)
+              driver.set_window_size(width, height)
+              time.sleep(0.35)
+              driver.execute_script('window.scrollTo(0, 0)')
+              path = out / filename
+              if not driver.save_screenshot(str(path)):
+                  raise AssertionError(f'Unable to capture {filename}')
+              return {
+                  'width': width,
+                  'height': height,
+                  'horizontal_overflow_px': overflow,
+                  'h1_count': metrics['h1Count'],
+                  'kpi_count': metrics['kpiCount'],
+                  'file': str(path),
+              }
+
+          try:
+              driver.get(base + '/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-login'))).send_keys(login)
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-password'))).send_keys(password)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
+              wait.until(lambda d: d.current_url.startswith(base + '/operator/dashboard'))
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-ui-kpi-grid')))
+              wait.until(lambda d: 'Claims abiertos' in d.find_element(By.TAG_NAME, 'body').text)
+
+              desktop = full_capture('dashboard-supervisor-desktop.png', 1440)
+              mobile = full_capture('dashboard-supervisor-mobile.png', 390)
+              summary = {
+                  'review_type': 'r3_dashboard_visual_review',
+                  'review_target_sha': target_sha,
+                  'runtime_commit': os.environ.get('GITHUB_SHA'),
+                  'role': 'CLAIMS_SUPERVISOR',
+                  'api_authoritative': True,
+                  'screenshots': [desktop, mobile],
+              }
+              (out / 'dashboard-visual-review.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+              print(json.dumps(summary))
+          finally:
+              driver.quit()
+          PY
+
+      - name: Upload dashboard visual review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-dashboard-visual-review-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/dashboard-review/**
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          echo '=== API LOG ==='
+          tail -n 250 .runtime/r3-dashboard-api.log 2>/dev/null || true
+          echo '=== LEGACY LOG ==='
+          tail -n 250 .runtime/r3-dashboard-legacy.log 2>/dev/null || true
+          echo '=== WEB LOG ==='
+          tail -n 250 .runtime/r3-dashboard-web.log 2>/dev/null || true
+
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          pkill -f 'tsx apps/api/src/main.ts' 2>/dev/null || true
+          pkill -f 'tsx apps/legacy-simulator/src/main.ts' 2>/dev/null || true
+          pkill -f 'vite --host 127.0.0.1' 2>/dev/null || true
+          [[ -f .runtime/r3-dashboard-web.pid ]] && kill "$(cat .runtime/r3-dashboard-web.pid)" 2>/dev/null || true
+          [[ -f .runtime/r3-dashboard-api.pid ]] && kill "$(cat .runtime/r3-dashboard-api.pid)" 2>/dev/null || true
+          [[ -f .runtime/r3-dashboard-legacy.pid ]] && kill "$(cat .runtime/r3-dashboard-legacy.pid)" 2>/dev/null || true
