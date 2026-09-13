@@ -37,10 +37,12 @@ jobs:
       QA_OPERATOR_LOGIN: qa.operator@example.invalid
       QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
       EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-dashboard-review
-      REVIEW_TARGET_SHA: 3251f0e19b6cc219662e8e063607a8a4aa5b7542
+      REVIEW_TARGET_SHA: d97eb058519923a98eafb97625c476cc296ba8db
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: d97eb058519923a98eafb97625c476cc296ba8db
 
       - uses: actions/setup-node@v7
         with:
