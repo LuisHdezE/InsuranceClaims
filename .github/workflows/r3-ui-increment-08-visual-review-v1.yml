@@ -1,0 +1,148 @@
+name: R3 UI Increment 08 Visual Review V1
+
+on:
+  push:
+    branches: [review/r3-ui-increment-08-pipelines-automations-v1]
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_ui08_visual
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_ui08_visual"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      REVIEW_TARGET_SHA: b04778511f3a8dd7d9b7cc9b68b036bdfad003ce
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_ui08_visual
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_OPERATOR_PASSWORD: Synthetic-${{ github.run_id }}-${{ github.run_attempt }}-Aa9!
+      JWT_SECRET: synthetic-ui08-${{ github.run_id }}-${{ github.run_attempt }}-0123456789abcdef0123456789abcdef
+      CUSTOMER_JWT_SECRET: synthetic-ui08-customer-${{ github.run_id }}-${{ github.run_attempt }}-0123456789abcdef
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-ui08-visual
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-ui08-visual
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+      REVIEW_DIR: .runtime/r3-ui08-visual
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: b04778511f3a8dd7d9b7cc9b68b036bdfad003ce
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Verify exact product head
+        run: test "$(git rev-parse HEAD)" = "$REVIEW_TARGET_SHA"
+
+      - name: Install locked dependencies and emit contract
+        run: |
+          npm ci
+          npm run contract:emit
+
+      - name: Exact-head web validation
+        run: |
+          npm run typecheck --workspace @insurance/web
+          npm run test --workspace @insurance/web
+          npm run build --workspace @insurance/web
+
+      - name: Prepare browser tooling
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+
+      - name: Bootstrap PostgreSQL and synthetic identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+
+      - name: Start real API and web runtime
+        shell: bash
+        run: |
+          mkdir -p "$REVIEW_DIR" "$EVIDENCE_STORAGE_DIR" "$IMPORT_SOURCE_STORAGE_DIR"
+          npm run start:legacy > "$REVIEW_DIR/legacy.log" 2>&1 & echo $! > "$REVIEW_DIR/legacy.pid"
+          npm run start:api > "$REVIEW_DIR/api.log" 2>&1 & echo $! > "$REVIEW_DIR/api.pid"
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > "$REVIEW_DIR/web.log" 2>&1 & echo $! > "$REVIEW_DIR/web.pid"
+          for attempt in $(seq 1 60); do
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          cat "$REVIEW_DIR/api.log" || true
+          cat "$REVIEW_DIR/web.log" || true
+          exit 1
+
+      - name: Seed Pipelines and Automations through real API
+        run: node qa/r3_ui08_review_seed.mjs
+
+      - name: Capture desktop and 390px exact-head evidence
+        run: python qa/r3_ui08_visual_review.py
+
+      - name: Upload exact-head evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-ui-increment-08-visual-${{ env.REVIEW_TARGET_SHA }}
+          path: |
+            .runtime/r3-ui08-visual/*.png
+            .runtime/r3-ui08-visual/r3-ui08-visual-review.json
+            .runtime/r3-ui08-visual/seed.json
+            .runtime/r3-ui08-visual/api.log
+            .runtime/r3-ui08-visual/web.log
+            .runtime/r3-ui08-visual/legacy.log
+          retention-days: 30
+
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          for pidfile in "$REVIEW_DIR"/*.pid; do
+            [[ -f "$pidfile" ]] && kill "$(cat "$pidfile")" 2>/dev/null || true
+          done
