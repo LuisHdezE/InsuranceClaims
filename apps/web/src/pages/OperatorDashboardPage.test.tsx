@@ -211,11 +211,11 @@ describe('OperatorDashboardPage', () => {
     renderDashboard();
     await screen.findByText('Claims abiertos');
 
-    const select = screen.getByRole('combobox', { name: 'Ventana' });
+    const select = screen.getByRole('combobox', { name: 'Ventana' }) as HTMLSelectElement;
     fireEvent.change(select, { target: { value: '7' } });
 
     await waitFor(() => expect(mockedMetrics.mock.calls.length).toBeGreaterThanOrEqual(2));
-    expect(select).toHaveValue('7');
+    expect(select.value).toBe('7');
   });
 
   it('does not synthesize analytics for a role without claims.analytics.read', async () => {
