@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 const root = process.cwd();
 const manifestPath = 'documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.json';
 const expectedBaseline = 'cbace18fc1b00dcd6c17aca79dc12bb668cbd9a9';
+const expectedClosureMerge = '54f791707d6a4e2f9425f57d0a18e20e139fb518';
 const expectedReferencePostUiHead = '24817b7d36a23cc184a0615da9fb8a4e251ab2e2';
 
 const expectedApi = {
@@ -84,13 +85,19 @@ const expectedEvidence = {
   apiClosureWorkflow: '.github/workflows/r3-final-closure.yml',
 };
 
-const expectedAllowlist = [
+const expectedClosureAllowlist = [
   '.github/workflows/r3-full-product-technical-closure.yml',
   'documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.json',
   'documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.md',
   'package.json',
   'scripts/validate-r3-full-product-closure.mjs',
 ];
+
+const postClosureExactAllowlist = new Set([
+  'README.md',
+  'scripts/validate-r3-full-product-closure.mjs',
+]);
+const postClosurePrefixAllowlist = ['documentation/portfolio/'];
 
 function fail(message) {
   throw new Error(`[r3-full-product-closure] ${message}`);
@@ -108,6 +115,15 @@ function assertExactArray(actual, expected, label) {
   });
 }
 
+function changedPaths(base, head) {
+  const output = execFileSync('git', ['diff', '--name-only', `${base}...${head}`], { encoding: 'utf8' }).trim();
+  return output ? output.split(/\r?\n/u).filter(Boolean) : [];
+}
+
+function isAllowedPostClosurePath(path) {
+  return postClosureExactAllowlist.has(path) || postClosurePrefixAllowlist.some((prefix) => path.startsWith(prefix));
+}
+
 async function readText(path) {
   return readFile(resolve(root, path), 'utf8');
 }
@@ -115,7 +131,7 @@ async function readText(path) {
 const manifest = JSON.parse(await readText(manifestPath));
 
 assert(manifest.schemaVersion === 1, 'schemaVersion must remain 1');
-assert(manifest.status === 'CANDIDATE', 'manifest status must remain CANDIDATE until the human-gated merge');
+assert(manifest.status === 'CANDIDATE', 'historical closure manifest must remain the merged candidate record');
 assert(manifest.productBaseline === expectedBaseline, `product baseline must be ${expectedBaseline}`);
 assert(manifest.referencePostUiHead === expectedReferencePostUiHead, `post-UI reference head must be ${expectedReferencePostUiHead}`);
 assert(manifest.blueprintConsumerVersion === '0.5.2', 'Blueprint consumer version must remain 0.5.2');
@@ -131,7 +147,7 @@ assertExactArray(manifest.webSurfaces, expectedSurfaces, 'webSurfaces');
 assertExactArray(manifest.deliberateExclusions, expectedExclusions, 'deliberateExclusions');
 assertExactArray(manifest.requiredSuccessWorkflows, expectedSuccessWorkflows, 'requiredSuccessWorkflows');
 assertExactArray(manifest.allowedHistoricalSentinelFailures, expectedSentinels, 'allowedHistoricalSentinelFailures');
-assertExactArray(manifest.closureChangeAllowlist, expectedAllowlist, 'closureChangeAllowlist');
+assertExactArray(manifest.closureChangeAllowlist, expectedClosureAllowlist, 'closureChangeAllowlist');
 
 for (const [key, path] of Object.entries(expectedEvidence)) {
   assert(manifest.evidence?.[key] === path, `evidence.${key} drift: expected ${path}, got ${manifest.evidence?.[key]}`);
@@ -177,26 +193,31 @@ for (const [path, marker] of workflowExpectations) {
 }
 
 try {
-  execFileSync('git', ['merge-base', '--is-ancestor', expectedBaseline, 'HEAD'], { stdio: 'pipe' });
+  execFileSync('git', ['merge-base', '--is-ancestor', expectedClosureMerge, 'HEAD'], { stdio: 'pipe' });
 } catch {
-  fail(`HEAD must descend from accepted product baseline ${expectedBaseline}`);
+  fail(`HEAD must descend from approved full-product closure merge ${expectedClosureMerge}`);
 }
 
-const changedOutput = execFileSync('git', ['diff', '--name-only', `${expectedBaseline}...HEAD`], { encoding: 'utf8' }).trim();
-const changedPaths = changedOutput ? changedOutput.split(/\r?\n/u).filter(Boolean) : [];
-assert(changedPaths.length > 0, 'closure candidate must contain closure evidence changes');
-
-for (const path of changedPaths) {
-  assert(expectedAllowlist.includes(path), `product drift detected outside closure allowlist: ${path}`);
+const historicalClosurePaths = changedPaths(expectedBaseline, expectedClosureMerge);
+assert(historicalClosurePaths.length === expectedClosureAllowlist.length, `historical closure boundary drift: expected ${expectedClosureAllowlist.length} files, got ${historicalClosurePaths.length}`);
+for (const path of historicalClosurePaths) {
+  assert(expectedClosureAllowlist.includes(path), `historical closure merge contains unexpected path: ${path}`);
 }
-
-for (const path of expectedAllowlist) {
+for (const path of expectedClosureAllowlist) {
+  assert(historicalClosurePaths.includes(path), `historical closure merge is missing approved path: ${path}`);
   await readText(path);
+}
+
+const postClosurePaths = changedPaths(expectedClosureMerge, 'HEAD');
+for (const path of postClosurePaths) {
+  assert(isAllowedPostClosurePath(path), `product/API/runtime drift detected after full-product closure: ${path}`);
 }
 
 console.log('R3 FULL PRODUCT TECHNICAL CLOSURE CONTRACT: PASS');
 console.log(`Product baseline: ${expectedBaseline}`);
-console.log(`Closure-only changed files: ${changedPaths.length}`);
+console.log(`Approved closure merge: ${expectedClosureMerge}`);
+console.log(`Historical closure files preserved: ${historicalClosurePaths.length}`);
+console.log(`Post-closure non-product maintenance files: ${postClosurePaths.length}`);
 console.log(`R3 API: ${manifest.api.operations} operations / ${manifest.api.paths} paths / ${manifest.api.families} families`);
 console.log(`Productized web surfaces: ${manifest.webSurfaces.length}`);
 console.log(`Required success workflows: ${manifest.requiredSuccessWorkflows.length}`);
