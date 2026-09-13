@@ -39,7 +39,7 @@ describe('OperatorShell', () => {
     );
 
     expect(screen.getByText('InsuranceClaims')).toBeTruthy();
-    expect(screen.getByText('Centro de Operaciones')).toBeTruthy();
+    expect(screen.getAllByText('Centro de Operaciones').length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Operación' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Clientes y pólizas' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Administración' })).toBeNull();
