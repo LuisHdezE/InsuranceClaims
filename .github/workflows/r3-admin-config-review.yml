@@ -92,10 +92,14 @@ jobs:
       - name: Validate executable interface inventory
         run: node scripts/validate-interface-inventory.mjs
 
-      - name: Generate and validate OpenAPI R3
+      - name: Validate OpenAPI R3
         run: |
-          npm run openapi:generate:r3
+          npm run openapi:check:r3
+          npx --yes @redocly/cli@2.51.2 lint --extends=spec openapi.yaml
+          mkdir -p .runtime
+          npx --yes @redocly/cli@2.51.2 bundle openapi.yaml --dereferenced --output .runtime/openapi.bundle.json
           npm run openapi:validate:r3
+          git diff --exit-code -- openapi.yaml openapi/r3
 
       - name: Validate Postman R3 contract
         run: |
