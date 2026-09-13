@@ -99,7 +99,7 @@ describe('OperatorCustomerDetailPage R3 Customer 360', () => {
 
     expect(await screen.findByRole('heading', { name: 'Cliente 360' })).toBeTruthy();
     expect(screen.getByText('María API')).toBeTruthy();
-    expect(screen.getByText('CUS-API-1042')).toBeTruthy();
+    expect(screen.getAllByText('CUS-API-1042')).toHaveLength(2);
     expect(screen.getByText('POL-API-008')).toBeTruthy();
     expect(screen.getByText('Legacy: LEG-POL-008')).toBeTruthy();
     expect(screen.getByText('INS-01')).toBeTruthy();
