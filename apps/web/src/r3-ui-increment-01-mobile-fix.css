@@ -1,8 +1,62 @@
 /* R3 UI Increment 01 mobile containment.
-   Keep wide desktop affordances inside their panels and reflow the stage chart
-   instead of allowing page-level horizontal overflow. */
+   Keep wide desktop affordances inside their panels, reflow data-heavy views,
+   and preserve a compact horizontally scrollable operator navigation. */
 
 @media (max-width: 720px) {
+  .ops-sidebar.r3-ui-sidebar {
+    width: 100%;
+    max-width: 100%;
+    min-height: 62px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .ops-brand.r3-ui-brand {
+    width: 54px;
+    flex: 0 0 54px;
+    justify-content: flex-start;
+  }
+
+  .ops-nav.r3-ui-nav {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .r3-ui-nav-group,
+  .r3-ui-nav-links {
+    display: contents;
+  }
+
+  .r3-ui-nav .ops-nav-link {
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .r3-ui-nav .ops-nav-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+
   .r3-ui-dashboard,
   .r3-ui-dashboard > *,
   .r3-ui-recent-panel,
