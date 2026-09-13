@@ -1,0 +1,331 @@
+name: R3 Task 11 CC77 Visual Closure V4
+
+on:
+  push:
+    branches: [review/r3-task11-cc77-visual-v4]
+
+permissions:
+  contents: read
+
+jobs:
+  visual-closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_task11_visual_v4
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_task11_visual_v4"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_task11_visual_v4
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-task11-visual-v4
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+      REVIEW_TARGET_SHA: cc7797e47b2054787c598bad04ed07f4316903d1
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: cc7797e47b2054787c598bad04ed07f4316903d1
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Verify exact product head
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$REVIEW_TARGET_SHA"
+
+      - name: Install runtime and browser harness
+        shell: bash
+        run: |
+          npm ci
+          npm run contract:emit
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+          echo "JWT_SECRET=r3-task11-v4-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-task11-v4-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-task11-v4-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-task11-v4-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          mkdir -p .runtime/task11-cc77-visual-v4 .runtime/evidence-r3-task11-visual-v4
+
+      - name: Bootstrap PostgreSQL and synthetic identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+
+      - name: Start simulated legacy API and web
+        shell: bash
+        run: |
+          npm run start:legacy > .runtime/task11-cc77-visual-v4/legacy.log 2>&1 &
+          echo $! > .runtime/task11-cc77-visual-v4/legacy.pid
+          npm run start:api > .runtime/task11-cc77-visual-v4/api.log 2>&1 &
+          echo $! > .runtime/task11-cc77-visual-v4/api.pid
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/task11-cc77-visual-v4/web.log 2>&1 &
+          echo $! > .runtime/task11-cc77-visual-v4/web.pid
+          for attempt in $(seq 1 60); do
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Reconfirm official public runtimes
+        shell: bash
+        run: |
+          npx tsx qa/web-digital-claim-intake-runtime.ts
+          npx tsx qa/web-customer-claim-tracking-runtime.ts
+
+      - name: Capture and assert all 14 public views
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, time, traceback
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base=os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          out=Path('.runtime/task11-cc77-visual-v4')
+          options=webdriver.ChromeOptions()
+          for arg in ('--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--force-device-scale-factor=1'):
+              options.add_argument(arg)
+          options.add_argument('--window-size=1440,1000')
+          options.binary_location=os.environ['BROWSER_BIN']
+          options.set_capability('goog:loggingPrefs', {'browser':'ALL'})
+          driver=webdriver.Chrome(options=options)
+          wait=WebDriverWait(driver,30)
+          status_wait=WebDriverWait(driver,60)
+          captures=[]
+
+          def exact_path(path):
+              return lambda d: d.current_url.split('?',1)[0].rstrip('/') == (base+path).rstrip('/')
+
+          def metrics():
+              return driver.execute_script("const r=document.documentElement;return {cw:r.clientWidth,sw:r.scrollWidth,sh:Math.max(r.scrollHeight,document.body.scrollHeight),h1:document.querySelectorAll('h1').length};")
+
+          def capture(name,width,marker,primary=None,surface=None):
+              driver.set_window_size(width,1000)
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,marker)))
+              time.sleep(.45)
+              m=metrics(); overflow=m['sw']-m['cw']
+              assert overflow<=2,f'{name} {width}: overflow {overflow}'
+              assert m['h1']==1,f'{name} {width}: expected 1 h1, got {m["h1"]}'
+              if primary:
+                  node=driver.find_element(By.CSS_SELECTOR,primary)
+                  assert node.is_displayed(),f'{name} {width}: primary hidden'
+                  assert node.rect['height']>=43,f'{name} {width}: primary below target {node.rect}'
+              if surface:
+                  node=driver.find_element(By.CSS_SELECTOR,surface)
+                  style=driver.execute_script("const s=getComputedStyle(arguments[0]);return {r:parseFloat(s.borderRadius)};",node)
+                  assert style['r']>=9,f'{name} {width}: surface radius {style}'
+              if width==390:
+                  for label in ('Inicio','Reportar','Seguimiento','Acceso equipo'):
+                      node=wait.until(EC.visibility_of_element_located((By.LINK_TEXT,label)))
+                      assert node.is_displayed(),f'{name} mobile: missing {label}'
+              height=min(max(int(m['sh'])+40,1000),7000)
+              driver.set_window_size(width,height)
+              time.sleep(.35)
+              driver.execute_script('window.scrollTo(0,0)')
+              path=out/f'{name}-{width}.png'
+              assert driver.save_screenshot(str(path))
+              captures.append({'name':name,'width':width,'height':height,'horizontal_overflow_px':overflow,'h1_count':m['h1'],'file':str(path)})
+              driver.set_window_size(width,1000)
+              time.sleep(.45)
+
+          def fill_text(selector,value):
+              node=wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,selector)))
+              driver.execute_script("arguments[0].scrollIntoView({block:'center'})",node)
+              node.clear(); node.send_keys(value)
+
+          def set_datetime(value):
+              node=wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#occurredAt')))
+              driver.execute_script("const el=arguments[0],v=arguments[1];const s=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;s.call(el,v);el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));",node,value)
+
+          def click(selector):
+              node=wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,selector)))
+              driver.execute_script("arguments[0].scrollIntoView({block:'center'})",node)
+              time.sleep(.15)
+              driver.execute_script('arguments[0].click()',node)
+
+          def wait_tracking_status(suffix):
+              def ready(d):
+                  path=d.current_url.split('?',1)[0].rstrip('/')
+                  if path != (base+'/claims/track/status').rstrip('/'):
+                      return False
+                  return len(d.find_elements(By.CSS_SELECTOR,'.status-hero-card')) >= 1
+              try:
+                  status_wait.until(ready)
+                  status_wait.until(lambda d:'estado actual' in d.find_element(By.TAG_NAME,'body').text.lower())
+              except Exception:
+                  debug={
+                    'suffix':suffix,
+                    'url':driver.current_url,
+                    'body':driver.find_element(By.TAG_NAME,'body').text,
+                    'browser_logs':driver.get_log('browser'),
+                    'traceback':traceback.format_exc()
+                  }
+                  (out/f'tracking-timeout-{suffix}.json').write_text(json.dumps(debug,indent=2,ensure_ascii=False))
+                  driver.save_screenshot(str(out/f'tracking-timeout-{suffix}.png'))
+                  print(json.dumps(debug,indent=2,ensure_ascii=False))
+                  raise
+
+          def run_journey(width,suffix):
+              driver.set_window_size(width,1000)
+              driver.get(base+'/')
+              capture(f'landing-{suffix}',width,'.landing-home','.landing-btn-primary','.landing-journey-card')
+              body=driver.find_element(By.TAG_NAME,'body').text
+              assert 'Cotiza tu seguro' not in body
+              assert 'Pagos web' not in body
+              assert 'Área de clientes' not in body
+
+              click('.landing-btn-primary')
+              wait.until(exact_path('/claims/new/verify'))
+              capture(f'verify-{suffix}',width,'.flow-panel','.form-actions .btn-primary','.flow-panel')
+              fill_text('#policyReference','SYN-POL-001')
+              fill_text('#vehicleReference','SYN-VEH-001')
+              click('.form-actions .btn-primary')
+
+              wait.until(exact_path('/claims/new'))
+              wait.until(lambda d:'Póliza verificada' in d.find_element(By.TAG_NAME,'body').text)
+              capture(f'claim-data-{suffix}',width,'.verification-card','.form-actions .btn-primary','.flow-panel')
+              fill_text('#eventType',f'Synthetic collision {suffix}')
+              set_datetime('2026-09-13T12:00')
+              fill_text('#locationText',f'Synthetic Test Avenue {suffix}')
+              fill_text('#description',f'Synthetic customer journey visual review claim {suffix}.')
+              click('.form-actions .btn-primary')
+
+              wait.until(exact_path('/claims/new/review'))
+              wait.until(lambda d:f'Synthetic Test Avenue {suffix}' in d.find_element(By.TAG_NAME,'body').text)
+              capture(f'review-{suffix}',width,'.review-card','.form-actions .btn-primary','.flow-panel')
+              click('.form-actions .btn-primary')
+
+              wait.until(exact_path('/claims/new/success'))
+              wait.until(lambda d:'Siniestro reportado' in d.find_element(By.TAG_NAME,'body').text)
+              capture(f'success-{suffix}',width,'.receipt-card','.form-actions .btn-primary','.flow-panel')
+              body=driver.find_element(By.TAG_NAME,'body').text
+              assert 'Estado inicial: Recibido' in body,f'{suffix}: receipt status is not localized'
+              tracking_code=driver.find_element(By.CSS_SELECTOR,'.tracking-code').text.strip()
+              assert tracking_code
+
+              click('.form-actions .btn-primary')
+              wait.until(exact_path('/claims/track'))
+              capture(f'tracking-lookup-{suffix}',width,'.tracking-lookup-panel','.form-actions .btn-primary','.flow-panel')
+              fill_text('#trackingCode',tracking_code)
+              fill_text('#trackingPolicyReference','SYN-POL-001')
+              click('.form-actions .btn-primary')
+
+              wait_tracking_status(suffix)
+              capture(f'tracking-status-{suffix}',width,'.status-hero-card','.form-actions .btn-primary','.flow-panel')
+              assert 'Recibido' in driver.find_element(By.TAG_NAME,'body').text
+              return tracking_code
+
+          try:
+              desktop_code=run_journey(1440,'desktop')
+              mobile_code=run_journey(390,'mobile')
+              assert len(captures)==14,f'Expected 14 captures, got {len(captures)}'
+              assert all(c['horizontal_overflow_px']<=2 for c in captures),captures
+              manifest={
+                'target_sha':os.environ['REVIEW_TARGET_SHA'],
+                'desktop_tracking_code':desktop_code,
+                'mobile_tracking_code':mobile_code,
+                'captures':captures,
+                'assertions':{
+                  'capture_count':14,
+                  'max_horizontal_overflow_px':2,
+                  'expected_h1_count':1,
+                  'minimum_primary_action_height_px':43,
+                  'mobile_public_navigation_visible':True,
+                  'nonfunctional_primary_affordances_absent':True,
+                  'receipt_status_visible_as':'Recibido'
+                }
+              }
+              (out/'manifest.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False))
+              print(json.dumps(manifest,indent=2,ensure_ascii=False))
+          finally:
+              driver.quit()
+          PY
+
+      - name: Reset API limiter and run baseline runtime QA
+        shell: bash
+        run: |
+          kill "$(cat .runtime/task11-cc77-visual-v4/api.pid)" 2>/dev/null || true
+          sleep 1
+          npm run start:api >> .runtime/task11-cc77-visual-v4/api.log 2>&1 &
+          echo $! > .runtime/task11-cc77-visual-v4/api.pid
+          for attempt in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/health/live >/dev/null
+          node qa/runtime-qa.mjs
+
+      - name: Assert no unhandled API errors
+        shell: bash
+        run: |
+          if grep -q 'UNHANDLED_API_ERROR' .runtime/task11-cc77-visual-v4/api.log; then
+            grep 'UNHANDLED_API_ERROR' .runtime/task11-cc77-visual-v4/api.log
+            exit 1
+          fi
+
+      - name: Upload final visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-task11-cc77-visual-v4-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/task11-cc77-visual-v4/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          echo '=== API LOG ==='
+          tail -n 260 .runtime/task11-cc77-visual-v4/api.log 2>/dev/null || true
+          echo '=== WEB LOG ==='
+          tail -n 180 .runtime/task11-cc77-visual-v4/web.log 2>/dev/null || true
+
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          [[ -f .runtime/task11-cc77-visual-v4/api.pid ]] && kill "$(cat .runtime/task11-cc77-visual-v4/api.pid)" 2>/dev/null || true
+          [[ -f .runtime/task11-cc77-visual-v4/web.pid ]] && kill "$(cat .runtime/task11-cc77-visual-v4/web.pid)" 2>/dev/null || true
+          [[ -f .runtime/task11-cc77-visual-v4/legacy.pid ]] && kill "$(cat .runtime/task11-cc77-visual-v4/legacy.pid)" 2>/dev/null || true
