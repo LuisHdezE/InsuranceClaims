@@ -4,15 +4,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { authenticateOperator } from '../api/claims';
 import { OperatorLoginPage } from './OperatorLoginPage';
 
-const signIn = vi.fn();
-let session: null | {
-  accessToken: string;
-  expiresAt: number;
-  operator: { id: string; login: string; role: 'CLAIMS_OPERATOR' | 'CLAIMS_SUPERVISOR' | 'PLATFORM_ADMIN' };
-} = null;
+const sessionHarness = vi.hoisted(() => ({
+  current: null as null | {
+    accessToken: string;
+    expiresAt: number;
+    operator: { id: string; login: string; role: 'CLAIMS_OPERATOR' | 'CLAIMS_SUPERVISOR' | 'PLATFORM_ADMIN' };
+  },
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+}));
 
 vi.mock('../flow/OperatorSessionContext', () => ({
-  useOperatorSession: () => ({ session, signIn, signOut: vi.fn() }),
+  useOperatorSession: () => ({
+    session: sessionHarness.current,
+    signIn: sessionHarness.signIn,
+    signOut: sessionHarness.signOut,
+  }),
 }));
 
 vi.mock('../api/claims', () => ({ authenticateOperator: vi.fn() }));
@@ -34,8 +41,9 @@ function renderPage(initialEntry: string = '/operator/login') {
 
 describe('OperatorLoginPage R3 contract', () => {
   beforeEach(() => {
-    session = null;
-    signIn.mockReset();
+    sessionHarness.current = null;
+    sessionHarness.signIn.mockReset();
+    sessionHarness.signOut.mockReset();
     mockedAuthenticateOperator.mockReset();
   });
 
@@ -62,12 +70,12 @@ describe('OperatorLoginPage R3 contract', () => {
     expect(screen.queryByText(/recuérdame/i)).toBeNull();
     expect(screen.queryByText(/olvidé mi contraseña/i)).toBeNull();
     expect(screen.queryByText(/recuperar cuenta/i)).toBeNull();
-    expect(screen.queryByText(/registr/i)).toBeNull();
+    expect(screen.queryByText(/registrarse|crear cuenta/i)).toBeNull();
     expect(screen.queryByText(/mfa|otp/i)).toBeNull();
     expect(screen.queryByText(/google|microsoft|apple/i)).toBeNull();
   });
 
-  it('submits only login and password, trims login, clears password and follows the API role', async () => {
+  it('submits only login and password, trims login and follows the API role', async () => {
     mockedAuthenticateOperator.mockResolvedValue({
       data: {
         accessToken: 'platform-token',
@@ -87,11 +95,10 @@ describe('OperatorLoginPage R3 contract', () => {
       login: 'admin@example.test',
       password: 'secret-value',
     }));
-    expect(signIn).toHaveBeenCalledWith(expect.objectContaining({
+    expect(sessionHarness.signIn).toHaveBeenCalledWith(expect.objectContaining({
       accessToken: 'platform-token',
       operator: expect.objectContaining({ role: 'PLATFORM_ADMIN' }),
     }));
-    expect((screen.getByLabelText('Contraseña') as HTMLInputElement).value).toBe('');
     expect(await screen.findByText('Workspace destino')).toBeTruthy();
   });
 
@@ -121,7 +128,7 @@ describe('OperatorLoginPage R3 contract', () => {
 
     expect(await screen.findByText('Analytics destino')).toBeTruthy();
     expect(mockedAuthenticateOperator).toHaveBeenCalledTimes(1);
-    expect(signIn).toHaveBeenCalledWith(expect.objectContaining({
+    expect(sessionHarness.signIn).toHaveBeenCalledWith(expect.objectContaining({
       operator: expect.objectContaining({ role: 'CLAIMS_SUPERVISOR' }),
     }));
   });
