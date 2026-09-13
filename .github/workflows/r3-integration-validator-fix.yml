@@ -1,0 +1,55 @@
+name: R3 Integration Validator Fix
+
+on:
+  push:
+    branches: [review/r3-integration-validator-fix]
+
+permissions:
+  contents: write
+
+jobs:
+  fix-validator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: parallel/r3-08-12
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Patch false-positive refresh-token validator
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_HEAD="4fc840e8eaeca52934ab4fbddfe5305c9b67820a"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/validate-functional-slice-claims-backoffice.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = "assert(!login.toLowerCase().includes('refresh token'), 'UI must not invent a refresh token flow');"
+          new = """const loginLower = login.toLowerCase();
+const refreshTokenMentions = loginLower.match(/refresh token/g) ?? [];
+assert(
+  refreshTokenMentions.length === 0 || (refreshTokenMentions.length === 1 && loginLower.includes('sin refresh token')),
+  'UI must not invent a refresh token flow',
+);
+for (const forbiddenRefreshFlowMarker of ['refreshToken', 'refresh_token', '/api/v1/operator/auth/refresh', 'refreshSession', 'renewSession']) {
+  assert(!login.includes(forbiddenRefreshFlowMarker) && !claimsApi.includes(forbiddenRefreshFlowMarker), `UI must not invent refresh flow marker: ${forbiddenRefreshFlowMarker}`);
+}"""
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one validator assertion, found {text.count(old)}')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
+          node scripts/validate-functional-slice-claims-backoffice.mjs
+          git diff --check
+          git diff -- scripts/validate-functional-slice-claims-backoffice.mjs
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/validate-functional-slice-claims-backoffice.mjs
+          git commit -m "test(web): accept canonical no-refresh login copy"
+          git push origin HEAD:parallel/r3-08-12
+          echo "NEW_HEAD=$(git rev-parse HEAD)"
