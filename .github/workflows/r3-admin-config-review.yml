@@ -1,0 +1,416 @@
+name: R3 Admin Configuration Review
+
+on:
+  push:
+    branches: [review/r3-parallel-09-admin-config]
+
+permissions:
+  contents: read
+
+jobs:
+  admin-config-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_admin_config_review
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_admin_config_review"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_admin_config_review
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-admin-config-review
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-admin-config-review
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+      REVIEW_TARGET_SHA: 10b5d5d68eef5a8ce58ecb739efa801ad9f4c0f9
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 10b5d5d68eef5a8ce58ecb739efa801ad9f4c0f9
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Typecheck production code
+        run: npm run typecheck
+
+      - name: Run core automated tests
+        run: npm run test
+
+      - name: Typecheck web client
+        run: npm run typecheck --workspace=@insurance/web
+
+      - name: Run web client tests
+        run: npm run test --workspace=@insurance/web
+
+      - name: Build web client
+        run: npm run build --workspace=@insurance/web
+
+      - name: Validate architecture
+        run: npm run architecture:check
+
+      - name: Validate CI QA hardening invariants
+        run: npm run ci:qa:validate
+
+      - name: Validate Design System
+        run: node scripts/validate-design-system.mjs
+
+      - name: Validate executable interface inventory
+        run: node scripts/validate-interface-inventory.mjs
+
+      - name: Generate and validate OpenAPI R3
+        run: |
+          npm run openapi:generate:r3
+          npm run openapi:validate:r3
+
+      - name: Validate Postman R3 contract
+        run: |
+          npm run postman:check:r3
+          npm run postman:validate:r3
+
+      - name: Prepare synthetic review secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=r3-admin-config-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-admin-config-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-admin-config-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-admin-config-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+
+      - name: Prepare browser and PostgreSQL clients
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+
+      - name: Bootstrap database and synthetic identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+
+      - name: Start simulated legacy, API and web client
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-r3-admin-config-review .runtime/imports-r3-admin-config-review .runtime/admin-config-review
+          npm run start:legacy > .runtime/r3-admin-config-legacy.log 2>&1 &
+          npm run start:api > .runtime/r3-admin-config-api.log 2>&1 &
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/r3-admin-config-web.log 2>&1 &
+
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 50); do
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Execute baseline API runtime QA
+        run: node qa/runtime-qa.mjs
+
+      - name: Create Task 8 synthetic definitions through real API
+        shell: bash
+        run: |
+          node <<'NODE'
+          const base = process.env.QA_BASE_URL.replace(/\/$/, '');
+          const login = process.env.QA_ADMIN_LOGIN;
+          const password = process.env.QA_OPERATOR_PASSWORD;
+
+          async function request(method, path, body, token) {
+            const response = await fetch(base + path, {
+              method,
+              headers: {
+                'content-type': 'application/json',
+                ...(token ? { authorization: `Bearer ${token}` } : {}),
+              },
+              ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+            });
+            const text = await response.text();
+            if (!response.ok) throw new Error(`${method} ${path} -> ${response.status}: ${text}`);
+            return text ? JSON.parse(text) : null;
+          }
+
+          const auth = await request('POST', '/api/v1/operator/auth/login', { login, password });
+          const token = auth.accessToken;
+
+          async function createActivated(basePath, body) {
+            let definition = await request('POST', basePath, body, token);
+            const draft = definition.versions.find((version) => version.status === 'DRAFT');
+            if (!draft) throw new Error(`No DRAFT returned from ${basePath}`);
+            definition = await request('POST', `${basePath}/${definition.definitionId}/versions/${draft.versionId}/activate`, {
+              expectedDefinitionVersion: definition.version,
+            }, token);
+            definition = await request('PATCH', `${basePath}/${definition.definitionId}`, {
+              expectedDefinitionVersion: definition.version,
+              enabled: true,
+            }, token);
+            return definition;
+          }
+
+          await createActivated('/api/v1/admin/communication-templates', {
+            key: 'qa.claim.status.notice',
+            channel: 'EMAIL',
+            subject: 'Actualización de tu siniestro',
+            body: 'Tu siniestro {{claimRef}} recibió una actualización gobernada.',
+            variableSchema: { claimRef: 'STRING' },
+            sourceClassification: 'SYNTHETIC_QA',
+          });
+          await request('POST', '/api/v1/admin/communication-templates', {
+            key: 'qa.claim.whatsapp.notice',
+            channel: 'WHATSAPP',
+            subject: null,
+            body: 'Actualización sintética para {{claimRef}}.',
+            variableSchema: { claimRef: 'STRING' },
+            sourceClassification: 'SYNTHETIC_QA',
+          }, token);
+
+          await createActivated('/api/v1/admin/custom-fields', {
+            fieldKey: 'qa.claim.adjusterNote',
+            targetType: 'CLAIM',
+            valueType: 'STRING',
+            displayName: 'Nota operativa QA',
+            validationMetadata: { maxLength: 180 },
+            enumValues: [],
+            sensitivityClassification: 'STAFF_ONLY',
+            sourceClassification: 'SYNTHETIC_QA',
+          });
+          await request('POST', '/api/v1/admin/custom-fields', {
+            fieldKey: 'qa.renewal.reviewBand',
+            targetType: 'RENEWAL',
+            valueType: 'ENUM',
+            displayName: 'Banda de revisión QA',
+            validationMetadata: {},
+            enumValues: ['STANDARD', 'ATTENTION'],
+            sensitivityClassification: 'STAFF_ONLY',
+            sourceClassification: 'SYNTHETIC_QA',
+          }, token);
+
+          await createActivated('/api/v1/admin/guidance', {
+            key: 'qa.claim.initial.review',
+            insurerContextReference: 'SYNTHETIC_QA_CONTEXT',
+            guidanceCategory: 'INITIAL_REVIEW',
+            documentCategories: ['CLAIM_FORM', 'PHOTO'],
+            instructions: ['Revisar integridad documental.', 'Confirmar que la evidencia corresponde al expediente.'],
+            assistanceMetadata: { audience: 'QA_STAFF' },
+            sourceClassification: 'SYNTHETIC_QA',
+          });
+          await request('POST', '/api/v1/admin/guidance', {
+            key: 'qa.claim.document.followup',
+            insurerContextReference: 'SYNTHETIC_QA_CONTEXT',
+            guidanceCategory: 'DOCUMENT_FOLLOWUP',
+            documentCategories: ['SUPPORTING_DOCUMENT'],
+            instructions: ['Solicitar únicamente documentación definida por la configuración.'],
+            assistanceMetadata: { audience: 'QA_STAFF' },
+            sourceClassification: 'SYNTHETIC_QA',
+          }, token);
+
+          console.log(JSON.stringify({ event: 'R3_TASK8_SYNTHETIC_DEFINITIONS_CREATED' }));
+          NODE
+
+      - name: Capture Task 8 desktop and 390px visual evidence
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          login = os.environ['QA_ADMIN_LOGIN']
+          password = os.environ['QA_OPERATOR_PASSWORD']
+          target_sha = os.environ['REVIEW_TARGET_SHA']
+          out = Path('.runtime/admin-config-review')
+          out.mkdir(parents=True, exist_ok=True)
+
+          options = webdriver.ChromeOptions()
+          for arg in ('--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--force-device-scale-factor=1'):
+              options.add_argument(arg)
+          options.add_argument('--window-size=1440,1100')
+          options.binary_location = os.environ['BROWSER_BIN']
+          driver = webdriver.Chrome(options=options)
+          wait = WebDriverWait(driver, 20)
+
+          def metrics():
+              return driver.execute_script('''
+                const root = document.documentElement;
+                return {
+                  clientWidth: root.clientWidth,
+                  scrollWidth: root.scrollWidth,
+                  scrollHeight: Math.max(root.scrollHeight, document.body.scrollHeight),
+                  h1Count: document.querySelectorAll('h1').length,
+                  bodyText: document.body.innerText
+                };
+              ''')
+
+          def capture(filename, width, kind, card_selector, required_text):
+              driver.set_window_size(width, 1000)
+              time.sleep(.45)
+              m = metrics()
+              overflow = m['scrollWidth'] - m['clientWidth']
+              assert overflow <= 2, f'{kind}: horizontal overflow at {width}px = {overflow}px'
+              assert m['h1Count'] == 1, f'{kind}: expected one h1 at {width}px, got {m["h1Count"]}'
+              assert required_text in m['bodyText'], f'{kind}: missing expected API-backed content {required_text}'
+              cards = driver.find_elements(By.CSS_SELECTOR, card_selector)
+              assert cards, f'{kind}: no cards found for {card_selector}'
+              primary = driver.find_elements(By.CSS_SELECTOR, '.comm-primary-button, .cf-primary-button, .guidance-primary-button')
+              if primary:
+                  assert primary[0].rect['height'] >= 43, f'{kind}: primary action below 44px target: {primary[0].rect}'
+              first_style = driver.execute_script('''
+                const s = getComputedStyle(arguments[0]);
+                return { background: s.backgroundColor, radius: s.borderRadius };
+              ''', cards[0])
+              assert first_style['background'] == 'rgb(255, 255, 255)', f'{kind}: R3 light card layer not applied: {first_style}'
+              assert first_style['radius'] == '12px', f'{kind}: expected 12px card radius: {first_style}'
+              height = min(max(int(m['scrollHeight']) + 40, 1000), 7000)
+              driver.set_window_size(width, height)
+              time.sleep(.35)
+              driver.execute_script('window.scrollTo(0, 0)')
+              path = out / filename
+              assert driver.save_screenshot(str(path))
+              return {
+                  'kind': kind,
+                  'width': width,
+                  'height': height,
+                  'horizontal_overflow_px': overflow,
+                  'h1_count': m['h1Count'],
+                  'file': str(path),
+              }
+
+          def click_sidebar(href, marker):
+              driver.set_window_size(1440, 1100)
+              link = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, f'a[href="{href}"]')))
+              link.click()
+              wait.until(lambda d: d.current_url.startswith(base + href))
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, marker)))
+
+          try:
+              driver.get(base + '/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-login'))).send_keys(login)
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-password'))).send_keys(password)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
+              wait.until(lambda d: d.current_url.startswith(base + '/operator/workspace'))
+
+              shots = []
+
+              click_sidebar('/operator/admin/communication-templates', '.comm-template-grid')
+              wait.until(lambda d: 'qa.claim.status.notice' in d.find_element(By.TAG_NAME, 'body').text)
+              shots.append(capture('communication-templates-directory-desktop.png', 1440, 'communication-directory', '.comm-template-card', 'qa.claim.status.notice'))
+              shots.append(capture('communication-templates-directory-mobile.png', 390, 'communication-directory', '.comm-template-card', 'qa.claim.status.notice'))
+              driver.set_window_size(1440, 1100)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.comm-card-link'))).click()
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.comm-version-card')))
+              shots.append(capture('communication-template-detail-desktop.png', 1440, 'communication-detail', '.comm-version-card', 'Historial de versiones'))
+              shots.append(capture('communication-template-detail-mobile.png', 390, 'communication-detail', '.comm-version-card', 'Historial de versiones'))
+
+              click_sidebar('/operator/admin/custom-fields', '.cf-card-grid')
+              wait.until(lambda d: 'qa.claim.adjusterNote' in d.find_element(By.TAG_NAME, 'body').text)
+              shots.append(capture('custom-fields-directory-desktop.png', 1440, 'custom-fields-directory', '.cf-definition-card', 'qa.claim.adjusterNote'))
+              shots.append(capture('custom-fields-directory-mobile.png', 390, 'custom-fields-directory', '.cf-definition-card', 'qa.claim.adjusterNote'))
+              driver.set_window_size(1440, 1100)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.cf-definition-card'))).click()
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.cf-version-card')))
+              shots.append(capture('custom-field-detail-desktop.png', 1440, 'custom-field-detail', '.cf-version-card', 'Historial de versiones'))
+              shots.append(capture('custom-field-detail-mobile.png', 390, 'custom-field-detail', '.cf-version-card', 'Historial de versiones'))
+
+              click_sidebar('/operator/admin/guidance', '.guidance-card-grid')
+              wait.until(lambda d: 'qa.claim.initial.review' in d.find_element(By.TAG_NAME, 'body').text)
+              shots.append(capture('guidance-directory-desktop.png', 1440, 'guidance-directory', '.guidance-definition-card', 'qa.claim.initial.review'))
+              shots.append(capture('guidance-directory-mobile.png', 390, 'guidance-directory', '.guidance-definition-card', 'qa.claim.initial.review'))
+              driver.set_window_size(1440, 1100)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.guidance-definition-card'))).click()
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.guidance-version-card')))
+              shots.append(capture('guidance-detail-desktop.png', 1440, 'guidance-detail', '.guidance-version-card', 'Historial de versiones'))
+              shots.append(capture('guidance-detail-mobile.png', 390, 'guidance-detail', '.guidance-version-card', 'Historial de versiones'))
+
+              summary = {
+                  'review_type': 'r3_admin_config_visual_review',
+                  'review_target_sha': target_sha,
+                  'runtime_commit': os.environ.get('GITHUB_SHA'),
+                  'role': 'PLATFORM_ADMIN',
+                  'api_authoritative': True,
+                  'screenshots': shots,
+              }
+              (out / 'admin-config-visual-review.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+              print(json.dumps(summary))
+          finally:
+              driver.quit()
+          PY
+
+      - name: Upload Task 8 exact-head review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-admin-config-review-${{ env.REVIEW_TARGET_SHA }}
+          path: .runtime/admin-config-review/**
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Runtime logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          tail -n 250 .runtime/r3-admin-config-api.log 2>/dev/null || true
+          tail -n 150 .runtime/r3-admin-config-legacy.log 2>/dev/null || true
+          tail -n 150 .runtime/r3-admin-config-web.log 2>/dev/null || true
+
+      - name: Stop runtime services
+        if: always()
+        shell: bash
+        run: |
+          pkill -f 'tsx apps/api/src/main.ts' 2>/dev/null || true
+          pkill -f 'tsx apps/legacy-simulator/src/main.ts' 2>/dev/null || true
+          pkill -f 'vite --host 127.0.0.1' 2>/dev/null || true
