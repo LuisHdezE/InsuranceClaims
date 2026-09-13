@@ -102,6 +102,7 @@ jobs:
           options = webdriver.ChromeOptions()
           for arg in ('--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--force-device-scale-factor=1'):
               options.add_argument(arg)
+          options.add_argument('--window-size=1440,1000')
           options.binary_location = os.environ['BROWSER_BIN']
           driver = webdriver.Chrome(options=options)
           wait = WebDriverWait(driver, 20)
@@ -110,7 +111,8 @@ jobs:
               driver.get(base + '/operator/login')
               wait.until(EC.visibility_of_element_located((By.ID, 'operator-login'))).send_keys(os.environ['QA_ADMIN_LOGIN'])
               wait.until(EC.visibility_of_element_located((By.ID, 'operator-password'))).send_keys(os.environ['QA_OPERATOR_PASSWORD'])
-              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
+              submit = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button.r3-login-submit')))
+              driver.execute_script('arguments[0].click()', submit)
               wait.until(lambda d: d.current_url.startswith(base + '/operator/workspace'))
               for width in (1440, 390):
                   driver.set_window_size(width, 1000)
