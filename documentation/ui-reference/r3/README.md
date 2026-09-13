@@ -45,6 +45,7 @@ Este directorio conserva las vistas **aprobadas explícitamente** durante la rac
 | Recovery Operations / Dead Letters | DIFERENCIADOR TÉCNICO / MANTENER | `recovery-operations-approved.svg` + `recovery-operations-approved.md` |
 | Analytics R3 | MANTENER / SIMPLIFICAR | `analytics-r3-approved.svg` + `analytics-r3-approved.md` |
 | Staff Workspace R3 | MANTENER / SIMPLIFICAR | `staff-workspace-r3-approved.svg` + `staff-workspace-r3-approved.md` |
+| Directorio de Clientes R3 | MANTENER / SIMPLIFICAR | `customer-directory-approved.svg` + `customer-directory-approved.md` |
 
 ## Principios funcionales clave
 
@@ -62,6 +63,9 @@ Responsabilidad: **organizar y cerrar trabajo operativo**. Completar una tarea n
 
 ### Cliente 360 / Póliza 360
 Responsabilidad: **contexto rápido de lectura**. No se inventa edición ni atributos ausentes en el API.
+
+### Directorio de Clientes R3
+Responsabilidad: **buscar y seleccionar clientes** mediante filtros server-side y abrir Cliente 360. No crea, edita ni elimina clientes.
 
 ### Renovaciones / Cobranzas
 Responsabilidad: **gestionar casos de negocio propios** sin duplicar los 360. Lifecycle y pipeline permanecen separados. En Cobranzas, el estado de pago es una tercera dimensión autoritativa independiente.
