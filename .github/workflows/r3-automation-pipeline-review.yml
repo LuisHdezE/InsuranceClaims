@@ -1,0 +1,396 @@
+name: R3 Automation Pipeline Review
+
+on:
+  push:
+    branches: [review/r3-parallel-10-automation-pipelines]
+
+permissions:
+  contents: read
+
+jobs:
+  automation-pipeline-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_automation_pipeline_review
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_automation_pipeline_review"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_automation_pipeline_review
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-automation-pipeline-review
+      IMPORT_SOURCE_STORAGE_DIR: .runtime/imports-r3-automation-pipeline-review
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+      REVIEW_TARGET_SHA: c13abfe75db5eb2ce2895c29da1c4bdd7835e69c
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: c13abfe75db5eb2ce2895c29da1c4bdd7835e69c
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Typecheck production code
+        run: npm run typecheck
+
+      - name: Run core automated tests
+        run: npm run test
+
+      - name: Typecheck web client
+        run: npm run typecheck --workspace=@insurance/web
+
+      - name: Run web client tests
+        run: npm run test --workspace=@insurance/web
+
+      - name: Build web client
+        run: npm run build --workspace=@insurance/web
+
+      - name: Validate architecture
+        run: npm run architecture:check
+
+      - name: Validate CI QA hardening invariants
+        run: npm run ci:qa:validate
+
+      - name: Validate Design System
+        run: node scripts/validate-design-system.mjs
+
+      - name: Validate executable interface inventory
+        run: node scripts/validate-interface-inventory.mjs
+
+      - name: Validate OpenAPI R3
+        run: |
+          npm run openapi:check:r3
+          npx --yes @redocly/cli@2.51.2 lint --extends=spec openapi.yaml
+          mkdir -p .runtime
+          npx --yes @redocly/cli@2.51.2 bundle openapi.yaml --dereferenced --output .runtime/openapi.bundle.json
+          npm run openapi:validate:r3
+          git diff --exit-code -- openapi.yaml openapi/r3
+
+      - name: Validate Postman R3 contract
+        run: |
+          npm run postman:check:r3
+          npm run postman:validate:r3
+
+      - name: Prepare synthetic review secrets
+        shell: bash
+        run: |
+          echo "JWT_SECRET=r3-automation-pipeline-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-automation-pipeline-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-automation-pipeline-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-automation-pipeline-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+
+      - name: Prepare browser and PostgreSQL clients
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+
+      - name: Bootstrap database and synthetic identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+
+      - name: Start simulated legacy, API and web client
+        shell: bash
+        run: |
+          mkdir -p .runtime/evidence-r3-automation-pipeline-review .runtime/imports-r3-automation-pipeline-review .runtime/automation-pipeline-review
+          npm run start:legacy > .runtime/r3-automation-pipeline-legacy.log 2>&1 &
+          npm run start:api > .runtime/r3-automation-pipeline-api.log 2>&1 &
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/r3-automation-pipeline-web.log 2>&1 &
+
+      - name: Wait for runtime services
+        shell: bash
+        run: |
+          for attempt in $(seq 1 50); do
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
+            curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
+            sleep 1
+          done
+          echo 'Runtime services did not become ready.' >&2
+          exit 1
+
+      - name: Execute baseline API runtime QA
+        run: node qa/runtime-qa.mjs
+
+      - name: Create Task 9 synthetic definitions through real API
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const base = process.env.QA_BASE_URL.replace(/\/$/, '');
+          const login = process.env.QA_ADMIN_LOGIN;
+          const password = process.env.QA_OPERATOR_PASSWORD;
+
+          async function request(method, path, body, token) {
+            const response = await fetch(base + path, {
+              method,
+              headers: {
+                'content-type': 'application/json',
+                ...(token ? { authorization: `Bearer ${token}` } : {}),
+              },
+              ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+            });
+            const text = await response.text();
+            if (!response.ok) throw new Error(`${method} ${path} -> ${response.status}: ${text}`);
+            return text ? JSON.parse(text) : null;
+          }
+
+          const auth = await request('POST', '/api/v1/operator/auth/login', { login, password });
+          const token = auth.accessToken;
+
+          async function activateAndEnable(basePath, definition) {
+            const draft = definition.versions.find((version) => version.status === 'DRAFT');
+            if (!draft) throw new Error(`No DRAFT returned from ${basePath}`);
+            definition = await request('POST', `${basePath}/${definition.definitionId}/versions/${draft.versionId}/activate`, {
+              expectedDefinitionVersion: definition.version,
+            }, token);
+            definition = await request('PATCH', `${basePath}/${definition.definitionId}`, {
+              expectedDefinitionVersion: definition.version,
+              enabled: true,
+            }, token);
+            return definition;
+          }
+
+          let automation = await request('POST', '/api/v1/admin/automations', {
+            key: 'qa.claim.initial.review',
+            displayName: 'Revisión inicial de siniestro QA',
+            sourceClassification: 'SYNTHETIC_QA',
+            content: {
+              when: { eventType: 'CLAIM_CREATED' },
+              if: [{ field: 'claim.status', operator: 'EQ', value: 'RECEIVED' }],
+              wait: { delaySeconds: 300 },
+              then: [
+                { key: 'create_initial_review', type: 'CREATE_TASK', parameters: { taskType: 'CLAIM_REVIEW', priority: 'NORMAL' } },
+                { key: 'notify_operator', type: 'NOTIFY_OPERATOR', parameters: { messageKey: 'QA_INITIAL_REVIEW' } },
+              ],
+            },
+          }, token);
+          automation = await activateAndEnable('/api/v1/admin/automations', automation);
+
+          await request('POST', '/api/v1/admin/automations', {
+            key: 'qa.claim.scheduled.check',
+            displayName: 'Control programado QA',
+            sourceClassification: 'SYNTHETIC_QA',
+            content: {
+              when: { eventType: 'SCHEDULED_CHECK' },
+              if: [],
+              wait: null,
+              then: [{ key: 'notify_review', type: 'NOTIFY_OPERATOR', parameters: { messageKey: 'QA_SCHEDULED_CHECK' } }],
+            },
+          }, token);
+
+          let pipeline = await request('POST', '/api/v1/admin/pipelines', {
+            key: 'qa.claim.standard.flow',
+            consumerType: 'CLAIM',
+            displayName: 'Flujo estándar de siniestros QA',
+            sourceClassification: 'SYNTHETIC_QA',
+            stages: [
+              { stageKey: 'RECEIVED', displayName: 'Recibido', sortOrder: 1, allowedNextStageKeys: ['UNDER_REVIEW'], reportingFlags: { intake: true } },
+              { stageKey: 'UNDER_REVIEW', displayName: 'En revisión', sortOrder: 2, allowedNextStageKeys: ['RESOLVED'], reportingFlags: { workInProgress: true } },
+              { stageKey: 'RESOLVED', displayName: 'Resuelto', sortOrder: 3, allowedNextStageKeys: [], reportingFlags: { terminal: true } },
+            ],
+          }, token);
+          pipeline = await activateAndEnable('/api/v1/admin/pipelines', pipeline);
+
+          await request('POST', '/api/v1/admin/pipelines', {
+            key: 'qa.renewal.review.flow',
+            consumerType: 'RENEWAL',
+            displayName: 'Revisión de renovaciones QA',
+            sourceClassification: 'SYNTHETIC_QA',
+            stages: [
+              { stageKey: 'PENDING_REVIEW', displayName: 'Pendiente', sortOrder: 1, allowedNextStageKeys: ['REVIEWED'], reportingFlags: { pending: true } },
+              { stageKey: 'REVIEWED', displayName: 'Revisada', sortOrder: 2, allowedNextStageKeys: [], reportingFlags: { terminal: true } },
+            ],
+          }, token);
+
+          const seed = {
+            automationDefinitionId: automation.definitionId,
+            automationDisplayName: automation.displayName,
+            pipelineDefinitionId: pipeline.definitionId,
+            pipelineDisplayName: pipeline.displayName,
+          };
+          fs.writeFileSync('.runtime/automation-pipeline-review/seed.json', JSON.stringify(seed, null, 2));
+          console.log(JSON.stringify({ event: 'R3_TASK9_SYNTHETIC_DEFINITIONS_CREATED', ...seed }));
+          NODE
+
+      - name: Capture Task 9 desktop and 390px visual evidence
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base = os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          login = os.environ['QA_ADMIN_LOGIN']
+          password = os.environ['QA_OPERATOR_PASSWORD']
+          target_sha = os.environ['REVIEW_TARGET_SHA']
+          out = Path('.runtime/automation-pipeline-review')
+          seed = json.loads((out / 'seed.json').read_text())
+
+          options = webdriver.ChromeOptions()
+          for arg in ('--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--force-device-scale-factor=1'):
+              options.add_argument(arg)
+          options.add_argument('--window-size=1440,1100')
+          options.binary_location = os.environ['BROWSER_BIN']
+          driver = webdriver.Chrome(options=options)
+          wait = WebDriverWait(driver, 20)
+          captures = []
+
+          def metrics():
+              return driver.execute_script('''
+                const root = document.documentElement;
+                return {
+                  clientWidth: root.clientWidth,
+                  scrollWidth: root.scrollWidth,
+                  scrollHeight: Math.max(root.scrollHeight, document.body.scrollHeight),
+                  h1Count: document.querySelectorAll('h1').length,
+                  bodyText: document.body.innerText
+                };
+              ''')
+
+          def capture(name, route, width, marker, required_text, surface=None, primary=None):
+              driver.set_window_size(width, 1000)
+              driver.get(base + route)
+              wait.until(lambda d: d.current_url.startswith(base + route))
+              wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, marker)))
+              wait.until(lambda d: required_text in d.find_element(By.TAG_NAME, 'body').text)
+              time.sleep(.35)
+              m = metrics()
+              overflow = m['scrollWidth'] - m['clientWidth']
+              assert overflow <= 2, f'{name}: horizontal overflow at {width}px = {overflow}px'
+              assert m['h1Count'] == 1, f'{name}: expected one h1 at {width}px, got {m["h1Count"]}'
+              assert required_text in m['bodyText'], f'{name}: missing expected content {required_text}'
+              marker_nodes = driver.find_elements(By.CSS_SELECTOR, marker)
+              assert marker_nodes, f'{name}: no marker nodes found for {marker}'
+              if primary:
+                  primary_nodes = driver.find_elements(By.CSS_SELECTOR, primary)
+                  assert primary_nodes, f'{name}: no primary action found for {primary}'
+                  assert primary_nodes[0].rect['height'] >= 43, f'{name}: primary action below 44px target: {primary_nodes[0].rect}'
+              if surface:
+                  surfaces = driver.find_elements(By.CSS_SELECTOR, surface)
+                  assert surfaces, f'{name}: no R3 surface found for {surface}'
+                  style = driver.execute_script('''
+                    const s = getComputedStyle(arguments[0]);
+                    return { background: s.backgroundColor, radius: s.borderRadius };
+                  ''', surfaces[0])
+                  assert style['background'] == 'rgb(255, 255, 255)', f'{name}: expected light surface, got {style}'
+                  assert style['radius'] == '12px', f'{name}: expected 12px radius, got {style}'
+              height = min(max(int(m['scrollHeight']) + 40, 1000), 7000)
+              driver.set_window_size(width, height)
+              time.sleep(.25)
+              driver.execute_script('window.scrollTo(0, 0)')
+              path = out / f'{name}-{width}.png'
+              assert driver.save_screenshot(str(path))
+              captures.append({
+                  'name': name,
+                  'route': route,
+                  'width': width,
+                  'height': height,
+                  'horizontal_overflow_px': overflow,
+                  'h1_count': m['h1Count'],
+                  'file': str(path),
+              })
+
+          try:
+              driver.get(base + '/operator/login')
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-login'))).send_keys(login)
+              wait.until(EC.visibility_of_element_located((By.ID, 'operator-password'))).send_keys(password)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
+              wait.until(lambda d: d.current_url.startswith(base + '/operator/workspace'))
+
+              scenarios = [
+                  ('automation-directory', '/operator/admin/automations', '.aa-definition-card', seed['automationDisplayName'], '.aa-definition-card', '.aa-primary-button'),
+                  ('automation-detail', f"/operator/admin/automations/{seed['automationDefinitionId']}", '.aa-version-card', 'CUANDO', '.aa-version-card', '.aa-primary-button'),
+                  ('automation-create', '/operator/admin/automations/new', '.aa-editor-section', 'Crear automatización', None, '.aa-primary-button'),
+                  ('pipeline-directory', '/operator/admin/pipelines', '.pipeline-definition-card', seed['pipelineDisplayName'], '.pipeline-definition-card', '.pipeline-primary-button'),
+                  ('pipeline-detail', f"/operator/admin/pipelines/{seed['pipelineDefinitionId']}", '.pipeline-version-card', 'Recibido', '.pipeline-version-card', '.pipeline-primary-button'),
+                  ('pipeline-create', '/operator/admin/pipelines/new', '.pipeline-stage-editor-card', 'Nuevo pipeline', None, '.pipeline-primary-button'),
+              ]
+              for name, route, marker, required, surface, primary in scenarios:
+                  capture(name, route, 1440, marker, required, surface, primary)
+                  capture(name, route, 390, marker, required, surface, primary)
+
+              manifest = {
+                  'target_sha': target_sha,
+                  'seed': seed,
+                  'captures': captures,
+                  'assertions': {
+                      'max_horizontal_overflow_px': 2,
+                      'expected_h1_count': 1,
+                      'minimum_primary_action_height_px': 43,
+                      'directory_and_detail_surface': 'white / 12px radius',
+                  },
+              }
+              (out / 'manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
+              print(json.dumps(manifest, indent=2, ensure_ascii=False))
+          finally:
+              driver.quit()
+          PY
+
+      - name: Upload Task 9 exact-head review artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-automation-pipeline-review-${{ env.REVIEW_TARGET_SHA }}
+          path: |
+            .runtime/automation-pipeline-review/**
+            .runtime/r3-automation-pipeline-*.log
+          if-no-files-found: error
+          retention-days: 30
