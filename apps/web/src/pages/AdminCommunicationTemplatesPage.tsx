@@ -33,7 +33,7 @@ export function AdminCommunicationTemplatesPage() {
       <main className="operator-main ops-main comm-admin-main">
         <div className="ops-page-heading comm-admin-page-heading">
           <div>
-            <span className="ops-kicker">Communication Templates R3</span>
+            <span className="ops-kicker">Plantillas de comunicación R3</span>
             <h1>Plantillas de comunicación</h1>
             <p>Definiciones gobernadas por versiones inmutables para EMAIL y WHATSAPP. El listado usa solo paginación publicada por R3.</p>
           </div>
@@ -93,7 +93,7 @@ function TemplateCard({ template }: { template: CommunicationTemplateDefinitionP
       <h3>{template.key}</h3>
       <code>{template.definitionId}</code>
       <div className="comm-template-facts">
-        <span><small>Definition version</small><strong>v{template.version}</strong></span>
+        <span><small>Versión de definición</small><strong>v{template.version}</strong></span>
         <span><small>Versiones</small><strong>{template.versions.length}</strong></span>
         <span><small>Activa</small><strong>{active ? `v${active.versionNumber}` : '—'}</strong></span>
         <span><small>Última</small><strong>{latest ? `${latest.status} v${latest.versionNumber}` : '—'}</strong></span>

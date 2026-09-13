@@ -64,12 +64,12 @@ export function AdminRecoveryPage() {
       <main className="operator-main ops-main recovery-admin-main">
         <section className="recovery-admin-hero" aria-labelledby="recovery-title">
           <div>
-            <span className="ops-kicker">Recovery Operations R3</span>
+            <span className="ops-kicker">Operaciones de recuperación R3</span>
             <h1 id="recovery-title">Integraciones y recuperación</h1>
-            <p>Diagnóstico explícito de eventos y recuperación de trabajos en dead-letter, separado de la operación normal de Claims.</p>
+            <p>Diagnóstico explícito de eventos y recuperación de trabajos en dead-letter, separado de la operación normal de siniestros.</p>
           </div>
           <div className="recovery-admin-hero-badge">
-            <strong>RECOVERY</strong>
+            <strong>RECUPERACIÓN</strong>
             <span>API autoritativa · datos sintéticos</span>
           </div>
         </section>

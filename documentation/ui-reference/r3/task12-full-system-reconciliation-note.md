@@ -43,6 +43,12 @@ The global shell recognized only the exact `/operator/claims` path, so Claim Det
 
 Therefore Task 12 does **not** weaken the route or navigation guard. `PLATFORM_ADMIN` continues to receive both read permissions under the frozen R3 presentation matrix, and the dead-letter detail keeps its dedicated read guard.
 
+### 5. Internal-page presentation language — corrected after visual review
+
+The first full-system visual pass exposed a second layer of language drift inside otherwise reconciled surfaces. Task 12 therefore also normalizes user-facing page titles, kickers and presentation metadata such as `Dashboard`, `Platform Configuration`, `Custom Fields`, `Guidance`, `Governed Imports`, `Recovery Operations`, `Policy Lifecycle`, `Collections Operations` and `Definition version`.
+
+Contract vocabulary remains literal where it carries R3 meaning, including `CLAIM`, `RENEWAL`, `COLLECTION`, `DRAFT`, `ACTIVE`, `RETIRED`, `eventId`, `dead-letter`, `dry-run`, `commit` and permission identifiers. No enum, API value, authorization rule or workflow meaning is translated or rewritten.
+
 ## Regression protection
 
 `OperatorShell.test.tsx` and `StaffWorkspacePage.test.tsx` now assert the reconciled Spanish labels while preserving role filtering and the existing authorization boundaries.

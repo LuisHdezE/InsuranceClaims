@@ -31,21 +31,21 @@ export function AdminGuidancePage() {
       <main className="operator-main ops-main guidance-admin-main">
         <div className="ops-page-heading guidance-directory-heading">
           <div>
-            <span className="ops-kicker">Platform Guidance R3</span>
-            <h1>Guidance</h1>
+            <span className="ops-kicker">Orientación de plataforma R3</span>
+            <h1>Orientación</h1>
             <p>Definiciones versionadas de orientación configurada. Contexto, categorías y metadata permanecen opacos: la UI no inventa semántica fuera del contrato R3.</p>
           </div>
-          <Link className="guidance-primary-button" to="/operator/admin/guidance/new">+ Nueva Guidance</Link>
+          <Link className="guidance-primary-button" to="/operator/admin/guidance/new">+ Nueva orientación</Link>
         </div>
 
-        <section className="guidance-contract-strip" aria-label="Frontera de Guidance">
+        <section className="guidance-contract-strip" aria-label="Frontera de orientación">
           <div><strong>Contenido</strong><span>Contexto · categoría · documentos · instrucciones</span></div>
           <div><strong>Versionado</strong><span>DRAFT → ACTIVE → RETIRED</span></div>
           <div><strong>Listado</strong><span>Solo paginación del servidor</span></div>
         </section>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
-        {guidanceQuery.isLoading && <div className="ops-compact-empty" role="status">Cargando Guidance…</div>}
+        {guidanceQuery.isLoading && <div className="ops-compact-empty" role="status">Cargando orientación…</div>}
 
         {result && (
           <>
@@ -61,7 +61,7 @@ export function AdminGuidancePage() {
               </div>
 
               {result.items.length === 0 ? (
-                <div className="ops-compact-empty">No hay Guidance configurada.</div>
+                <div className="ops-compact-empty">No hay orientación configurada.</div>
               ) : (
                 <div className="guidance-card-grid">
                   {result.items.map((definition) => {
@@ -75,7 +75,7 @@ export function AdminGuidancePage() {
                         </div>
                         <h3>{definition.key}</h3>
                         <div className="guidance-card-facts">
-                          <span><small>Definition version</small><strong>v{definition.version}</strong></span>
+                          <span><small>Versión de definición</small><strong>v{definition.version}</strong></span>
                           <span><small>Versiones</small><strong>{definition.versions.length}</strong></span>
                           <span><small>Última categoría</small><strong>{latest?.guidanceCategory ?? '—'}</strong></span>
                           <span><small>Contexto</small><strong>{latest?.insurerContextReference ?? '—'}</strong></span>
@@ -88,7 +88,7 @@ export function AdminGuidancePage() {
               )}
             </section>
 
-            <nav className="guidance-pagination" aria-label="Paginación de Guidance">
+            <nav className="guidance-pagination" aria-label="Paginación de orientación">
               <button type="button" disabled={page <= 1 || guidanceQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>← Anterior</button>
               <span>Página {result.page} / {result.totalPages}</span>
               <button type="button" disabled={page >= result.totalPages || guidanceQuery.isFetching} onClick={() => setPage((current) => current + 1)}>Siguiente →</button>

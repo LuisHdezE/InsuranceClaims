@@ -33,9 +33,9 @@ export function OperatorRenewalsPage() {
       <main className="operator-main ops-main renewal-main r3-renewals-directory">
         <div className="ops-page-heading r3-case-page-heading">
           <div>
-            <span className="ops-kicker">Policy Lifecycle</span>
+            <span className="ops-kicker">Ciclo de vida de póliza</span>
             <h1>Renovaciones</h1>
-            <p>Casos de renovación con lifecycle y pipeline operativo separados. La bandeja usa exclusivamente la proyección publicada por la API R3.</p>
+            <p>Casos de renovación con ciclo de vida y pipeline operativo separados. La bandeja usa exclusivamente la proyección publicada por la API R3.</p>
           </div>
           <div className="r3-case-heading-summary" aria-label="Resumen del listado">
             <span>Resultado R3</span>
@@ -50,7 +50,7 @@ export function OperatorRenewalsPage() {
           <div className="ops-panel-heading">
             <div>
               <h2 id="renewals-list-title">Bandeja de renovaciones</h2>
-              <p>Cliente, póliza, lifecycle y etapa operativa provienen del servidor.</p>
+              <p>Cliente, póliza, ciclo de vida y etapa operativa provienen del servidor.</p>
             </div>
             <button className="ops-refresh-button" type="button" disabled={renewalsQuery.isFetching} onClick={() => void renewalsQuery.refetch()}>
               {renewalsQuery.isFetching ? 'Actualizando…' : 'Actualizar'}
@@ -65,7 +65,7 @@ export function OperatorRenewalsPage() {
             <div className="r3-case-table-wrap">
               <table className="r3-case-table">
                 <thead>
-                  <tr><th>Cliente</th><th>Póliza</th><th>Lifecycle</th><th>Etapa operativa</th><th>Actualizado</th><th /></tr>
+                  <tr><th>Cliente</th><th>Póliza</th><th>Ciclo de vida</th><th>Etapa operativa</th><th>Actualizado</th><th /></tr>
                 </thead>
                 <tbody>
                   {items.map((item) => (
@@ -78,7 +78,7 @@ export function OperatorRenewalsPage() {
                         <strong>{item.policy?.policyReference ?? item.policyId}</strong>
                         <small>{item.policy?.insurerReference ?? 'Sin referencia de aseguradora'}</small>
                       </td>
-                      <td data-label="Lifecycle"><RenewalStatus value={item.status} /></td>
+                      <td data-label="Ciclo de vida"><RenewalStatus value={item.status} /></td>
                       <td data-label="Etapa operativa"><span className="r3-case-stage">{item.pipeline?.currentStage?.displayName ?? 'Sin work item'}</span></td>
                       <td data-label="Actualizado"><time dateTime={item.updatedAt}>{formatDateTime(item.updatedAt)}</time></td>
                       <td data-label="Acción"><Link className="r3-case-row-action" to={`/operator/renewals/${item.renewalId}`}>Abrir caso →</Link></td>
