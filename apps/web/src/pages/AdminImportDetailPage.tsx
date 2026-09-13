@@ -92,7 +92,7 @@ export function AdminImportDetailPage() {
           <div>
             <span className="ops-kicker">Governed Imports R3</span>
             <h1>Workflow de importación</h1>
-            <p>La acción principal cambia únicamente cuando el backend confirma el siguiente estado del lifecycle.</p>
+            <p>La acción principal cambia únicamente cuando el backend confirma el siguiente estado del ciclo de vida.</p>
           </div>
           <Link className="gi-secondary" to="/operator/admin/imports">← Importaciones</Link>
         </div>
@@ -121,7 +121,7 @@ export function AdminImportDetailPage() {
                 </div>
               )}
               {job.status === 'COMMITTING' && <div className="ops-compact-empty">Commit en procesamiento. Esta vista consulta el estado autoritativo periódicamente.</div>}
-              {['COMPLETED', 'COMPLETED_WITH_ERRORS', 'FAILED', 'CANCELLED'].includes(job.status) && <div className="ops-compact-empty">Job terminal: <strong>{job.status}</strong>. No hay más mutaciones permitidas desde esta vista.</div>}
+              {['COMPLETED', 'COMPLETED_WITH_ERRORS', 'FAILED', 'CANCELLED'].includes(job.status) && <div className="ops-compact-empty">Job terminal: <strong>{statusLabel(job.status)}</strong>. No hay más mutaciones permitidas desde esta vista.</div>}
             </section>
 
             {rowsQuery.data?.data && <RowsTable rows={rowsQuery.data.data.items} total={rowsQuery.data.data.totalItems} />}
@@ -133,13 +133,13 @@ export function AdminImportDetailPage() {
 }
 
 function JobSummary({ job, refreshing, onRefresh }: { job: ImportJobResponse; refreshing: boolean; onRefresh: () => void }) {
-  return <section className="ops-panel gi-summary"><div className="ops-panel-heading"><div><h2>{job.importType}</h2><p><code>{job.importJobId}</code></p></div><button className="ops-refresh-button" type="button" disabled={refreshing} onClick={onRefresh}>{refreshing ? 'Actualizando…' : 'Actualizar'}</button></div><div className="gi-summary-grid"><span><small>Estado</small><strong>{job.status}</strong></span><span><small>Versión</small><strong>v{job.version}</strong></span><span><small>Filas</small><strong>{job.counts.total}</strong></span><span><small>Válidas / inválidas</small><strong>{job.counts.valid} / {job.counts.invalid}</strong></span><span><small>Committed</small><strong>{job.counts.committed}</strong></span><span><small>Rejected / failed</small><strong>{job.counts.rejected} / {job.counts.failed}</strong></span></div></section>;
+  return <section className="ops-panel gi-summary"><div className="ops-panel-heading"><div><h2>{job.importType}</h2><p><code>{job.importJobId}</code></p></div><button className="ops-refresh-button" type="button" disabled={refreshing} onClick={onRefresh}>{refreshing ? 'Actualizando…' : 'Actualizar'}</button></div><div className="gi-summary-grid"><span><small>Estado</small><strong>{statusLabel(job.status)}</strong></span><span><small>Versión</small><strong>v{job.version}</strong></span><span><small>Filas</small><strong>{job.counts.total}</strong></span><span><small>Válidas / inválidas</small><strong>{job.counts.valid} / {job.counts.invalid}</strong></span><span><small>Confirmadas</small><strong>{job.counts.committed}</strong></span><span><small>Rechazadas / fallidas</small><strong>{job.counts.rejected} / {job.counts.failed}</strong></span></div></section>;
 }
 
 function Lifecycle({ job }: { job: ImportJobResponse }) {
   const steps = ['UPLOADED', 'PREVIEWED', 'MAPPED', 'VALIDATED', 'DRY_RUN_READY', 'COMMITTING'];
   const current = steps.indexOf(job.status);
-  return <section className="gi-lifecycle" aria-label="Lifecycle de importación">{steps.map((step, index) => <span className={index < current ? 'is-done' : index === current ? 'is-current' : ''} key={step}>{step}</span>)}</section>;
+  return <section className="gi-lifecycle" aria-label="Ciclo de vida de importación">{steps.map((step, index) => <span className={index < current ? 'is-done' : index === current ? 'is-current' : ''} key={step}>{statusLabel(step)}</span>)}</section>;
 }
 
 function MappingForm(props: { job: ImportJobResponse; externalReference: string; label: string; classification: string; setExternalReference: (v: string) => void; setLabel: (v: string) => void; setClassification: (v: string) => void; pending: boolean; onSubmit: (event: FormEvent) => void }) {
@@ -155,4 +155,11 @@ function ActionButton({ label, pending, onClick }: { label: string; pending: boo
 
 function RowsTable({ rows, total }: { rows: Awaited<ReturnType<typeof listImportRows>>['data']['items']; total: number }) {
   return <section className="ops-panel gi-rows"><div className="ops-panel-heading"><div><h2>Resultado por filas</h2><p>Mostrando hasta {ROW_PAGE_SIZE} de {total} filas. Nunca se expone stagedInput crudo.</p></div></div><div className="gi-table-wrap"><table><thead><tr><th>Fila</th><th>Validación</th><th>Dry-run</th><th>Commit</th><th>Errores</th></tr></thead><tbody>{rows.map((row) => <tr key={row.importRowId}><td>{row.rowNumber}</td><td>{row.validationStatus}</td><td>{row.dryRunOutcome}</td><td>{row.commitOutcome}</td><td>{row.validationErrors.join(', ') || '—'}</td></tr>)}</tbody></table></div></section>;
+}
+
+function statusLabel(status: string) {
+  return ({
+    UPLOADED: 'Subida', PREVIEWED: 'Preview generado', MAPPED: 'Mapeada', VALIDATED: 'Validada', DRY_RUN_READY: 'Dry-run listo',
+    COMMITTING: 'Commit en curso', COMPLETED: 'Completada', COMPLETED_WITH_ERRORS: 'Completada con errores', FAILED: 'Fallida', CANCELLED: 'Cancelada',
+  } as Record<string, string>)[status] ?? status;
 }
