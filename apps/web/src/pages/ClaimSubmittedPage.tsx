@@ -22,7 +22,7 @@ export function ClaimSubmittedPage() {
       <div className="receipt-card">
         <div>Código de seguimiento</div>
         <div className="tracking-code">{flow.receipt.trackingCode}</div>
-        <div>Estado inicial: <strong>{flow.receipt.status}</strong></div>
+        <div>Estado inicial: <strong>Recibido</strong></div>
         <div>Enviado: {new Date(flow.receipt.submittedAt).toLocaleString('es-UY')}</div>
         {flow.receipt.nextSteps.length > 0 && (
           <>

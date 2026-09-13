@@ -3,31 +3,17 @@ import { HERO_DATA_URI } from '../assets/heroAsset';
 import { PublicIcon, type PublicIconName } from '../components/PublicIcon';
 import { PublicShell } from '../components/PublicShell';
 
-const quickCards: Array<{
-  icon: PublicIconName;
-  title: string;
-  copy: string;
-  route?: string;
-}> = [
-  { icon: 'car', title: 'Cotiza tu seguro', copy: 'Referencia visual del alcance comercial observado.' },
-  { icon: 'document', title: 'Qué hacer en un siniestro', copy: 'Te guiamos paso a paso.', route: '/claims/new/verify' },
-  { icon: 'chat', title: 'Seguimiento de reclamo', copy: 'Consultá el estado de tu trámite.', route: '/claims/track' },
-  { icon: 'card', title: 'Pagos web', copy: 'Referencia visual fuera del alcance funcional.' },
-  { icon: 'help', title: 'Preguntas frecuentes', copy: 'Contenido de referencia del caso técnico.' },
-  { icon: 'file', title: 'Documentos públicos', copy: 'Navegación conceptual sin nuevos endpoints.' },
-];
-
 const benefits: Array<{ icon: PublicIconName; title: string; copy: string }> = [
-  { icon: 'users', title: 'Atención personalizada', copy: 'Una experiencia clara para cada etapa del flujo.' },
-  { icon: 'bolt', title: 'Respuesta ágil', copy: 'Interacciones simples, directas y trazables.' },
-  { icon: 'shield', title: 'Cobertura confiable', copy: 'Estados y evidencias protegidos por el backend.' },
-  { icon: 'headset', title: 'Soporte del proceso', copy: 'Seguimiento público y operación de backoffice.' },
+  { icon: 'shield', title: 'Datos protegidos', copy: 'La elegibilidad y el estado siempre los decide el API autorizado.' },
+  { icon: 'document', title: 'Reporte guiado', copy: 'Cuatro pasos visibles desde la verificación hasta la confirmación.' },
+  { icon: 'search', title: 'Seguimiento público', copy: 'Consulta el estado con tu código y referencia de póliza.' },
+  { icon: 'bolt', title: 'Proceso trazable', copy: 'Cada respuesta pública muestra únicamente la información autorizada.' },
 ];
 
 const steps: Array<{ icon: PublicIconName; number: string; title: string; copy: string }> = [
-  { icon: 'document', number: '1', title: 'Reporta', copy: 'Completá el formulario y verificá los datos sintéticos.' },
-  { icon: 'camera', number: '2', title: 'Adjunta evidencia', copy: 'Incorporá fotos y documentación del siniestro.' },
-  { icon: 'search', number: '3', title: 'Haz seguimiento', copy: 'Consultá el estado del trámite cuando lo necesites.' },
+  { icon: 'document', number: '1', title: 'Verifica', copy: 'Confirma la combinación de póliza y vehículo.' },
+  { icon: 'camera', number: '2', title: 'Reporta', copy: 'Describe lo ocurrido y adjunta evidencia opcional.' },
+  { icon: 'search', number: '3', title: 'Da seguimiento', copy: 'Consulta el estado con la prueba pública requerida.' },
 ];
 
 export function HomePage() {
@@ -42,63 +28,67 @@ export function HomePage() {
           />
           <div className="container-shell landing-hero-inner">
             <div className="landing-hero-copy">
-              <span className="landing-kicker">SEGUROS DE VEHÍCULOS</span>
+              <span className="landing-kicker">REPORTE Y SEGUIMIENTO DE SINIESTROS</span>
               <h1 id="landing-title">
-                Protección simple,
-                <span>rápida y confiable</span>
+                Un proceso claro,
+                <span>de principio a fin</span>
               </h1>
               <p>
-                Una experiencia moderna para reportar y seguir un siniestro con claridad, trazabilidad y datos exclusivamente sintéticos.
+                Reporta un siniestro y consulta su estado con una experiencia pública simple, trazable y respaldada por el API.
               </p>
-              <div className="landing-actions">
-                <span className="landing-btn landing-btn-primary landing-reference-control" aria-disabled="true">
-                  <PublicIcon kind="car" />
-                  Cotiza tu seguro
-                </span>
-                <Link className="landing-btn landing-btn-secondary" to="/claims/new/verify">
+              <div className="landing-actions" aria-label="Acciones principales">
+                <Link className="landing-btn landing-btn-primary" to="/claims/new/verify">
                   <PublicIcon kind="document" />
                   Reportar un siniestro
                   <span aria-hidden="true">›</span>
                 </Link>
+                <Link className="landing-btn landing-btn-secondary" to="/claims/track">
+                  <PublicIcon kind="search" />
+                  Dar seguimiento
+                  <span aria-hidden="true">›</span>
+                </Link>
               </div>
-              <Link className="landing-track-link" to="/claims/track">¿Ya reportaste? Dar seguimiento <span aria-hidden="true">→</span></Link>
             </div>
             <div className="landing-trust-badge">
               <PublicIcon kind="shield" />
-              <strong>Más que un formulario,<br />una experiencia trazable.</strong>
+              <strong>Solo mostramos información pública autorizada por R3.</strong>
             </div>
           </div>
         </section>
 
-        <section className="landing-quick" aria-labelledby="quick-title">
-          <h2 id="quick-title" className="sr-only">Accesos rápidos</h2>
-          <div className="container-shell landing-quick-grid">
-            {quickCards.map((card) => {
-              const content = (
-                <>
-                  <span className="landing-quick-icon"><PublicIcon kind={card.icon} /></span>
-                  <span className="landing-quick-copy">
-                    <strong>{card.title}</strong>
-                    <small>{card.copy}</small>
-                  </span>
-                  {card.route && <span className="landing-chevron" aria-hidden="true">›</span>}
-                </>
-              );
-
-              return card.route ? (
-                <Link className="landing-quick-card" to={card.route} key={card.title}>{content}</Link>
-              ) : (
-                <div className="landing-quick-card is-reference" key={card.title} aria-disabled="true">{content}</div>
-              );
-            })}
+        <section className="landing-journeys" aria-labelledby="journeys-title">
+          <div className="container-shell">
+            <div className="landing-section-heading">
+              <span className="landing-kicker">DOS JOURNEYS REALES</span>
+              <h2 id="journeys-title">¿Qué necesitas hacer?</h2>
+              <p>El MVP público se concentra únicamente en estas dos capacidades verificables.</p>
+            </div>
+            <div className="landing-journey-grid">
+              <Link className="landing-journey-card" to="/claims/new/verify">
+                <span className="landing-journey-icon"><PublicIcon kind="document" /></span>
+                <span>
+                  <strong>Reportar un siniestro</strong>
+                  <small>Verifica póliza y vehículo, completa los datos, revisa y confirma.</small>
+                </span>
+                <span className="landing-journey-arrow" aria-hidden="true">›</span>
+              </Link>
+              <Link className="landing-journey-card" to="/claims/track">
+                <span className="landing-journey-icon"><PublicIcon kind="search" /></span>
+                <span>
+                  <strong>Dar seguimiento</strong>
+                  <small>Usa el código de seguimiento y la referencia de póliza como una única prueba.</small>
+                </span>
+                <span className="landing-journey-arrow" aria-hidden="true">›</span>
+              </Link>
+            </div>
           </div>
         </section>
 
         <section className="landing-benefits" aria-labelledby="benefits-title">
           <div className="container-shell landing-benefits-grid">
             <div className="landing-benefits-heading">
-              <span className="landing-kicker">POR QUÉ ELEGIR UNA EXPERIENCIA MODERNA</span>
-              <h2 id="benefits-title">Tu tranquilidad,<br />nuestro compromiso</h2>
+              <span className="landing-kicker">EXPERIENCIA PÚBLICA R3</span>
+              <h2 id="benefits-title">Simple por fuera,<br />gobernada por dentro</h2>
               <span className="landing-yellow-rule" aria-hidden="true" />
             </div>
             <div className="landing-benefit-items">
@@ -118,9 +108,9 @@ export function HomePage() {
         <section className="landing-process" aria-labelledby="process-title">
           <div className="container-shell landing-process-grid">
             <div className="landing-process-heading">
-              <h2 id="process-title">¿Cómo reportar un siniestro?</h2>
-              <p>Es muy fácil. Te acompañamos visualmente en todo el proceso.</p>
-              <Link to="/claims/new/verify">Conocé más <span aria-hidden="true">→</span></Link>
+              <h2 id="process-title">Del reporte al seguimiento</h2>
+              <p>La experiencia conserva el contexto y te guía sin pedir datos innecesarios.</p>
+              <Link to="/claims/new/verify">Iniciar reporte <span aria-hidden="true">→</span></Link>
             </div>
             <div className="landing-step-items">
               {steps.map((step, index) => (
