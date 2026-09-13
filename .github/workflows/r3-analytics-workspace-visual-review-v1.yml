@@ -39,9 +39,16 @@ jobs:
       REVIEW_TARGET_SHA: 439562d69a6a42121143c67cc6ff4fa91dfbc503
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout exact product head
+        uses: actions/checkout@v7
         with:
           ref: 439562d69a6a42121143c67cc6ff4fa91dfbc503
+      - name: Checkout review harness separately
+        uses: actions/checkout@v7
+        with:
+          ref: review/r3-ui-increment-07-analytics-workspace-v1
+          path: .review-harness
+          sparse-checkout: qa/r3_increment07_visual_review.py
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
@@ -95,7 +102,7 @@ jobs:
           analytics=$(curl -fsS -G -H "Authorization: Bearer $token" --data-urlencode "from=$from" --data-urlencode "to=$to" http://127.0.0.1:3000/api/v1/operator/analytics/claims)
           node -e 'const x=JSON.parse(process.argv[1]);const keys=["window","generatedAt","openClaims","reportedInWindow","claimsByStatus","claimsByOperationalStage","evidencePendingReviewClaims","openTasks","overdueTasks","closedClaims"];if(!keys.every(k=>Object.prototype.hasOwnProperty.call(x,k)))process.exit(1);const statuses=["RECEIVED","UNDER_REVIEW","OBSERVED","APPROVED","IN_REPAIR","CLOSED"];if(!statuses.every(s=>Object.prototype.hasOwnProperty.call(x.claimsByStatus||{},s)))process.exit(1);console.log(JSON.stringify({event:"ANALYTICS_CONTRACT_OK",openClaims:x.openClaims,reportedInWindow:x.reportedInWindow,closedClaims:x.closedClaims}))' "$analytics"
       - name: Capture exact-head Analytics and Workspace views
-        run: python qa/r3_increment07_visual_review.py
+        run: python .review-harness/qa/r3_increment07_visual_review.py
       - name: Upload exact-head visual evidence
         if: always()
         uses: actions/upload-artifact@v7
