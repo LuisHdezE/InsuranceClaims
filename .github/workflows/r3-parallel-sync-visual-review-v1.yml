@@ -72,6 +72,9 @@ jobs:
           echo "QA_OPERATOR_PASSWORD=R3-parallel-visual-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
           echo "QA_CUSTOMER_PASSWORD=R3-parallel-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
 
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
       - name: Bootstrap PostgreSQL and synthetic identities
         shell: bash
         run: |
@@ -156,7 +159,6 @@ jobs:
               wait.until(lambda d:d.current_url.startswith(base+route))
 
           try:
-              # Operator Login, una superficie pública del staff auth contract.
               for label,width,height in [('desktop',1440,1000),('mobile',390,844)]:
                   driver.set_window_size(width,height)
                   hard('/operator/login')
@@ -165,8 +167,6 @@ jobs:
                   assert driver.find_element(By.ID,'operator-password').get_attribute('autocomplete')=='current-password'
                   save(f'operator-login-{label}',width,height)
 
-              # Login real como PLATFORM_ADMIN. Navegación posterior siempre SPA para
-              # preservar la sesión in-memory del producto.
               driver.set_window_size(1440,1000)
               hard('/operator/login')
               wait.until(EC.visibility_of_element_located((By.ID,'operator-login')))
@@ -195,8 +195,6 @@ jobs:
                       assert 'acceso del equipo' not in body, f'{name} {width}: login surfaced unexpectedly'
                       save(name,width,1000 if width==1440 else 844)
 
-              # Public journey surfaces. A hard reload is now intentional because
-              # these routes are public and must not depend on operator session.
               public_routes=[
                   ('public-home','/'),
                   ('public-claim-verify','/claims/new/verify'),
