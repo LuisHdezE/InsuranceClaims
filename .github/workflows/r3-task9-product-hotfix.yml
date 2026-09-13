@@ -1,0 +1,48 @@
+name: R3 Task 9 Product Hotfix
+
+on:
+  push:
+    branches: [review/r3-parallel-10-automation-pipelines]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-hotfix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/r3-parallel-10-automation-pipelines
+          fetch-depth: 0
+      - name: Apply exact ORM query correction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('packages/infrastructure/src/automation-store.ts')
+          text = path.read_text()
+          old = "const rows = await this.db.orm.public.AutomationVersion.all({ automationDefinitionId: definitionId });"
+          new = "const rows = await this.db.orm.public.AutomationVersion.where({ automationDefinitionId: definitionId }).all();"
+          count = text.count(old)
+          if count == 0:
+              print('Hotfix already present; no change required.')
+          elif count == 1:
+              path.write_text(text.replace(old, new))
+              print('Applied one exact ORM query correction.')
+          else:
+              raise SystemExit(f'Expected exactly one target occurrence, found {count}.')
+          PY
+          git diff --check
+      - name: Commit verified product correction
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No product diff to commit.'
+            exit 0
+          fi
+          git config user.name 'MSc Luis A. Hernández Elias'
+          git config user.email '88979457+LuisHdezE@users.noreply.github.com'
+          git add packages/infrastructure/src/automation-store.ts
+          git commit -m 'fix(infrastructure): query automation versions through ORM filter'
+          git push origin HEAD:feat/r3-parallel-10-automation-pipelines
