@@ -35,7 +35,6 @@ jobs:
       QA_BASE_URL: http://127.0.0.1:3000
       QA_WEB_BASE_URL: http://127.0.0.1:5173
       QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
-      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
       EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-customers-review
       REVIEW_TARGET_SHA: f5e7b54c41c80da17181cfb4efffe3051386e489
 
@@ -64,9 +63,7 @@ jobs:
         shell: bash
         run: |
           echo "JWT_SECRET=r3-customers-review-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
-          echo "CUSTOMER_JWT_SECRET=r3-customers-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "QA_OPERATOR_PASSWORD=R3-customers-review-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
-          echo "QA_CUSTOMER_PASSWORD=R3-customers-portal-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
 
       - name: Prepare browser runtime
         shell: bash
@@ -84,7 +81,83 @@ jobs:
         shell: bash
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
-          npx tsx qa/seed.ts
+          QA_CUSTOMER_PASSWORD= npx tsx qa/seed.ts
+          mkdir -p .runtime
+          cat > .runtime/r3-customers-review-seed.ts <<'TS'
+          import { createProductionRuntimeFromEnv } from '@insurance/infrastructure';
+
+          const customerId = '91000000-0000-4000-8000-000000000001';
+          const policyId = '92000000-0000-4000-8000-000000000001';
+          const assetId = '93000000-0000-4000-8000-000000000001';
+          const claimId = '94000000-0000-4000-8000-000000000001';
+          const historyId = '95000000-0000-4000-8000-000000000001';
+          const at = new Date();
+          const runtime = await createProductionRuntimeFromEnv();
+
+          await runtime.customerPolicyStore.seedSyntheticCustomerPolicy({
+            customer: {
+              id: customerId,
+              customerRef: 'SYN-QA-PORTAL-CUST-001',
+              displayName: 'Synthetic QA Portal Customer',
+              status: 'ACTIVE',
+              createdAt: at,
+              updatedAt: at,
+              version: 1,
+            },
+            policy: {
+              id: policyId,
+              customerId,
+              policyReference: 'MOD-QA-PORTAL-POL-001',
+              legacyPolicyReference: 'SYN-QA-PORTAL-POL-001',
+              insurerReference: 'SYN-QA-PORTAL-INSURER-001',
+              recordStatus: 'ACTIVE',
+              operationalMetadata: { source: 'SYNTHETIC_R3_CUSTOMERS_REVIEW' },
+              createdAt: at,
+              updatedAt: at,
+              version: 1,
+            },
+            assets: [{
+              id: assetId,
+              policyId,
+              assetType: 'VEHICLE',
+              assetReference: 'MOD-QA-PORTAL-VEH-001',
+              legacyAssetReference: 'SYN-QA-PORTAL-VEH-001',
+              metadata: {},
+              createdAt: at,
+            }],
+          });
+
+          if (!(await runtime.store.getById(claimId))) {
+            await runtime.store.create({
+              id: claimId,
+              trackingCode: 'SYN-QA-PORTAL-TRACK-001',
+              policyReference: 'SYN-QA-PORTAL-POL-001',
+              vehicleReference: 'SYN-QA-PORTAL-VEH-001',
+              customerId,
+              policyId,
+              verifiedCustomerLabel: 'Synthetic QA Portal Customer',
+              eventType: 'Synthetic R3 customers review event',
+              occurredAt: at,
+              locationText: 'Synthetic R3 customers review location',
+              description: 'Synthetic R3 customers visual review claim.',
+              status: 'OBSERVED',
+              createdAt: at,
+              updatedAt: at,
+            }, [], {
+              historyId,
+              claimId,
+              fromStatus: null,
+              toStatus: 'RECEIVED',
+              actorType: 'SYSTEM',
+              actorId: null,
+              occurredAt: at,
+            });
+          }
+
+          console.log(JSON.stringify({ event: 'R3_CUSTOMERS_REVIEW_GRAPH_SEEDED', customerId, policyId, claimId }));
+          process.exit(0);
+          TS
+          npx tsx .runtime/r3-customers-review-seed.ts
 
       - name: Start simulated legacy, API and web client
         shell: bash
@@ -196,7 +269,6 @@ jobs:
               wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
               wait.until(lambda d: d.current_url.startswith(base + '/operator/dashboard'))
 
-              # Keep the in-memory staff session by navigating through React Router.
               customers_link = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a[href="/operator/customers"]')))
               activate(customers_link)
               wait.until(lambda d: d.current_url.startswith(base + '/operator/customers'))
