@@ -34,7 +34,6 @@ jobs:
       PORT: '3000'
       QA_BASE_URL: http://127.0.0.1:3000
       QA_WEB_BASE_URL: http://127.0.0.1:5173
-      QA_OPERATOR_LOGIN: qa.operator@example.invalid
       QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
       EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-claims-review
       REVIEW_TARGET_SHA: 5fef90f697235a4d04d0bc85ae17b29368c87842
@@ -76,10 +75,7 @@ jobs:
           fi
           python -m pip install --disable-pip-version-check selenium==4.35.0
           browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
-          if [[ -z "$browser_bin" ]]; then
-            echo "No supported Chrome/Chromium binary found on runner" >&2
-            exit 1
-          fi
+          test -n "$browser_bin"
           echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
 
       - name: Bootstrap database and synthetic identities
@@ -93,33 +89,21 @@ jobs:
         run: |
           mkdir -p .runtime/evidence-r3-claims-review .runtime/claims-review
           npm run start:legacy > .runtime/r3-claims-legacy.log 2>&1 &
-          echo $! > .runtime/r3-claims-legacy.pid
           npm run start:api > .runtime/r3-claims-api.log 2>&1 &
-          echo $! > .runtime/r3-claims-api.pid
           npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/r3-claims-web.log 2>&1 &
-          echo $! > .runtime/r3-claims-web.pid
 
       - name: Wait for runtime services
         shell: bash
         run: |
           for attempt in $(seq 1 50); do
-            legacy_ok=0
-            api_ok=0
-            web_ok=0
-            curl -fsS -X POST -H 'content-type: application/json' \
-              -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' \
-              http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
+            legacy_ok=0; api_ok=0; web_ok=0
+            curl -fsS -X POST -H 'content-type: application/json' -d '{"policy_no":"SYN-POL-001","vehicle_ref":"SYN-VEH-001"}' http://127.0.0.1:3200/legacy/v1/policy-vehicle/verify >/dev/null 2>&1 && legacy_ok=1 || true
             curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && api_ok=1 || true
             curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && web_ok=1 || true
-            if [[ "$legacy_ok" == "1" && "$api_ok" == "1" && "$web_ok" == "1" ]]; then exit 0; fi
-            if [[ "$attempt" == "50" ]]; then
-              cat .runtime/r3-claims-legacy.log || true
-              cat .runtime/r3-claims-api.log || true
-              cat .runtime/r3-claims-web.log || true
-              exit 1
-            fi
+            if [[ "$legacy_ok" == 1 && "$api_ok" == 1 && "$web_ok" == 1 ]]; then exit 0; fi
             sleep 1
           done
+          exit 1
 
       - name: Create authoritative synthetic claim through real API client
         run: npx tsx qa/web-digital-claim-intake-runtime.ts
@@ -145,20 +129,14 @@ jobs:
           out.mkdir(parents=True, exist_ok=True)
 
           options = webdriver.ChromeOptions()
-          options.add_argument('--headless=new')
-          options.add_argument('--no-sandbox')
-          options.add_argument('--disable-dev-shm-usage')
-          options.add_argument('--disable-gpu')
-          options.add_argument('--force-device-scale-factor=1')
+          for arg in ('--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--force-device-scale-factor=1'):
+              options.add_argument(arg)
           options.add_argument('--window-size=1440,1100')
-          browser_bin = os.environ.get('BROWSER_BIN')
-          if browser_bin:
-              options.binary_location = browser_bin
-
+          options.binary_location = os.environ['BROWSER_BIN']
           driver = webdriver.Chrome(options=options)
           wait = WebDriverWait(driver, 20)
 
-          def page_metrics():
+          def metrics():
               return driver.execute_script('''
                 const root = document.documentElement;
                 return {
@@ -170,57 +148,36 @@ jobs:
                 };
               ''')
 
-          def capture(filename: str, width: int, kind: str):
+          def capture(filename, width, kind):
               driver.set_window_size(width, 1000)
-              time.sleep(0.45)
-              metrics = page_metrics()
-              overflow = metrics['scrollWidth'] - metrics['clientWidth']
-              if overflow > 2:
-                  raise AssertionError(f'{kind}: horizontal overflow at {width}px = {overflow}px')
-              if metrics['h1Count'] != 1:
-                  raise AssertionError(f'{kind}: expected one h1 at {width}px, found {metrics["h1Count"]}')
-
-              body = metrics['bodyText']
+              time.sleep(.45)
+              m = metrics()
+              overflow = m['scrollWidth'] - m['clientWidth']
+              assert overflow <= 2, f'{kind}: horizontal overflow at {width}px = {overflow}px'
+              assert m['h1Count'] == 1, f'{kind}: expected one h1 at {width}px, got {m["h1Count"]}'
+              body = m['bodyText']
               if kind == 'workspace':
-                  if 'Gestión de siniestros' not in body:
-                      raise AssertionError('Workspace heading missing')
-                  if 'SYN-POL-001' not in body or 'SYN-VEH-001' not in body:
-                      raise AssertionError('Authoritative synthetic Claim is not visible in Workspace')
-                  if 'Nuevo siniestro' in body:
-                      raise AssertionError('Unsupported New Claim action is visible')
-                  if len(driver.find_elements(By.CSS_SELECTOR, '.ops-claim-card')) < 1:
-                      raise AssertionError('Expected at least one API-backed Claim card')
+                  assert 'Gestión de siniestros' in body
+                  assert 'SYN-POL-001' in body and 'SYN-VEH-001' in body
+                  assert 'Nuevo siniestro' not in body
+                  assert len(driver.find_elements(By.CSS_SELECTOR, '.ops-claim-card')) >= 1
               else:
-                  required = ['Información del siniestro', 'Estado y siguiente decisión', 'Etapa operacional', 'Tareas', 'Evidencia', 'Historial', 'Auditoría']
-                  for label in required:
-                      if label not in body:
-                          raise AssertionError(f'Detail required section missing: {label}')
-                  if 'Comunicaciones' in body:
-                      raise AssertionError('Unsupported Communications capability is visible in Claim Detail')
+                  for label in ('Información del siniestro', 'Estado y siguiente decisión', 'Etapa operacional', 'Tareas', 'Evidencia', 'Historial', 'Auditoría'):
+                      assert label in body, f'Detail required section missing: {label}'
+                  assert 'Comunicaciones' not in body
                   nav = driver.find_element(By.CSS_SELECTOR, '.r3-detail-anchor-nav')
                   hrefs = [a.get_attribute('href').split('#')[-1] for a in nav.find_elements(By.TAG_NAME, 'a')]
-                  if hrefs != ['resumen', 'flujo', 'etapa', 'tareas', 'evidencia', 'historial', 'auditoria']:
-                      raise AssertionError(f'Unexpected detail anchors: {hrefs}')
+                  assert hrefs == ['resumen', 'flujo', 'etapa', 'tareas', 'evidencia', 'historial', 'auditoria'], hrefs
                   transition = driver.find_element(By.ID, 'transition-target')
-                  options_values = [o.get_attribute('value') for o in transition.find_elements(By.TAG_NAME, 'option')]
-                  if options_values != ['', 'UNDER_REVIEW']:
-                      raise AssertionError(f'Expected API-authoritative RECEIVED transition set, got {options_values}')
-
-              height = min(max(int(metrics['scrollHeight']) + 40, 1000), 7000)
+                  values = [o.get_attribute('value') for o in transition.find_elements(By.TAG_NAME, 'option')]
+                  assert values == ['', 'UNDER_REVIEW'], values
+              height = min(max(int(m['scrollHeight']) + 40, 1000), 7000)
               driver.set_window_size(width, height)
-              time.sleep(0.35)
+              time.sleep(.35)
               driver.execute_script('window.scrollTo(0, 0)')
               path = out / filename
-              if not driver.save_screenshot(str(path)):
-                  raise AssertionError(f'Unable to capture {filename}')
-              return {
-                  'kind': kind,
-                  'width': width,
-                  'height': height,
-                  'horizontal_overflow_px': overflow,
-                  'h1_count': metrics['h1Count'],
-                  'file': str(path),
-              }
+              assert driver.save_screenshot(str(path))
+              return {'kind': kind, 'width': width, 'height': height, 'horizontal_overflow_px': overflow, 'h1_count': m['h1Count'], 'file': str(path)}
 
           try:
               driver.get(base + '/operator/login')
@@ -229,11 +186,11 @@ jobs:
               wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.r3-login-submit'))).click()
               wait.until(lambda d: d.current_url.startswith(base + '/operator/dashboard'))
 
-              driver.get(base + '/operator/claims')
+              # Preserve the in-memory operator session by navigating through React Router links.
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[href="/operator/claims"]'))).click()
+              wait.until(lambda d: d.current_url.startswith(base + '/operator/claims'))
               wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.ops-kanban')))
               wait.until(lambda d: 'SYN-POL-001' in d.find_element(By.TAG_NAME, 'body').text)
-              first_claim = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.ops-claim-card')))
-              detail_url = first_claim.get_attribute('href')
 
               shots = [
                   capture('claims-workspace-desktop.png', 1440, 'workspace'),
@@ -241,10 +198,11 @@ jobs:
               ]
 
               driver.set_window_size(1440, 1100)
-              driver.get(detail_url)
+              wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a.ops-claim-card'))).click()
+              wait.until(lambda d: '/operator/claims/' in d.current_url)
+              detail_url = driver.current_url
               wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.r3-detail-hero')))
               wait.until(EC.visibility_of_element_located((By.ID, 'transition-target')))
-              wait.until(lambda d: 'Información del siniestro' in d.find_element(By.TAG_NAME, 'body').text)
 
               shots.extend([
                   capture('claim-detail-desktop.png', 1440, 'detail'),
@@ -278,12 +236,9 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          echo '=== API LOG ==='
-          tail -n 250 .runtime/r3-claims-api.log 2>/dev/null || true
-          echo '=== LEGACY LOG ==='
-          tail -n 250 .runtime/r3-claims-legacy.log 2>/dev/null || true
-          echo '=== WEB LOG ==='
-          tail -n 250 .runtime/r3-claims-web.log 2>/dev/null || true
+          tail -n 200 .runtime/r3-claims-api.log 2>/dev/null || true
+          tail -n 200 .runtime/r3-claims-legacy.log 2>/dev/null || true
+          tail -n 200 .runtime/r3-claims-web.log 2>/dev/null || true
 
       - name: Stop runtime services
         if: always()
@@ -292,6 +247,3 @@ jobs:
           pkill -f 'tsx apps/api/src/main.ts' 2>/dev/null || true
           pkill -f 'tsx apps/legacy-simulator/src/main.ts' 2>/dev/null || true
           pkill -f 'vite --host 127.0.0.1' 2>/dev/null || true
-          [[ -f .runtime/r3-claims-web.pid ]] && kill "$(cat .runtime/r3-claims-web.pid)" 2>/dev/null || true
-          [[ -f .runtime/r3-claims-api.pid ]] && kill "$(cat .runtime/r3-claims-api.pid)" 2>/dev/null || true
-          [[ -f .runtime/r3-claims-legacy.pid ]] && kill "$(cat .runtime/r3-claims-legacy.pid)" 2>/dev/null || true
