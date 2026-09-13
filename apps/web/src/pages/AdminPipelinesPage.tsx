@@ -30,7 +30,7 @@ export function AdminPipelinesPage() {
       <main className="operator-main ops-main pipeline-admin-main">
         <div className="ops-page-heading pipeline-admin-page-heading">
           <div>
-            <span className="ops-kicker">Platform Configuration</span>
+            <span className="ops-kicker">Configuración de plataforma</span>
             <h1>Administración de pipelines</h1>
             <p>Definiciones y versiones R3 para CLAIM, RENEWAL y COLLECTION. Las versiones son inmutables y la API conserva la autoridad de activación y concurrencia.</p>
           </div>
@@ -80,9 +80,9 @@ export function AdminPipelinesPage() {
                     <h3>{pipeline.displayName}</h3>
                     <code>{pipeline.key}</code>
                     <div className="pipeline-definition-meta">
-                      <div><span>Definition version</span><strong>v{pipeline.version}</strong></div>
+                      <div><span>Versión de definición</span><strong>v{pipeline.version}</strong></div>
                       <div><span>Versiones</span><strong>{pipeline.versions.length}</strong></div>
-                      <div><span>Drafts</span><strong>{draftCount}</strong></div>
+                      <div><span>Borradores</span><strong>{draftCount}</strong></div>
                     </div>
                     <div className="pipeline-definition-active">
                       <span>Versión activa</span>

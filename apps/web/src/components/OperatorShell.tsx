@@ -25,17 +25,17 @@ const navGroups: Array<{ key: NavGroup; label: string }> = [
 ];
 
 const navItems: NavItem[] = [
-  { to: '/operator/workspace', label: 'Workspace', glyph: '◇', group: 'operations' },
+  { to: '/operator/workspace', label: 'Espacio de trabajo', glyph: '◇', group: 'operations' },
   {
     to: '/operator/dashboard',
-    label: 'Dashboard',
+    label: 'Tablero',
     glyph: '⌂',
     group: 'operations',
     allOf: ['claims.backoffice.read', 'claims.tasks.read'],
   },
-  { to: '/operator/analytics', label: 'Analytics', glyph: '◫', group: 'operations', allOf: ['claims.analytics.read'] },
-  { to: '/operator/claims', label: 'Claims', glyph: '▱', group: 'operations', allOf: ['claims.backoffice.read'] },
-  { to: '/operator/tasks', label: 'Tasks', glyph: '☑', group: 'operations', allOf: ['claims.tasks.read'] },
+  { to: '/operator/analytics', label: 'Analítica', glyph: '◫', group: 'operations', allOf: ['claims.analytics.read'] },
+  { to: '/operator/claims', label: 'Siniestros', glyph: '▱', group: 'operations', allOf: ['claims.backoffice.read'] },
+  { to: '/operator/tasks', label: 'Tareas', glyph: '☑', group: 'operations', allOf: ['claims.tasks.read'] },
   { to: '/operator/customers', label: 'Clientes', glyph: '◎', group: 'portfolio', allOf: ['customers.read'] },
   { to: '/operator/policies', label: 'Pólizas', glyph: '▤', group: 'portfolio', allOf: ['policies.read'] },
   { to: '/operator/renewals', label: 'Renovaciones', glyph: '↻', group: 'portfolio', allOf: ['renewals.read'] },
@@ -43,10 +43,10 @@ const navItems: NavItem[] = [
   { to: '/operator/admin/pipelines', label: 'Pipelines', glyph: '⌘', group: 'administration', allOf: ['pipelines.admin'] },
   { to: '/operator/admin/communication-templates', label: 'Plantillas', glyph: '✉', group: 'administration', allOf: ['communications.admin'] },
   { to: '/operator/admin/custom-fields', label: 'Campos', glyph: '⊞', group: 'administration', allOf: ['custom_fields.admin'] },
-  { to: '/operator/admin/guidance', label: 'Guidance', glyph: '◈', group: 'administration', allOf: ['guidance.admin'] },
-  { to: '/operator/admin/automations', label: 'Automations', glyph: '⚙', group: 'administration', allOf: ['automations.admin'] },
-  { to: '/operator/admin/imports', label: 'Imports', glyph: '⇧', group: 'administration', allOf: ['imports.execute'] },
-  { to: '/operator/admin/recovery', label: 'Recovery', glyph: '↺', group: 'administration', allOf: ['operations.integration.read', 'operations.dead_letters.read'] },
+  { to: '/operator/admin/guidance', label: 'Orientación', glyph: '◈', group: 'administration', allOf: ['guidance.admin'] },
+  { to: '/operator/admin/automations', label: 'Automatizaciones', glyph: '⚙', group: 'administration', allOf: ['automations.admin'] },
+  { to: '/operator/admin/imports', label: 'Importaciones', glyph: '⇧', group: 'administration', allOf: ['imports.execute'] },
+  { to: '/operator/admin/recovery', label: 'Recuperación', glyph: '↺', group: 'administration', allOf: ['operations.integration.read', 'operations.dead_letters.read'] },
 ];
 
 export function OperatorShell({ children }: { children: ReactNode }) {
@@ -60,8 +60,8 @@ export function OperatorShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="operator-shell operator-ops-shell r3-ui-shell">
-      <aside className="ops-sidebar r3-ui-sidebar" aria-label="Navegación principal de Insurance Operations">
-        <Link className="ops-brand r3-ui-brand" to="/operator/workspace" aria-label="Ir al workspace de Insurance Operations">
+      <aside className="ops-sidebar r3-ui-sidebar" aria-label="Navegación principal del Centro de Operaciones">
+        <Link className="ops-brand r3-ui-brand" to="/operator/workspace" aria-label="Ir al espacio de trabajo del Centro de Operaciones">
           <span className="r3-ui-brand-mark" aria-hidden="true">IC</span>
           <span className="r3-ui-brand-copy">
             <strong className="r3-ui-brand-name">InsuranceClaims</strong>
@@ -96,7 +96,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
 
         <div className="ops-sidebar-footer r3-ui-sidebar-footer">
           <Link className="ops-public-link" to="/">Sitio público ↗</Link>
-          <strong>Insurance Operations R3</strong>
+          <strong>Centro de Operaciones R3</strong>
           <span>Caso técnico no oficial · No oficial · Sin afiliación</span>
           <span>Datos exclusivamente sintéticos.</span>
         </div>
@@ -136,20 +136,23 @@ export function OperatorShell({ children }: { children: ReactNode }) {
 }
 
 function contextForPath(path: string) {
-  if (path === '/operator/analytics') return 'Claims Analytics R3 · Métricas agregadas sin elevar permisos de negocio';
-  if (path === '/operator/claims') return 'Listado autoritativo del API · Workspace protegido y consciente del rol';
-  if (path.startsWith('/operator/customers')) return 'Customer 360 R3 · Relaciones autoritativas y read-only';
-  if (path.startsWith('/operator/policies')) return 'Policy 360 R3 · Referencias modernas y legacy';
-  if (path.startsWith('/operator/renewals')) return 'Renewals R3 · Lifecycle y pipeline operativo con control de versión';
-  if (path.startsWith('/operator/collections')) return 'Collections R3 · Lifecycle, pago verificado y pipeline separados';
-  if (path.startsWith('/operator/admin/pipelines')) return 'Pipeline Administration R3 · Versiones inmutables y activación gobernada';
-  if (path.startsWith('/operator/admin/communication-templates')) return 'Communication Templates R3 · Contenido versionado y activación gobernada';
-  if (path.startsWith('/operator/admin/custom-fields')) return 'Custom Fields R3 · Proyecciones extendidas con versionado y límites de dominio';
-  if (path.startsWith('/operator/admin/guidance')) return 'Guidance Administration R3 · Orientación versionada sin semántica inventada';
-  if (path.startsWith('/operator/admin/automations')) return 'Automation Administration R3 · Reglas versionadas con triggers y acciones allowlisted';
-  if (path.startsWith('/operator/admin/imports')) return 'Governed Imports R3 · Preview, mapping, validación, dry-run y commit gobernados';
-  if (path.startsWith('/operator/admin/recovery')) return 'Recovery Operations R3 · Integraciones y dead letters con acceso separado';
-  return 'Workspace protegido y consciente del rol';
+  if (path === '/operator/workspace') return 'Espacio de trabajo por rol · Solo capacidades autorizadas y productizadas';
+  if (path === '/operator/dashboard') return 'Tablero de Operaciones R3 · Priorización del trabajo que requiere atención';
+  if (path === '/operator/analytics') return 'Analítica de siniestros R3 · Métricas agregadas sin elevar permisos de negocio';
+  if (path.startsWith('/operator/claims')) return 'Listado autoritativo del API · Espacio de siniestros protegido y consciente del rol';
+  if (path.startsWith('/operator/tasks')) return 'Tareas R3 · Trabajo operativo independiente del ciclo de vida del siniestro';
+  if (path.startsWith('/operator/customers')) return 'Cliente 360 R3 · Relaciones autoritativas y solo lectura';
+  if (path.startsWith('/operator/policies')) return 'Póliza 360 R3 · Referencias modernas y legacy';
+  if (path.startsWith('/operator/renewals')) return 'Renovaciones R3 · Ciclo de vida y pipeline operativo con control de versión';
+  if (path.startsWith('/operator/collections')) return 'Cobranzas R3 · Ciclo de vida, pago verificado y pipeline separados';
+  if (path.startsWith('/operator/admin/pipelines')) return 'Administración de pipelines R3 · Versiones inmutables y activación gobernada';
+  if (path.startsWith('/operator/admin/communication-templates')) return 'Plantillas de comunicación R3 · Contenido versionado y activación gobernada';
+  if (path.startsWith('/operator/admin/custom-fields')) return 'Campos personalizados R3 · Proyecciones extendidas con versionado y límites de dominio';
+  if (path.startsWith('/operator/admin/guidance')) return 'Administración de orientación R3 · Contenido versionado sin semántica inventada';
+  if (path.startsWith('/operator/admin/automations')) return 'Administración de automatizaciones R3 · Reglas versionadas con disparadores y acciones permitidas';
+  if (path.startsWith('/operator/admin/imports')) return 'Importaciones gobernadas R3 · Vista previa, mapeo, validación, dry-run y commit gobernados';
+  if (path.startsWith('/operator/admin/recovery')) return 'Operaciones de recuperación R3 · Integraciones y dead letters con acceso separado';
+  return 'Espacio de trabajo protegido y consciente del rol';
 }
 
 function operatorInitials(login: string | undefined) {

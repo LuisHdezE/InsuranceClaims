@@ -31,14 +31,14 @@ export function AdminImportsPage() {
       <main className="operator-main ops-main gi-main">
         <div className="ops-page-heading gi-heading">
           <div>
-            <span className="ops-kicker">Governed Imports R3</span>
+            <span className="ops-kicker">Importaciones gobernadas R3</span>
             <h1>Importaciones gobernadas</h1>
-            <p>Importa registros sintéticos mediante un workflow auditable, con preview, mapping explícito, validación, dry-run y commit controlado.</p>
+            <p>Importa registros sintéticos mediante un flujo auditable, con vista previa, mapeo explícito, validación, dry-run y commit controlado.</p>
           </div>
           <Link className="gi-primary" to="/operator/admin/imports/new">+ Nueva importación</Link>
         </div>
 
-        <section className="gi-contract-strip" aria-label="Límites de Governed Imports">
+        <section className="gi-contract-strip" aria-label="Límites de importaciones gobernadas">
           <div><strong>Fixture</strong><span>SYNTHETIC_REFERENCE_RECORDS</span></div>
           <div><strong>Formatos</strong><span>CSV o XLSX · máximo 10 MiB</span></div>
           <div><strong>Límite</strong><span>5.000 filas por archivo</span></div>
@@ -51,7 +51,7 @@ export function AdminImportsPage() {
           <>
             <section className="ops-panel gi-panel" aria-labelledby="gi-directory-title">
               <div className="ops-panel-heading">
-                <div><h2 id="gi-directory-title">Jobs de importación</h2><p>{result.totalItems} jobs · página {result.page} de {Math.max(result.totalPages, 1)}</p></div>
+                <div><h2 id="gi-directory-title">Trabajos de importación</h2><p>{result.totalItems} trabajos · página {result.page} de {Math.max(result.totalPages, 1)}</p></div>
                 <button className="ops-refresh-button" type="button" disabled={jobsQuery.isFetching} onClick={() => void jobsQuery.refetch()}>{jobsQuery.isFetching ? 'Actualizando…' : 'Actualizar'}</button>
               </div>
 
@@ -70,7 +70,7 @@ export function AdminImportsPage() {
                         <span><small>Inválidas</small><strong>{job.counts.invalid}</strong></span>
                         <span><small>Commit</small><strong>{job.counts.committed}</strong></span>
                       </div>
-                      <span className="gi-card-link">Abrir workflow →</span>
+                      <span className="gi-card-link">Abrir flujo →</span>
                     </Link>
                   ))}
                 </div>

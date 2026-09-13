@@ -31,21 +31,21 @@ export function AdminCustomFieldsPage() {
       <main className="operator-main ops-main cf-admin-main">
         <div className="ops-page-heading cf-directory-heading">
           <div>
-            <span className="ops-kicker">Platform Configuration R3</span>
-            <h1>Custom Fields</h1>
+            <span className="ops-kicker">Configuración de plataforma R3</span>
+            <h1>Campos personalizados</h1>
             <p>Definiciones versionadas para proyecciones operacionales aprobadas. La API conserva la autoridad sobre campos protegidos, activación y concurrencia.</p>
           </div>
-          <Link className="cf-primary-button" to="/operator/admin/custom-fields/new">+ Nuevo Custom Field</Link>
+          <Link className="cf-primary-button" to="/operator/admin/custom-fields/new">+ Nuevo campo personalizado</Link>
         </div>
 
-        <section className="cf-contract-strip" aria-label="Frontera de Custom Fields">
-          <div><strong>Targets</strong><span>CLAIM · RENEWAL · COLLECTION</span></div>
+        <section className="cf-contract-strip" aria-label="Frontera de campos personalizados">
+          <div><strong>Tipos objetivo</strong><span>CLAIM · RENEWAL · COLLECTION</span></div>
           <div><strong>Versionado</strong><span>DRAFT → ACTIVE → RETIRED</span></div>
           <div><strong>Listado</strong><span>Solo paginación del servidor</span></div>
         </section>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
-        {fieldsQuery.isLoading && <div className="ops-compact-empty" role="status">Cargando Custom Fields…</div>}
+        {fieldsQuery.isLoading && <div className="ops-compact-empty" role="status">Cargando campos personalizados…</div>}
 
         {result && (
           <>
@@ -61,7 +61,7 @@ export function AdminCustomFieldsPage() {
               </div>
 
               {result.items.length === 0 ? (
-                <div className="ops-compact-empty">No hay Custom Fields configurados.</div>
+                <div className="ops-compact-empty">No hay campos personalizados configurados.</div>
               ) : (
                 <div className="cf-card-grid">
                   {result.items.map((field) => {
@@ -75,7 +75,7 @@ export function AdminCustomFieldsPage() {
                         </div>
                         <h3>{field.fieldKey}</h3>
                         <div className="cf-card-facts">
-                          <span><small>Definition version</small><strong>v{field.version}</strong></span>
+                          <span><small>Versión de definición</small><strong>v{field.version}</strong></span>
                           <span><small>Versiones</small><strong>{field.versions.length}</strong></span>
                           <span><small>Activa</small><strong>{active ? `v${active.versionNumber}` : '—'}</strong></span>
                           <span><small>Último tipo</small><strong>{latest?.valueType ?? '—'}</strong></span>
@@ -88,7 +88,7 @@ export function AdminCustomFieldsPage() {
               )}
             </section>
 
-            <nav className="cf-pagination" aria-label="Paginación de Custom Fields">
+            <nav className="cf-pagination" aria-label="Paginación de campos personalizados">
               <button type="button" disabled={page <= 1 || fieldsQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>← Anterior</button>
               <span>Página {result.page} / {result.totalPages}</span>
               <button type="button" disabled={page >= result.totalPages || fieldsQuery.isFetching} onClick={() => setPage((current) => current + 1)}>Siguiente →</button>

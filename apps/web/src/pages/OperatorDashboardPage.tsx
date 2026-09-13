@@ -78,7 +78,7 @@ export function OperatorDashboardPage() {
         <div className="ops-page-heading r3-ui-dashboard-heading">
           <div className="r3-ui-dashboard-intro">
             <span className="ops-kicker">Operaciones</span>
-            <h1>Dashboard</h1>
+            <h1>Tablero</h1>
             <p>Panorama operativo de Claims y Tasks servido por las APIs autoritativas. Las métricas agregadas solo aparecen cuando R3 concede <code>claims.analytics.read</code>.</p>
           </div>
           <div className="r3-dashboard-heading-actions r3-ui-dashboard-actions">
@@ -98,7 +98,7 @@ export function OperatorDashboardPage() {
         </div>
 
         {failure && failure.problem?.status !== 401 && (
-          <section className="r3-ui-dashboard-alert" aria-label="Incidencia al actualizar el dashboard">
+          <section className="r3-ui-dashboard-alert" aria-label="Incidencia al actualizar el tablero">
             <OperatorApiErrorNotice failure={failure} />
             <button className="r3-ui-inline-retry" type="button" disabled={fetching} onClick={() => void refresh()}>
               Reintentar consultas
@@ -223,7 +223,7 @@ export function OperatorDashboardPage() {
             title="Reportados recientemente"
             description="Claims actualmente en RECEIVED, ordenados por creación."
             to="/operator/claims"
-            linkLabel="Ver workspace"
+            linkLabel="Ver espacio de trabajo"
           />
           {received.length === 0 ? (
             <div className="ops-compact-empty">No hay siniestros en RECEIVED.</div>

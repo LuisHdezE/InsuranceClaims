@@ -33,9 +33,9 @@ export function OperatorCollectionsPage() {
       <main className="operator-main ops-main collection-main r3-collections-directory">
         <div className="ops-page-heading r3-case-page-heading">
           <div>
-            <span className="ops-kicker">Collections Operations</span>
+            <span className="ops-kicker">Operaciones de cobranzas</span>
             <h1>Cobranzas</h1>
-            <p>Casos de cobranza con lifecycle, estado de pago autoritativo y pipeline operativo claramente separados. La bandeja refleja únicamente la proyección R3.</p>
+            <p>Casos de cobranza con ciclo de vida, estado de pago autoritativo y pipeline operativo claramente separados. La bandeja refleja únicamente la proyección R3.</p>
           </div>
           <div className="r3-case-heading-summary" aria-label="Resumen del listado">
             <span>Resultado R3</span>
@@ -50,7 +50,7 @@ export function OperatorCollectionsPage() {
           <div className="ops-panel-heading">
             <div>
               <h2 id="collections-list-title">Bandeja de cobranzas</h2>
-              <p>Cliente, póliza, lifecycle, pago y etapa operativa provienen del servidor.</p>
+              <p>Cliente, póliza, ciclo de vida, pago y etapa operativa provienen del servidor.</p>
             </div>
             <button className="ops-refresh-button" type="button" disabled={collectionsQuery.isFetching} onClick={() => void collectionsQuery.refetch()}>
               {collectionsQuery.isFetching ? 'Actualizando…' : 'Actualizar'}
@@ -65,7 +65,7 @@ export function OperatorCollectionsPage() {
             <div className="r3-case-table-wrap">
               <table className="r3-case-table">
                 <thead>
-                  <tr><th>Cliente</th><th>Póliza</th><th>Lifecycle</th><th>Estado de pago</th><th>Etapa operativa</th><th>Actualizado</th><th /></tr>
+                  <tr><th>Cliente</th><th>Póliza</th><th>Ciclo de vida</th><th>Estado de pago</th><th>Etapa operativa</th><th>Actualizado</th><th /></tr>
                 </thead>
                 <tbody>
                   {items.map((item) => (
@@ -78,7 +78,7 @@ export function OperatorCollectionsPage() {
                         <strong>{item.policy?.policyReference ?? item.policyId}</strong>
                         <small>{item.policy?.insurerReference ?? 'Sin referencia de aseguradora'}</small>
                       </td>
-                      <td data-label="Lifecycle"><CollectionStatus value={item.status} /></td>
+                      <td data-label="Ciclo de vida"><CollectionStatus value={item.status} /></td>
                       <td data-label="Estado de pago"><PaymentState value={item.paymentState} /></td>
                       <td data-label="Etapa operativa"><span className="r3-case-stage">{item.pipeline?.currentStage?.displayName ?? 'Sin work item'}</span></td>
                       <td data-label="Actualizado"><time dateTime={item.updatedAt}>{formatDateTime(item.updatedAt)}</time></td>
