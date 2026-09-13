@@ -123,7 +123,7 @@ export function OperatorClaimsPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main">
+      <main className="operator-main ops-main r3-workspace-page">
         <div className="ops-page-heading">
           <div>
             <span className="ops-kicker">Operación</span>
