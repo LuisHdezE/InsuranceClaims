@@ -47,6 +47,7 @@ Este directorio conserva las vistas **aprobadas explícitamente** durante la rac
 | Staff Workspace R3 | MANTENER / SIMPLIFICAR | `staff-workspace-r3-approved.svg` + `staff-workspace-r3-approved.md` |
 | Directorio de Clientes R3 | MANTENER / SIMPLIFICAR | `customer-directory-approved.svg` + `customer-directory-approved.md` |
 | Directorio de Pólizas R3 | MANTENER / SIMPLIFICAR | `policy-directory-approved.svg` + `policy-directory-approved.md` |
+| Communication Templates R3 | DIFERENCIADOR TÉCNICO / MANTENER | `communication-templates-r3-approved.svg` + `communication-templates-r3-approved.md` |
 
 ## Principios funcionales clave
 
@@ -76,6 +77,9 @@ Responsabilidad: **gestionar casos de negocio propios** sin duplicar los 360. Li
 
 ### Administración de Pipelines
 Responsabilidad: **gobernar configuración versionada** para `CLAIM`, `RENEWAL` y `COLLECTION`. Las versiones son inmutables; DRAFT, activación y enable/disable son pasos explícitos y gobernados.
+
+### Communication Templates R3
+Responsabilidad: **gobernar definiciones de comunicación y contenido versionado** para `EMAIL` y `WHATSAPP`. Las versiones son inmutables; crear genera `DRAFT`, activar y habilitar son pasos separados y las mutaciones usan `expectedDefinitionVersion`. Un `409` exige refetch autoritativo, sin reintento ciego.
 
 ### Automatizaciones R3
 Responsabilidad: **gobernar reglas operacionales versionadas** usando el modelo CUANDO → SI → ESPERA → ENTONCES, sin convertir métricas o acciones ilustrativas de mockups en capacidades reales.
