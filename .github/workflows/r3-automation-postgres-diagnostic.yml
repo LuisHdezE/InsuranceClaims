@@ -1,0 +1,95 @@
+name: R3 Automation PostgreSQL Diagnostic
+
+on:
+  push:
+    branches: [review/r3-parallel-10-automation-pipelines]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_automation_diag
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_automation_diag"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_automation_diag
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '[]'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: c13abfe75db5eb2ce2895c29da1c4bdd7835e69c
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install and emit contract
+        run: |
+          npm ci
+          npm run contract:emit
+      - name: Prepare runtime secrets
+        run: |
+          echo "JWT_SECRET=diag-staff-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=diag-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+      - name: Bootstrap database
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+      - name: Reproduce activation with full stack
+        shell: bash
+        run: |
+          mkdir -p .runtime
+          cat > .runtime/automation-postgres-diag.ts <<'TS'
+          import { createProductionRuntimeFromEnv } from '../packages/infrastructure/src/runtime.ts';
+
+          const runtime = await createProductionRuntimeFromEnv();
+          const actor = {
+            operatorId: '93000000-0000-4000-8000-000000000001',
+            role: 'PLATFORM_ADMIN',
+            permissions: ['automations.admin', 'pipelines.admin'],
+          } as any;
+          const content = {
+            when: { eventType: 'CLAIM_CREATED' },
+            if: [{ field: 'status', operator: 'EQ', value: 'RECEIVED' }],
+            wait: null,
+            then: [{ key: 'notify-operator', type: 'NOTIFY_OPERATOR', parameters: { messageKey: 'synthetic-created' } }],
+          } as any;
+
+          const created = await runtime.automationAdmin.createAutomation({
+            key: 'diag.automation', displayName: 'Diagnostic Automation', sourceClassification: 'SYNTHETIC_QA', content,
+          }, actor, { requestId: 'diag-create' });
+          console.log('CREATED', JSON.stringify(created));
+          const draft = created.versions[0];
+          try {
+            const activated = await runtime.automationAdmin.activateAutomationVersion({
+              definitionId: created.definitionId,
+              versionId: draft.versionId,
+              expectedDefinitionVersion: created.version,
+            }, actor, { requestId: 'diag-activate' });
+            console.log('ACTIVATED', JSON.stringify(activated));
+          } catch (error) {
+            console.error('AUTOMATION_ACTIVATION_STACK');
+            console.error(error instanceof Error ? error.stack : error);
+            throw error;
+          }
+          TS
+          npx tsx .runtime/automation-postgres-diag.ts
