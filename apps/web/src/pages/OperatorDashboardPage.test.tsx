@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { listClaims } from '../api/claims';
 import { getClaimsOperationalMetrics } from '../api/claims-work';
 import { listTasks } from '../api/tasks';
@@ -139,7 +139,13 @@ function renderDashboard() {
   );
 }
 
-describe.skip('OperatorDashboardPage', () => {
+function expectKpiValue(label: string, value: number) {
+  const card = screen.getByText(label).closest('article');
+  expect(card).not.toBeNull();
+  expect(within(card!).getByText(String(value))).toBeTruthy();
+}
+
+describe('OperatorDashboardPage', () => {
   beforeEach(() => {
     sessionState.role = 'CLAIMS_SUPERVISOR';
     sessionState.signOut.mockClear();
@@ -151,13 +157,40 @@ describe.skip('OperatorDashboardPage', () => {
     mockedListClaims.mockResolvedValue(claimsResponse);
   });
 
-  it('renders the six authoritative KPIs and only the governed windows', async () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('renders API-backed operational data and only the governed analytics windows', async () => {
     renderDashboard();
 
     expect(await screen.findByText('Claims abiertos')).toBeTruthy();
-    for (const label of ['Reportados 30d', 'Claims cerrados', 'Tareas abiertas', 'Tareas vencidas', 'Evidencia pendiente']) {
-      expect(screen.getByText(label)).toBeTruthy();
-    }
+
+    expectKpiValue('Claims abiertos', metricsResponse.data.openClaims);
+    expectKpiValue('Reportados 30d', metricsResponse.data.reportedInWindow);
+    expectKpiValue('Claims cerrados', metricsResponse.data.closedClaims);
+    expectKpiValue('Tareas abiertas', metricsResponse.data.openTasks);
+    expectKpiValue('Tareas vencidas', metricsResponse.data.overdueTasks);
+    expectKpiValue('Evidencia pendiente', metricsResponse.data.evidencePendingReviewClaims);
+
+    await waitFor(() => {
+      expect(mockedMetrics).toHaveBeenCalledTimes(1);
+      expect(mockedListTasks).toHaveBeenCalledTimes(1);
+      expect(mockedListClaims).toHaveBeenCalledTimes(1);
+    });
+    expect(mockedListTasks).toHaveBeenCalledWith(
+      { page: 1, pageSize: 5, status: 'OPEN' },
+      'test-token',
+    );
+    expect(mockedListClaims).toHaveBeenCalledWith(
+      { page: 1, pageSize: 6, status: 'RECEIVED', sort: 'createdAt:desc' },
+      'test-token',
+    );
+
+    expect(screen.getByText(tasksResponse.data.items[0].title)).toBeTruthy();
+    expect(screen.getByText('Assessment')).toBeTruthy();
+    expect(screen.getByRole('link', { name: claimsResponse.data.items[0].trackingCode })).toBeTruthy();
+    expect(screen.getByText(claimsResponse.data.items[0].vehicleReference)).toBeTruthy();
 
     expect(screen.getByRole('option', { name: 'Últimos 7 días' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Últimos 30 días' })).toBeTruthy();
@@ -168,7 +201,6 @@ describe.skip('OperatorDashboardPage', () => {
     expect(screen.getByRole('heading', { name: 'Etapas operacionales' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Requiere acción' })).toBeTruthy();
     expect(screen.getByRole('table')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'CLM-2026-001' })).toBeTruthy();
 
     expect(screen.queryByText(/exportar/i)).toBeNull();
     expect(screen.queryByText(/forecast/i)).toBeNull();
@@ -223,5 +255,7 @@ describe.skip('OperatorDashboardPage', () => {
 
     expect(await screen.findByText('No hay tareas abiertas.')).toBeTruthy();
     expect(screen.getByText('No hay siniestros en RECEIVED.')).toBeTruthy();
+    expect(screen.queryByText(tasksResponse.data.items[0].title)).toBeNull();
+    expect(screen.queryByRole('link', { name: claimsResponse.data.items[0].trackingCode })).toBeNull();
   });
 });
