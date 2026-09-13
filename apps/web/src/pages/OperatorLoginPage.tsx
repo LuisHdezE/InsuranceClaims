@@ -76,7 +76,7 @@ export function OperatorLoginPage() {
 
             <div className="r3-login-session-note">
               <strong>Contrato de sesión R3</strong>
-              <p>JWT Bearer · 900 segundos · sin refresh token · permisos derivados del rol emitido por el API.</p>
+              <p>JWT Bearer · 900 segundos · sin renovación automática de sesión · permisos derivados del rol emitido por el API.</p>
             </div>
           </div>
         </section>
