@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "closure": "InsuranceClaims R3 Full Product Technical Closure",
+  "status": "CANDIDATE",
+  "productBaseline": "cbace18fc1b00dcd6c17aca79dc12bb668cbd9a9",
+  "referencePostUiHead": "24817b7d36a23cc184a0615da9fb8a4e251ab2e2",
+  "blueprintConsumerVersion": "0.5.2",
+  "deliveryMode": "GREENFIELD",
+  "legacyCoexistence": "SIMULATED",
+  "contractRevision": "api-v1-r3",
+  "api": {
+    "operations": 90,
+    "paths": 76,
+    "families": 16,
+    "inheritedOperations": 15,
+    "newOperations": 75,
+    "changedExistingOperations": 7,
+    "backendTestsBaseline": 91
+  },
+  "webSurfaces": [
+    "Public Claim Intake",
+    "Public Claim Tracking",
+    "Operator Login",
+    "Staff Workspace",
+    "Operations Dashboard",
+    "Claims Workspace",
+    "Claim Detail",
+    "Tasks",
+    "Customer Directory",
+    "Customer 360",
+    "Policy Directory",
+    "Policy 360",
+    "Renewals",
+    "Collections",
+    "Analytics",
+    "Pipeline Administration",
+    "Automation Administration",
+    "Communication Template Administration",
+    "Custom Field Administration",
+    "Guidance Administration",
+    "Governed Imports",
+    "Recovery Operations / Dead Letters"
+  ],
+  "deliberateExclusions": [
+    "Authenticated Customer Portal",
+    "Operator Communications UI",
+    "Standalone Bulk Actions UI"
+  ],
+  "requiredSuccessWorkflows": [
+    "API Implementation",
+    "API QA",
+    "Integration QA - Web Slices",
+    "OpenAPI Validation",
+    "OpenAPI Post-MVP R2",
+    "Postman Contract",
+    "CI QA Hardening",
+    "Release Gate Evidence",
+    "Claims Operations Release Formalization 0.2.0",
+    "R3 Final Closure",
+    "Functional Slice - Digital Claim Intake Web",
+    "Functional Slice - Customer Claim Tracking Web",
+    "Functional Slice - Claims Backoffice Web",
+    "Interface Inventory",
+    "Design System",
+    "Operations Observability Evidence",
+    "R3 Full Product Technical Closure"
+  ],
+  "allowedHistoricalSentinelFailures": [
+    "Release Gate Ready State",
+    "Operations State",
+    "Visual Functional Review Ready - Web"
+  ],
+  "evidence": {
+    "apiClosure": "documentation/api-implementation/r3/FINAL_CLOSURE_INCREMENT_22.md",
+    "uiReconciliation": "documentation/ui-reference/r3/task12-full-system-reconciliation-note.md",
+    "operatorShellRegression": "apps/web/src/components/OperatorShell.test.tsx",
+    "staffWorkspaceRegression": "apps/web/src/pages/StaffWorkspacePage.test.tsx",
+    "apiQaWorkflow": ".github/workflows/api-qa.yml",
+    "webIntegrationWorkflow": ".github/workflows/integration-qa-web.yml",
+    "apiClosureWorkflow": ".github/workflows/r3-final-closure.yml"
+  },
+  "closureChangeAllowlist": [
+    ".github/workflows/r3-full-product-technical-closure.yml",
+    "documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.json",
+    "documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.md",
+    "package.json",
+    "scripts/validate-r3-full-product-closure.mjs"
+  ]
+}

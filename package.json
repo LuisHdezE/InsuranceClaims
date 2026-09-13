@@ -26,6 +26,7 @@
     "r3:closure:materialize": "node scripts/materialize-r3-final-closure-status.mjs",
     "r3:closure:check": "node scripts/check-r3-final-closure-state.mjs",
     "r3:closure:validate": "node scripts/validate-r3-final-closure.mjs",
+    "r3:product-closure:validate": "node scripts/validate-r3-full-product-closure.mjs",
     "architecture:check": "node scripts/architecture-check.mjs",
     "start:api": "tsx apps/api/src/main.ts",
     "start:mcp": "tsx apps/mcp/src/main.ts",
