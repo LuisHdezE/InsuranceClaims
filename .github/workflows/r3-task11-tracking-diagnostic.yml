@@ -1,0 +1,157 @@
+name: R3 Task 11 Tracking Diagnostic
+
+on:
+  push:
+    branches: [review/r3-task11-tracking-diagnostic]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_r3_task11_tracking_diag
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_r3_task11_tracking_diag"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_r3_task11_tracking_diag
+      LEGACY_SIMULATOR_URL: http://127.0.0.1:3200
+      LEGACY_SIMULATOR_PORT: '3200'
+      PORT: '3000'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_WEB_BASE_URL: http://127.0.0.1:5173
+      QA_OPERATOR_LOGIN: qa.operator@example.invalid
+      QA_ADMIN_LOGIN: qa.admin@example.invalid
+      QA_SUPERVISOR_LOGIN: qa.supervisor@example.invalid
+      QA_CUSTOMER_LOGIN: qa.customer@example.invalid
+      EVIDENCE_STORAGE_DIR: .runtime/evidence-r3-task11-tracking-diag
+      COLLECTION_PAYMENT_STATE_VALUES_JSON: '["DEMO_STATE_A","DEMO_STATE_B"]'
+      REVIEW_TARGET_SHA: cc7797e47b2054787c598bad04ed07f4316903d1
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: cc7797e47b2054787c598bad04ed07f4316903d1
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Verify exact product head
+        run: test "$(git rev-parse HEAD)" = "$REVIEW_TARGET_SHA"
+      - name: Install dependencies and browser harness
+        shell: bash
+        run: |
+          npm ci
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser_bin"
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+          echo "JWT_SECRET=r3-task11-diag-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=r3-task11-diag-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "QA_OPERATOR_PASSWORD=R3-task11-diag-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          echo "QA_CUSTOMER_PASSWORD=R3-task11-diag-customer-$(openssl rand -hex 16)!" >> "$GITHUB_ENV"
+          mkdir -p .runtime/task11-tracking-diag .runtime/evidence-r3-task11-tracking-diag
+      - name: Bootstrap PostgreSQL
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f qa/r3-insurer-guidance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_09_customer_portal_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_10_governed_imports_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_01_renewals_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_02_collections_r3.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260909_03_custom_fields_r3.sql
+          npx tsx qa/seed.ts
+      - name: Start runtime
+        shell: bash
+        run: |
+          npm run start:legacy > .runtime/task11-tracking-diag/legacy.log 2>&1 & echo $! > .runtime/task11-tracking-diag/legacy.pid
+          npm run start:api > .runtime/task11-tracking-diag/api.log 2>&1 & echo $! > .runtime/task11-tracking-diag/api.pid
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime/task11-tracking-diag/web.log 2>&1 & echo $! > .runtime/task11-tracking-diag/web.pid
+          for attempt in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && curl -fsS http://127.0.0.1:5173/ >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: Reproduce tracking navigation
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support import expected_conditions as EC
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          base=os.environ['QA_WEB_BASE_URL'].rstrip('/')
+          out=Path('.runtime/task11-tracking-diag')
+          options=webdriver.ChromeOptions()
+          for arg in ('--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--force-device-scale-factor=1'):
+              options.add_argument(arg)
+          options.add_argument('--window-size=1440,1000')
+          options.binary_location=os.environ['BROWSER_BIN']
+          options.set_capability('goog:loggingPrefs', {'browser':'ALL','performance':'ALL'})
+          driver=webdriver.Chrome(options=options)
+          wait=WebDriverWait(driver,30)
+
+          def path_is(path):
+              return lambda d: d.current_url.split('?',1)[0].rstrip('/') == (base+path).rstrip('/')
+          def fill(sel,val):
+              el=wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,sel))); el.clear(); el.send_keys(val)
+          def click(sel):
+              el=wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,sel))); driver.execute_script('arguments[0].click()',el)
+          def set_dt(val):
+              el=wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#occurredAt')))
+              driver.execute_script("const el=arguments[0],v=arguments[1];const s=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;s.call(el,v);el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));",el,val)
+
+          try:
+              driver.get(base+'/claims/new/verify')
+              fill('#policyReference','SYN-POL-001'); fill('#vehicleReference','SYN-VEH-001'); click('.form-actions .btn-primary')
+              wait.until(path_is('/claims/new'))
+              fill('#eventType','Synthetic diagnostic collision'); set_dt('2026-09-13T12:00'); fill('#locationText','Synthetic Diagnostic Avenue'); fill('#description','Synthetic diagnostic tracking navigation claim.'); click('.form-actions .btn-primary')
+              wait.until(path_is('/claims/new/review')); click('.form-actions .btn-primary')
+              wait.until(path_is('/claims/new/success'))
+              tracking=driver.find_element(By.CSS_SELECTOR,'.tracking-code').text.strip()
+              click('.form-actions .btn-primary'); wait.until(path_is('/claims/track'))
+              fill('#trackingCode',tracking); fill('#trackingPolicyReference','SYN-POL-001'); click('.form-actions .btn-primary')
+              time.sleep(4)
+              body=driver.find_element(By.TAG_NAME,'body').text
+              diag={'url':driver.current_url,'tracking_code':tracking,'body':body,'browser_logs':driver.get_log('browser')}
+              (out/'diagnostic.json').write_text(json.dumps(diag,indent=2,ensure_ascii=False))
+              driver.save_screenshot(str(out/'after-track-submit.png'))
+              print(json.dumps(diag,indent=2,ensure_ascii=False))
+          finally:
+              driver.quit()
+          PY
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-task11-tracking-diagnostic-cc7797e
+          path: .runtime/task11-tracking-diag/**
+          include-hidden-files: true
+          retention-days: 30
+      - name: Stop runtime
+        if: always()
+        shell: bash
+        run: |
+          [[ -f .runtime/task11-tracking-diag/api.pid ]] && kill "$(cat .runtime/task11-tracking-diag/api.pid)" 2>/dev/null || true
+          [[ -f .runtime/task11-tracking-diag/web.pid ]] && kill "$(cat .runtime/task11-tracking-diag/web.pid)" 2>/dev/null || true
+          [[ -f .runtime/task11-tracking-diag/legacy.pid ]] && kill "$(cat .runtime/task11-tracking-diag/legacy.pid)" 2>/dev/null || true
