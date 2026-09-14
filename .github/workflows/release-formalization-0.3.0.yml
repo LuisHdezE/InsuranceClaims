@@ -1,0 +1,87 @@
+name: R3 Release Formalization 0.3.0
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'apps/**/package.json'
+      - 'packages/**/package.json'
+      - 'README.md'
+      - 'documentation/release/R3_RELEASE_FORMALIZATION_0.3.0.md'
+      - 'documentation/portfolio/RELEASE_NOTES_v0.3.0.md'
+      - 'scripts/validate-release-formalization-0.3.0.mjs'
+      - 'scripts/validate-r3-full-product-closure.mjs'
+      - '.github/workflows/release-formalization-0.3.0.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'apps/**/package.json'
+      - 'packages/**/package.json'
+      - 'README.md'
+      - 'documentation/release/R3_RELEASE_FORMALIZATION_0.3.0.md'
+      - 'documentation/portfolio/RELEASE_NOTES_v0.3.0.md'
+      - 'scripts/validate-release-formalization-0.3.0.mjs'
+      - 'scripts/validate-r3-full-product-closure.mjs'
+      - '.github/workflows/release-formalization-0.3.0.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r3-release-formalization-0.3.0-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-release-formalization:
+    name: R3 Release Formalization 0.3.0
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact candidate head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Verify lockfile reproducibility
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Validate 0.3.0 release identity and formalization boundary
+        run: node scripts/validate-release-formalization-0.3.0.mjs
+
+      - name: Revalidate R3 full-product closure boundary
+        run: npm run r3:product-closure:validate
+
+      - name: Reconcile R3 runtime inventory
+        run: npm run api:reconcile:r3
+
+      - name: Verify OpenAPI R3 zero drift
+        run: npm run openapi:check:r3
+
+      - name: Verify Postman R3 zero drift
+        run: npm run postman:check:r3
+
+      - name: Candidate summary
+        shell: bash
+        run: |
+          echo 'R3_RELEASE_FORMALIZATION_0_3_0_PASS'
+          echo "candidate_sha=$(git rev-parse HEAD)"
+          echo 'candidate_version=0.3.0'
+          echo 'publication_status=NOT_STARTED'
+          echo 'human_merge_decision=PENDING'

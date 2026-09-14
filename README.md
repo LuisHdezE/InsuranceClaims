@@ -6,6 +6,7 @@
 [![Integration QA](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/integration-qa-web.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/integration-qa-web.yml)
 [![R3 Final Closure](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-final-closure.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-final-closure.yml)
 [![R3 Full Product Closure](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-full-product-technical-closure.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-full-product-technical-closure.yml)
+[![R3 Release Formalization](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/release-formalization-0.3.0.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/release-formalization-0.3.0.yml)
 
 > **Portfolio case-study disclaimer**  
 > This is an unofficial technical case study with no affiliation with FAR Seguros. All policy, claim, operator and operational data are synthetic/demo data. Delivery mode is **GREENFIELD** and legacy coexistence is **SIMULATED**.
@@ -22,7 +23,7 @@ This project demonstrates that transition as an end-to-end product: public claim
 |---|---|
 | **Current product state** | **R3 — Full Product Technical Closure completed** |
 | **Latest published release** | **v0.2.0 — Claims Operations Experience** |
-| **Next planned release** | **v0.3.0 — pending separate release formalization** |
+| **Release candidate** | **v0.3.0 — formalization candidate; publication pending** |
 | **API revision** | `api-v1-r3` |
 | **REST surface** | **90 operations · 76 paths · 16 families** |
 | **Productized web surfaces** | **22** |
@@ -37,7 +38,7 @@ This project demonstrates that transition as an end-to-end product: public claim
 
 ## Release candidate scope
 
-The historical MVP Release Gate remains preserved as accepted evidence. R3 does not rewrite that decision: it is a later governed product evolution whose technical closure is recorded separately. The latest published release is still `v0.2.0`; `v0.3.0` remains pending its own formalization and publication gates.
+The historical MVP Release Gate remains preserved as accepted evidence. R3 does not rewrite that decision: it is a later governed product evolution whose technical closure is recorded separately. The monorepo is now being formalized as candidate `0.3.0`, while **v0.2.0 remains the latest published release**. Tag `v0.3.0` and its GitHub Release require a separate explicit publication gate after the formalization PR is merged.
 
 ## Product experience
 
@@ -132,7 +133,8 @@ The repository contains executable evidence for:
 - authentication, authorization, idempotency, concurrency and rate limiting;
 - async/recovery flows;
 - production web build and strict typecheck;
-- full-product technical closure on the exact approved head.
+- full-product technical closure on the exact approved head;
+- fail-closed `0.3.0` release identity and changed-file validation.
 
 R3 was closed technically through PR #90. The accepted merge commit is `54f791707d6a4e2f9425f57d0a18e20e139fb518`.
 
@@ -150,12 +152,14 @@ These are explicit product decisions, not hidden gaps.
 
 - **v0.1.0** — governed modernization MVP.
 - **v0.2.0** — Claims Operations Experience, published and immutable.
-- **R3** — full product technically closed; release formalization to **v0.3.0** is intentionally a separate human-governed task.
+- **0.3.0 candidate** — R3 Full Product release formalization; `v0.3.0` tag and GitHub Release are not published until the separate human publication gate.
 
 The repository does not move or rewrite historical tags to make newer work appear released retroactively.
 
 ## Release documentation and evidence
 
+- [R3 0.3.0 Release Formalization candidate](documentation/release/R3_RELEASE_FORMALIZATION_0.3.0.md)
+- [R3 v0.3.0 candidate release notes](documentation/portfolio/RELEASE_NOTES_v0.3.0.md)
 - [R3 Technical Case Study](documentation/portfolio/CASE_STUDY.md)
 - [R3 Portfolio Hardening record](documentation/portfolio/R3_PORTFOLIO_HARDENING.md)
 - [Full Product Technical Closure](documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.md)
@@ -186,6 +190,7 @@ npm run openapi:check:r3
 npm run postman:check:r3
 npm run r3:closure:validate
 npm run r3:product-closure:validate
+node scripts/validate-release-formalization-0.3.0.mjs
 npm run typecheck --workspace=@insurance/web
 npm test --workspace=@insurance/web
 npm run build --workspace=@insurance/web

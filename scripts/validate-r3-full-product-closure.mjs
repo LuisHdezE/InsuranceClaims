@@ -94,8 +94,21 @@ const expectedClosureAllowlist = [
 ];
 
 const postClosureExactAllowlist = new Set([
+  '.github/workflows/release-formalization-0.2.0.yml',
+  '.github/workflows/release-formalization-0.3.0.yml',
   'README.md',
+  'apps/api/package.json',
+  'apps/legacy-simulator/package.json',
+  'apps/mcp/package.json',
+  'apps/web/package.json',
+  'documentation/release/R3_RELEASE_FORMALIZATION_0.3.0.md',
+  'package-lock.json',
+  'package.json',
+  'packages/application/package.json',
+  'packages/domain/package.json',
+  'packages/infrastructure/package.json',
   'scripts/validate-r3-full-product-closure.mjs',
+  'scripts/validate-release-formalization-0.3.0.mjs',
 ]);
 const postClosurePrefixAllowlist = ['documentation/portfolio/'];
 

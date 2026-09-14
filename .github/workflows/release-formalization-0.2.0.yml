@@ -55,8 +55,43 @@ jobs:
       - name: Verify package-lock reproducibility
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      - name: Detect active release identity
+        id: release-identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_version=$(node -p "require('./package.json').version")
+          echo "version=${current_version}" >> "$GITHUB_OUTPUT"
+          if [[ "${current_version}" == '0.2.0' ]]; then
+            echo 'mode=formalization' >> "$GITHUB_OUTPUT"
+            echo 'Claims Operations 0.2.0 is the active package identity; validating original formalization.'
+          else
+            echo 'mode=historical-preservation' >> "$GITHUB_OUTPUT"
+            echo "Current package identity is ${current_version}; validating immutable published v0.2.0 history instead."
+          fi
+
       - name: Validate release identity and governed evidence chain
+        if: steps.release-identity.outputs.mode == 'formalization'
         run: node scripts/validate-release-formalization-0.2.0.mjs
+
+      - name: Verify published v0.2.0 remains immutable after later releases
+        if: steps.release-identity.outputs.mode == 'historical-preservation'
+        shell: bash
+        env:
+          RELEASE_TAG: v0.2.0
+          RELEASE_COMMIT: 9265417849f398f5d1efa56b7cd8ff365b950dbb
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse "${RELEASE_TAG}^{commit}")" = "${RELEASE_COMMIT}"
+          git cat-file -e "${RELEASE_TAG}:package.json"
+          git cat-file -e "${RELEASE_TAG}:package-lock.json"
+          git cat-file -e "${RELEASE_TAG}:documentation/release/CLAIMS_OPERATIONS_RELEASE_0.2.0.md"
+          git cat-file -e "${RELEASE_TAG}:documentation/portfolio/RELEASE_NOTES_v0.2.0.md"
+          mkdir -p .runtime
+          git show "${RELEASE_TAG}:package.json" > .runtime/v0.2.0-package.json
+          test "$(node -p "require('./.runtime/v0.2.0-package.json').version")" = '0.2.0'
+          echo "Published ${RELEASE_TAG} immutable target: PASS"
+          echo "Published ${RELEASE_TAG} release evidence availability: PASS"
 
       - name: Verify historical v0.1.0 evidence is unchanged
         shell: bash
