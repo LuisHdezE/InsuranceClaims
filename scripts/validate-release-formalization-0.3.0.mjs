@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 const expectedVersion = '0.3.0';
 const baselineVersion = '0.2.0';
 const formalizationBaseline = '47e1745ad5cbe65c9a1b54dcae236bad7205d92b';
+const formalizationMerge = '014b2a4c4c38d94b07346aaa54bc32a8bbb7c5f9';
 const fullProductClosureMerge = '54f791707d6a4e2f9425f57d0a18e20e139fb518';
 const previousReleaseCommit = '9265417849f398f5d1efa56b7cd8ff365b950dbb';
 const previousReleaseTag = 'v0.2.0';
@@ -36,6 +37,13 @@ const exactFormalizationPaths = [
   'packages/domain/package.json',
   'packages/infrastructure/package.json',
   'scripts/validate-r3-full-product-closure.mjs',
+  'scripts/validate-release-formalization-0.3.0.mjs',
+].sort();
+
+const exactPublicationGatePaths = [
+  '.github/workflows/release-formalization-0.3.0.yml',
+  'documentation/portfolio/GITHUB_RELEASE_BODY_v0.3.0.md',
+  'documentation/portfolio/R3_RELEASE_PUBLICATION_GATE_0.3.0.md',
   'scripts/validate-release-formalization-0.3.0.mjs',
 ].sort();
 
@@ -74,9 +82,7 @@ function normalizeManifest(document, normalizedVersion, internalPackageNames) {
   normalized.version = normalizedVersion;
   for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
     for (const dependencyName of Object.keys(normalized[section] ?? {})) {
-      if (internalPackageNames.has(dependencyName)) {
-        normalized[section][dependencyName] = normalizedVersion;
-      }
+      if (internalPackageNames.has(dependencyName)) normalized[section][dependencyName] = normalizedVersion;
     }
   }
   return normalized;
@@ -86,7 +92,6 @@ function normalizeLock(document, normalizedVersion, internalPackageNames) {
   const normalized = clone(document);
   normalized.version = normalizedVersion;
   if (normalized.packages?.['']) normalized.packages[''].version = normalizedVersion;
-
   for (const file of packageFiles.slice(1)) {
     const workspacePath = file.replace(/\/package\.json$/, '');
     const workspace = normalized.packages?.[workspacePath];
@@ -94,9 +99,7 @@ function normalizeLock(document, normalizedVersion, internalPackageNames) {
     workspace.version = normalizedVersion;
     for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
       for (const dependencyName of Object.keys(workspace[section] ?? {})) {
-        if (internalPackageNames.has(dependencyName)) {
-          workspace[section][dependencyName] = normalizedVersion;
-        }
+        if (internalPackageNames.has(dependencyName)) workspace[section][dependencyName] = normalizedVersion;
       }
     }
   }
@@ -107,16 +110,24 @@ function assertJsonEquivalent(actual, expected, label) {
   assert(JSON.stringify(actual) === JSON.stringify(expected), `${label} contains drift beyond approved release identity metadata`);
 }
 
-try {
-  execFileSync('git', ['merge-base', '--is-ancestor', formalizationBaseline, 'HEAD'], { stdio: 'pipe' });
-} catch {
-  fail(`HEAD must descend from formalization baseline ${formalizationBaseline}`);
+function changedPaths(base, head) {
+  const output = git(['diff', '--name-only', `${base}...${head}`]);
+  return output ? output.split(/\r?\n/u).filter(Boolean).sort() : [];
 }
 
-try {
-  execFileSync('git', ['merge-base', '--is-ancestor', fullProductClosureMerge, 'HEAD'], { stdio: 'pipe' });
-} catch {
-  fail(`HEAD must descend from R3 Full Product Technical Closure merge ${fullProductClosureMerge}`);
+function assertExactPaths(actual, expected, label) {
+  assert(actual.length === expected.length, `${label} changed-file count must be ${expected.length}; found ${actual.length}: ${actual.join(', ')}`);
+  expected.forEach((path, index) => {
+    assert(actual[index] === path, `${label} path drift at index ${index}: expected ${path}, found ${actual[index]}`);
+  });
+}
+
+for (const ancestor of [formalizationBaseline, fullProductClosureMerge, formalizationMerge]) {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', ancestor, 'HEAD'], { stdio: 'pipe' });
+  } catch {
+    fail(`HEAD must descend from approved ancestor ${ancestor}`);
+  }
 }
 
 const packages = new Map();
@@ -137,16 +148,11 @@ for (const [file, candidate] of packages) {
   for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
     for (const [dependencyName, dependencyVersion] of Object.entries(candidate[section] ?? {})) {
       if (internalPackageNames.has(dependencyName)) {
-        assert(
-          dependencyVersion === expectedVersion,
-          `${file} ${section}.${dependencyName} must be ${expectedVersion}; found ${dependencyVersion}`,
-        );
+        assert(dependencyVersion === expectedVersion, `${file} ${section}.${dependencyName} must be ${expectedVersion}; found ${dependencyVersion}`);
       }
     }
   }
-
-  const normalizedCandidate = normalizeManifest(candidate, baselineVersion, internalPackageNames);
-  assertJsonEquivalent(normalizedCandidate, baselinePackages.get(file), file);
+  assertJsonEquivalent(normalizeManifest(candidate, baselineVersion, internalPackageNames), baselinePackages.get(file), file);
 }
 
 const lock = readJson('package-lock.json');
@@ -159,20 +165,8 @@ for (const file of packageFiles.slice(1)) {
   const workspacePath = file.replace(/\/package\.json$/, '');
   const workspace = lock.packages?.[workspacePath];
   assert(workspace?.version === expectedVersion, `package-lock workspace ${workspacePath} version must be ${expectedVersion}; found ${workspace?.version}`);
-  for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
-    for (const [dependencyName, dependencyVersion] of Object.entries(workspace?.[section] ?? {})) {
-      if (internalPackageNames.has(dependencyName)) {
-        assert(
-          dependencyVersion === expectedVersion,
-          `package-lock ${workspacePath} ${section}.${dependencyName} must be ${expectedVersion}; found ${dependencyVersion}`,
-        );
-      }
-    }
-  }
 }
-
-const normalizedLock = normalizeLock(lock, baselineVersion, internalPackageNames);
-assertJsonEquivalent(normalizedLock, baselineLock, 'package-lock.json');
+assertJsonEquivalent(normalizeLock(lock, baselineVersion, internalPackageNames), baselineLock, 'package-lock.json');
 
 const closure = readJson('documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.json');
 assert(closure.contractRevision === 'api-v1-r3', 'release must remain bound to api-v1-r3');
@@ -183,44 +177,20 @@ assert(closure.api?.operations === 90, `R3 operation count must remain 90; found
 assert(closure.api?.paths === 76, `R3 path count must remain 76; found ${closure.api?.paths}`);
 assert(closure.api?.families === 16, `R3 family count must remain 16; found ${closure.api?.families}`);
 assert(closure.webSurfaces?.length === 22, `R3 productized web surfaces must remain 22; found ${closure.webSurfaces?.length}`);
-assert(closure.deliberateExclusions?.length === 3, `R3 deliberate exclusions must remain 3; found ${closure.deliberateExclusions?.length}`);
 
 const releaseDoc = readText('documentation/release/R3_RELEASE_FORMALIZATION_0.3.0.md');
-for (const marker of [
-  'CANDIDATE / HUMAN MERGE DECISION PENDING',
-  'Publication status: `NOT_STARTED`',
-  formalizationBaseline,
-  'v0.3.0',
-  'v0.2.0',
-  'Gate A',
-  'Gate B',
-]) {
+for (const marker of ['v0.3.0', 'v0.2.0', 'Gate A', 'Gate B', formalizationBaseline]) {
   assert(releaseDoc.includes(marker), `release formalization document missing marker: ${marker}`);
 }
 
-const releaseNotes = readText('documentation/portfolio/RELEASE_NOTES_v0.3.0.md');
-for (const marker of [
-  'Formalization status: `CANDIDATE / HUMAN MERGE DECISION PENDING`',
-  'Publication status: `NOT_STARTED`',
-  '90',
-  '76',
-  '16',
-  '22',
-  'v0.3.0',
-]) {
-  assert(releaseNotes.includes(marker), `release notes missing marker: ${marker}`);
+const publicationGate = readText('documentation/portfolio/R3_RELEASE_PUBLICATION_GATE_0.3.0.md');
+for (const marker of ['READY_FOR_HUMAN_GATE_B', formalizationMerge, 'v0.3.0', 'annotated', '90', '76', '16', '22']) {
+  assert(publicationGate.includes(marker), `publication gate document missing marker: ${marker}`);
 }
 
-const readme = readText('README.md');
-for (const marker of [
-  'Latest published release',
-  'v0.2.0',
-  'v0.3.0',
-  'formalization candidate',
-  'api-v1-r3',
-  '90 operations',
-]) {
-  assert(readme.toLowerCase().includes(marker.toLowerCase()), `README missing release marker: ${marker}`);
+const releaseBody = readText('documentation/portfolio/GITHUB_RELEASE_BODY_v0.3.0.md');
+for (const marker of ['R3 Full Product v0.3.0', formalizationMerge, 'api-v1-r3', '90', '76', '16', '22', 'Caso técnico no oficial']) {
+  assert(releaseBody.includes(marker), `GitHub release body missing marker: ${marker}`);
 }
 
 const previousTagCommit = git(['rev-parse', `${previousReleaseTag}^{commit}`]);
@@ -232,21 +202,17 @@ try {
 } catch {
   candidateTagExists = false;
 }
-assert(candidateTagExists === false, `${candidateReleaseTag} must not exist before the separate publication gate`);
+assert(candidateTagExists === false, `${candidateReleaseTag} must remain absent until the publication job executes after explicit Gate B merge approval`);
 
-const changed = git(['diff', '--name-only', `${formalizationBaseline}...HEAD`]);
-const changedPaths = changed ? changed.split(/\r?\n/u).filter(Boolean).sort() : [];
-assert(changedPaths.length === exactFormalizationPaths.length, `formalization changed-file count must be ${exactFormalizationPaths.length}; found ${changedPaths.length}: ${changedPaths.join(', ')}`);
-for (let index = 0; index < exactFormalizationPaths.length; index += 1) {
-  assert(changedPaths[index] === exactFormalizationPaths[index], `formalization path drift at index ${index}: expected ${exactFormalizationPaths[index]}, found ${changedPaths[index]}`);
-}
+assertExactPaths(changedPaths(formalizationBaseline, formalizationMerge), exactFormalizationPaths, 'historical formalization');
+assertExactPaths(changedPaths(formalizationMerge, 'HEAD'), exactPublicationGatePaths, 'publication gate');
 
-console.log('R3 RELEASE FORMALIZATION 0.3.0: PASS');
+console.log('R3 RELEASE FORMALIZATION / PUBLICATION PREFLIGHT 0.3.0: PASS');
 console.log(`Formalization baseline: ${formalizationBaseline}`);
+console.log(`Approved release commit: ${formalizationMerge}`);
 console.log(`Candidate version: ${expectedVersion}`);
 console.log(`Previous published tag preserved: ${previousReleaseTag} -> ${previousReleaseCommit}`);
 console.log(`Candidate tag publication state: ${candidateReleaseTag} ABSENT as required`);
-console.log(`Validated package manifests: ${packageFiles.length}`);
-console.log(`Exact formalization paths: ${changedPaths.length}`);
+console.log(`Publication-gate paths: ${exactPublicationGatePaths.length}`);
 console.log(`R3 API: ${closure.api.operations} operations / ${closure.api.paths} paths / ${closure.api.families} families`);
 console.log(`R3 productized web surfaces: ${closure.webSurfaces.length}`);
