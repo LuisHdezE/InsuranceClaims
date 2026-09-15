@@ -28,6 +28,8 @@
     "r3:closure:validate": "node scripts/validate-r3-final-closure.mjs",
     "r3:product-closure:validate": "node scripts/validate-r3-full-product-closure.mjs",
     "architecture:check": "node scripts/architecture-check.mjs",
+    "demo:db:init": "node scripts/demo-db-init.mjs",
+    "demo:seed": "node scripts/demo-seed.mjs",
     "start:api": "tsx apps/api/src/main.ts",
     "start:mcp": "tsx apps/mcp/src/main.ts",
     "start:legacy": "tsx apps/legacy-simulator/src/main.ts",

@@ -1,0 +1,158 @@
+name: Demo Deployment Readiness
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/demo-deployment-readiness.yml'
+      - '.env.example'
+      - 'apps/api/**'
+      - 'apps/web/src/api/**'
+      - 'packages/infrastructure/**'
+      - 'prisma/**'
+      - 'qa/**'
+      - 'scripts/demo-*.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo-runtime:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: insuranceclaims_demo_readiness
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insuranceclaims_demo_readiness"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insuranceclaims_demo_readiness
+      DEMO_MODE: 'true'
+      NODE_ENV: production
+      PORT: '3000'
+      CORS_ALLOWED_ORIGINS: http://127.0.0.1:4173
+      DEMO_DB_INIT_CONFIRM: INSURANCECLAIMS_DEMO_INIT
+      DEMO_SEED_CONFIRM: INSURANCECLAIMS_DEMO_SEED
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies including build tooling
+        run: npm ci --include=dev
+
+      - name: Emit Prisma 8 contract
+        run: npm run contract:emit
+
+      - name: Prepare synthetic demo secrets
+        shell: bash
+        run: |
+          echo "STAFF_JWT_SECRET=demo-ci-staff-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=demo-ci-customer-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "DEMO_OPERATOR_PASSWORD=Demo-ci-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "DEMO_CUSTOMER_PASSWORD=Demo-customer-ci-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
+      - name: Initialize fresh demo database
+        run: npm run demo:db:init
+
+      - name: Prove initializer fails closed after first run
+        shell: bash
+        run: |
+          set +e
+          npm run demo:db:init > .runtime-demo-reinit.log 2>&1
+          status=$?
+          set -e
+          if [[ "$status" -eq 0 ]]; then
+            cat .runtime-demo-reinit.log
+            echo 'Expected demo:db:init to reject an already initialized database.' >&2
+            exit 1
+          fi
+          grep -q 'Use a fresh empty database' .runtime-demo-reinit.log
+
+      - name: Seed synthetic demo data
+        run: npm run demo:seed
+
+      - name: Verify representative demo dataset
+        shell: bash
+        run: |
+          staff_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM operators WHERE login IN ('demo.operator@eliasworks.invalid','demo.supervisor@eliasworks.invalid','demo.admin@eliasworks.invalid') AND is_active = true;")"
+          claim_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM claims;")"
+          task_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM claim_tasks WHERE status = 'OPEN';")"
+          overdue_task_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM claim_tasks WHERE status = 'OPEN' AND due_at < NOW();")"
+          renewal_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM renewal_cases WHERE status = 'OPEN';")"
+          collection_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM collection_cases WHERE status = 'OPEN';")"
+          policy_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM policies WHERE record_status = 'ACTIVE';")"
+          test "$staff_count" = '3'
+          test "$claim_count" -ge '3'
+          test "$task_count" -ge '3'
+          test "$overdue_task_count" -ge '1'
+          test "$renewal_count" -ge '1'
+          test "$collection_count" -ge '1'
+          test "$policy_count" -ge '3'
+
+      - name: Start API in demo mode without legacy simulator
+        shell: bash
+        run: |
+          unset LEGACY_SIMULATOR_URL
+          npm run start:api > .runtime-demo-api.log 2>&1 &
+          echo $! > .runtime-demo-api.pid
+
+      - name: Wait for demo API
+        shell: bash
+        run: |
+          for attempt in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1; then
+              exit 0
+            fi
+            if [[ "$attempt" == '40' ]]; then
+              cat .runtime-demo-api.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Verify in-process synthetic policy verification
+        shell: bash
+        run: |
+          response="$(curl -fsS \
+            -H 'Content-Type: application/json' \
+            -H 'Origin: http://127.0.0.1:4173' \
+            -d '{"policyReference":"SYN-POL-001","vehicleReference":"SYN-VEH-001"}' \
+            http://127.0.0.1:3000/api/v1/public/policy-verifications)"
+          echo "$response" | grep -q '"eligible":true'
+          echo "$response" | grep -q '"policyReference":"SYN-POL-001"'
+
+      - name: Verify configured CORS response
+        shell: bash
+        run: |
+          headers="$(mktemp)"
+          curl -fsS -D "$headers" -o /dev/null \
+            -H 'Origin: http://127.0.0.1:4173' \
+            http://127.0.0.1:3000/health/live
+          grep -qi '^access-control-allow-origin: http://127.0.0.1:4173' "$headers"
+
+      - name: Runtime logs on failure
+        if: failure()
+        run: cat .runtime-demo-api.log 2>/dev/null || true
+
+      - name: Stop demo API
+        if: always()
+        shell: bash
+        run: |
+          [[ -f .runtime-demo-api.pid ]] && kill "$(cat .runtime-demo-api.pid)" 2>/dev/null || true
