@@ -126,7 +126,16 @@ demo.admin@eliasworks.invalid
 
 A customer portal identity is seeded only when `DEMO_CUSTOMER_PASSWORD` is explicitly provided.
 
-The seed also applies the existing synthetic renewals, collections and bulk-action QA scenarios so the demo has representative operational content.
+The seed applies the established synthetic renewals, collections and bulk-action scenarios plus a demo-only operational workload. The deployment-readiness guard requires the resulting database to contain, at minimum:
+
+- three active staff identities;
+- three Claims;
+- three OPEN claim Tasks, including at least one overdue Task;
+- one OPEN renewal case;
+- one OPEN collection case;
+- three active policies.
+
+This keeps the operator dashboard, Claims, Tasks, Customers/Policies, Renewals and Collections areas visibly populated without using real insurer/customer information.
 
 No real insurer/customer data or provider secrets may be committed to the repository.
 
