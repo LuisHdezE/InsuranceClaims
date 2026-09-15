@@ -1,7 +1,9 @@
 import axios, { AxiosError } from 'axios';
 import type { ApiFailure, ProblemDetails } from './types';
 
-export function createApiClient(baseURL = '') {
+const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/+$/, '');
+
+export function createApiClient(baseURL = configuredApiBaseUrl) {
   const client = axios.create({
     baseURL,
     timeout: 15_000,
