@@ -109,6 +109,12 @@ export interface RuntimeContext {
   customerAccessTokens: CustomerAccessTokenPort;
 }
 
+function demoModeFromEnv(raw: string | undefined): boolean {
+  if (raw === undefined || raw === '' || raw === 'false') return false;
+  if (raw === 'true') return true;
+  throw new Error('DEMO_MODE must be either "true" or "false" when provided.');
+}
+
 function integrationSecretsFromEnv(raw: string | undefined): Readonly<Record<string, string>> {
   if (!raw) return {};
   let parsed: unknown;
@@ -361,6 +367,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   guidanceStore: PrismaGuidanceStore;
   customFieldStore: PrismaCustomFieldStore;
 }> {
+  const demoMode = demoModeFromEnv(env.DEMO_MODE);
   const databaseUrl = env.DATABASE_URL;
   const legacyUrl = env.LEGACY_SIMULATOR_URL;
   const staffJwtSecret = env.STAFF_JWT_SECRET ?? env.JWT_SECRET;
@@ -370,7 +377,7 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const customerJwtIssuer = env.CUSTOMER_JWT_ISSUER ?? 'insurance-claims-customer';
   const customerJwtAudience = env.CUSTOMER_JWT_AUDIENCE ?? 'insurance-claims-customer-api';
   if (!databaseUrl) throw new Error('DATABASE_URL is required.');
-  if (!legacyUrl) throw new Error('LEGACY_SIMULATOR_URL is required.');
+  if (!demoMode && !legacyUrl) throw new Error('LEGACY_SIMULATOR_URL is required when DEMO_MODE is not enabled.');
   if (!staffJwtSecret) throw new Error('STAFF_JWT_SECRET (or legacy JWT_SECRET) is required.');
   if (!customerJwtSecret) throw new Error('CUSTOMER_JWT_SECRET is required for the separate Customer Portal authentication context.');
   const integrationSecrets = integrationSecretsFromEnv(env.INTEGRATION_HMAC_SECRETS_JSON);
@@ -382,7 +389,9 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const pipelineAdminStore = new PrismaPipelineAdminStore(db);
   const asyncStore = new PrismaAsyncOperationsStore(db);
   const importStore = new PrismaGovernedImportStore(db);
-  const importSourceStorage = new LocalPrivateImportSourceStorage(env.IMPORT_SOURCE_STORAGE_DIR ?? '.runtime/imports');
+  const importSourceStorage = demoMode
+    ? new MemoryImportSourceStorage()
+    : new LocalPrivateImportSourceStorage(env.IMPORT_SOURCE_STORAGE_DIR ?? '.runtime/imports');
   const renewalStore = new PrismaRenewalCaseStore(db);
   const collectionStore = new PrismaCollectionCaseStore(db);
   const collectionPaymentStateVerifier = new ConfiguredCollectionPaymentStateVerifier(collectionPaymentStates);
@@ -397,9 +406,12 @@ export async function createProductionRuntimeFromEnv(env: NodeJS.ProcessEnv = pr
   const passwordHasher = new Argon2PasswordHasher();
   const accessTokens = new JwtAccessTokenAdapter(staffJwtSecret, staffJwtIssuer, staffJwtAudience);
   const customerAccessTokens = new JwtCustomerAccessTokenAdapter(customerJwtSecret, customerJwtIssuer, customerJwtAudience);
+  const evidenceStorage = demoMode
+    ? new MemoryEvidenceStorage()
+    : new LocalPrivateEvidenceStorage(env.EVIDENCE_STORAGE_DIR ?? '.runtime/evidence');
   const deps: ApplicationDependencies = {
-    policyVerification: new HttpPolicyVerificationAdapter(legacyUrl), claims: store,
-    evidenceStorage: new LocalPrivateEvidenceStorage(env.EVIDENCE_STORAGE_DIR ?? '.runtime/evidence'), audits: store,
+    policyVerification: demoMode ? new MemoryPolicyVerificationAdapter() : new HttpPolicyVerificationAdapter(legacyUrl!), claims: store,
+    evidenceStorage, audits: store,
     idempotency: store, transactions: store, operators: store, passwordHasher, accessTokens,
     clock: new SystemClock(), ids: new SecureIdGenerator(), hash: new Sha256HashAdapter(), logger: new JsonConsoleLogger(),
   };
