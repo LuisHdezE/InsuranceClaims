@@ -54,8 +54,8 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
-      - name: Install locked dependencies
-        run: npm ci
+      - name: Install locked dependencies including build tooling
+        run: npm ci --include=dev
 
       - name: Emit Prisma 8 contract
         run: npm run contract:emit
