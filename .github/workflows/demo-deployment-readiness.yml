@@ -88,11 +88,23 @@ jobs:
       - name: Seed synthetic demo data
         run: npm run demo:seed
 
-      - name: Verify seeded staff identities
+      - name: Verify representative demo dataset
         shell: bash
         run: |
-          count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM operators WHERE login IN ('demo.operator@eliasworks.invalid','demo.supervisor@eliasworks.invalid','demo.admin@eliasworks.invalid') AND is_active = true;")"
-          test "$count" = '3'
+          staff_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM operators WHERE login IN ('demo.operator@eliasworks.invalid','demo.supervisor@eliasworks.invalid','demo.admin@eliasworks.invalid') AND is_active = true;")"
+          claim_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM claims;")"
+          task_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM claim_tasks WHERE status = 'OPEN';")"
+          overdue_task_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM claim_tasks WHERE status = 'OPEN' AND due_at < NOW();")"
+          renewal_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM renewal_cases WHERE status = 'OPEN';")"
+          collection_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM collection_cases WHERE status = 'OPEN';")"
+          policy_count="$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM policies WHERE record_status = 'ACTIVE';")"
+          test "$staff_count" = '3'
+          test "$claim_count" -ge '3'
+          test "$task_count" -ge '3'
+          test "$overdue_task_count" -ge '1'
+          test "$renewal_count" -ge '1'
+          test "$collection_count" -ge '1'
+          test "$policy_count" -ge '3'
 
       - name: Start API in demo mode without legacy simulator
         shell: bash
