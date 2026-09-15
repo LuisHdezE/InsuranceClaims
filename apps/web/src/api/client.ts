@@ -1,7 +1,8 @@
 import axios, { AxiosError } from 'axios';
 import type { ApiFailure, ProblemDetails } from './types';
 
-const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/+$/, '');
+const viteEnv = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env;
+const configuredApiBaseUrl = (viteEnv?.VITE_API_BASE_URL ?? '').trim().replace(/\/+$/, '');
 
 export function createApiClient(baseURL = configuredApiBaseUrl) {
   const client = axios.create({
