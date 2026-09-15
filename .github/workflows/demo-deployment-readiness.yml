@@ -135,7 +135,8 @@ jobs:
             -H 'Origin: http://127.0.0.1:4173' \
             -d '{"policyReference":"SYN-POL-001","vehicleReference":"SYN-VEH-001"}' \
             http://127.0.0.1:3000/api/v1/public/policy-verifications)"
-          echo "$response" | grep -q 'ELIGIBLE'
+          echo "$response" | grep -q '"eligible":true'
+          echo "$response" | grep -q '"policyReference":"SYN-POL-001"'
 
       - name: Verify configured CORS response
         shell: bash
