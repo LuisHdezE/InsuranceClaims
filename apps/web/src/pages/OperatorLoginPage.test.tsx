@@ -90,7 +90,7 @@ describe('OperatorLoginPage R3 contract', () => {
         tokenType: 'Bearer',
         expiresIn: 900,
         operator: {
-          id: '00000000-0000-4000-8000-000000000099',
+          id: '00000000-0000-4000-8000-000000000096',
           login: 'demo.operator@eliasworks.invalid',
           role: 'CLAIMS_OPERATOR',
         },
