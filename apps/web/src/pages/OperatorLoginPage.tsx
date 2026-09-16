@@ -124,7 +124,7 @@ export function OperatorLoginPage() {
 
             <div className="r3-login-role-note">
               <strong>Demo pública · solo lectura</strong>
-              Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance.
+              Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance. En hosting gratuito, la primera entrada puede tardar unos segundos mientras despierta la API.
               <button
                 className="btn btn-cyan r3-login-submit"
                 type="button"
