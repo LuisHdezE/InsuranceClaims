@@ -197,7 +197,7 @@ export function OperatorLoginPage() {
                 disabled={pending}
                 aria-label={pendingMode === 'credentials' ? 'Autenticando' : 'Ingresar al workspace'}
               >
-                {pendingMode === 'credentials' ? 'Autenticando…' : 'Ingresar al workspace'}
+                {pendingMode === 'credentials' ? 'Autenticando…' : 'Ingresar'}
               </button>
             </form>
 
