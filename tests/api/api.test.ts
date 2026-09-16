@@ -97,7 +97,7 @@ test('public demo operator access is gated, read-only and confined to governed s
     assert.equal(session.body.tokenType, 'Bearer');
     assert.equal(session.body.expiresIn, 900);
     assert.deepEqual(session.body.operator, {
-      id: '00000000-0000-4000-8000-000000000099',
+      id: '00000000-0000-4000-8000-000000000096',
       login: 'demo.operator@eliasworks.invalid',
       role: 'CLAIMS_OPERATOR',
     });
