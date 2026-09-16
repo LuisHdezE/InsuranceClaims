@@ -78,6 +78,29 @@ jobs:
             sleep 5
           done
 
+      - name: Verify API root remains a governed 404
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          status="$(curl -sS --connect-timeout 10 --max-time 20 \
+            -D "$headers" \
+            -o "$body" \
+            -w '%{http_code}' \
+            "$DEMO_API_BASE_URL/")"
+          test "$status" = '404'
+          grep -Eqi '^content-type: application/problem\+json' "$headers"
+          node - "$body" <<'NODE'
+          const fs = require('node:fs');
+          const body = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          if (body.status !== 404) throw new Error(`Expected status 404, got ${body.status}`);
+          if (body.code !== 'HTTP_404') throw new Error(`Expected HTTP_404, got ${body.code}`);
+          if (body.type !== 'urn:insuranceclaims:problem:http-404') throw new Error(`Unexpected type: ${body.type}`);
+          if (body.instance !== '/') throw new Error(`Unexpected instance: ${body.instance}`);
+          if (typeof body.requestId !== 'string' || body.requestId.length === 0) throw new Error('Missing requestId');
+          NODE
+
       - name: Verify custom-domain CORS and policy eligibility
         shell: bash
         run: |
@@ -132,4 +155,4 @@ jobs:
       - name: Custom domains summary
         run: |
           echo 'Custom domain smoke passed.'
-          echo 'Validated DNS/TLS reachability, SPA deep links, custom API bundle target, CORS, Neon-backed tracking, protected-route boundary, and HTTP-to-HTTPS redirects.'
+          echo 'Validated DNS/TLS reachability, SPA deep links, custom API bundle target, governed API-root 404, CORS, Neon-backed tracking, protected-route boundary, and HTTP-to-HTTPS redirects.'
