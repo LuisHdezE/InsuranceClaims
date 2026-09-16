@@ -1,0 +1,80 @@
+name: Demo Static Web Smoke
+
+on:
+  push:
+    branches:
+      - feat/demo-static-frontend-validation
+    paths:
+      - '.github/workflows/demo-static-web-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEMO_WEB_BASE_URL: https://insuranceclaims-demo-web.onrender.com
+  DEMO_API_BASE_URL: https://insuranceclaims-demo-api.onrender.com
+
+jobs:
+  static-web-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - name: Verify static root
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          html="$(curl -fsS --connect-timeout 10 --max-time 20 -D "$headers" "$DEMO_WEB_BASE_URL/")"
+          grep -Eq '<div id="root"></div>|<div id="root"' <<< "$html"
+          grep -Eqi 'content-type: text/html' "$headers"
+
+      - name: Verify production API base is baked into bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          html="$(curl -fsS --connect-timeout 10 --max-time 20 "$DEMO_WEB_BASE_URL/")"
+          asset="$(grep -oE 'src="[^"]+\.js"' <<< "$html" | head -n1 | cut -d'"' -f2)"
+          test -n "$asset"
+          bundle="$(curl -fsS --connect-timeout 10 --max-time 20 "$DEMO_WEB_BASE_URL$asset")"
+          grep -Fq "$DEMO_API_BASE_URL" <<< "$bundle"
+
+      - name: Wake public API
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if curl -fsS --connect-timeout 10 --max-time 25 -o /dev/null "$DEMO_API_BASE_URL/health/live"; then
+              exit 0
+            fi
+            if [[ "$attempt" == '12' ]]; then
+              echo 'Public API did not wake within the smoke window.' >&2
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Verify API CORS for temporary frontend origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          curl -fsS --connect-timeout 10 --max-time 25 \
+            -D "$headers" \
+            -o /dev/null \
+            -H "Origin: $DEMO_WEB_BASE_URL" \
+            "$DEMO_API_BASE_URL/health/live"
+          grep -Fqi "access-control-allow-origin: $DEMO_WEB_BASE_URL" "$headers"
+
+      - name: Verify BrowserRouter deep-link fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          status="$(curl -sS --connect-timeout 10 --max-time 20 -D "$headers" -o "$body" -w '%{http_code}' "$DEMO_WEB_BASE_URL/operator/login")"
+          test "$status" = '200'
+          grep -Eq '<div id="root"></div>|<div id="root"' "$body"
+
+      - name: Static web smoke summary
+        run: echo 'Static web root, API base, CORS, and deep-link fallback passed.'
