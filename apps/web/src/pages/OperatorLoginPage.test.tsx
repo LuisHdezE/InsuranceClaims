@@ -60,7 +60,10 @@ describe('OperatorLoginPage R3 contract', () => {
 
     const login = screen.getByLabelText('Usuario') as HTMLInputElement;
     const password = screen.getByLabelText('Contraseña') as HTMLInputElement;
+    const wordmarks = screen.getAllByRole('img', { name: 'FAR Seguros' }) as HTMLImageElement[];
 
+    expect(wordmarks).toHaveLength(2);
+    expect(wordmarks.every((wordmark) => wordmark.getAttribute('src') === '/far-demo-wordmark-v2.svg')).toBe(true);
     expect(login.required).toBe(true);
     expect(login.maxLength).toBe(160);
     expect(login.autocomplete).toBe('username');
