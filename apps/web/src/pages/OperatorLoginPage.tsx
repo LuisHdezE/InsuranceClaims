@@ -7,6 +7,7 @@ import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import '../operator-login-r3.css';
+import '../operator-login-viewport.css';
 
 type PendingMode = 'credentials' | 'demo' | null;
 
