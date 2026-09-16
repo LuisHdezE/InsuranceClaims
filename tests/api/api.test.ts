@@ -65,7 +65,7 @@ test('REST contract preserves Nest HTTP exceptions as Problem Details', async ()
   await app.close();
 });
 
-test('public demo operator access is gated by DEMO_MODE and remains read-only', async () => {
+test('public demo operator access is gated, read-only and confined to governed synthetic fixtures', async () => {
   const previousDemoMode = process.env.DEMO_MODE;
   const runtime = await createMemoryRuntime();
   const app = await NestFactory.create(ApiModule.register(runtime), { logger: false });
@@ -82,6 +82,17 @@ test('public demo operator access is gated by DEMO_MODE and remains read-only', 
     assert.equal(disabled.body.code, 'INVALID_CREDENTIALS');
 
     process.env.DEMO_MODE = 'true';
+    await request(http)
+      .post('/api/v1/public/claims')
+      .set('Idempotency-Key', 'demo-scope-1234567890abcdef')
+      .field('policyReference', 'SYN-POL-001')
+      .field('vehicleReference', 'SYN-VEH-001')
+      .field('eventType', 'Visitor synthetic incident')
+      .field('occurredAt', '2026-09-16T12:00:00Z')
+      .field('locationText', 'Visitor synthetic location')
+      .field('description', 'A visitor-created claim must never appear in the public operator demo.')
+      .expect(201);
+
     const session = await demoLogin().expect(200);
     assert.equal(session.body.tokenType, 'Bearer');
     assert.equal(session.body.expiresIn, 900);
@@ -92,7 +103,20 @@ test('public demo operator access is gated by DEMO_MODE and remains read-only', 
     });
 
     const bearer = `Bearer ${session.body.accessToken}`;
-    await request(http).get('/api/v1/operator/claims').set('Authorization', bearer).expect(200);
+    const scopedList = await request(http).get('/api/v1/operator/claims').set('Authorization', bearer).expect(200);
+    assert.equal(scopedList.body.totalItems, 0, 'visitor-created claims must be excluded from the public demo list');
+
+    const restrictedClaim = await request(http)
+      .get('/api/v1/operator/claims/00000000-0000-4000-8000-000000000001')
+      .set('Authorization', bearer)
+      .expect(403);
+    assert.equal(restrictedClaim.body.code, 'DEMO_SCOPE_RESTRICTED');
+
+    const restrictedArea = await request(http)
+      .get('/api/v1/operator/tasks')
+      .set('Authorization', bearer)
+      .expect(403);
+    assert.equal(restrictedArea.body.code, 'DEMO_SCOPE_RESTRICTED');
 
     const blocked = await request(http)
       .post('/api/v1/operator/claims/00000000-0000-4000-8000-000000000001/transitions')
