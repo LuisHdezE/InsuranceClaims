@@ -75,27 +75,33 @@ export function OperatorLoginPage() {
         <section className="r3-login-context" aria-label="Contexto del acceso de operadores">
           <div className="r3-login-context-inner">
             <div className="r3-login-context-brand">
-              <img className="brand-logo" src="/far-seguros-logo.svg" alt="FAR Seguros" />
-              <span>InsuranceClaims · Operations R3</span>
+              <span className="r3-login-logo-surface">
+                <img className="r3-login-wordmark" src="/far-demo-wordmark-v2.svg" alt="FAR Seguros" />
+              </span>
+              <span className="r3-login-product-label">InsuranceClaims · Operations R3</span>
             </div>
 
-            <h2>Acceso seguro del equipo</h2>
+            <span className="r3-login-context-kicker">Operación protegida</span>
+            <h2>Acceso seguro para operadores</h2>
             <p className="r3-login-context-lead">
-              Un único ingreso. El API determina el rol, los permisos efectivos y la navegación autorizada después de autenticar.
+              Un único ingreso para el equipo. El API determina el rol, los permisos efectivos y la navegación autorizada después de autenticar.
             </p>
 
             <div className="r3-login-role-grid" aria-label="Roles publicados por el contrato R3">
               <article className="r3-login-role-card">
+                <span className="r3-login-role-index">01</span>
                 <strong>Operador de siniestros</strong>
                 <span>Trabajo operativo de Claims, tareas, clientes y pólizas según permisos.</span>
                 <small>Destino habitual: Dashboard</small>
               </article>
               <article className="r3-login-role-card">
+                <span className="r3-login-role-index">02</span>
                 <strong>Supervisor</strong>
                 <span>Operación y supervisión, incluyendo Analytics cuando el API lo autoriza.</span>
                 <small>Destino habitual: Dashboard</small>
               </article>
               <article className="r3-login-role-card">
+                <span className="r3-login-role-index">03</span>
                 <strong>Administrador de plataforma</strong>
                 <span>Configuración y recuperación, sin operación de Claims implícita.</span>
                 <small>Destino habitual: Workspace</small>
@@ -103,8 +109,11 @@ export function OperatorLoginPage() {
             </div>
 
             <div className="r3-login-session-note">
-              <strong>Contrato de sesión R3</strong>
-              <p>JWT Bearer · 900 segundos · sin renovación automática de sesión · permisos derivados del rol emitido por el API.</p>
+              <div>
+                <strong>Contrato de sesión R3</strong>
+                <p>JWT Bearer · 900 segundos · sin renovación automática · permisos derivados del rol emitido por el API.</p>
+              </div>
+              <span className="r3-login-session-status">API autoritativa</span>
             </div>
           </div>
         </section>
@@ -112,21 +121,29 @@ export function OperatorLoginPage() {
         <section className="r3-login-form-side" aria-labelledby="operator-login-title">
           <div className="operator-login-card r3-login-card">
             <div className="r3-login-brand-row">
-              <img className="brand-logo" src="/far-seguros-logo.svg" alt="FAR Seguros" />
+              <img className="r3-login-wordmark" src="/far-demo-wordmark-v2.svg" alt="FAR Seguros" />
               <span className="r3-login-version">Operations R3</span>
             </div>
 
-            <span className="eyebrow">Acceso de operadores · Workspace protegido</span>
-            <h1 id="operator-login-title">Acceso del equipo</h1>
+            <span className="eyebrow">Workspace protegido</span>
+            <h1 id="operator-login-title">Workspace de operadores</h1>
             <p>
               Usa tus credenciales R3. Tu rol y permisos son emitidos por el API después de autenticar.
             </p>
 
-            <div className="r3-login-role-note">
-              <strong>Demo pública · solo lectura</strong>
-              Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance. En hosting gratuito, la primera entrada puede tardar unos segundos mientras despierta la API.
+            <div className="r3-login-demo-panel">
+              <div className="r3-login-demo-heading">
+                <div>
+                  <span className="r3-login-demo-kicker">Demo pública</span>
+                  <strong>Explora el flujo operativo en modo seguro</strong>
+                </div>
+                <span className="r3-login-readonly-badge">Solo lectura</span>
+              </div>
+              <p>
+                Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance. En hosting gratuito, la primera entrada puede tardar unos segundos mientras despierta la API.
+              </p>
               <button
-                className="btn btn-cyan r3-login-submit"
+                className="btn btn-cyan r3-login-demo-button"
                 type="button"
                 disabled={pending}
                 onClick={openReadOnlyDemo}
@@ -136,8 +153,12 @@ export function OperatorLoginPage() {
               </button>
             </div>
 
+            <div className="r3-login-divider" aria-hidden="true">
+              <span>o accede con credenciales R3</span>
+            </div>
+
             <div className="r3-login-role-note">
-              <strong>Rol</strong>
+              <strong>Rol resuelto por el API</strong>
               No se selecciona aquí. El API lo resuelve y la aplicación aplica el destino autorizado.
             </div>
 
@@ -176,7 +197,7 @@ export function OperatorLoginPage() {
                 disabled={pending}
                 aria-label={pendingMode === 'credentials' ? 'Autenticando' : 'Ingresar al workspace'}
               >
-                {pendingMode === 'credentials' ? 'Autenticando…' : 'Ingresar'}
+                {pendingMode === 'credentials' ? 'Autenticando…' : 'Ingresar al workspace'}
               </button>
             </form>
 
