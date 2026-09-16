@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { authenticateOperator } from '../api/claims';
+import { authenticateOperator, createReadOnlyDemoOperatorSession } from '../api/claims';
 import { OperatorLoginPage } from './OperatorLoginPage';
 
 const sessionHarness = vi.hoisted(() => ({
@@ -22,9 +22,13 @@ vi.mock('../flow/OperatorSessionContext', () => ({
   }),
 }));
 
-vi.mock('../api/claims', () => ({ authenticateOperator: vi.fn() }));
+vi.mock('../api/claims', () => ({
+  authenticateOperator: vi.fn(),
+  createReadOnlyDemoOperatorSession: vi.fn(),
+}));
 
 const mockedAuthenticateOperator = vi.mocked(authenticateOperator);
+const mockedCreateReadOnlyDemoOperatorSession = vi.mocked(createReadOnlyDemoOperatorSession);
 
 function renderPage(initialEntry: string = '/operator/login') {
   return render(
@@ -45,11 +49,12 @@ describe('OperatorLoginPage R3 contract', () => {
     sessionHarness.signIn.mockReset();
     sessionHarness.signOut.mockReset();
     mockedAuthenticateOperator.mockReset();
+    mockedCreateReadOnlyDemoOperatorSession.mockReset();
   });
 
   afterEach(() => cleanup());
 
-  it('renders the contract-exact credentials form without invented authentication features', () => {
+  it('renders contract credentials plus the explicit governed read-only demo entry', () => {
     renderPage();
 
     const login = screen.getByLabelText('Usuario') as HTMLInputElement;
@@ -63,6 +68,8 @@ describe('OperatorLoginPage R3 contract', () => {
     expect(password.autocomplete).toBe('current-password');
     expect(password.type).toBe('password');
     expect(screen.getByRole('button', { name: 'Ingresar al workspace' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Entrar en demo de solo lectura' })).toBeTruthy();
+    expect(screen.getByText(/el API bloquea las operaciones de escritura/i)).toBeTruthy();
     expect(screen.getByRole('link', { name: /volver al sitio público/i })).toBeTruthy();
 
     expect(screen.getByText(/No se selecciona aquí/i)).toBeTruthy();
@@ -73,6 +80,33 @@ describe('OperatorLoginPage R3 contract', () => {
     expect(screen.queryByText(/registrarse|crear cuenta/i)).toBeNull();
     expect(screen.queryByText(/mfa|otp/i)).toBeNull();
     expect(screen.queryByText(/google|microsoft|apple/i)).toBeNull();
+  });
+
+  it('opens the public read-only demo without collecting credentials', async () => {
+    mockedCreateReadOnlyDemoOperatorSession.mockResolvedValue({
+      data: {
+        accessToken: 'demo-token',
+        tokenType: 'Bearer',
+        expiresIn: 900,
+        operator: {
+          id: '00000000-0000-4000-8000-000000000099',
+          login: 'demo.operator@eliasworks.invalid',
+          role: 'CLAIMS_OPERATOR',
+        },
+      },
+      requestId: 'req-demo-1',
+    });
+
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar en demo de solo lectura' }));
+
+    await waitFor(() => expect(mockedCreateReadOnlyDemoOperatorSession).toHaveBeenCalledTimes(1));
+    expect(mockedAuthenticateOperator).not.toHaveBeenCalled();
+    expect(sessionHarness.signIn).toHaveBeenCalledWith(expect.objectContaining({
+      accessToken: 'demo-token',
+      operator: expect.objectContaining({ role: 'CLAIMS_OPERATOR' }),
+    }));
+    expect(await screen.findByText('Dashboard destino')).toBeTruthy();
   });
 
   it('submits only login and password, trims login and follows the API role', async () => {
