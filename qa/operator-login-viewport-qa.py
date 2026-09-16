@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
 WEB_BASE_URL = os.environ.get("QA_WEB_BASE_URL", "http://127.0.0.1:5173").rstrip("/")
-TARGETS = ((1366, 768), (1280, 720))
+TARGETS = ((1366, 768), (1280, 720), (1366, 600), (1280, 600))
 TOLERANCE_PX = 2
 
 options = webdriver.ChromeOptions()
