@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import {
   ArgumentsHost,
   Catch,
+  HttpException,
   Injectable,
   type ExceptionFilter,
   type NestMiddleware,
@@ -78,6 +79,21 @@ function safeUnknownError(exception: unknown): { name: string; message: string }
   return { name: 'UnknownError', message: 'Non-Error exception reached the HTTP boundary.' };
 }
 
+function httpExceptionDetail(exception: HttpException, status: number): string {
+  if (status >= 500) return 'An unexpected error occurred.';
+  const response = exception.getResponse();
+  if (typeof response === 'string' && response.trim()) return response.slice(0, 500);
+  if (response && typeof response === 'object') {
+    const message = (response as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message.slice(0, 500);
+    if (Array.isArray(message)) {
+      const joined = message.filter((item): item is string => typeof item === 'string').join('; ');
+      if (joined) return joined.slice(0, 500);
+    }
+  }
+  return exception.message?.trim().slice(0, 500) || 'Request failed.';
+}
+
 @Injectable()
 export class RequestIdMiddleware implements NestMiddleware {
   use(req: any, res: any, next: () => void): void {
@@ -132,6 +148,11 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         ? (importUpload ? 'Import source exceeds the transport limit.' : 'Evidence payload exceeds the transport limit.')
         : (importUpload ? 'Import upload does not satisfy the contract.' : 'Evidence upload does not satisfy the contract.');
       classified = true;
+    } else if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      code = `HTTP_${status}`;
+      detail = httpExceptionDetail(exception, status);
+      classified = status < 500;
     }
 
     if (!classified) {
