@@ -1,7 +1,7 @@
 /* Desktop density pass: use available width instead of compressing the access workflow. */
 @media (min-width: 821px) {
   .r3-login-main {
-    grid-template-columns: minmax(430px, .62fr) minmax(0, 1fr);
+    grid-template-columns: minmax(500px, .72fr) minmax(0, 1fr);
   }
 
   .r3-login-context {
