@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import type { StaffPermission } from '../auth/staff-access';
 import { hasAllPermissions } from '../auth/staff-access';
+import { isPublicDemoOperator, isPublicDemoPath } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 export function RequireStaffAccess({
@@ -16,6 +17,10 @@ export function RequireStaffAccess({
 
   if (!session) {
     return <Navigate to="/operator/login" replace state={{ from: location.pathname }} />;
+  }
+
+  if (isPublicDemoOperator(session.operator) && !isPublicDemoPath(location.pathname)) {
+    return <Navigate to="/operator/claims" replace />;
   }
 
   if (allOf.length > 0 && !hasAllPermissions(session.operator.role, allOf)) {
