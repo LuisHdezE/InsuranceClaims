@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createProductionRuntimeFromEnv } from '@insurance/infrastructure';
-import { parseCorsAllowedOrigins } from '../../apps/api/src/cors.js';
+import { configureCors, parseCorsAllowedOrigins } from '../../apps/api/src/cors.js';
 
 const baseEnv: NodeJS.ProcessEnv = {
   DATABASE_URL: 'postgresql://demo:demo@127.0.0.1:65535/insuranceclaims_demo',
@@ -52,4 +52,21 @@ test('CORS parser rejects values that are not origins', () => {
     () => parseCorsAllowedOrigins('https://claims.eliasworks.uy/path'),
     /must contain origins only/,
   );
+});
+
+test('CORS configuration permits the governed read-only demo request header', () => {
+  let captured: { allowedHeaders?: string[] } | undefined;
+  const app = {
+    enableCors(options: unknown) {
+      captured = options as { allowedHeaders?: string[] };
+    },
+  };
+
+  configureCors(app as Parameters<typeof configureCors>[0], {
+    NODE_ENV: 'production',
+    DEMO_MODE: 'true',
+    CORS_ALLOWED_ORIGINS: 'https://claims.eliasworks.uy',
+  });
+
+  assert.ok(captured?.allowedHeaders?.includes('X-Demo-Read-Only'));
 });
