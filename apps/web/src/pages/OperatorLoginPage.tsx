@@ -8,6 +8,7 @@ import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import '../operator-login-r3.css';
 import '../operator-login-viewport.css';
+import '../operator-login-balance.css';
 
 type PendingMode = 'credentials' | 'demo' | null;
 

@@ -26,7 +26,7 @@ if browser_bin:
 
 driver = webdriver.Chrome(options=options)
 wait = WebDriverWait(driver, 20)
-results: list[dict[str, int]] = []
+results: list[dict[str, float | int]] = []
 
 try:
     driver.get(f"{WEB_BASE_URL}/operator/login")
@@ -50,6 +50,12 @@ try:
             """
             const root = document.documentElement;
             const body = document.body;
+            const rect = (selector) => document.querySelector(selector)?.getBoundingClientRect();
+            const context = rect('.r3-login-context');
+            const formSide = rect('.r3-login-form-side');
+            const card = rect('.r3-login-card');
+            const demo = rect('.r3-login-demo-panel');
+            const loginInput = rect('#operator-login');
             return {
               innerWidth: window.innerWidth,
               innerHeight: window.innerHeight,
@@ -57,12 +63,18 @@ try:
               clientHeight: root.clientHeight,
               scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
               scrollHeight: Math.max(root.scrollHeight, body.scrollHeight),
+              contextWidth: context?.width ?? 0,
+              formSideWidth: formSide?.width ?? 0,
+              cardWidth: card?.width ?? 0,
+              demoPanelWidth: demo?.width ?? 0,
+              loginInputWidth: loginInput?.width ?? 0,
             };
             """
         )
 
         vertical_overflow = metrics["scrollHeight"] - metrics["innerHeight"]
         horizontal_overflow = metrics["scrollWidth"] - metrics["innerWidth"]
+        context_ratio = metrics["contextWidth"] / metrics["innerWidth"]
         result = {
             "width": width,
             "height": height,
@@ -70,6 +82,10 @@ try:
             "innerHeight": metrics["innerHeight"],
             "verticalOverflow": vertical_overflow,
             "horizontalOverflow": horizontal_overflow,
+            "contextRatio": round(context_ratio, 3),
+            "cardWidth": round(metrics["cardWidth"], 1),
+            "demoPanelWidth": round(metrics["demoPanelWidth"], 1),
+            "loginInputWidth": round(metrics["loginInputWidth"], 1),
         }
         results.append(result)
 
@@ -84,6 +100,26 @@ try:
                 f"Operator login has horizontal overflow at {width}x{height}: "
                 f"scrollWidth={metrics['scrollWidth']} innerWidth={metrics['innerWidth']} "
                 f"overflow={horizontal_overflow}px"
+            )
+        if not 0.33 <= context_ratio <= 0.44:
+            raise AssertionError(
+                f"Operator login desktop split is unbalanced at {width}x{height}: "
+                f"left context ratio={context_ratio:.3f}"
+            )
+        if metrics["cardWidth"] < 700:
+            raise AssertionError(
+                f"Operator login card is too narrow at {width}x{height}: "
+                f"cardWidth={metrics['cardWidth']:.1f}px"
+            )
+        if metrics["demoPanelWidth"] < 620:
+            raise AssertionError(
+                f"Public demo content is too compressed at {width}x{height}: "
+                f"demoPanelWidth={metrics['demoPanelWidth']:.1f}px"
+            )
+        if metrics["loginInputWidth"] < 340:
+            raise AssertionError(
+                f"Credential fields are too compressed at {width}x{height}: "
+                f"loginInputWidth={metrics['loginInputWidth']:.1f}px"
             )
 
     severe = [
