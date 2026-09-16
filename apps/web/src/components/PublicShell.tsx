@@ -22,7 +22,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
 
           <div className="refreshed-header-actions">
             <Link className="client-area-btn" to="/operator/login">
-              Acceso equipo
+              Explorar demo
             </Link>
           </div>
         </div>
@@ -56,7 +56,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
             <h2>Enlaces útiles</h2>
             <Link to="/claims/new/verify">Reportar un siniestro</Link>
             <Link to="/claims/track">Dar seguimiento</Link>
-            <Link to="/operator/login">Acceso equipo</Link>
+            <Link to="/operator/login">Explorar demo de operador</Link>
           </div>
 
           <div className="footer-column footer-case-column">
