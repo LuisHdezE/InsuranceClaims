@@ -1,0 +1,161 @@
+name: Demo Read-Only Operator Smoke
+
+on:
+  push:
+    branches:
+      - ci/demo-readonly-operator-smoke
+    paths:
+      - .github/workflows/demo-readonly-operator-smoke.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/demo-readonly-operator-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-readonly-operator-smoke
+  cancel-in-progress: true
+
+jobs:
+  production-demo-access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      DEMO_WEB_BASE_URL: https://claims.eliasworks.uy
+      DEMO_API_BASE_URL: https://api.claims.eliasworks.uy
+      DEMO_OPERATOR_ID: 00000000-0000-4000-8000-000000000096
+    steps:
+      - name: Verify deployed operator login UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 30 \
+            "$DEMO_WEB_BASE_URL/operator/login" > /tmp/operator-login.html
+          grep -q '<div id="root"' /tmp/operator-login.html
+          asset_path="$(grep -oE 'src="/assets/[^"]+\.js"' /tmp/operator-login.html | head -n1 | cut -d'"' -f2)"
+          test -n "$asset_path"
+          curl --fail --silent --show-error --location --max-time 30 \
+            "$DEMO_WEB_BASE_URL$asset_path" > /tmp/operator-bundle.js
+          grep -Fq 'Entrar en demo de solo lectura' /tmp/operator-bundle.js
+
+      - name: Wake public API
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 24); do
+            if curl --fail --silent --show-error --max-time 20 \
+              "$DEMO_API_BASE_URL/health/live" > /tmp/health.json; then
+              node -e "const d=require('/tmp/health.json'); if(d.status!=='ok') process.exit(1)"
+              exit 0
+            fi
+            if [[ "$attempt" == "24" ]]; then
+              echo 'API did not become live within the bounded wake window' >&2
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Issue governed public demo session
+        shell: bash
+        run: |
+          set -euo pipefail
+          http_code="$(curl --silent --show-error --max-time 30 \
+            -D /tmp/demo-login.headers \
+            -o /tmp/demo-login.json \
+            -w '%{http_code}' \
+            -X POST "$DEMO_API_BASE_URL/api/v1/operator/auth/login" \
+            -H 'content-type: application/json' \
+            -H 'X-Demo-Read-Only: true' \
+            -H "Origin: $DEMO_WEB_BASE_URL" \
+            --data '{"login":"demo.operator@eliasworks.invalid","password":"public-demo-read-only"}')"
+          test "$http_code" = '200'
+          grep -iFq "access-control-allow-origin: $DEMO_WEB_BASE_URL" /tmp/demo-login.headers
+          node <<'NODE'
+          const fs = require('fs');
+          const d = JSON.parse(fs.readFileSync('/tmp/demo-login.json', 'utf8'));
+          if (typeof d.accessToken !== 'string' || d.accessToken.length < 20) throw new Error('missing demo token');
+          if (d.tokenType !== 'Bearer') throw new Error('unexpected token type');
+          if (d.expiresIn !== 900) throw new Error('unexpected token lifetime');
+          if (d.operator?.id !== process.env.DEMO_OPERATOR_ID) throw new Error('unexpected demo operator id');
+          if (d.operator?.role !== 'CLAIMS_OPERATOR') throw new Error('unexpected demo role');
+          fs.writeFileSync('/tmp/demo-token.txt', d.accessToken);
+          NODE
+          token="$(cat /tmp/demo-token.txt)"
+          echo "::add-mask::$token"
+          echo "DEMO_TOKEN=$token" >> "$GITHUB_ENV"
+          rm -f /tmp/demo-token.txt /tmp/demo-login.json
+
+      - name: Verify synthetic Claims read scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30 \
+            "$DEMO_API_BASE_URL/api/v1/operator/claims" \
+            -H "Authorization: Bearer $DEMO_TOKEN" > /tmp/demo-claims.json
+          node <<'NODE'
+          const fs = require('fs');
+          const d = JSON.parse(fs.readFileSync('/tmp/demo-claims.json', 'utf8'));
+          const allowed = new Set([
+            '94000000-0000-4000-8000-000000000001',
+            'd7000000-0000-4000-8000-000000000001',
+            'd7000000-0000-4000-8000-000000000002',
+            '86359138-f525-4820-931c-010b7246d3ab',
+          ]);
+          if (!Array.isArray(d.items)) throw new Error('claims items missing');
+          if (!Number.isInteger(d.totalItems) || d.totalItems < 1) throw new Error('expected at least one governed synthetic claim');
+          for (const item of d.items) {
+            if (!allowed.has(item.claimId)) throw new Error(`out-of-scope claim exposed: ${item.claimId}`);
+          }
+          console.log(`Governed synthetic Claims visible: ${d.items.length}`);
+          NODE
+
+      - name: Verify out-of-scope reads are rejected
+        shell: bash
+        run: |
+          set -euo pipefail
+          tasks_http="$(curl --silent --show-error --max-time 30 \
+            -o /tmp/restricted-tasks.json -w '%{http_code}' \
+            "$DEMO_API_BASE_URL/api/v1/operator/tasks" \
+            -H "Authorization: Bearer $DEMO_TOKEN")"
+          test "$tasks_http" = '403'
+          node -e "const d=require('/tmp/restricted-tasks.json'); if(d.code!=='DEMO_SCOPE_RESTRICTED') process.exit(1)"
+
+          claim_http="$(curl --silent --show-error --max-time 30 \
+            -o /tmp/restricted-claim.json -w '%{http_code}' \
+            "$DEMO_API_BASE_URL/api/v1/operator/claims/00000000-0000-4000-8000-000000000001" \
+            -H "Authorization: Bearer $DEMO_TOKEN")"
+          test "$claim_http" = '403'
+          node -e "const d=require('/tmp/restricted-claim.json'); if(d.code!=='DEMO_SCOPE_RESTRICTED') process.exit(1)"
+
+      - name: Verify public demo cannot mutate Claims
+        shell: bash
+        run: |
+          set -euo pipefail
+          write_http="$(curl --silent --show-error --max-time 30 \
+            -o /tmp/demo-write.json -w '%{http_code}' \
+            -X POST "$DEMO_API_BASE_URL/api/v1/operator/claims/94000000-0000-4000-8000-000000000001/transitions" \
+            -H 'content-type: application/json' \
+            -H "Authorization: Bearer $DEMO_TOKEN" \
+            --data '{"expectedFromStatus":"RECEIVED","toStatus":"UNDER_REVIEW"}')"
+          test "$write_http" = '403'
+          node -e "const d=require('/tmp/demo-write.json'); if(d.code!=='DEMO_READ_ONLY') process.exit(1)"
+
+      - name: Verify normal protected boundary remains closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          http_code="$(curl --silent --show-error --max-time 30 \
+            -o /tmp/unauthorized.json -w '%{http_code}' \
+            "$DEMO_API_BASE_URL/api/v1/operator/claims")"
+          test "$http_code" = '401'
+          node -e "const d=require('/tmp/unauthorized.json'); if(d.code!=='AUTHENTICATION_REQUIRED') process.exit(1)"
+
+      - name: Demo access smoke summary
+        if: always()
+        shell: bash
+        run: |
+          echo 'Production demo access checks completed.'
