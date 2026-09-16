@@ -5,6 +5,7 @@ import { listClaims } from '../api/claims';
 import { moveClaimOperationalStage } from '../api/claims-work';
 import type { PipelineWorkItemResponse } from '../api/claims-work-types';
 import type { ApiFailure } from '../api/types';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import { OperatorApiErrorNotice } from './OperatorApiErrorNotice';
 
@@ -62,7 +63,8 @@ export function ClaimOperationalStagePanel({ claimId, trackingCode }: { claimId:
 
   if (!session) return null;
   const projection = projectionQuery.data?.data ?? null;
-  const canMove = hasPermission(session.operator.role, 'claims.pipeline.transition');
+  const demoReadOnly = isPublicDemoOperator(session.operator);
+  const canMove = !demoReadOnly && hasPermission(session.operator.role, 'claims.pipeline.transition');
   const version = projection?.operationalWorkItemVersion ?? null;
   const currentStage = projection?.operationalStage ?? null;
   const suggestions = lastProjection?.allowedNextStageKeys ?? [];
@@ -132,11 +134,15 @@ export function ClaimOperationalStagePanel({ claimId, trackingCode }: { claimId:
             </form>
           ) : (
             <div className="r3-pipeline-readonly">
-              {currentStage ? 'Tu rol puede consultar la etapa, pero no moverla.' : 'No hay una versión operacional disponible para mover.'}
+              {demoReadOnly
+                ? 'Demo pública de solo lectura. El movimiento de etapas está deshabilitado.'
+                : currentStage
+                  ? 'Tu rol puede consultar la etapa, pero no moverla.'
+                  : 'No hay una versión operacional disponible para mover.'}
             </div>
           )}
 
-          {suggestions.length > 0 && (
+          {!demoReadOnly && suggestions.length > 0 && (
             <div className="r3-next-stage-suggestions">
               <span>Siguientes stage keys devueltas por el último movimiento</span>
               <div>
