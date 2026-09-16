@@ -4,6 +4,7 @@ import { resolveStaffLandingRoute } from '../auth/staff-access';
 import { authenticateOperator, createReadOnlyDemoOperatorSession } from '../api/claims';
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import '../operator-login-r3.css';
 
@@ -21,12 +22,18 @@ export function OperatorLoginPage() {
   const pending = pendingMode !== null;
 
   if (session) {
-    return <Navigate to={resolveStaffLandingRoute(session.operator.role, requestedPath)} replace />;
+    const destination = isPublicDemoOperator(session.operator)
+      ? '/operator/claims'
+      : resolveStaffLandingRoute(session.operator.role, requestedPath);
+    return <Navigate to={destination} replace />;
   }
 
   const completeSignIn = (response: Parameters<typeof signIn>[0]) => {
     signIn(response);
-    navigate(resolveStaffLandingRoute(response.operator.role, requestedPath), { replace: true });
+    const destination = isPublicDemoOperator(response.operator)
+      ? '/operator/claims'
+      : resolveStaffLandingRoute(response.operator.role, requestedPath);
+    navigate(destination, { replace: true });
   };
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -117,7 +124,7 @@ export function OperatorLoginPage() {
 
             <div className="r3-login-role-note">
               <strong>Demo pública · solo lectura</strong>
-              Explora el workspace con datos sintéticos sin contraseña. El API bloquea las operaciones de escritura para esta sesión.
+              Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance.
               <button
                 className="btn btn-cyan r3-login-submit"
                 type="button"
