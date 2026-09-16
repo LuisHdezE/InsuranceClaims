@@ -61,6 +61,15 @@ jobs:
           QA_WEB_BASE_URL: http://127.0.0.1:5173
         run: python qa/operator-login-viewport-qa.py
 
+      - name: Upload operator login screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operator-login-viewport-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .qa-artifacts/operator-login/*.png
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Web logs on failure
         if: failure()
         run: cat .runtime-operator-login-web.log || true
