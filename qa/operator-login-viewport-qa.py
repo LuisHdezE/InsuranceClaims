@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -11,6 +12,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 WEB_BASE_URL = os.environ.get("QA_WEB_BASE_URL", "http://127.0.0.1:5173").rstrip("/")
 TARGETS = ((1366, 768), (1280, 720), (1366, 600), (1280, 600))
 TOLERANCE_PX = 2
+ARTIFACT_DIR = Path(".qa-artifacts/operator-login")
+ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 
 options = webdriver.ChromeOptions()
 options.add_argument("--headless=new")
@@ -26,7 +29,7 @@ if browser_bin:
 
 driver = webdriver.Chrome(options=options)
 wait = WebDriverWait(driver, 20)
-results: list[dict[str, int]] = []
+results: list[dict[str, int | str]] = []
 
 try:
     driver.get(f"{WEB_BASE_URL}/operator/login")
@@ -61,6 +64,9 @@ try:
             """
         )
 
+        screenshot_path = ARTIFACT_DIR / f"operator-login-{width}x{height}.png"
+        driver.save_screenshot(str(screenshot_path))
+
         vertical_overflow = metrics["scrollHeight"] - metrics["innerHeight"]
         horizontal_overflow = metrics["scrollWidth"] - metrics["innerWidth"]
         result = {
@@ -70,6 +76,7 @@ try:
             "innerHeight": metrics["innerHeight"],
             "verticalOverflow": vertical_overflow,
             "horizontalOverflow": horizontal_overflow,
+            "screenshot": str(screenshot_path),
         }
         results.append(result)
 
