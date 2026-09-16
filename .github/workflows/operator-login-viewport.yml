@@ -4,6 +4,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'apps/web/src/main.tsx'
+      - 'apps/web/src/backoffice.css'
       - 'apps/web/src/pages/OperatorLoginPage.tsx'
       - 'apps/web/src/operator-login-r3.css'
       - 'apps/web/src/operator-login-viewport.css'
