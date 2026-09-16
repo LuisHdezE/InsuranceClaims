@@ -1,0 +1,90 @@
+name: Demo Public API Smoke
+
+on:
+  push:
+    branches:
+      - feat/demo-public-smoke
+    paths:
+      - '.github/workflows/demo-public-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEMO_PUBLIC_API_BASE_URL: https://insuranceclaims-demo-api.onrender.com
+  DEMO_PUBLIC_ORIGIN: https://claims.eliasworks.uy
+
+jobs:
+  public-api-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Wait for public API and verify liveness
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 24); do
+            if body="$(curl -fsS --connect-timeout 10 --max-time 20 "$DEMO_PUBLIC_API_BASE_URL/health/live" 2>/dev/null)"; then
+              echo "$body" | grep -q '"status":"ok"'
+              exit 0
+            fi
+            if [[ "$attempt" == '24' ]]; then
+              echo 'Public API did not become live.' >&2
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Verify readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(curl -fsS --connect-timeout 10 --max-time 20 "$DEMO_PUBLIC_API_BASE_URL/health/ready")"
+          echo "$body" | grep -q '"status":"ok"'
+          echo "$body" | grep -q '"process":"ready"'
+
+      - name: Verify synthetic policy through public Render URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(curl -fsS --connect-timeout 10 --max-time 20 \
+            -D "$headers" \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $DEMO_PUBLIC_ORIGIN" \
+            -d '{"policyReference":"SYN-POL-001","vehicleReference":"SYN-VEH-001"}' \
+            "$DEMO_PUBLIC_API_BASE_URL/api/v1/public/policy-verifications")"
+          echo "$body" | grep -q '"eligible":true'
+          echo "$body" | grep -q '"policyReference":"SYN-POL-001"'
+          grep -Fqi "access-control-allow-origin: $DEMO_PUBLIC_ORIGIN" "$headers"
+
+      - name: Verify public claim tracking reads Neon
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(curl -fsS --connect-timeout 10 --max-time 20 \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $DEMO_PUBLIC_ORIGIN" \
+            -d '{"trackingCode":"SYN-QA-BULK-TRACK-001","policyReference":"SYN-QA-BULK-POL-001"}' \
+            "$DEMO_PUBLIC_API_BASE_URL/api/v1/public/claim-tracking")"
+          echo "$body" | grep -q '"trackingCode":"SYN-QA-BULK-TRACK-001"'
+          echo "$body" | grep -q '"status":"RECEIVED"'
+          echo "$body" | grep -q '"vehicleReference":"SYN-QA-BULK-VEH-001"'
+
+      - name: Verify protected staff boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl -sS --connect-timeout 10 --max-time 20 \
+            -o "$body" \
+            -w '%{http_code}' \
+            "$DEMO_PUBLIC_API_BASE_URL/api/v1/operator/claims")"
+          test "$status" = '401'
+          grep -Eq 'AUTHENTICATION_REQUIRED|Unauthorized|authentication' "$body"
+
+      - name: Public smoke summary
+        run: |
+          echo 'Public Render API smoke passed.'
+          echo 'Validated: liveness, readiness, synthetic policy verification, CORS, Neon-backed claim tracking, and protected-route authentication boundary.'
