@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { HomePage } from './HomePage';
 
 describe('HomePage', () => {
-  it('renders only the approved R3 public customer journeys', () => {
+  it('renders only the approved R3 public customer journeys plus the governed operator demo entry', () => {
     render(
       <MemoryRouter>
         <HomePage />
@@ -26,11 +26,11 @@ describe('HomePage', () => {
       expect(link.getAttribute('href')).toBe('/claims/track');
     }
 
-    const staffLinks = screen.getAllByRole('link', { name: 'Acceso equipo' });
-    expect(staffLinks.length).toBeGreaterThan(0);
-    for (const link of staffLinks) {
-      expect(link.getAttribute('href')).toBe('/operator/login');
-    }
+    expect(screen.getByRole('link', { name: 'Explorar demo' }).getAttribute('href')).toBe('/operator/login');
+    expect(screen.getByRole('link', { name: 'Abrir demo de operador' }).getAttribute('href')).toBe('/operator/login');
+    expect(screen.getByRole('link', { name: 'Explorar demo de operador' }).getAttribute('href')).toBe('/operator/login');
+    expect(screen.getByRole('heading', { name: /Explora el backoffice sin credenciales/i })).toBeTruthy();
+    expect(screen.getByText(/Las acciones de escritura permanecen bloqueadas por el API/i)).toBeTruthy();
 
     expect(screen.getAllByText(/Caso técnico no oficial/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Cotiza tu seguro/i)).toBeNull();
