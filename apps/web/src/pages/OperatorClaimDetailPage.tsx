@@ -9,6 +9,7 @@ import { ClaimTasksPanel } from '../components/ClaimTasksPanel';
 import { ClaimTimelinePanel } from '../components/ClaimTimelinePanel';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 export function OperatorClaimDetailPage() {
@@ -61,6 +62,7 @@ export function OperatorClaimDetailPage() {
 
   if (!session) return null;
   const detail = claimQuery.data?.data;
+  const demoReadOnly = isPublicDemoOperator(session.operator);
 
   return (
     <OperatorShell>
@@ -76,6 +78,7 @@ export function OperatorClaimDetailPage() {
               detail={detail}
               busy={transitionMutation.isPending}
               refreshBusy={claimQuery.isFetching}
+              readOnlyDemo={demoReadOnly}
               onRefresh={() => {
                 void Promise.all([
                   claimQuery.refetch(),
@@ -133,22 +136,26 @@ export function OperatorClaimDetailPage() {
                   <span>Esta decisión cambia `ClaimStatus`. La etapa operacional se gestiona en su panel propio y nunca se deriva visualmente de este estado.</span>
                 </div>
 
-                <form className="ops-transition-form" onSubmit={(event) => {
-                  event.preventDefault();
-                  if (!selectedTransition) return;
-                  setTransitionFailure(null);
-                  transitionMutation.mutate({ expectedFromStatus: detail.status, toStatus: selectedTransition });
-                }}>
-                  <label htmlFor="transition-target">Transición autorizada</label>
-                  <div className="ops-transition-row">
-                    <select id="transition-target" value={selectedTransition} onChange={(event) => setSelectedTransition(event.target.value as ClaimStatus | '')} required>
-                      <option value="">Seleccionar…</option>
-                      {detail.allowedTransitions.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
-                    </select>
-                    <button className="ops-primary-action" type="submit" disabled={!selectedTransition || transitionMutation.isPending}>{transitionMutation.isPending ? 'Enviando…' : 'Confirmar'}</button>
-                  </div>
-                </form>
-                <div className="operator-concurrency-note">`allowedTransitions` proviene del servidor. Se envía `expectedFromStatus = {detail.status}`; un 409 refresca el detalle antes de una nueva decisión.</div>
+                {demoReadOnly ? (
+                  <div className="r3-pipeline-readonly">Demo pública de solo lectura. Las transiciones están ocultas y el API rechaza cualquier escritura.</div>
+                ) : (
+                  <form className="ops-transition-form" onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!selectedTransition) return;
+                    setTransitionFailure(null);
+                    transitionMutation.mutate({ expectedFromStatus: detail.status, toStatus: selectedTransition });
+                  }}>
+                    <label htmlFor="transition-target">Transición autorizada</label>
+                    <div className="ops-transition-row">
+                      <select id="transition-target" value={selectedTransition} onChange={(event) => setSelectedTransition(event.target.value as ClaimStatus | '')} required>
+                        <option value="">Seleccionar…</option>
+                        {detail.allowedTransitions.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
+                      </select>
+                      <button className="ops-primary-action" type="submit" disabled={!selectedTransition || transitionMutation.isPending}>{transitionMutation.isPending ? 'Enviando…' : 'Confirmar'}</button>
+                    </div>
+                  </form>
+                )}
+                {!demoReadOnly && <div className="operator-concurrency-note">`allowedTransitions` proviene del servidor. Se envía `expectedFromStatus = {detail.status}`; un 409 refresca el detalle antes de una nueva decisión.</div>}
               </section>
 
               <div id="etapa" className="r3-detail-section"><ClaimOperationalStagePanel claimId={claimId} trackingCode={detail.trackingCode} /></div>
@@ -172,14 +179,15 @@ export function OperatorClaimDetailPage() {
   );
 }
 
-function ClaimHeader({ detail, busy, refreshBusy, onRefresh, onPrimaryTransition }: {
+function ClaimHeader({ detail, busy, refreshBusy, readOnlyDemo, onRefresh, onPrimaryTransition }: {
   detail: OperatorClaimDetailResponse;
   busy: boolean;
   refreshBusy: boolean;
+  readOnlyDemo: boolean;
   onRefresh: () => void;
   onPrimaryTransition: (status: ClaimStatus) => void;
 }) {
-  const primary = preferredTransition(detail.status, detail.allowedTransitions);
+  const primary = readOnlyDemo ? null : preferredTransition(detail.status, detail.allowedTransitions);
   return (
     <header className="ops-detail-header r3-detail-hero">
       <div className="ops-detail-identity"><h1>{detail.trackingCode}</h1><span>{detail.policyReference} · {detail.vehicleReference}</span></div>

@@ -2,6 +2,12 @@ import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/commo
 import type { AccessTokenPort } from '@insurance/application';
 import type { CustomerAccessTokenPort } from '@insurance/application/customer-portal';
 import { ACCESS_TOKENS, CUSTOMER_ACCESS_TOKENS } from './contracts.js';
+import {
+  isAllowedPublicDemoReadPath,
+  isDemoModeEnabled,
+  isPublicDemoOperator,
+  isSafeReadOnlyMethod,
+} from './demo-access.js';
 import { ApiProblemError } from './transport.js';
 
 @Injectable()
@@ -17,6 +23,19 @@ export class JwtAuthGuard implements CanActivate {
     const token = header.slice(7);
     const actor = await this.tokens.verify(token);
     if (actor) {
+      if (isDemoModeEnabled() && isPublicDemoOperator(actor)) {
+        if (!isSafeReadOnlyMethod(req.method)) {
+          throw new ApiProblemError(403, 'DEMO_READ_ONLY', 'The public demo session is read-only.');
+        }
+        const requestPath = typeof req.path === 'string'
+          ? req.path
+          : typeof req.originalUrl === 'string'
+            ? req.originalUrl.split('?')[0]
+            : '';
+        if (!isAllowedPublicDemoReadPath(requestPath)) {
+          throw new ApiProblemError(403, 'DEMO_SCOPE_RESTRICTED', 'The public demo session can read only governed synthetic Claim fixtures.');
+        }
+      }
       req.actor = actor;
       return true;
     }

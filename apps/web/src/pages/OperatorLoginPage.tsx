@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { resolveStaffLandingRoute } from '../auth/staff-access';
-import { authenticateOperator } from '../api/claims';
+import { authenticateOperator, createReadOnlyDemoOperatorSession } from '../api/claims';
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import '../operator-login-r3.css';
+
+type PendingMode = 'credentials' | 'demo' | null;
 
 export function OperatorLoginPage() {
   const navigate = useNavigate();
@@ -13,27 +16,52 @@ export function OperatorLoginPage() {
   const { session, signIn } = useOperatorSession();
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
-  const [pending, setPending] = useState(false);
+  const [pendingMode, setPendingMode] = useState<PendingMode>(null);
   const [failure, setFailure] = useState<ApiFailure | null>(null);
   const requestedPath = readRequestedPath(location.state);
+  const pending = pendingMode !== null;
 
   if (session) {
-    return <Navigate to={resolveStaffLandingRoute(session.operator.role, requestedPath)} replace />;
+    const destination = isPublicDemoOperator(session.operator)
+      ? '/operator/claims'
+      : resolveStaffLandingRoute(session.operator.role, requestedPath);
+    return <Navigate to={destination} replace />;
   }
+
+  const completeSignIn = (response: Parameters<typeof signIn>[0]) => {
+    signIn(response);
+    const destination = isPublicDemoOperator(response.operator)
+      ? '/operator/claims'
+      : resolveStaffLandingRoute(response.operator.role, requestedPath);
+    navigate(destination, { replace: true });
+  };
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setPending(true);
+    setPendingMode('credentials');
     setFailure(null);
     try {
       const result = await authenticateOperator({ login: login.trim(), password });
       setPassword('');
-      signIn(result.data);
-      navigate(resolveStaffLandingRoute(result.data.operator.role, requestedPath), { replace: true });
+      completeSignIn(result.data);
     } catch (error) {
       setFailure(error as ApiFailure);
     } finally {
-      setPending(false);
+      setPendingMode(null);
+    }
+  };
+
+  const openReadOnlyDemo = async () => {
+    setPendingMode('demo');
+    setFailure(null);
+    try {
+      const result = await createReadOnlyDemoOperatorSession();
+      setPassword('');
+      completeSignIn(result.data);
+    } catch (error) {
+      setFailure(error as ApiFailure);
+    } finally {
+      setPendingMode(null);
     }
   };
 
@@ -95,6 +123,20 @@ export function OperatorLoginPage() {
             </p>
 
             <div className="r3-login-role-note">
+              <strong>Demo pública · solo lectura</strong>
+              Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance.
+              <button
+                className="btn btn-cyan r3-login-submit"
+                type="button"
+                disabled={pending}
+                onClick={openReadOnlyDemo}
+                aria-label="Entrar en demo de solo lectura"
+              >
+                {pendingMode === 'demo' ? 'Abriendo demo…' : 'Entrar en demo de solo lectura'}
+              </button>
+            </div>
+
+            <div className="r3-login-role-note">
               <strong>Rol</strong>
               No se selecciona aquí. El API lo resuelve y la aplicación aplica el destino autorizado.
             </div>
@@ -132,9 +174,9 @@ export function OperatorLoginPage() {
                 className="btn btn-cyan r3-login-submit"
                 type="submit"
                 disabled={pending}
-                aria-label={pending ? 'Autenticando' : 'Ingresar al workspace'}
+                aria-label={pendingMode === 'credentials' ? 'Autenticando' : 'Ingresar al workspace'}
               >
-                {pending ? 'Autenticando…' : 'Ingresar'}
+                {pendingMode === 'credentials' ? 'Autenticando…' : 'Ingresar'}
               </button>
             </form>
 

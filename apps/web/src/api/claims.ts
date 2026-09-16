@@ -101,6 +101,24 @@ export async function authenticateOperator(
   }
 }
 
+export async function createReadOnlyDemoOperatorSession(
+  client: AxiosInstance = browserClient,
+): Promise<ApiResult<OperatorLoginResponse>> {
+  try {
+    const response = await client.post<OperatorLoginResponse>(
+      '/api/v1/operator/auth/login',
+      {
+        login: 'demo.operator@eliasworks.invalid',
+        password: 'public-demo-read-only',
+      },
+      { headers: { 'X-Demo-Read-Only': 'true' } },
+    );
+    return { data: response.data, requestId: readHeader(response.headers['x-request-id']) };
+  } catch (error) {
+    throw toApiFailure(error);
+  }
+}
+
 export async function listClaims(
   input: ClaimsListInput,
   accessToken: string,

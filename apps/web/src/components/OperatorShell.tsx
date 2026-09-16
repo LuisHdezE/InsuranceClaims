@@ -5,6 +5,7 @@ import {
   STAFF_ROLE_LABELS,
   type StaffPermission,
 } from '../auth/staff-access';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import '../operator-shell-disclosure.css';
 
@@ -53,15 +54,20 @@ export function OperatorShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { session, signOut } = useOperatorSession();
   const role = session?.operator.role;
+  const demoReadOnly = isPublicDemoOperator(session?.operator);
   const visibleNavItems = role
-    ? navItems.filter((item) => !item.allOf || hasAllPermissions(role, item.allOf))
+    ? navItems.filter((item) => {
+      if (demoReadOnly) return item.to === '/operator/claims';
+      return !item.allOf || hasAllPermissions(role, item.allOf);
+    })
     : [];
   const topbarContext = contextForPath(location.pathname);
+  const brandDestination = demoReadOnly ? '/operator/claims' : '/operator/workspace';
 
   return (
     <div className="operator-shell operator-ops-shell r3-ui-shell">
       <aside className="ops-sidebar r3-ui-sidebar" aria-label="Navegación principal del Centro de Operaciones">
-        <Link className="ops-brand r3-ui-brand" to="/operator/workspace" aria-label="Ir al espacio de trabajo del Centro de Operaciones">
+        <Link className="ops-brand r3-ui-brand" to={brandDestination} aria-label="Ir al espacio de trabajo del Centro de Operaciones">
           <span className="r3-ui-brand-mark" aria-hidden="true">IC</span>
           <span className="r3-ui-brand-copy">
             <strong className="r3-ui-brand-name">InsuranceClaims</strong>
@@ -124,6 +130,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
             <span className="r3-operator-copy">
               <strong className="operator-identity">{session?.operator.login}</strong>
               {role && <small className="r3-topbar-role">{STAFF_ROLE_LABELS[role]}</small>}
+              {demoReadOnly && <small className="r3-topbar-role">Demo pública · solo lectura · fixtures gobernados</small>}
             </span>
             <button className="ops-signout" type="button" onClick={signOut}>Cerrar sesión</button>
           </div>

@@ -4,9 +4,17 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { z } from 'zod';
+import type { AccessTokenPort } from '@insurance/application';
 import { CLAIMS_OPERATIONAL_SORTS } from '@insurance/application/claims-operational-query';
-import { API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
+import { ACCESS_TOKENS, API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
+import {
+  PUBLIC_DEMO_ACCESS_HEADER,
+  PUBLIC_DEMO_CLAIMS,
+  PUBLIC_DEMO_OPERATOR,
+  isDemoModeEnabled,
+  isPublicDemoOperator,
+} from './demo-access.js';
 import { RateLimitService, callerIp } from './transport.js';
 
 const ref = z.string().trim().min(1).max(80);
@@ -19,6 +27,17 @@ const uuidSchema = z.string().uuid();
 const operationalStageSchema = z.string().trim().min(1).max(80).regex(/^[A-Za-z0-9._-]+$/);
 const operationalSearchSchema = z.string().trim().min(1).max(120);
 const operationalSortSchema = z.enum(CLAIMS_OPERATIONAL_SORTS);
+
+function compareDemoClaimItems(a: any, b: any, sort: (typeof CLAIMS_OPERATIONAL_SORTS)[number]): number {
+  switch (sort) {
+    case 'createdAt:asc': return Date.parse(a.createdAt) - Date.parse(b.createdAt) || a.claimId.localeCompare(b.claimId);
+    case 'createdAt:desc': return Date.parse(b.createdAt) - Date.parse(a.createdAt) || a.claimId.localeCompare(b.claimId);
+    case 'occurredAt:asc': return Date.parse(a.occurredAt) - Date.parse(b.occurredAt) || a.claimId.localeCompare(b.claimId);
+    case 'occurredAt:desc': return Date.parse(b.occurredAt) - Date.parse(a.occurredAt) || a.claimId.localeCompare(b.claimId);
+    case 'trackingCode:asc': return a.trackingCode.localeCompare(b.trackingCode) || a.claimId.localeCompare(b.claimId);
+    case 'trackingCode:desc': return b.trackingCode.localeCompare(a.trackingCode) || a.claimId.localeCompare(b.claimId);
+  }
+}
 
 @Controller('api/v1/public')
 export class PublicClaimsController {
@@ -70,15 +89,44 @@ export class PublicClaimsController {
 export class OperatorAuthController {
   constructor(
     @Inject(API_RUNTIME) private readonly runtime: ApiRuntimeContract,
+    @Inject(ACCESS_TOKENS) private readonly tokens: AccessTokenPort,
     @Inject(RateLimitService) private readonly limits: RateLimitService,
   ) {}
 
   @Post('login')
   @HttpCode(200)
-  async login(@Body() body: unknown, @Req() req: any) {
+  async login(
+    @Body() body: unknown,
+    @Headers(PUBLIC_DEMO_ACCESS_HEADER) demoReadOnlyHeader: string | undefined,
+    @Req() req: any,
+  ) {
     const parsed = loginSchema.parse(body);
+    const normalizedLogin = parsed.login.toLowerCase();
     this.limits.consume(`login-ip:${callerIp(req)}`, 5, 60);
-    this.limits.consume(`login-user:${parsed.login.toLowerCase()}`, 10, 15 * 60);
+    this.limits.consume(`login-user:${normalizedLogin}`, 10, 15 * 60);
+
+    if (
+      isDemoModeEnabled()
+      && demoReadOnlyHeader?.toLowerCase() === 'true'
+      && normalizedLogin === PUBLIC_DEMO_OPERATOR.login
+    ) {
+      const accessToken = await this.tokens.issue(PUBLIC_DEMO_OPERATOR, 900);
+      console.info(JSON.stringify({
+        level: 'info',
+        event: 'PUBLIC_DEMO_SESSION_ISSUED',
+        requestId: req.requestId ?? null,
+        actorId: PUBLIC_DEMO_OPERATOR.id,
+        role: PUBLIC_DEMO_OPERATOR.role,
+        readOnly: true,
+      }));
+      return {
+        accessToken,
+        tokenType: 'Bearer' as const,
+        expiresIn: 900,
+        operator: PUBLIC_DEMO_OPERATOR,
+      };
+    }
+
     return this.runtime.application.authenticateOperator(parsed, { requestId: req.requestId });
   }
 }
@@ -106,6 +154,43 @@ export class OperatorClaimsController {
       search: operationalSearchSchema.optional(),
       sort: operationalSortSchema.optional(),
     }).parse(query);
+
+    if (isDemoModeEnabled() && isPublicDemoOperator(req.actor)) {
+      const allowedIds = new Set<string>(PUBLIC_DEMO_CLAIMS.map((fixture) => fixture.claimId));
+      const fixturePages = await Promise.all(PUBLIC_DEMO_CLAIMS.map((fixture) =>
+        this.runtime.application.listClaims({
+          page: 1,
+          pageSize: 100,
+          status: parsed.status,
+          stage: parsed.stage,
+          search: fixture.trackingCode,
+          sort: parsed.sort,
+        }, req.actor),
+      ));
+      const uniqueItems = new Map<string, any>();
+      for (const page of fixturePages) {
+        for (const item of page.items) {
+          if (allowedIds.has(item.claimId)) uniqueItems.set(item.claimId, item);
+        }
+      }
+      const normalizedSearch = parsed.search?.trim().toLowerCase();
+      const sort = parsed.sort ?? 'createdAt:desc';
+      const scopedItems = [...uniqueItems.values()]
+        .filter((item) => !normalizedSearch || [item.trackingCode, item.policyReference, item.vehicleReference]
+          .some((value) => value.toLowerCase().includes(normalizedSearch)))
+        .sort((a, b) => compareDemoClaimItems(a, b, sort));
+      const page = parsed.page ?? 1;
+      const pageSize = parsed.pageSize ?? 25;
+      const start = (page - 1) * pageSize;
+      return {
+        items: scopedItems.slice(start, start + pageSize),
+        page,
+        pageSize,
+        totalItems: scopedItems.length,
+        totalPages: Math.ceil(scopedItems.length / pageSize),
+      };
+    }
+
     return this.runtime.application.listClaims(parsed, req.actor);
   }
 

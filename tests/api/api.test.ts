@@ -64,3 +64,69 @@ test('REST contract preserves Nest HTTP exceptions as Problem Details', async ()
   assert.equal(typeof response.body.requestId, 'string');
   await app.close();
 });
+
+test('public demo operator access is gated, read-only and confined to governed synthetic fixtures', async () => {
+  const previousDemoMode = process.env.DEMO_MODE;
+  const runtime = await createMemoryRuntime();
+  const app = await NestFactory.create(ApiModule.register(runtime), { logger: false });
+  await app.init();
+  const http = app.getHttpServer();
+  const demoLogin = () => request(http)
+    .post('/api/v1/operator/auth/login')
+    .set('X-Demo-Read-Only', 'true')
+    .send({ login: 'demo.operator@eliasworks.invalid', password: 'public-demo-read-only' });
+
+  try {
+    process.env.DEMO_MODE = 'false';
+    const disabled = await demoLogin().expect(401);
+    assert.equal(disabled.body.code, 'INVALID_CREDENTIALS');
+
+    process.env.DEMO_MODE = 'true';
+    await request(http)
+      .post('/api/v1/public/claims')
+      .set('Idempotency-Key', 'demo-scope-1234567890abcdef')
+      .field('policyReference', 'SYN-POL-001')
+      .field('vehicleReference', 'SYN-VEH-001')
+      .field('eventType', 'Visitor synthetic incident')
+      .field('occurredAt', '2026-09-16T12:00:00Z')
+      .field('locationText', 'Visitor synthetic location')
+      .field('description', 'A visitor-created claim must never appear in the public operator demo.')
+      .expect(201);
+
+    const session = await demoLogin().expect(200);
+    assert.equal(session.body.tokenType, 'Bearer');
+    assert.equal(session.body.expiresIn, 900);
+    assert.deepEqual(session.body.operator, {
+      id: '00000000-0000-4000-8000-000000000096',
+      login: 'demo.operator@eliasworks.invalid',
+      role: 'CLAIMS_OPERATOR',
+    });
+
+    const bearer = `Bearer ${session.body.accessToken}`;
+    const scopedList = await request(http).get('/api/v1/operator/claims').set('Authorization', bearer).expect(200);
+    assert.equal(scopedList.body.totalItems, 0, 'visitor-created claims must be excluded from the public demo list');
+
+    const restrictedClaim = await request(http)
+      .get('/api/v1/operator/claims/00000000-0000-4000-8000-000000000001')
+      .set('Authorization', bearer)
+      .expect(403);
+    assert.equal(restrictedClaim.body.code, 'DEMO_SCOPE_RESTRICTED');
+
+    const restrictedArea = await request(http)
+      .get('/api/v1/operator/tasks')
+      .set('Authorization', bearer)
+      .expect(403);
+    assert.equal(restrictedArea.body.code, 'DEMO_SCOPE_RESTRICTED');
+
+    const blocked = await request(http)
+      .post('/api/v1/operator/claims/00000000-0000-4000-8000-000000000001/transitions')
+      .set('Authorization', bearer)
+      .send({ expectedFromStatus: 'RECEIVED', toStatus: 'UNDER_REVIEW' })
+      .expect(403);
+    assert.equal(blocked.body.code, 'DEMO_READ_ONLY');
+  } finally {
+    if (previousDemoMode === undefined) delete process.env.DEMO_MODE;
+    else process.env.DEMO_MODE = previousDemoMode;
+    await app.close();
+  }
+});

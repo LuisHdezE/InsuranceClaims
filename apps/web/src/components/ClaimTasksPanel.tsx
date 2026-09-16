@@ -5,6 +5,7 @@ import { hasPermission } from '../auth/staff-access';
 import { completeClaimTask, listClaimTasks } from '../api/tasks';
 import type { ApiFailure } from '../api/types';
 import type { ClaimTaskProjection, ClaimTaskStatus } from '../api/task-types';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import { ClaimTaskCreateForm } from './ClaimTaskCreateForm';
 import { OperatorApiErrorNotice } from './OperatorApiErrorNotice';
@@ -53,7 +54,8 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
   if (!session) return null;
   const tasks = tasksQuery.data?.data ?? [];
   const openCount = tasks.filter((task) => task.status === 'OPEN').length;
-  const canManage = hasPermission(session.operator.role, 'claims.tasks.manage');
+  const demoReadOnly = isPublicDemoOperator(session.operator);
+  const canManage = !demoReadOnly && hasPermission(session.operator.role, 'claims.tasks.manage');
 
   return (
     <section className="ops-panel ops-claim-tasks-card r3-claim-tasks-card" aria-labelledby="claim-tasks-title">
@@ -73,6 +75,7 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
         </div>
       </div>
 
+      {demoReadOnly && <div className="r3-pipeline-readonly">Demo pública de solo lectura. La gestión de tareas está deshabilitada.</div>}
       {creating && canManage && <ClaimTaskCreateForm claimId={claimId} onCreated={() => setCreating(false)} />}
       {failure && <OperatorApiErrorNotice failure={failure} />}
       {queryFailure && queryFailure.problem?.status !== 401 && <OperatorApiErrorNotice failure={queryFailure} />}
@@ -88,26 +91,30 @@ export function ClaimTasksPanel({ claimId }: { claimId: string }) {
                 {task.status === 'COMPLETED' ? '✓' : task.status === 'CANCELLED' ? '×' : '○'}
               </span>
               <div className="ops-task-main-copy">
-                <Link className="r3-task-title-link" to={`/operator/tasks/${task.taskId}`}><strong>{task.title}</strong></Link>
+                {demoReadOnly
+                  ? <strong>{task.title}</strong>
+                  : <Link className="r3-task-title-link" to={`/operator/tasks/${task.taskId}`}><strong>{task.title}</strong></Link>}
                 <span>{taskTypeLabel(task.type)} · {task.priority === 'HIGH' ? 'Prioridad alta' : 'Prioridad normal'}</span>
                 <small>{task.dueAt ? `Vence ${formatDate(task.dueAt)}` : 'Sin vencimiento definido'} · {assignmentLabel(task, session.operator.id)}</small>
               </div>
               <TaskStatusBadge status={task.status} />
-              <div className="r3-task-row-actions">
-                <Link to={`/operator/tasks/${task.taskId}`}>Gestionar</Link>
-                {canManage && task.status === 'OPEN' && (
-                  <button
-                    type="button"
-                    disabled={completeMutation.isPending}
-                    onClick={() => {
-                      setFailure(null);
-                      completeMutation.mutate(task);
-                    }}
-                  >
-                    {completeMutation.isPending && completeMutation.variables?.taskId === task.taskId ? 'Completando…' : 'Completar'}
-                  </button>
-                )}
-              </div>
+              {!demoReadOnly && (
+                <div className="r3-task-row-actions">
+                  <Link to={`/operator/tasks/${task.taskId}`}>Gestionar</Link>
+                  {canManage && task.status === 'OPEN' && (
+                    <button
+                      type="button"
+                      disabled={completeMutation.isPending}
+                      onClick={() => {
+                        setFailure(null);
+                        completeMutation.mutate(task);
+                      }}
+                    >
+                      {completeMutation.isPending && completeMutation.variables?.taskId === task.taskId ? 'Completando…' : 'Completar'}
+                    </button>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>
