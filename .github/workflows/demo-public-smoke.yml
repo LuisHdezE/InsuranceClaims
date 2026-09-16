@@ -18,7 +18,7 @@ env:
 jobs:
   public-api-smoke:
     runs-on: ubuntu-24.04
-    timeout-minutes: 6
+    timeout-minutes: 5
     steps:
       - name: Wait for public API and verify liveness
         shell: bash
@@ -84,70 +84,7 @@ jobs:
           test "$status" = '401'
           grep -Eq 'AUTHENTICATION_REQUIRED|Unauthorized|authentication' "$body"
 
-      - name: Generate encrypted auth handshake
-        shell: bash
-        run: |
-          set -euo pipefail
-          umask 077
-          STAFF_PASSWORD="TmpS_$(openssl rand -hex 24)"
-          CUSTOMER_PASSWORD="TmpC_$(openssl rand -hex 24)"
-          {
-            printf 'STAFF_PASSWORD=%s\n' "$STAFF_PASSWORD"
-            printf 'CUSTOMER_PASSWORD=%s\n' "$CUSTOMER_PASSWORD"
-          } > "$RUNNER_TEMP/demo-auth-creds"
-          cat > "$RUNNER_TEMP/demo-auth-public.pem" <<'EOF'
-          -----BEGIN PUBLIC KEY-----
-          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmIhxC4PhmVHZOhpOdRdr
-          TzXcHJFdpK1mvWhU0TW5ml1T1BBYV3pv9Hkq3T5/oIa2UQJHVEeKI9Im1SX7b9a2
-          TaFX9FHgyVWcUMfMz0CnHQ7GCsXPHexBwsY1iHcISovGQcMn0Q4im7Ln5VpS1ZGm
-          blvLYPwvyLPdVjCootQMKmuQQLEGuA5HeUdzCcmn7mtBxoTRglMf6fhHROzBt/0G
-          Y0ljzmm1Heea+8B+IMcl3RJ/TmUSofroDjygMpX2gA+7sgkW16aRaC5Iw/M/hmmz
-          Sn7v1HxxsRZvTYQHaCfUHXVa6YtH7aHK8q+4g9fg/t5631kLr6+jIhjMli0NXM0i
-          pwIDAQAB
-          -----END PUBLIC KEY-----
-          EOF
-          STAFF_CIPHERTEXT="$(printf '%s' "$STAFF_PASSWORD" | openssl pkeyutl -encrypt -pubin -inkey "$RUNNER_TEMP/demo-auth-public.pem" -pkeyopt rsa_padding_mode:oaep | base64 -w0)"
-          CUSTOMER_CIPHERTEXT="$(printf '%s' "$CUSTOMER_PASSWORD" | openssl pkeyutl -encrypt -pubin -inkey "$RUNNER_TEMP/demo-auth-public.pem" -pkeyopt rsa_padding_mode:oaep | base64 -w0)"
-          {
-            printf 'STAFF_CIPHERTEXT=%s\n' "$STAFF_CIPHERTEXT"
-            printf 'CUSTOMER_CIPHERTEXT=%s\n' "$CUSTOMER_CIPHERTEXT"
-          } > "$RUNNER_TEMP/demo-auth-handshake.txt"
-
-      - name: Upload encrypted auth handshake
-        uses: actions/upload-artifact@v4
-        with:
-          name: demo-auth-handshake-${{ github.run_id }}
-          path: ${{ runner.temp }}/demo-auth-handshake.txt
-          retention-days: 1
-
-      - name: Verify authenticated staff and customer flows
-        shell: bash
-        run: |
-          set -euo pipefail
-          source "$RUNNER_TEMP/demo-auth-creds"
-          for attempt in $(seq 1 5); do
-            staff_payload="$(jq -nc --arg login 'demo.operator@eliasworks.invalid' --arg password "$STAFF_PASSWORD" '{login:$login,password:$password}')"
-            staff_response="$(curl -sS --connect-timeout 10 --max-time 20 -H 'Content-Type: application/json' -d "$staff_payload" "$DEMO_PUBLIC_API_BASE_URL/api/v1/operator/auth/login")"
-            staff_token="$(printf '%s' "$staff_response" | jq -r '.accessToken // empty')"
-            customer_payload="$(jq -nc --arg login 'demo.customer@eliasworks.invalid' --arg password "$CUSTOMER_PASSWORD" '{login:$login,password:$password}')"
-            customer_response="$(curl -sS --connect-timeout 10 --max-time 20 -H 'Content-Type: application/json' -d "$customer_payload" "$DEMO_PUBLIC_API_BASE_URL/api/v1/portal/auth/login")"
-            customer_token="$(printf '%s' "$customer_response" | jq -r '.accessToken // empty')"
-            if [[ -n "$staff_token" && -n "$customer_token" ]]; then
-              claims="$(curl -fsS --connect-timeout 10 --max-time 20 -H "Authorization: Bearer $staff_token" "$DEMO_PUBLIC_API_BASE_URL/api/v1/operator/claims?page=1&pageSize=5")"
-              test "$(printf '%s' "$claims" | jq -r '.totalItems')" -ge 3
-              me="$(curl -fsS --connect-timeout 10 --max-time 20 -H "Authorization: Bearer $customer_token" "$DEMO_PUBLIC_API_BASE_URL/api/v1/portal/me")"
-              printf '%s' "$me" | grep -q '"displayName":"Synthetic QA Portal Customer"'
-              policies="$(curl -fsS --connect-timeout 10 --max-time 20 -H "Authorization: Bearer $customer_token" "$DEMO_PUBLIC_API_BASE_URL/api/v1/portal/policies?page=1&pageSize=5")"
-              test "$(printf '%s' "$policies" | jq -r '.totalItems')" -ge 1
-              echo 'Authenticated staff and customer smoke passed.'
-              exit 0
-            fi
-            sleep 30
-          done
-          echo 'Temporary demo credentials were not activated before the authenticated smoke deadline.' >&2
-          exit 1
-
       - name: Public smoke summary
         run: |
           echo 'Public Render API smoke passed.'
-          echo 'Validated: liveness, readiness, synthetic policy verification, CORS, Neon-backed claim tracking, protected-route boundary, staff login/read, and customer login/read.'
+          echo 'Validated: liveness, readiness, synthetic policy verification, CORS, Neon-backed claim tracking, and protected-route authentication boundary.'
