@@ -38,6 +38,7 @@ function renderPage(initialEntry: string = '/operator/login') {
         <Route path="/operator/dashboard" element={<div>Dashboard destino</div>} />
         <Route path="/operator/workspace" element={<div>Workspace destino</div>} />
         <Route path="/operator/analytics" element={<div>Analytics destino</div>} />
+        <Route path="/operator/claims" element={<div>Siniestros destino</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -69,7 +70,7 @@ describe('OperatorLoginPage R3 contract', () => {
     expect(password.type).toBe('password');
     expect(screen.getByRole('button', { name: 'Ingresar al workspace' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Entrar en demo de solo lectura' })).toBeTruthy();
-    expect(screen.getByText(/el API bloquea las operaciones de escritura/i)).toBeTruthy();
+    expect(screen.getByText(/bloquea escrituras y cualquier lectura fuera de ese alcance/i)).toBeTruthy();
     expect(screen.getByRole('link', { name: /volver al sitio público/i })).toBeTruthy();
 
     expect(screen.getByText(/No se selecciona aquí/i)).toBeTruthy();
@@ -82,7 +83,7 @@ describe('OperatorLoginPage R3 contract', () => {
     expect(screen.queryByText(/google|microsoft|apple/i)).toBeNull();
   });
 
-  it('opens the public read-only demo without collecting credentials', async () => {
+  it('opens the public read-only demo without collecting credentials and lands inside the governed claims scope', async () => {
     mockedCreateReadOnlyDemoOperatorSession.mockResolvedValue({
       data: {
         accessToken: 'demo-token',
@@ -106,7 +107,7 @@ describe('OperatorLoginPage R3 contract', () => {
       accessToken: 'demo-token',
       operator: expect.objectContaining({ role: 'CLAIMS_OPERATOR' }),
     }));
-    expect(await screen.findByText('Dashboard destino')).toBeTruthy();
+    expect(await screen.findByText('Siniestros destino')).toBeTruthy();
   });
 
   it('submits only login and password, trims login and follows the API role', async () => {
