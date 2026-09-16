@@ -6,6 +6,7 @@ const ALLOWED_HEADERS = [
   'Content-Type',
   'Idempotency-Key',
   'X-Request-Id',
+  'X-Demo-Read-Only',
 ] as const;
 
 const EXPOSED_HEADERS = [
