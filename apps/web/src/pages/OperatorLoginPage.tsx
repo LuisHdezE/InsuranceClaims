@@ -7,6 +7,7 @@ import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import '../operator-login-r3.css';
+import '../operator-login-viewport.css';
 
 type PendingMode = 'credentials' | 'demo' | null;
 
@@ -120,86 +121,94 @@ export function OperatorLoginPage() {
 
         <section className="r3-login-form-side" aria-labelledby="operator-login-title">
           <div className="operator-login-card r3-login-card">
-            <div className="r3-login-brand-row">
-              <img className="r3-login-wordmark" src="/far-demo-wordmark-v2.svg" alt="FAR Seguros" />
-              <span className="r3-login-version">Operations R3</span>
-            </div>
-
-            <span className="eyebrow">Workspace protegido</span>
-            <h1 id="operator-login-title">Acceso de operadores</h1>
-            <p>
-              Usa tus credenciales R3. Tu rol y permisos son emitidos por el API después de autenticar.
-            </p>
-
-            <div className="r3-login-demo-panel">
-              <div className="r3-login-demo-heading">
-                <div>
-                  <span className="r3-login-demo-kicker">Demo pública</span>
-                  <strong>Explora el flujo operativo en modo seguro</strong>
-                </div>
-                <span className="r3-login-readonly-badge">Solo lectura</span>
+            <div className="r3-login-card-header">
+              <div className="r3-login-brand-row">
+                <img className="r3-login-wordmark" src="/far-demo-wordmark-v2.svg" alt="FAR Seguros" />
+                <span className="r3-login-version">Operations R3</span>
               </div>
+
+              <span className="eyebrow">Workspace protegido</span>
+              <h1 id="operator-login-title">Acceso de operadores</h1>
               <p>
-                Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance. En hosting gratuito, la primera entrada puede tardar unos segundos mientras despierta la API.
+                Usa tus credenciales R3. Tu rol y permisos son emitidos por el API después de autenticar.
               </p>
-              <button
-                className="btn btn-cyan r3-login-demo-button"
-                type="button"
-                disabled={pending}
-                onClick={openReadOnlyDemo}
-                aria-label="Entrar en demo de solo lectura"
-              >
-                {pendingMode === 'demo' ? 'Abriendo demo…' : 'Entrar en demo de solo lectura'}
-              </button>
             </div>
 
-            <div className="r3-login-divider" aria-hidden="true">
-              <span>o accede con credenciales R3</span>
+            <div className="r3-login-access-grid">
+              <div className="r3-login-access-demo">
+                <div className="r3-login-demo-panel">
+                  <div className="r3-login-demo-heading">
+                    <div>
+                      <span className="r3-login-demo-kicker">Demo pública</span>
+                      <strong>Explora el flujo operativo en modo seguro</strong>
+                    </div>
+                    <span className="r3-login-readonly-badge">Solo lectura</span>
+                  </div>
+                  <p>
+                    Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance. En hosting gratuito, la primera entrada puede tardar unos segundos mientras despierta la API.
+                  </p>
+                  <button
+                    className="btn btn-cyan r3-login-demo-button"
+                    type="button"
+                    disabled={pending}
+                    onClick={openReadOnlyDemo}
+                    aria-label="Entrar en demo de solo lectura"
+                  >
+                    {pendingMode === 'demo' ? 'Abriendo demo…' : 'Entrar en demo de solo lectura'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="r3-login-access-credentials">
+                <div className="r3-login-divider" aria-hidden="true">
+                  <span>Credenciales R3</span>
+                </div>
+
+                <div className="r3-login-role-note">
+                  <strong>Rol resuelto por el API</strong>
+                  No se selecciona aquí. El API lo resuelve y la aplicación aplica el destino autorizado.
+                </div>
+
+                {failure && <OperatorApiErrorNotice failure={failure} />}
+
+                <form className="operator-form" onSubmit={submit} aria-busy={pending}>
+                  <label htmlFor="operator-login">Usuario</label>
+                  <input
+                    id="operator-login"
+                    name="login"
+                    autoComplete="username"
+                    maxLength={160}
+                    required
+                    autoFocus
+                    disabled={pending}
+                    value={login}
+                    onChange={(event) => setLogin(event.target.value)}
+                  />
+
+                  <label htmlFor="operator-password">Contraseña</label>
+                  <input
+                    id="operator-password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    maxLength={256}
+                    required
+                    disabled={pending}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                  />
+
+                  <button
+                    className="btn btn-cyan r3-login-submit"
+                    type="submit"
+                    disabled={pending}
+                    aria-label={pendingMode === 'credentials' ? 'Autenticando' : 'Ingresar al workspace'}
+                  >
+                    {pendingMode === 'credentials' ? 'Autenticando…' : 'Ingresar'}
+                  </button>
+                </form>
+              </div>
             </div>
-
-            <div className="r3-login-role-note">
-              <strong>Rol resuelto por el API</strong>
-              No se selecciona aquí. El API lo resuelve y la aplicación aplica el destino autorizado.
-            </div>
-
-            {failure && <OperatorApiErrorNotice failure={failure} />}
-
-            <form className="operator-form" onSubmit={submit} aria-busy={pending}>
-              <label htmlFor="operator-login">Usuario</label>
-              <input
-                id="operator-login"
-                name="login"
-                autoComplete="username"
-                maxLength={160}
-                required
-                autoFocus
-                disabled={pending}
-                value={login}
-                onChange={(event) => setLogin(event.target.value)}
-              />
-
-              <label htmlFor="operator-password">Contraseña</label>
-              <input
-                id="operator-password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                maxLength={256}
-                required
-                disabled={pending}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-
-              <button
-                className="btn btn-cyan r3-login-submit"
-                type="submit"
-                disabled={pending}
-                aria-label={pendingMode === 'credentials' ? 'Autenticando' : 'Ingresar al workspace'}
-              >
-                {pendingMode === 'credentials' ? 'Autenticando…' : 'Ingresar'}
-              </button>
-            </form>
 
             <Link className="operator-public-link" to="/">← Volver al sitio público</Link>
           </div>
