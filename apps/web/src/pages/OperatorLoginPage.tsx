@@ -126,7 +126,7 @@ export function OperatorLoginPage() {
             </div>
 
             <span className="eyebrow">Workspace protegido</span>
-            <h1 id="operator-login-title">Workspace de operadores</h1>
+            <h1 id="operator-login-title">Acceso de operadores</h1>
             <p>
               Usa tus credenciales R3. Tu rol y permisos son emitidos por el API después de autenticar.
             </p>
