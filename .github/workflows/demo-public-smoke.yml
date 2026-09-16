@@ -59,6 +59,19 @@ jobs:
           echo "$body" | grep -q '"policyReference":"SYN-POL-001"'
           grep -Fqi "access-control-allow-origin: $DEMO_PUBLIC_ORIGIN" "$headers"
 
+      - name: Verify public claim tracking reads Neon
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(curl -fsS --connect-timeout 10 --max-time 20 \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $DEMO_PUBLIC_ORIGIN" \
+            -d '{"trackingCode":"SYN-QA-BULK-TRACK-001","policyReference":"SYN-QA-BULK-POL-001"}' \
+            "$DEMO_PUBLIC_API_BASE_URL/api/v1/public/claim-tracking")"
+          echo "$body" | grep -q '"trackingCode":"SYN-QA-BULK-TRACK-001"'
+          echo "$body" | grep -q '"status":"RECEIVED"'
+          echo "$body" | grep -q '"vehicleReference":"SYN-QA-BULK-VEH-001"'
+
       - name: Verify protected staff boundary
         shell: bash
         run: |
@@ -74,4 +87,4 @@ jobs:
       - name: Public smoke summary
         run: |
           echo 'Public Render API smoke passed.'
-          echo 'Validated: liveness, readiness, synthetic policy verification, CORS, and protected-route authentication boundary.'
+          echo 'Validated: liveness, readiness, synthetic policy verification, CORS, Neon-backed claim tracking, and protected-route authentication boundary.'
