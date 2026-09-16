@@ -16,6 +16,12 @@ const steps: Array<{ icon: PublicIconName; number: string; title: string; copy: 
   { icon: 'search', number: '3', title: 'Da seguimiento', copy: 'Consulta el estado con la prueba pública requerida.' },
 ];
 
+const demoHighlights: Array<{ icon: PublicIconName; number: string; title: string; copy: string }> = [
+  { icon: 'search', number: '1', title: 'Explora Claims', copy: 'Recorre siniestros sintéticos preparados para mostrar el flujo operativo.' },
+  { icon: 'shield', number: '2', title: 'Solo lectura', copy: 'Las acciones de escritura permanecen bloqueadas por el API.' },
+  { icon: 'document', number: '3', title: 'Alcance gobernado', copy: 'La sesión demo solo muestra fixtures aprobados para el portafolio.' },
+];
+
 export function HomePage() {
   return (
     <PublicShell>
@@ -59,9 +65,9 @@ export function HomePage() {
         <section className="landing-journeys" aria-labelledby="journeys-title">
           <div className="container-shell">
             <div className="landing-section-heading">
-              <span className="landing-kicker">DOS JOURNEYS REALES</span>
+              <span className="landing-kicker">FLUJOS PÚBLICOS</span>
               <h2 id="journeys-title">¿Qué necesitas hacer?</h2>
-              <p>El MVP público se concentra únicamente en estas dos capacidades verificables.</p>
+              <p>Puedes iniciar un reporte o consultar un siniestro existente desde dos recorridos simples y verificables.</p>
             </div>
             <div className="landing-journey-grid">
               <Link className="landing-journey-card" to="/claims/new/verify">
@@ -80,6 +86,30 @@ export function HomePage() {
                 </span>
                 <span className="landing-journey-arrow" aria-hidden="true">›</span>
               </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="landing-process" aria-labelledby="operator-demo-title">
+          <div className="container-shell landing-process-grid">
+            <div className="landing-process-heading">
+              <span className="landing-kicker">DEMO OPERATIVA</span>
+              <h2 id="operator-demo-title">Explora el backoffice sin credenciales</h2>
+              <p>Entra como operador demo de solo lectura y recorre una selección gobernada de siniestros sintéticos.</p>
+              <Link to="/operator/login">Abrir demo de operador <span aria-hidden="true">→</span></Link>
+            </div>
+            <div className="landing-step-items">
+              {demoHighlights.map((item, index) => (
+                <article className="landing-step" key={item.number}>
+                  <span className="landing-step-number">{item.number}</span>
+                  <span className="landing-step-icon"><PublicIcon kind={item.icon} /></span>
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.copy}</p>
+                  </div>
+                  {index < demoHighlights.length - 1 && <span className="landing-step-arrow" aria-hidden="true">›</span>}
+                </article>
+              ))}
             </div>
           </div>
         </section>
