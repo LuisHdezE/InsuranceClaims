@@ -53,6 +53,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { session, signOut } = useOperatorSession();
   const role = session?.operator.role;
+  const demoReadOnly = session?.operator.id === '00000000-0000-4000-8000-000000000099';
   const visibleNavItems = role
     ? navItems.filter((item) => !item.allOf || hasAllPermissions(role, item.allOf))
     : [];
@@ -124,6 +125,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
             <span className="r3-operator-copy">
               <strong className="operator-identity">{session?.operator.login}</strong>
               {role && <small className="r3-topbar-role">{STAFF_ROLE_LABELS[role]}</small>}
+              {demoReadOnly && <small className="r3-topbar-role">Demo pública · solo lectura</small>}
             </span>
             <button className="ops-signout" type="button" onClick={signOut}>Cerrar sesión</button>
           </div>
