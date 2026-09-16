@@ -5,6 +5,7 @@ import { getClaimEvidenceAttention } from '../api/evidence-attention';
 import type { EvidenceAttentionItem, EvidenceAttentionState, EvidenceReviewTask } from '../api/evidence-attention-types';
 import { completeClaimTask } from '../api/tasks';
 import type { ApiFailure } from '../api/types';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import { OperatorApiErrorNotice } from './OperatorApiErrorNotice';
 
@@ -49,6 +50,7 @@ export function ClaimEvidenceAttentionPanel({ claimId }: { claimId: string }) {
   });
 
   if (!session) return null;
+  const demoReadOnly = isPublicDemoOperator(session.operator);
   const attention = attentionQuery.data?.data;
   const openReviewTask = attention?.reviewTasks.find((task) => task.status === 'OPEN') ?? null;
   const completedReviewTask = attention?.reviewTasks.find((task) => task.status === 'COMPLETED') ?? null;
@@ -87,6 +89,7 @@ export function ClaimEvidenceAttentionPanel({ claimId }: { claimId: string }) {
         {attention && <AttentionBadge state={attention.attentionState} />}
       </div>
 
+      {demoReadOnly && <div className="r3-pipeline-readonly">Demo pública de solo lectura. La revisión puede consultarse, pero no completarse.</div>}
       {failure && <OperatorApiErrorNotice failure={failure} />}
       {queryFailure && queryFailure.problem?.status !== 401 && <OperatorApiErrorNotice failure={queryFailure} />}
 
@@ -107,17 +110,19 @@ export function ClaimEvidenceAttentionPanel({ claimId }: { claimId: string }) {
                 <strong>{openReviewTask.title}</strong>
                 <small>{openReviewTask.priority === 'HIGH' ? 'Prioridad alta' : 'Prioridad normal'} · Creada {formatDate(openReviewTask.createdAt)}</small>
               </div>
-              <button
-                type="button"
-                className="ops-primary-action"
-                disabled={completeReviewMutation.isPending}
-                onClick={() => {
-                  setFailure(null);
-                  completeReviewMutation.mutate(openReviewTask);
-                }}
-              >
-                {completeReviewMutation.isPending ? 'Completando…' : 'Completar revisión'}
-              </button>
+              {!demoReadOnly && (
+                <button
+                  type="button"
+                  className="ops-primary-action"
+                  disabled={completeReviewMutation.isPending}
+                  onClick={() => {
+                    setFailure(null);
+                    completeReviewMutation.mutate(openReviewTask);
+                  }}
+                >
+                  {completeReviewMutation.isPending ? 'Completando…' : 'Completar revisión'}
+                </button>
+              )}
             </div>
           )}
 
