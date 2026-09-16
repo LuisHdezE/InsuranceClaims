@@ -47,3 +47,20 @@ test('REST contract collapses invalid tracking proof and protects operator route
   assert.equal(miss.body.code, 'CLAIM_NOT_FOUND');
   await app.close();
 });
+
+test('REST contract preserves Nest HTTP exceptions as Problem Details', async () => {
+  const runtime = await createMemoryRuntime();
+  const app = await NestFactory.create(ApiModule.register(runtime), { logger: false });
+  await app.init();
+  const http = app.getHttpServer();
+  const response = await request(http).get('/').expect(404);
+  assert.match(response.headers['content-type'] ?? '', /^application\/problem\+json/);
+  assert.equal(response.body.status, 404);
+  assert.equal(response.body.code, 'HTTP_404');
+  assert.equal(response.body.type, 'urn:insuranceclaims:problem:http-404');
+  assert.equal(response.body.title, 'Not found');
+  assert.equal(response.body.instance, '/');
+  assert.match(response.body.detail, /Cannot GET \/$/);
+  assert.equal(typeof response.body.requestId, 'string');
+  await app.close();
+});
