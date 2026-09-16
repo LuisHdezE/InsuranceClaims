@@ -4,9 +4,15 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { z } from 'zod';
+import type { AccessTokenPort } from '@insurance/application';
 import { CLAIMS_OPERATIONAL_SORTS } from '@insurance/application/claims-operational-query';
-import { API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
+import { ACCESS_TOKENS, API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
+import {
+  PUBLIC_DEMO_ACCESS_HEADER,
+  PUBLIC_DEMO_OPERATOR,
+  isDemoModeEnabled,
+} from './demo-access.js';
 import { RateLimitService, callerIp } from './transport.js';
 
 const ref = z.string().trim().min(1).max(80);
@@ -70,15 +76,44 @@ export class PublicClaimsController {
 export class OperatorAuthController {
   constructor(
     @Inject(API_RUNTIME) private readonly runtime: ApiRuntimeContract,
+    @Inject(ACCESS_TOKENS) private readonly tokens: AccessTokenPort,
     @Inject(RateLimitService) private readonly limits: RateLimitService,
   ) {}
 
   @Post('login')
   @HttpCode(200)
-  async login(@Body() body: unknown, @Req() req: any) {
+  async login(
+    @Body() body: unknown,
+    @Headers(PUBLIC_DEMO_ACCESS_HEADER) demoReadOnlyHeader: string | undefined,
+    @Req() req: any,
+  ) {
     const parsed = loginSchema.parse(body);
+    const normalizedLogin = parsed.login.toLowerCase();
     this.limits.consume(`login-ip:${callerIp(req)}`, 5, 60);
-    this.limits.consume(`login-user:${parsed.login.toLowerCase()}`, 10, 15 * 60);
+    this.limits.consume(`login-user:${normalizedLogin}`, 10, 15 * 60);
+
+    if (
+      isDemoModeEnabled()
+      && demoReadOnlyHeader?.toLowerCase() === 'true'
+      && normalizedLogin === PUBLIC_DEMO_OPERATOR.login
+    ) {
+      const accessToken = await this.tokens.issue(PUBLIC_DEMO_OPERATOR, 900);
+      console.info(JSON.stringify({
+        level: 'info',
+        event: 'PUBLIC_DEMO_SESSION_ISSUED',
+        requestId: req.requestId ?? null,
+        actorId: PUBLIC_DEMO_OPERATOR.id,
+        role: PUBLIC_DEMO_OPERATOR.role,
+        readOnly: true,
+      }));
+      return {
+        accessToken,
+        tokenType: 'Bearer' as const,
+        expiresIn: 900,
+        operator: PUBLIC_DEMO_OPERATOR,
+      };
+    }
+
     return this.runtime.application.authenticateOperator(parsed, { requestId: req.requestId });
   }
 }
