@@ -1,0 +1,134 @@
+name: Demo Public Product E2E
+
+on:
+  push:
+    branches:
+      - feat/demo-public-e2e
+    paths:
+      - '.github/workflows/demo-public-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEMO_WEB_BASE_URL: https://insuranceclaims-demo-web.onrender.com
+  DEMO_API_BASE_URL: https://insuranceclaims-demo-api.onrender.com
+  DEMO_POLICY_REFERENCE: SYN-POL-001
+  DEMO_VEHICLE_REFERENCE: SYN-VEH-001
+  DEMO_IDEMPOTENCY_KEY: d5000000-0000-4000-8000-000000000001
+
+jobs:
+  public-product-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Verify public frontend routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in / /claims/new/verify /claims/track /operator/login; do
+            body="$(mktemp)"
+            status="$(curl -sS --connect-timeout 10 --max-time 20 -o "$body" -w '%{http_code}' "$DEMO_WEB_BASE_URL$path")"
+            test "$status" = '200'
+            grep -Eq '<div id="root"></div>|<div id="root"' "$body"
+          done
+
+      - name: Wake public API
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 24); do
+            if body="$(curl -fsS --connect-timeout 10 --max-time 20 "$DEMO_API_BASE_URL/health/live" 2>/dev/null)"; then
+              echo "$body" | jq -e '.status == "ok"' >/dev/null
+              exit 0
+            fi
+            if [[ "$attempt" == '24' ]]; then
+              echo 'Public API did not become live.' >&2
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Verify browser-origin policy eligibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(curl -fsS --connect-timeout 10 --max-time 30 \
+            -D "$headers" \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $DEMO_WEB_BASE_URL" \
+            -d "{\"policyReference\":\"$DEMO_POLICY_REFERENCE\",\"vehicleReference\":\"$DEMO_VEHICLE_REFERENCE\"}" \
+            "$DEMO_API_BASE_URL/api/v1/public/policy-verifications")"
+          jq -e --arg policy "$DEMO_POLICY_REFERENCE" --arg vehicle "$DEMO_VEHICLE_REFERENCE" \
+            '.eligible == true and .policyReference == $policy and .vehicleReference == $vehicle' <<< "$body" >/dev/null
+          grep -Fqi "access-control-allow-origin: $DEMO_WEB_BASE_URL" "$headers"
+
+      - name: Verify deterministic claim creation idempotency and Neon tracking
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          submit_claim() {
+            local headers="$1"
+            local body="$2"
+            curl -fsS --connect-timeout 10 --max-time 45 \
+              -D "$headers" \
+              -o "$body" \
+              -H "Origin: $DEMO_WEB_BASE_URL" \
+              -H "Idempotency-Key: $DEMO_IDEMPOTENCY_KEY" \
+              --form-string "policyReference=$DEMO_POLICY_REFERENCE" \
+              --form-string "vehicleReference=$DEMO_VEHICLE_REFERENCE" \
+              --form-string 'eventType=D5_SYNTHETIC_E2E' \
+              --form-string 'occurredAt=2026-09-15T12:00:00.000Z' \
+              --form-string 'locationText=Synthetic D5 public E2E, Uruguay' \
+              --form-string 'description=Governed synthetic claim used only to validate the public EliasWorks demo end to end.' \
+              "$DEMO_API_BASE_URL/api/v1/public/claims"
+          }
+
+          first_headers="$(mktemp)"
+          first_body="$(mktemp)"
+          second_headers="$(mktemp)"
+          second_body="$(mktemp)"
+
+          submit_claim "$first_headers" "$first_body"
+          first_tracking="$(jq -er '.trackingCode | select(type == "string" and length > 0)' "$first_body")"
+          jq -e '.status == "RECEIVED" and (.nextSteps | type == "array")' "$first_body" >/dev/null
+          grep -Fqi "access-control-allow-origin: $DEMO_WEB_BASE_URL" "$first_headers"
+
+          submit_claim "$second_headers" "$second_body"
+          second_tracking="$(jq -er '.trackingCode | select(type == "string" and length > 0)' "$second_body")"
+          test "$second_tracking" = "$first_tracking"
+          jq -e '.status == "RECEIVED"' "$second_body" >/dev/null
+          grep -Eqi '^idempotency-replayed:[[:space:]]*true' "$second_headers"
+
+          tracking_body="$(curl -fsS --connect-timeout 10 --max-time 30 \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $DEMO_WEB_BASE_URL" \
+            -d "{\"trackingCode\":\"$first_tracking\",\"policyReference\":\"$DEMO_POLICY_REFERENCE\"}" \
+            "$DEMO_API_BASE_URL/api/v1/public/claim-tracking")"
+
+          jq -e \
+            --arg tracking "$first_tracking" \
+            --arg vehicle "$DEMO_VEHICLE_REFERENCE" \
+            '.trackingCode == $tracking and .status == "RECEIVED" and .summary.vehicleReference == $vehicle and .summary.eventType == "D5_SYNTHETIC_E2E" and (.timeline | length >= 1)' \
+            <<< "$tracking_body" >/dev/null
+
+      - name: Verify protected operator boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl -sS --connect-timeout 10 --max-time 30 \
+            -o "$body" \
+            -w '%{http_code}' \
+            -H "Origin: $DEMO_WEB_BASE_URL" \
+            "$DEMO_API_BASE_URL/api/v1/operator/claims")"
+          test "$status" = '401'
+          grep -Eq 'AUTHENTICATION_REQUIRED|Unauthorized|authentication' "$body"
+
+      - name: Public product E2E summary
+        run: |
+          echo 'Public product E2E passed.'
+          echo 'Validated: static SPA routes, browser-origin CORS, synthetic eligibility, durable claim creation, idempotent replay, Neon-backed tracking, and protected operator boundary.'
