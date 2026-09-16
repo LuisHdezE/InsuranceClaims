@@ -133,30 +133,6 @@ export function OperatorLoginPage() {
             </div>
 
             <div className="r3-login-access-grid">
-              <div className="r3-login-access-demo">
-                <div className="r3-login-demo-panel">
-                  <div className="r3-login-demo-heading">
-                    <div>
-                      <span className="r3-login-demo-kicker">Demo pública</span>
-                      <strong>Explora el flujo operativo en modo seguro</strong>
-                    </div>
-                    <span className="r3-login-readonly-badge">Solo lectura</span>
-                  </div>
-                  <p>
-                    Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance. En hosting gratuito, la primera entrada puede tardar unos segundos mientras despierta la API.
-                  </p>
-                  <button
-                    className="btn btn-cyan r3-login-demo-button"
-                    type="button"
-                    disabled={pending}
-                    onClick={openReadOnlyDemo}
-                    aria-label="Entrar en demo de solo lectura"
-                  >
-                    {pendingMode === 'demo' ? 'Abriendo demo…' : 'Entrar en demo de solo lectura'}
-                  </button>
-                </div>
-              </div>
-
               <div className="r3-login-access-credentials">
                 <div className="r3-login-divider" aria-hidden="true">
                   <span>Credenciales R3</span>
@@ -205,6 +181,30 @@ export function OperatorLoginPage() {
                     {pendingMode === 'credentials' ? 'Autenticando…' : 'Ingresar'}
                   </button>
                 </form>
+              </div>
+
+              <div className="r3-login-access-demo">
+                <div className="r3-login-demo-panel">
+                  <div className="r3-login-demo-heading">
+                    <div>
+                      <span className="r3-login-demo-kicker">Demo pública</span>
+                      <strong>Explora el flujo operativo en modo seguro</strong>
+                    </div>
+                    <span className="r3-login-readonly-badge">Solo lectura</span>
+                  </div>
+                  <p>
+                    Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance. En hosting gratuito, la primera entrada puede tardar unos segundos mientras despierta la API.
+                  </p>
+                  <button
+                    className="btn btn-cyan r3-login-demo-button"
+                    type="button"
+                    disabled={pending}
+                    onClick={openReadOnlyDemo}
+                    aria-label="Entrar en demo de solo lectura"
+                  >
+                    {pendingMode === 'demo' ? 'Abriendo demo…' : 'Entrar en demo de solo lectura'}
+                  </button>
+                </div>
               </div>
             </div>
 
