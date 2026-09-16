@@ -4,6 +4,8 @@ services:
     name: insuranceclaims-demo-web
     branch: main
     autoDeployTrigger: commit
+    domains:
+      - claims.eliasworks.uy
     buildCommand: npm ci --include=dev && npm run build --workspace @insurance/web
     staticPublishPath: apps/web/dist
     routes:
@@ -12,4 +14,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://insuranceclaims-demo-api.onrender.com
+        value: https://api.claims.eliasworks.uy
