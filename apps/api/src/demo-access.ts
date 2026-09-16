@@ -1,7 +1,7 @@
 import type { ActorContext, OperatorRecord } from '@insurance/application';
 
 export const PUBLIC_DEMO_OPERATOR = {
-  id: '00000000-0000-4000-8000-000000000099',
+  id: '00000000-0000-4000-8000-000000000096',
   login: 'demo.operator@eliasworks.invalid',
   role: 'CLAIMS_OPERATOR',
 } as const satisfies Pick<OperatorRecord, 'id' | 'login' | 'role'>;
