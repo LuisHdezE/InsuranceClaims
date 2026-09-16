@@ -1,0 +1,135 @@
+name: Demo Custom Domains Smoke
+
+on:
+  push:
+    branches:
+      - feat/demo-custom-domains
+    paths:
+      - '.github/workflows/demo-custom-domains-smoke.yml'
+      - 'render.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEMO_WEB_BASE_URL: https://claims.eliasworks.uy
+  DEMO_API_BASE_URL: https://api.claims.eliasworks.uy
+
+jobs:
+  custom-domains-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Wait for custom frontend TLS and root
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 36); do
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            if status="$(curl -sS --connect-timeout 10 --max-time 20 -D "$headers" -o "$body" -w '%{http_code}' "$DEMO_WEB_BASE_URL/" 2>/dev/null)" \
+              && [[ "$status" == '200' ]] \
+              && grep -Eq '<div id="root"></div>|<div id="root"' "$body"; then
+              grep -Eqi 'content-type: text/html' "$headers"
+              exit 0
+            fi
+            if [[ "$attempt" == '36' ]]; then
+              echo 'Custom frontend domain did not become ready with valid HTTPS.' >&2
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Verify custom frontend deep links
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in /claims/new/verify /claims/track /operator/login; do
+            body="$(mktemp)"
+            status="$(curl -sS --connect-timeout 10 --max-time 20 -o "$body" -w '%{http_code}' "$DEMO_WEB_BASE_URL$path")"
+            test "$status" = '200'
+            grep -Eq '<div id="root"></div>|<div id="root"' "$body"
+          done
+
+      - name: Verify frontend uses custom API domain
+        shell: bash
+        run: |
+          set -euo pipefail
+          html="$(curl -fsS --connect-timeout 10 --max-time 20 "$DEMO_WEB_BASE_URL/")"
+          asset="$(grep -oE 'src="[^"]+\.js"' <<< "$html" | head -n1 | cut -d'"' -f2)"
+          test -n "$asset"
+          bundle="$(curl -fsS --connect-timeout 10 --max-time 20 "$DEMO_WEB_BASE_URL$asset")"
+          grep -Fq "$DEMO_API_BASE_URL" <<< "$bundle"
+
+      - name: Wait for custom API TLS and liveness
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 36); do
+            if body="$(curl -fsS --connect-timeout 10 --max-time 20 "$DEMO_API_BASE_URL/health/live" 2>/dev/null)"; then
+              grep -q '"status":"ok"' <<< "$body"
+              exit 0
+            fi
+            if [[ "$attempt" == '36' ]]; then
+              echo 'Custom API domain did not become live with valid HTTPS.' >&2
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Verify custom-domain CORS and policy eligibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(curl -fsS --connect-timeout 10 --max-time 20 \
+            -D "$headers" \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $DEMO_WEB_BASE_URL" \
+            -d '{"policyReference":"SYN-POL-001","vehicleReference":"SYN-VEH-001"}' \
+            "$DEMO_API_BASE_URL/api/v1/public/policy-verifications")"
+          grep -q '"eligible":true' <<< "$body"
+          grep -q '"policyReference":"SYN-POL-001"' <<< "$body"
+          grep -Fqi "access-control-allow-origin: $DEMO_WEB_BASE_URL" "$headers"
+
+      - name: Verify Neon tracking through custom API domain
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(curl -fsS --connect-timeout 10 --max-time 20 \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $DEMO_WEB_BASE_URL" \
+            -d '{"trackingCode":"SYN-QA-BULK-TRACK-001","policyReference":"SYN-QA-BULK-POL-001"}' \
+            "$DEMO_API_BASE_URL/api/v1/public/claim-tracking")"
+          grep -q '"trackingCode":"SYN-QA-BULK-TRACK-001"' <<< "$body"
+          grep -q '"status":"RECEIVED"' <<< "$body"
+          grep -q '"vehicleReference":"SYN-QA-BULK-VEH-001"' <<< "$body"
+
+      - name: Verify protected operator boundary on custom API domain
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl -sS --connect-timeout 10 --max-time 20 \
+            -o "$body" \
+            -w '%{http_code}' \
+            "$DEMO_API_BASE_URL/api/v1/operator/claims")"
+          test "$status" = '401'
+          grep -Eq 'AUTHENTICATION_REQUIRED|Unauthorized|authentication' "$body"
+
+      - name: Verify HTTP redirects to HTTPS
+        shell: bash
+        run: |
+          set -euo pipefail
+          for url in http://claims.eliasworks.uy/ http://api.claims.eliasworks.uy/health/live; do
+            headers="$(mktemp)"
+            status="$(curl -sS --connect-timeout 10 --max-time 20 -D "$headers" -o /dev/null -w '%{http_code}' "$url")"
+            [[ "$status" =~ ^30[1278]$ ]]
+            grep -Eqi '^location: https://' "$headers"
+          done
+
+      - name: Custom domains summary
+        run: |
+          echo 'Custom domain smoke passed.'
+          echo 'Validated DNS/TLS reachability, SPA deep links, custom API bundle target, CORS, Neon-backed tracking, protected-route boundary, and HTTP-to-HTTPS redirects.'
