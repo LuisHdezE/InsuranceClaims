@@ -111,7 +111,11 @@ export async function createReadOnlyDemoOperatorSession(
         login: 'demo.operator@eliasworks.invalid',
         password: 'public-demo-read-only',
       },
-      { headers: { 'X-Demo-Read-Only': 'true' } },
+      {
+        headers: { 'X-Demo-Read-Only': 'true' },
+        // Render free services may need more than the default client timeout to wake from idle.
+        timeout: 60_000,
+      },
     );
     return { data: response.data, requestId: readHeader(response.headers['x-request-id']) };
   } catch (error) {
