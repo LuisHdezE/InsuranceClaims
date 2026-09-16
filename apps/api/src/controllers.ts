@@ -156,7 +156,7 @@ export class OperatorClaimsController {
     }).parse(query);
 
     if (isDemoModeEnabled() && isPublicDemoOperator(req.actor)) {
-      const allowedIds = new Set(PUBLIC_DEMO_CLAIMS.map((fixture) => fixture.claimId));
+      const allowedIds = new Set<string>(PUBLIC_DEMO_CLAIMS.map((fixture) => fixture.claimId));
       const fixturePages = await Promise.all(PUBLIC_DEMO_CLAIMS.map((fixture) =>
         this.runtime.application.listClaims({
           page: 1,
