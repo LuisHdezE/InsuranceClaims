@@ -1,0 +1,105 @@
+name: Operator Dashboard Viewport
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web/src/pages/OperatorDashboardPage.tsx'
+      - 'apps/web/src/operator-dashboard-polish.css'
+      - 'apps/web/src/r3-ui-increment-01.css'
+      - 'apps/web/src/r3-ui-increment-01-mobile-fix.css'
+      - 'apps/web/src/components/OperatorShell.tsx'
+      - 'apps/web/src/main.tsx'
+      - 'qa/operator-dashboard-mock-api.py'
+      - 'qa/operator-dashboard-viewport-qa.py'
+      - '.github/workflows/operator-dashboard-viewport.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  viewport:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start dashboard visual QA API stub
+        run: |
+          python qa/operator-dashboard-mock-api.py > .runtime-operator-dashboard-api.log 2>&1 &
+          echo $! > .runtime-operator-dashboard-api.pid
+          for attempt in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && exit 0
+            if [[ "$attempt" == "20" ]]; then
+              cat .runtime-operator-dashboard-api.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Start web client
+        run: |
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime-operator-dashboard-web.log 2>&1 &
+          echo $! > .runtime-operator-dashboard-web.pid
+          for attempt in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:5173/operator/login >/dev/null 2>&1 && exit 0
+            if [[ "$attempt" == "40" ]]; then
+              cat .runtime-operator-dashboard-web.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Prepare Chrome QA
+        run: |
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$browser_bin" ]]; then
+            echo "No supported Chrome/Chromium binary found on runner" >&2
+            exit 1
+          fi
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+          "$browser_bin" --version
+
+      - name: Verify dashboard target viewports
+        env:
+          QA_WEB_BASE_URL: http://127.0.0.1:5173
+        run: python qa/operator-dashboard-viewport-qa.py
+
+      - name: Upload operator dashboard screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operator-dashboard-viewport-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .qa-artifacts/operator-dashboard/*.png
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Runtime logs on failure
+        if: failure()
+        run: |
+          echo '=== WEB ==='
+          cat .runtime-operator-dashboard-web.log || true
+          echo '=== DASHBOARD API STUB ==='
+          cat .runtime-operator-dashboard-api.log || true
+
+      - name: Stop runtime services
+        if: always()
+        run: |
+          pkill -f 'vite --host 127.0.0.1' 2>/dev/null || true
+          [[ -f .runtime-operator-dashboard-web.pid ]] && kill "$(cat .runtime-operator-dashboard-web.pid)" 2>/dev/null || true
+          [[ -f .runtime-operator-dashboard-api.pid ]] && kill "$(cat .runtime-operator-dashboard-api.pid)" 2>/dev/null || true
