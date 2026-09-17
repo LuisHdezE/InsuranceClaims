@@ -78,8 +78,8 @@ export function OperatorDashboardPage() {
         <div className="ops-page-heading r3-ui-dashboard-heading">
           <div className="r3-ui-dashboard-intro">
             <span className="ops-kicker">Operaciones</span>
-            <h1>Tablero</h1>
-            <p>Panorama operativo de Claims y Tasks servido por las APIs autoritativas. Las métricas agregadas solo aparecen cuando R3 concede <code>claims.analytics.read</code>.</p>
+            <h1>Tablero de Operaciones</h1>
+            <p>Resumen de la actividad de siniestros que requiere tu atención.</p>
           </div>
           <div className="r3-dashboard-heading-actions r3-ui-dashboard-actions">
             {canAnalytics && (
@@ -140,7 +140,92 @@ export function OperatorDashboardPage() {
           </section>
         ) : null}
 
-        <section className="r3-ui-dashboard-grid">
+        <section className="r3-ui-dashboard-primary-grid">
+          <section className="ops-panel ops-stage-panel r3-ui-panel r3-ui-stage-panel">
+            <PanelHeading
+              eyebrow="Pipeline"
+              title="Etapas operacionales"
+              description={metrics ? 'Distribución canónica por las etapas configuradas.' : 'La distribución agregada requiere permiso de analytics.'}
+              to="/operator/claims"
+              linkLabel="Abrir Claims"
+            />
+
+            {metrics ? (
+              metrics.claimsByOperationalStage.length === 0 ? (
+                <div className="ops-compact-empty">No hay Claims proyectados en etapas operacionales.</div>
+              ) : (
+                <div className="ops-stage-chart r3-stage-chart r3-ui-stage-chart" role="img" aria-label="Distribución de siniestros por etapa operacional canónica">
+                  {metrics.claimsByOperationalStage.map((stage, index) => (
+                    <div className="ops-stage-chart-item r3-ui-stage-chart-item" key={stage.stageKey}>
+                      <strong>{stage.count}</strong>
+                      <div className="ops-stage-bar-track"><span className={`ops-stage-bar is-${stageTone(index)}`} style={{ height: `${Math.max(8, Math.round((stage.count / maxStage) * 100))}%` }} /></div>
+                      <span title={stage.stageKey}>{stage.displayName}</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : (
+              <div className="r3-stage-no-analytics"><strong>Sin agregación local</strong><span>Consulta Claims para ver la etapa operacional de cada registro individual.</span></div>
+            )}
+          </section>
+
+          <section className="ops-panel ops-activity-panel r3-ui-panel r3-ui-recent-panel">
+            <PanelHeading
+              eyebrow="Actividad"
+              title="Reportados recientemente"
+              description="Claims actualmente en RECEIVED, ordenados por creación."
+              to="/operator/claims"
+              linkLabel="Ver todos"
+            />
+            {received.length === 0 ? (
+              <div className="ops-compact-empty">No hay siniestros en RECEIVED.</div>
+            ) : (
+              <div className="r3-ui-table-wrap">
+                <table className="r3-ui-recent-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Tracking</th>
+                      <th scope="col">Estado</th>
+                      <th scope="col">Etapa</th>
+                      <th scope="col">Vehículo</th>
+                      <th scope="col">Ocurrencia</th>
+                      <th scope="col"><span className="sr-only">Abrir</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {received.map((claim) => (
+                      <tr key={claim.claimId}>
+                        <td><Link className="r3-ui-tracking-link" to={`/operator/claims/${claim.claimId}`}>{claim.trackingCode}</Link></td>
+                        <td><span className={`r3-ui-status-badge is-${statusTone(claim.status)}`}>{CLAIM_STATUS_LABELS[claim.status]}</span></td>
+                        <td><span className={`r3-stage-badge${claim.operationalStage ? '' : ' is-unassigned'}`}><span aria-hidden="true">●</span>{claim.operationalStage?.displayName ?? 'Sin etapa operacional'}</span></td>
+                        <td>{claim.vehicleReference}</td>
+                        <td><time dateTime={claim.occurredAt}>{formatDate(claim.occurredAt)}</time></td>
+                        <td><Link className="r3-ui-row-action" to={`/operator/claims/${claim.claimId}`} aria-label={`Abrir Claim ${claim.trackingCode}`}>›</Link></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </section>
+
+        <section className="r3-ui-dashboard-secondary-grid">
+          <div className="ops-panel ops-action-panel r3-ui-panel r3-ui-action-panel">
+            <PanelHeading
+              eyebrow="Atención"
+              title="Requiere acción"
+              description="Tareas OPEN servidas por la API de trabajo operacional."
+              to="/operator/tasks"
+              linkLabel="Abrir Tasks"
+            />
+            {tasks.length === 0 ? (
+              <div className="ops-compact-empty r3-ui-positive-empty"><span aria-hidden="true">✓</span>No hay tareas abiertas.</div>
+            ) : (
+              <ul className="ops-action-list r3-ui-action-list">{tasks.map((task) => <TaskActionItem task={task} key={task.taskId} />)}</ul>
+            )}
+          </div>
+
           <div className="ops-panel r3-ui-panel r3-ui-status-panel">
             <PanelHeading
               eyebrow="Claims"
@@ -172,89 +257,6 @@ export function OperatorDashboardPage() {
               <div className="r3-stage-no-analytics"><strong>Sin agregación local</strong><span>Consulta Claims para ver el estado de cada registro individual.</span></div>
             )}
           </div>
-
-          <div className="ops-panel ops-action-panel r3-ui-panel r3-ui-action-panel">
-            <PanelHeading
-              eyebrow="Atención"
-              title="Requiere acción"
-              description="Tareas OPEN servidas por la API de trabajo operacional."
-              to="/operator/tasks"
-              linkLabel="Abrir Tasks"
-            />
-            {tasks.length === 0 ? (
-              <div className="ops-compact-empty r3-ui-positive-empty"><span aria-hidden="true">✓</span>No hay tareas abiertas.</div>
-            ) : (
-              <ul className="ops-action-list r3-ui-action-list">{tasks.map((task) => <TaskActionItem task={task} key={task.taskId} />)}</ul>
-            )}
-          </div>
-        </section>
-
-        <section className="ops-panel ops-stage-panel r3-ui-panel r3-ui-stage-panel">
-          <PanelHeading
-            eyebrow="Pipeline"
-            title="Etapas operacionales"
-            description={metrics ? 'Distribución canónica por las etapas configuradas.' : 'La distribución agregada requiere permiso de analytics.'}
-            to="/operator/claims"
-            linkLabel="Abrir Claims"
-          />
-
-          {metrics ? (
-            metrics.claimsByOperationalStage.length === 0 ? (
-              <div className="ops-compact-empty">No hay Claims proyectados en etapas operacionales.</div>
-            ) : (
-              <div className="ops-stage-chart r3-stage-chart r3-ui-stage-chart" role="img" aria-label="Distribución de siniestros por etapa operacional canónica">
-                {metrics.claimsByOperationalStage.map((stage, index) => (
-                  <div className="ops-stage-chart-item r3-ui-stage-chart-item" key={stage.stageKey}>
-                    <strong>{stage.count}</strong>
-                    <div className="ops-stage-bar-track"><span className={`ops-stage-bar is-${stageTone(index)}`} style={{ height: `${Math.max(8, Math.round((stage.count / maxStage) * 100))}%` }} /></div>
-                    <span title={stage.stageKey}>{stage.displayName}</span>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : (
-            <div className="r3-stage-no-analytics"><strong>Sin agregación local</strong><span>Consulta Claims para ver la etapa operacional de cada registro individual.</span></div>
-          )}
-        </section>
-
-        <section className="ops-panel ops-activity-panel r3-ui-panel r3-ui-recent-panel">
-          <PanelHeading
-            eyebrow="Actividad"
-            title="Reportados recientemente"
-            description="Claims actualmente en RECEIVED, ordenados por creación."
-            to="/operator/claims"
-            linkLabel="Ver espacio de trabajo"
-          />
-          {received.length === 0 ? (
-            <div className="ops-compact-empty">No hay siniestros en RECEIVED.</div>
-          ) : (
-            <div className="r3-ui-table-wrap">
-              <table className="r3-ui-recent-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Tracking</th>
-                    <th scope="col">Estado</th>
-                    <th scope="col">Etapa</th>
-                    <th scope="col">Vehículo</th>
-                    <th scope="col">Ocurrencia</th>
-                    <th scope="col"><span className="sr-only">Abrir</span></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {received.map((claim) => (
-                    <tr key={claim.claimId}>
-                      <td><Link className="r3-ui-tracking-link" to={`/operator/claims/${claim.claimId}`}>{claim.trackingCode}</Link></td>
-                      <td><span className={`r3-ui-status-badge is-${statusTone(claim.status)}`}>{CLAIM_STATUS_LABELS[claim.status]}</span></td>
-                      <td><span className={`r3-stage-badge${claim.operationalStage ? '' : ' is-unassigned'}`}><span aria-hidden="true">●</span>{claim.operationalStage?.displayName ?? 'Sin etapa operacional'}</span></td>
-                      <td>{claim.vehicleReference}</td>
-                      <td><time dateTime={claim.occurredAt}>{formatDate(claim.occurredAt)}</time></td>
-                      <td><Link className="r3-ui-row-action" to={`/operator/claims/${claim.claimId}`} aria-label={`Abrir Claim ${claim.trackingCode}`}>›</Link></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </section>
       </main>
     </OperatorShell>
