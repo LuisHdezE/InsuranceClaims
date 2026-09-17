@@ -133,7 +133,7 @@ class Handler(BaseHTTPRequestHandler):
                 "tokenType": "Bearer",
                 "expiresIn": 900,
                 "operator": {
-                    "id": "claims-workspace-visual-qa-operator",
+                    "id": "00000000-0000-4000-8000-000000000096",
                     "login": "demo.operator@eliasworks.invalid",
                     "role": "CLAIMS_OPERATOR",
                 },
