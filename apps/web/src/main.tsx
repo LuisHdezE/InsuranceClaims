@@ -38,6 +38,7 @@ import './r3-mobile-nav-containment.css';
 import './operator-login-r3.css';
 import './operator-login-viewport.css';
 import './operator-dashboard-polish.css';
+import './operator-dashboard-mobile-polish.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
