@@ -1,0 +1,383 @@
+/* Claims Workspace density alignment
+ * Canonical visual baseline:
+ * - documentation/ui-reference/r3/claims-workspace-kanban-approved.jpg
+ * - documentation/ui-reference/r3/claims-workspace-kanban-approved.md
+ * - documentation/ui-reference/r3/claims-workspace-responsive-approved.md
+ *
+ * Presentation-only overrides. API, auth, RBAC, ClaimStatus, operational
+ * pipeline semantics, search/filter behavior and navigation are unchanged.
+ */
+
+.r3-workspace-page {
+  min-width: 0;
+  padding-top: 20px;
+}
+
+/* Compact title strip: the approved workspace keeps the working area above fold. */
+.r3-workspace-page .ops-page-heading {
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.r3-workspace-page .ops-page-heading h1 {
+  margin: 2px 0 3px;
+  font-size: clamp(22px, 1.8vw, 28px);
+  line-height: 1.08;
+  letter-spacing: -.025em;
+}
+
+.r3-workspace-page .ops-page-heading p {
+  max-width: 760px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.r3-workspace-page .ops-kicker {
+  font-size: 8px;
+  letter-spacing: .09em;
+}
+
+.r3-workspace-page .ops-page-heading .ops-refresh-button {
+  min-height: 36px;
+  padding-inline: 12px;
+  font-size: 10px;
+}
+
+/* Filter bar: one quiet, low-height operational strip on desktop. */
+.r3-workspace-page .r3-claims-toolbar {
+  grid-template-columns: minmax(250px, 1.55fr) minmax(135px, .55fr) minmax(160px, .66fr) auto;
+  gap: 9px;
+  margin-bottom: 11px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  box-shadow: 0 5px 16px rgba(11, 24, 48, .035);
+}
+
+.r3-workspace-page .r3-claims-search,
+.r3-workspace-page .ops-filter-control {
+  gap: 4px;
+}
+
+.r3-workspace-page .r3-claims-search > label,
+.r3-workspace-page .ops-filter-control > label {
+  font-size: 8px;
+  line-height: 1.2;
+}
+
+.r3-workspace-page .r3-claims-search > div {
+  gap: 6px;
+}
+
+.r3-workspace-page .r3-claims-search input,
+.r3-workspace-page .ops-filter-control select {
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.r3-workspace-page .r3-claims-search button,
+.r3-workspace-page .r3-toolbar-actions > button,
+.r3-workspace-page .ops-view-toggle button {
+  min-height: 36px;
+  font-size: 10px;
+}
+
+.r3-workspace-page .r3-claims-search button {
+  padding-inline: 13px;
+}
+
+.r3-workspace-page .ops-view-toggle {
+  padding: 2px;
+  border-radius: 8px;
+}
+
+.r3-workspace-page .ops-view-toggle button {
+  padding-inline: 11px;
+  border-radius: 6px;
+}
+
+.r3-workspace-page .r3-toolbar-actions {
+  gap: 6px;
+}
+
+.r3-workspace-page .r3-clear-filter {
+  padding-inline: 10px;
+}
+
+.r3-workspace-page .r3-active-filter {
+  margin-bottom: 9px;
+  padding: 5px 9px;
+  font-size: 10px;
+}
+
+.r3-workspace-page .r3-active-filter button {
+  width: 26px;
+  height: 26px;
+}
+
+/* List mode: intentionally dense. This is a triage table, not a reading page. */
+.r3-workspace-page .ops-list-panel {
+  padding-top: 29px;
+  margin-bottom: 12px;
+  border-radius: 11px;
+  box-shadow: 0 6px 18px rgba(11, 24, 48, .04);
+}
+
+.r3-workspace-page .ops-list-count {
+  top: 8px;
+  right: 12px;
+  font-size: 9px;
+}
+
+.r3-workspace-page .claims-table {
+  table-layout: fixed;
+  font-size: 12.5px;
+  line-height: 1.32;
+}
+
+.r3-workspace-page .claims-table th,
+.r3-workspace-page .claims-table td {
+  padding: 9px 12px;
+  vertical-align: middle;
+}
+
+.r3-workspace-page .claims-table th {
+  height: 38px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: .035em;
+}
+
+.r3-workspace-page .claims-table tbody tr {
+  height: 58px;
+}
+
+.r3-workspace-page .claims-table td {
+  color: #253650;
+  overflow-wrap: anywhere;
+}
+
+.r3-workspace-page .claims-table td:first-child strong {
+  display: inline-block;
+  max-width: 100%;
+  color: #14233d;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.28;
+  letter-spacing: -.01em;
+  overflow-wrap: anywhere;
+}
+
+.r3-workspace-page .claims-table th:nth-child(1),
+.r3-workspace-page .claims-table td:nth-child(1) { width: 27%; }
+.r3-workspace-page .claims-table th:nth-child(2),
+.r3-workspace-page .claims-table td:nth-child(2) { width: 12%; }
+.r3-workspace-page .claims-table th:nth-child(3),
+.r3-workspace-page .claims-table td:nth-child(3) { width: 12.5%; }
+.r3-workspace-page .claims-table th:nth-child(4),
+.r3-workspace-page .claims-table td:nth-child(4) { width: 13.5%; }
+.r3-workspace-page .claims-table th:nth-child(5),
+.r3-workspace-page .claims-table td:nth-child(5) { width: 11.5%; }
+.r3-workspace-page .claims-table th:nth-child(6),
+.r3-workspace-page .claims-table td:nth-child(6) { width: 12.5%; }
+.r3-workspace-page .claims-table th:nth-child(7),
+.r3-workspace-page .claims-table td:nth-child(7) { width: 11%; }
+
+.r3-workspace-page .claims-table .status-badge {
+  min-height: 23px;
+  padding: 3px 8px;
+  font-size: 10px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.r3-workspace-page .claims-table .r3-stage-badge {
+  min-height: 22px;
+  padding: 3px 7px;
+  font-size: 9px;
+  line-height: 1.15;
+}
+
+.r3-workspace-page .claims-table .ops-card-link {
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.r3-workspace-page .operator-pagination {
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 10px;
+}
+
+.r3-workspace-page .operator-pagination .ops-refresh-button {
+  min-height: 34px;
+  padding-inline: 11px;
+  font-size: 10px;
+}
+
+/* Kanban mode follows the same compact triage grammar. */
+.r3-workspace-page .ops-kanban {
+  gap: 10px;
+}
+
+.r3-workspace-page .ops-kanban-column {
+  border-radius: 10px;
+}
+
+.r3-workspace-page .ops-kanban-heading {
+  min-height: 68px;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-bottom: 0;
+  padding: 9px 10px;
+}
+
+.r3-workspace-page .ops-kanban-stage-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.r3-workspace-page .ops-kanban-heading h2 {
+  margin-bottom: 1px;
+  font-size: 12px;
+}
+
+.r3-workspace-page .ops-kanban-heading p {
+  margin-top: 1px;
+  font-size: 8.5px;
+  line-height: 1.3;
+}
+
+.r3-workspace-page .ops-kanban-heading > strong {
+  min-width: 26px;
+  height: 22px;
+  font-size: 9px;
+}
+
+.r3-workspace-page .ops-kanban-cards {
+  gap: 7px;
+  padding: 8px;
+}
+
+.r3-workspace-page .r3-claim-card {
+  gap: 6px;
+  padding: 10px;
+  border-radius: 9px;
+  box-shadow: 0 3px 10px rgba(11, 24, 48, .035);
+}
+
+.r3-workspace-page .r3-claim-card .ops-claim-card-top > strong {
+  font-size: 11px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.r3-workspace-page .r3-claim-card .status-badge {
+  min-height: 20px;
+  padding: 2px 6px;
+  font-size: 8px;
+}
+
+.r3-workspace-page .r3-claim-card .r3-stage-badge {
+  min-height: 20px;
+  padding: 2px 6px;
+  font-size: 8px;
+}
+
+.r3-workspace-page .r3-claim-card .ops-claim-policy {
+  font-size: 9px;
+}
+
+.r3-workspace-page .r3-claim-card dl div,
+.r3-workspace-page .r3-claim-card .ops-claim-card-action {
+  font-size: 8.5px;
+}
+
+/* Preserve compactness on smaller desktops/tablets without forcing horizontal Kanban. */
+@media (max-width: 1120px) {
+  .r3-workspace-page .r3-claims-toolbar {
+    grid-template-columns: minmax(220px, 1fr) minmax(125px, .5fr) minmax(150px, .6fr);
+  }
+
+  .r3-workspace-page .claims-table {
+    table-layout: auto;
+    font-size: 11.5px;
+  }
+
+  .r3-workspace-page .claims-table th,
+  .r3-workspace-page .claims-table td {
+    padding-inline: 9px;
+  }
+}
+
+@media (max-width: 720px) {
+  .r3-workspace-page {
+    padding-top: 14px;
+  }
+
+  .r3-workspace-page .ops-page-heading {
+    align-items: stretch;
+    margin-bottom: 10px;
+  }
+
+  .r3-workspace-page .ops-page-heading h1 {
+    font-size: 22px;
+  }
+
+  .r3-workspace-page .ops-page-heading p {
+    font-size: 10.5px;
+  }
+
+  .r3-workspace-page .r3-claims-toolbar {
+    gap: 8px;
+    padding: 9px;
+  }
+
+  /* Touch targets recover to 44px on mobile while typography stays contained. */
+  .r3-workspace-page .r3-claims-search input,
+  .r3-workspace-page .ops-filter-control select,
+  .r3-workspace-page .r3-claims-search button,
+  .r3-workspace-page .r3-toolbar-actions > button,
+  .r3-workspace-page .ops-view-toggle button {
+    min-height: 44px;
+  }
+
+  .r3-workspace-page .ops-kanban-heading {
+    min-height: 58px;
+  }
+}
+
+@media (max-width: 520px) {
+  .r3-workspace-page .claims-table {
+    font-size: 11px;
+  }
+
+  .r3-workspace-page .claims-table tbody {
+    gap: 8px;
+  }
+
+  .r3-workspace-page .claims-table tr {
+    padding: 9px 10px;
+    border-radius: 9px;
+  }
+
+  .r3-workspace-page .claims-table td {
+    min-height: 30px;
+    padding: 4px 0;
+    font-size: 11px;
+  }
+
+  .r3-workspace-page .claims-table td:first-child strong {
+    font-size: 12px;
+  }
+
+  .r3-workspace-page .claims-table .status-badge,
+  .r3-workspace-page .claims-table .r3-stage-badge {
+    width: fit-content;
+  }
+}
