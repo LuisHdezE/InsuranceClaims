@@ -34,13 +34,30 @@ wait = WebDriverWait(driver, 20)
 results: list[dict[str, int | str]] = []
 
 try:
+    # Start the authenticated journey on a deterministic desktop viewport so
+    # the login form cannot be obscured by Chrome's small headless default.
+    driver.execute_cdp_cmd(
+        "Emulation.setDeviceMetricsOverride",
+        {
+            "width": 1366,
+            "height": 768,
+            "deviceScaleFactor": 1,
+            "mobile": False,
+        },
+    )
     driver.get(f"{WEB_BASE_URL}/operator/login")
     wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
     wait.until(EC.visibility_of_element_located((By.ID, "operator-login"))).send_keys(
         "claims.supervisor@visual-qa.invalid"
     )
     driver.find_element(By.ID, "operator-password").send_keys("visual-qa-password")
-    driver.find_element(By.CSS_SELECTOR, "form.operator-form button[type='submit']").click()
+    submit = wait.until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "form.operator-form button[type='submit']"))
+    )
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", submit)
+    wait.until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, "form.operator-form button[type='submit']"))
+    ).click()
 
     wait.until(lambda d: "/operator/dashboard" in d.current_url)
     wait.until(lambda d: "Tablero" in d.find_element(By.TAG_NAME, "body").text)
