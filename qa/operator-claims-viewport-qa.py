@@ -53,7 +53,12 @@ try:
     ).click()
     wait.until(lambda d: "/operator/dashboard" in d.current_url)
 
-    driver.get(f"{WEB_BASE_URL}/operator/claims")
+    # Preserve the in-memory operator session by navigating through the real SPA link.
+    claims_link = wait.until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href='/operator/claims']"))
+    )
+    claims_link.click()
+    wait.until(lambda d: "/operator/claims" in d.current_url)
     wait.until(lambda d: "Gestión de siniestros" in d.find_element(By.TAG_NAME, "body").text)
 
     list_button = wait.until(
