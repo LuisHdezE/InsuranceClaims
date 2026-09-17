@@ -7,6 +7,7 @@ import {
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import '../r3-ui-increment-07.css';
+import '../operator-workspace-polish.css';
 
 type WorkspaceGroupKey = 'operations' | 'supervision' | 'platform' | 'technical';
 
@@ -29,22 +30,22 @@ const WORKSPACE_GROUPS: Array<{
   {
     key: 'operations',
     label: 'Operación',
-    description: 'Entradas concisas al trabajo operativo R3 realmente productizado para tu rol.',
+    description: 'El trabajo diario de clientes, pólizas, siniestros, renovaciones y cobranzas.',
   },
   {
     key: 'supervision',
     label: 'Supervisión',
-    description: 'Lectura agregada y autoritativa, sin conceder acceso implícito a registros individuales.',
+    description: 'Visión agregada para seguimiento y control operacional.',
   },
   {
     key: 'platform',
     label: 'Configuración de plataforma',
-    description: 'Definiciones y reglas administrables únicamente cuando el rol dispone de la capacidad correspondiente.',
+    description: 'Herramientas administrativas disponibles para perfiles autorizados.',
   },
   {
     key: 'technical',
     label: 'Operación técnica',
-    description: 'Herramientas gobernadas para importación, integraciones y recuperación operativa.',
+    description: 'Importaciones, integraciones y recuperación operativa.',
   },
 ];
 
@@ -53,7 +54,7 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
     group: 'operations',
     kicker: 'Operación de siniestros',
     title: 'Siniestros y trabajo operativo',
-    description: 'Tablero operativo con Siniestros y Tareas respaldados por datos autoritativos.',
+    description: 'Revisa el tablero, los siniestros y las tareas que requieren atención.',
     permissions: ['claims.backoffice.read', 'claims.tasks.read'],
     href: '/operator/dashboard',
     action: 'Abrir operaciones',
@@ -63,7 +64,7 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
     group: 'operations',
     kicker: 'Cliente 360',
     title: 'Clientes y pólizas',
-    description: 'Acceso R3 a clientes y pólizas cuando ambas capacidades de lectura están habilitadas.',
+    description: 'Consulta la información disponible de clientes y sus pólizas asociadas.',
     permissions: ['customers.read', 'policies.read'],
     href: '/operator/customers',
     action: 'Abrir Cliente 360',
@@ -73,7 +74,7 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
     group: 'operations',
     kicker: 'Ciclo de póliza',
     title: 'Renovaciones',
-    description: 'Ciclo de vida y pipeline operativo de renovaciones gobernados por el contrato R3.',
+    description: 'Da seguimiento al ciclo operativo de renovación de pólizas.',
     permissions: ['renewals.read'],
     href: '/operator/renewals',
     action: 'Abrir renovaciones',
@@ -81,9 +82,9 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
   },
   {
     group: 'operations',
-    kicker: 'Cobranzas',
+    kicker: 'Finanzas',
     title: 'Cobranzas',
-    description: 'Ciclo de vida, estado de pago y pipeline operativo presentados como estados independientes.',
+    description: 'Consulta el estado de pago y el flujo operativo de cobranzas.',
     permissions: ['collections.read'],
     href: '/operator/collections',
     action: 'Abrir cobranzas',
@@ -93,7 +94,7 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
     group: 'supervision',
     kicker: 'Analítica',
     title: 'Métricas operacionales',
-    description: 'KPIs, estados y etapas operacionales agregados desde el endpoint autoritativo de analítica.',
+    description: 'Consulta indicadores y distribuciones agregadas del trabajo operativo.',
     permissions: ['claims.analytics.read'],
     href: '/operator/analytics',
     action: 'Abrir analítica',
@@ -103,7 +104,7 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
     group: 'platform',
     kicker: 'Pipelines',
     title: 'Administración de pipelines',
-    description: 'Definiciones, versiones y activación gobernada de pipelines.',
+    description: 'Gestiona definiciones, versiones y activación de pipelines.',
     permissions: ['pipelines.admin'],
     href: '/operator/admin/pipelines',
     action: 'Administrar pipelines',
@@ -113,7 +114,7 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
     group: 'platform',
     kicker: 'Comunicaciones',
     title: 'Plantillas de comunicación',
-    description: 'Plantillas EMAIL/WHATSAPP versionadas y administradas por la capacidad de plataforma.',
+    description: 'Administra plantillas versionadas para los canales disponibles.',
     permissions: ['communications.admin'],
     href: '/operator/admin/communication-templates',
     action: 'Administrar plantillas',
@@ -121,9 +122,9 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
   },
   {
     group: 'platform',
-    kicker: 'Campos personalizados',
+    kicker: 'Configuración',
     title: 'Campos personalizados',
-    description: 'Campos versionados para CLAIM, RENEWAL y COLLECTION con límites de dominio explícitos.',
+    description: 'Gestiona los campos configurables disponibles para cada dominio.',
     permissions: ['custom_fields.admin'],
     href: '/operator/admin/custom-fields',
     action: 'Administrar campos',
@@ -133,7 +134,7 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
     group: 'platform',
     kicker: 'Orientación',
     title: 'Orientación',
-    description: 'Orientación configurada y versionada sin semántica adicional inventada por la UI.',
+    description: 'Administra el contenido de orientación configurado en la plataforma.',
     permissions: ['guidance.admin'],
     href: '/operator/admin/guidance',
     action: 'Administrar orientación',
@@ -141,9 +142,9 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
   },
   {
     group: 'platform',
-    kicker: 'Automatizaciones',
+    kicker: 'Reglas',
     title: 'Automatizaciones',
-    description: 'Reglas versionadas con disparadores y acciones limitadas por el contrato R3.',
+    description: 'Gestiona reglas versionadas, disparadores y acciones disponibles.',
     permissions: ['automations.admin'],
     href: '/operator/admin/automations',
     action: 'Administrar automatizaciones',
@@ -151,9 +152,9 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
   },
   {
     group: 'technical',
-    kicker: 'Importaciones gobernadas',
+    kicker: 'Datos',
     title: 'Importaciones gobernadas',
-    description: 'Carga, vista previa, mapeo, validación, dry-run y commit mediante el flujo ya productizado.',
+    description: 'Carga, valida y confirma importaciones mediante el flujo disponible.',
     permissions: ['imports.execute'],
     href: '/operator/admin/imports',
     action: 'Abrir importaciones',
@@ -163,7 +164,7 @@ const WORKSPACE_CARDS: WorkspaceCard[] = [
     group: 'technical',
     kicker: 'Recuperación',
     title: 'Integraciones y recuperación',
-    description: 'Eventos de integración y trabajos en dead-letter con lectura y recuperación gobernadas por permisos explícitos.',
+    description: 'Consulta integraciones y trabajos pendientes de recuperación operativa.',
     permissions: ['operations.integration.read', 'operations.dead_letters.read'],
     href: '/operator/admin/recovery',
     action: 'Abrir recuperación',
@@ -180,18 +181,17 @@ export function StaffWorkspacePage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main r3-workspace-main r3-increment-07-workspace">
+      <main className="operator-main ops-main r3-workspace-main r3-increment-07-workspace operator-workspace-polish">
         <section className="r3-workspace-hero r3-workspace-launchpad-hero" aria-labelledby="workspace-title">
           <div className="r3-workspace-hero-copy">
-            <span className="ops-kicker">Operaciones R3</span>
+            <span className="ops-kicker">InsuranceClaims · Centro de operaciones</span>
             <h1 id="workspace-title">Tu espacio de trabajo</h1>
             <p>
-              Entrada compacta y consciente del rol a capacidades R3 realmente productizadas.
-              La interfaz anticipa el acceso; la autorización efectiva continúa siendo responsabilidad del API.
+              Accede a las áreas habilitadas para tu rol y continúa el trabajo desde un único punto.
             </p>
             <div className="r3-workspace-meta">
               <span className="r3-role-pill">{STAFF_ROLE_LABELS[role]}</span>
-              <span>Capacidades visibles según autorización de presentación</span>
+              <span>{visibleCards.length} {visibleCards.length === 1 ? 'módulo disponible' : 'módulos disponibles'}</span>
             </div>
           </div>
         </section>
@@ -208,7 +208,10 @@ export function StaffWorkspacePage() {
             return (
               <section className="r3-workspace-group" aria-labelledby={`workspace-group-${group.key}`} key={group.key}>
                 <div className="r3-workspace-group-heading">
-                  <h2 id={`workspace-group-${group.key}`}>{group.label}</h2>
+                  <div>
+                    <span>{String(cards.length).padStart(2, '0')}</span>
+                    <h2 id={`workspace-group-${group.key}`}>{group.label}</h2>
+                  </div>
                   <p>{group.description}</p>
                 </div>
 
@@ -222,7 +225,8 @@ export function StaffWorkspacePage() {
                         <p>{card.description}</p>
                       </div>
                       <div className="r3-capability-footer">
-                        <strong>{card.action} →</strong>
+                        <strong>{card.action}</strong>
+                        <span aria-hidden="true">→</span>
                       </div>
                     </Link>
                   ))}
@@ -233,9 +237,9 @@ export function StaffWorkspacePage() {
         </div>
 
         <section className="r3-contract-strip" aria-label="Principios de acceso">
-          <div><strong>Rol explícito</strong><span>{STAFF_ROLE_LABELS[role]}</span></div>
-          <div><strong>API autoritativa</strong><span>La UI anticipa acceso, no lo concede</span></div>
-          <div><strong>Solo producto disponible</strong><span>No se presentan capacidades sin una ruta utilizable</span></div>
+          <div><strong>Acceso por rol</strong><span>{STAFF_ROLE_LABELS[role]}</span></div>
+          <div><strong>Datos del sistema</strong><span>La información proviene de las APIs autorizadas</span></div>
+          <div><strong>Módulos habilitados</strong><span>Solo se muestran áreas disponibles para tu perfil</span></div>
         </section>
       </main>
     </OperatorShell>
