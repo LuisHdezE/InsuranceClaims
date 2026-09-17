@@ -1,0 +1,1 @@
+Canonical visual baseline: documentation/ui-reference/r3/claims-workspace-kanban-approved.jpg + .md and claims-workspace-responsive-approved.md. This PR is presentation-only and targets claims workspace density/typography.
