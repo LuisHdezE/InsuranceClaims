@@ -52,8 +52,8 @@ const WORKSPACE_GROUPS: Array<{
 const WORKSPACE_CARDS: WorkspaceCard[] = [
   {
     group: 'operations',
-    kicker: 'Siniestros',
-    title: 'Operaciones de siniestros',
+    kicker: 'Operación de siniestros',
+    title: 'Siniestros y trabajo operativo',
     description: 'Revisa el tablero, los siniestros y las tareas que requieren atención.',
     permissions: ['claims.backoffice.read', 'claims.tasks.read'],
     href: '/operator/dashboard',
@@ -184,8 +184,8 @@ export function StaffWorkspacePage() {
       <main className="operator-main ops-main r3-workspace-main r3-increment-07-workspace operator-workspace-polish">
         <section className="r3-workspace-hero r3-workspace-launchpad-hero" aria-labelledby="workspace-title">
           <div className="r3-workspace-hero-copy">
-            <span className="ops-kicker">InsuranceClaims · Operaciones</span>
-            <h1 id="workspace-title">Centro de operaciones</h1>
+            <span className="ops-kicker">InsuranceClaims · Centro de operaciones</span>
+            <h1 id="workspace-title">Tu espacio de trabajo</h1>
             <p>
               Accede a las áreas habilitadas para tu rol y continúa el trabajo desde un único punto.
             </p>
@@ -248,10 +248,10 @@ export function StaffWorkspacePage() {
 
 function roleMessage(role: 'CLAIMS_OPERATOR' | 'CLAIMS_SUPERVISOR' | 'PLATFORM_ADMIN') {
   if (role === 'PLATFORM_ADMIN') {
-    return 'Tu perfil administra la plataforma. Las áreas operativas aparecen únicamente cuando el rol dispone de esos permisos.';
+    return 'Sin superusuario implícito: Administrador de plataforma no hereda acceso operativo a Siniestros, Tareas, Clientes, Pólizas, Renovaciones ni Cobranzas.';
   }
   if (role === 'CLAIMS_SUPERVISOR') {
-    return 'Tu perfil combina trabajo operativo con acceso a analítica para supervisar el flujo de siniestros.';
+    return 'La supervisión añade Analítica a las capacidades operativas autorizadas sin ampliar permisos de plataforma.';
   }
-  return 'Tu perfil está orientado al trabajo operativo diario de siniestros, clientes, pólizas, renovaciones y cobranzas.';
+  return 'El rol operador recibe un acceso conciso al trabajo operativo productizado, sin Analítica ni administración de plataforma.';
 }
