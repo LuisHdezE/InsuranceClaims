@@ -9,11 +9,17 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/claims/claim-123', 'CLAIMS_OPERATOR')).toBe(true);
     expect(isPublicDemoPath('/operator/tasks', 'CLAIMS_OPERATOR')).toBe(true);
     expect(isPublicDemoPath('/operator/tasks/task-123', 'CLAIMS_OPERATOR')).toBe(true);
+    expect(isPublicDemoPath('/operator/analytics', 'CLAIMS_OPERATOR')).toBe(false);
   });
 
   it('keeps visually pending routes closed even when the role is authorized', () => {
     expect(isPublicDemoPath('/operator/customers', 'CLAIMS_OPERATOR')).toBe(false);
     expect(isPublicDemoPath('/operator/policies', 'CLAIMS_OPERATOR')).toBe(false);
+  });
+
+  it('allows Analytics only to roles that own claims.analytics.read', () => {
+    expect(isPublicDemoPath('/operator/analytics', 'CLAIMS_SUPERVISOR')).toBe(true);
+    expect(isPublicDemoPath('/operator/analytics', 'PLATFORM_ADMIN')).toBe(true);
   });
 
   it('does not elevate ready routes beyond the current role permissions', () => {

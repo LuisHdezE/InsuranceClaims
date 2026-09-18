@@ -75,7 +75,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '◫',
     group: 'operations',
     allOf: ['claims.analytics.read'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Analítica de siniestros R3 · Métricas agregadas sin elevar permisos de negocio',
   },
   {

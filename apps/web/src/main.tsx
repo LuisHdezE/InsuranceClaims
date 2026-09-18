@@ -42,6 +42,7 @@ import './claims-workspace-density.css';
 import './claim-detail-polish.css';
 import './tasks-operational-polish.css';
 import './tasks-operational-detail-density-fix.css';
+import './analytics-r3-visual-polish.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
