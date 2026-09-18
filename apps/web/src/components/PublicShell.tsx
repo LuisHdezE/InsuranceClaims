@@ -4,6 +4,7 @@ import '../public-refresh.css';
 import '../public-refresh-fixes.css';
 import '../hero-hq.css';
 import '../public-customer-journey-r3.css';
+import '../public-home-density.css';
 
 export function PublicShell({ children }: { children: ReactNode }) {
   return (
