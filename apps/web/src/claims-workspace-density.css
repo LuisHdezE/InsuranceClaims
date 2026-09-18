@@ -435,6 +435,10 @@
     border-radius: 9px;
   }
 
+  .r3-workspace-page .claims-table tbody td:nth-child(n) {
+    width: 100%;
+  }
+
   .r3-workspace-page .claims-table td {
     min-height: 30px;
     padding: 4px 0;
