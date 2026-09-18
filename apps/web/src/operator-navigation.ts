@@ -66,7 +66,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '☑',
     group: 'operations',
     allOf: ['claims.tasks.read'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Tareas R3 · Trabajo operativo independiente del ciclo de vida del siniestro',
   },
   {

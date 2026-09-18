@@ -1,0 +1,514 @@
+/* Tasks / Operational Work Queue visual alignment
+ * Canonical baseline:
+ * documentation/ui-reference/r3/tasks-operational-approved.svg
+ * documentation/ui-reference/r3/tasks-operational-approved.md
+ *
+ * Presentation-only. Task status remains independent from ClaimStatus and all
+ * mutations continue to use the existing API-backed task contract.
+ */
+
+.r3-task-workspace-page,
+.r3-task-detail-page {
+  min-width: 0;
+  padding-top: 14px;
+}
+
+/* Compact work-queue identity. */
+.r3-task-workspace-page .ops-page-heading {
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.r3-task-workspace-page .ops-page-heading h1 {
+  margin: 2px 0 3px;
+  font-size: clamp(22px, 2vw, 28px);
+  line-height: 1.04;
+  letter-spacing: -.03em;
+}
+
+.r3-task-workspace-page .ops-page-heading p {
+  max-width: 720px;
+  font-size: 10px;
+  line-height: 1.42;
+}
+
+.r3-task-workspace-page .ops-page-heading .ops-refresh-button {
+  min-height: 36px;
+  padding-inline: 12px;
+  font-size: 9px;
+}
+
+/* Approved queue scopes read as one compact navigation rail. */
+.r3-task-workspace-page .r3-task-scope-tabs {
+  gap: 3px;
+  min-height: 38px;
+  margin: 0 0 8px;
+  padding: 3px;
+  border: 1px solid #1f2d40;
+  border-radius: 9px;
+  background: #152235;
+  box-shadow: 0 5px 14px rgba(11, 24, 48, .07);
+}
+
+.r3-task-workspace-page .r3-task-scope-tabs button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #c9d3df;
+  font-size: 9px;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.r3-task-workspace-page .r3-task-scope-tabs button strong {
+  min-width: 20px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, .09);
+  color: #dbe5ef;
+  font-size: 8px;
+}
+
+.r3-task-workspace-page .r3-task-scope-tabs button:hover,
+.r3-task-workspace-page .r3-task-scope-tabs button:focus-visible {
+  background: rgba(255, 255, 255, .08);
+  color: #fff;
+}
+
+.r3-task-workspace-page .r3-task-scope-tabs button.is-active {
+  background: #f8fbff;
+  color: #17314f;
+  box-shadow: 0 2px 7px rgba(4, 13, 26, .16);
+}
+
+.r3-task-workspace-page .r3-task-scope-tabs button.is-active strong {
+  background: #e6eef7;
+  color: #33516f;
+}
+
+/* Filters support the queue instead of becoming a second dashboard. */
+.r3-task-workspace-page .r3-task-filter-strip {
+  grid-template-columns: minmax(220px, 1.35fr) minmax(104px, .48fr) minmax(104px, .48fr) minmax(160px, .7fr) auto;
+  gap: 7px;
+  margin-bottom: 9px;
+  padding: 8px 9px;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(11, 24, 48, .025);
+}
+
+.r3-task-workspace-page .r3-task-filter-strip label,
+.r3-task-workspace-page .r3-task-filter-summary {
+  gap: 3px;
+}
+
+.r3-task-workspace-page .r3-task-filter-strip label > span {
+  font-size: 7.5px;
+  letter-spacing: .055em;
+}
+
+.r3-task-workspace-page .r3-task-filter-strip input,
+.r3-task-workspace-page .r3-task-filter-strip select {
+  min-height: 36px;
+  padding-inline: 9px;
+  border-radius: 7px;
+  font-size: 9.5px;
+}
+
+.r3-task-workspace-page .r3-task-filter-summary {
+  min-width: 120px;
+  min-height: 36px;
+}
+
+.r3-task-workspace-page .r3-task-filter-summary strong,
+.r3-task-workspace-page .r3-task-filter-summary button {
+  font-size: 8.5px;
+}
+
+/* Approved desktop composition: dense queue + immediate task context. */
+.r3-task-workspace-page .r3-task-master-detail {
+  grid-template-columns: minmax(310px, .82fr) minmax(0, 1.18fr);
+  gap: 9px;
+  align-items: start;
+}
+
+.r3-task-workspace-page .r3-task-queue-panel,
+.r3-task-workspace-page .r3-task-inline-detail {
+  border-radius: 10px;
+  box-shadow: 0 5px 16px rgba(11, 24, 48, .028);
+}
+
+.r3-task-workspace-page .r3-task-queue-panel .ops-panel-heading {
+  padding: 10px 11px 8px;
+}
+
+.r3-task-workspace-page .r3-task-queue-panel .ops-panel-heading h2 {
+  margin-top: 1px;
+  font-size: 12px;
+}
+
+.r3-task-workspace-page .r3-task-queue-panel .ops-panel-heading p {
+  margin-top: 2px;
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.r3-task-workspace-page .r3-task-queue-list {
+  max-height: 590px;
+}
+
+.r3-task-workspace-page .r3-task-queue-item {
+  min-height: 68px;
+  gap: 5px 8px;
+  padding: 8px 10px;
+}
+
+.r3-task-workspace-page .r3-task-queue-copy {
+  gap: 2px;
+}
+
+.r3-task-workspace-page .r3-task-queue-copy strong {
+  font-size: 10px;
+  line-height: 1.28;
+}
+
+.r3-task-workspace-page .r3-task-queue-copy small,
+.r3-task-workspace-page .r3-task-due {
+  font-size: 8px;
+  line-height: 1.32;
+}
+
+.r3-task-workspace-page .r3-task-queue-item .ops-priority {
+  min-height: 20px;
+  padding-inline: 7px;
+  font-size: 7.5px;
+}
+
+.r3-task-workspace-page .r3-task-inline-detail {
+  top: 8px;
+  padding: 12px;
+}
+
+.r3-task-workspace-page .r3-task-inline-header {
+  gap: 10px;
+  padding-bottom: 9px;
+}
+
+.r3-task-workspace-page .r3-task-inline-header h2 {
+  margin: 2px 0 3px;
+  font-size: clamp(18px, 1.55vw, 23px);
+  line-height: 1.08;
+  letter-spacing: -.02em;
+}
+
+.r3-task-workspace-page .r3-task-inline-header p {
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.r3-task-workspace-page .r3-task-inline-header .ops-task-status {
+  min-height: 22px;
+  padding-inline: 7px;
+  font-size: 7.5px;
+}
+
+.r3-task-workspace-page .r3-task-inline-facts {
+  margin-top: 9px;
+  border-radius: 8px;
+}
+
+.r3-task-workspace-page .r3-task-inline-facts > div {
+  padding: 7px 8px;
+}
+
+.r3-task-workspace-page .r3-task-inline-facts dt {
+  font-size: 7px;
+}
+
+.r3-task-workspace-page .r3-task-inline-facts dd {
+  margin-top: 2px;
+  font-size: 8.5px;
+}
+
+.r3-task-workspace-page .r3-task-inline-actions {
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.r3-task-workspace-page .r3-task-inline-actions .r3-secondary-action,
+.r3-task-workspace-page .r3-task-inline-actions .ops-primary-action {
+  min-height: 36px;
+  padding-inline: 10px;
+  font-size: 8.5px;
+}
+
+.r3-task-workspace-page .r3-task-domain-note {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid #edf1f5;
+  font-size: 8px;
+}
+
+/* Dedicated task detail keeps the same operator hierarchy. */
+.r3-task-detail-page .ops-detail-breadcrumbs {
+  margin-bottom: 7px;
+}
+
+.r3-task-detail-page .ops-detail-breadcrumbs a {
+  font-size: 9px;
+}
+
+.r3-task-detail-page .r3-task-detail-hero {
+  min-height: 78px;
+  margin-bottom: 9px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  box-shadow: 0 5px 16px rgba(11, 24, 48, .03);
+}
+
+.r3-task-detail-page .r3-task-detail-hero h1 {
+  margin: 2px 0 3px;
+  font-size: clamp(21px, 2vw, 27px);
+  line-height: 1.05;
+  letter-spacing: -.025em;
+}
+
+.r3-task-detail-page .r3-task-detail-hero p {
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.r3-task-detail-page .r3-task-hero-meta {
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.r3-task-detail-page .r3-task-hero-meta > span,
+.r3-task-detail-page .r3-task-hero-meta > span:first-child {
+  min-height: 21px;
+  padding-inline: 7px;
+  font-size: 7.5px;
+}
+
+.r3-task-detail-page .r3-task-detail-grid {
+  grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
+  gap: 9px;
+}
+
+.r3-task-detail-page .r3-task-detail-grid > .ops-panel,
+.r3-task-detail-page .r3-task-decision-card {
+  padding: 11px 12px;
+  border-radius: 10px;
+  box-shadow: 0 5px 16px rgba(11, 24, 48, .028);
+}
+
+.r3-task-detail-page .ops-panel-heading {
+  margin-bottom: 7px;
+}
+
+.r3-task-detail-page .ops-panel-heading .ops-kicker {
+  font-size: 7px;
+}
+
+.r3-task-detail-page .ops-panel-heading h2 {
+  margin-top: 1px;
+  font-size: 12px;
+}
+
+.r3-task-detail-page .ops-panel-heading p {
+  margin-top: 2px;
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.r3-task-detail-page .r3-task-context-list {
+  margin-bottom: 9px;
+  border-radius: 8px;
+}
+
+.r3-task-detail-page .r3-task-context-list > div {
+  padding: 7px 8px;
+}
+
+.r3-task-detail-page .r3-task-context-list dt {
+  font-size: 7px;
+}
+
+.r3-task-detail-page .r3-task-context-list dd {
+  margin-top: 2px;
+  font-size: 8.5px;
+}
+
+.r3-task-detail-page .r3-task-edit-grid {
+  gap: 7px;
+}
+
+.r3-task-detail-page .r3-task-edit-grid label > span {
+  font-size: 7.5px;
+}
+
+.r3-task-detail-page .r3-task-edit-grid input,
+.r3-task-detail-page .r3-task-edit-grid select,
+.r3-task-detail-page .r3-task-decision-grid select {
+  min-height: 36px;
+  padding-inline: 9px;
+  font-size: 9px;
+}
+
+.r3-task-detail-page .r3-task-form-actions {
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.r3-task-detail-page .r3-task-form-actions .r3-secondary-action,
+.r3-task-detail-page .r3-task-form-actions .ops-primary-action,
+.r3-task-detail-page .r3-full-action {
+  min-height: 36px;
+  font-size: 8.5px;
+}
+
+.r3-task-detail-page .r3-task-assignment-note,
+.r3-task-detail-page .r3-task-assignment-state {
+  font-size: 8px;
+}
+
+.r3-task-detail-page .r3-task-decision-card {
+  margin-top: 9px;
+}
+
+.r3-task-detail-page .r3-task-decision-grid {
+  gap: 8px;
+}
+
+.r3-task-detail-page .r3-task-decision-grid article {
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 7px;
+  padding: 9px;
+  border-radius: 8px;
+}
+
+.r3-task-detail-page .r3-task-decision-grid strong {
+  font-size: 9.5px;
+}
+
+.r3-task-detail-page .r3-task-decision-grid p {
+  margin: 2px 0 6px;
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.r3-task-detail-page .r3-task-decision-grid article > button,
+.r3-task-detail-page .r3-danger-action {
+  min-height: 36px;
+  padding-inline: 10px;
+  font-size: 8.5px;
+}
+
+/* Below desktop workspace width, preserve context by stacking rather than squeezing. */
+@media (max-width: 1100px) {
+  .r3-task-workspace-page .r3-task-master-detail,
+  .r3-task-detail-page .r3-task-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-task-workspace-page .r3-task-inline-detail {
+    position: static;
+  }
+
+  .r3-task-workspace-page .r3-task-queue-list {
+    max-height: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .r3-task-workspace-page .r3-task-filter-strip {
+    grid-template-columns: minmax(190px, 1.2fr) repeat(2, minmax(112px, .6fr));
+  }
+
+  .r3-task-workspace-page .r3-task-filter-strip label:nth-of-type(4),
+  .r3-task-workspace-page .r3-task-filter-summary {
+    grid-column: auto;
+  }
+
+  .r3-task-workspace-page .r3-task-filter-summary {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 720px) {
+  .r3-task-workspace-page .r3-task-filter-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .r3-task-workspace-page .r3-task-filter-strip .r3-task-search,
+  .r3-task-workspace-page .r3-task-filter-summary {
+    grid-column: 1 / -1;
+  }
+
+  .r3-task-workspace-page .r3-task-inline-facts,
+  .r3-task-detail-page .r3-task-context-list,
+  .r3-task-detail-page .r3-task-decision-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .r3-task-workspace-page,
+  .r3-task-detail-page {
+    padding-top: 9px;
+  }
+
+  .r3-task-workspace-page .ops-page-heading h1,
+  .r3-task-detail-page .r3-task-detail-hero h1 {
+    font-size: 21px;
+  }
+
+  .r3-task-workspace-page .ops-page-heading .ops-refresh-button,
+  .r3-task-workspace-page .r3-task-scope-tabs button,
+  .r3-task-workspace-page .r3-task-filter-strip input,
+  .r3-task-workspace-page .r3-task-filter-strip select,
+  .r3-task-workspace-page .r3-task-inline-actions .r3-secondary-action,
+  .r3-task-workspace-page .r3-task-inline-actions .ops-primary-action,
+  .r3-task-detail-page .r3-task-edit-grid input,
+  .r3-task-detail-page .r3-task-edit-grid select,
+  .r3-task-detail-page .r3-task-form-actions .r3-secondary-action,
+  .r3-task-detail-page .r3-task-form-actions .ops-primary-action,
+  .r3-task-detail-page .r3-full-action,
+  .r3-task-detail-page .r3-task-decision-grid article > button,
+  .r3-task-detail-page .r3-danger-action {
+    min-height: 44px;
+  }
+
+  .r3-task-workspace-page .r3-task-scope-tabs {
+    min-height: 50px;
+    padding-block: 3px;
+  }
+
+  .r3-task-workspace-page .r3-task-filter-strip {
+    grid-template-columns: 1fr;
+    padding: 9px;
+  }
+
+  .r3-task-workspace-page .r3-task-filter-strip .r3-task-search,
+  .r3-task-workspace-page .r3-task-filter-summary {
+    grid-column: 1;
+  }
+
+  .r3-task-workspace-page .r3-task-queue-item {
+    min-height: 76px;
+  }
+
+  .r3-task-workspace-page .r3-task-inline-actions,
+  .r3-task-detail-page .r3-task-form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .r3-task-workspace-page .r3-task-inline-actions > *,
+  .r3-task-detail-page .r3-task-form-actions > * {
+    width: 100%;
+  }
+}
