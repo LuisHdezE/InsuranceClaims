@@ -114,7 +114,9 @@ try:
 
     nav_links = driver.find_elements(By.CSS_SELECTOR, ".operator-sidebar-nav a.operator-sidebar-item")
     actual_ready_links = {
-        link.get_attribute("href").removeprefix(WEB_BASE_URL): link.text.strip()
+        link.get_attribute("href").removeprefix(WEB_BASE_URL): link.find_element(
+            By.CSS_SELECTOR, ".operator-sidebar-item-label"
+        ).text.strip()
         for link in nav_links
     }
     if actual_ready_links != EXPECTED_READY_LINKS:
