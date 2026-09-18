@@ -425,6 +425,11 @@
     gap: 8px;
   }
 
+  .r3-workspace-page .claims-table tbody tr {
+    height: auto;
+    min-height: 0;
+  }
+
   .r3-workspace-page .claims-table tr {
     padding: 9px 10px;
     border-radius: 9px;
