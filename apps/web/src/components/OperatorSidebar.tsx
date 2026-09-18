@@ -2,6 +2,7 @@ import { Link, NavLink } from 'react-router-dom';
 import type { StaffRole } from '../api/types';
 import {
   OPERATOR_NAV_GROUPS,
+  OPERATOR_NAV_ITEMS,
   operatorNavItemCanLink,
   operatorNavItemsForRole,
   type OperatorNavItem,
@@ -17,7 +18,11 @@ export function OperatorSidebar({
   demoReadOnly: boolean;
   brandDestination: string;
 }) {
-  const items = role ? operatorNavItemsForRole(role) : [];
+  const items = demoReadOnly
+    ? OPERATOR_NAV_ITEMS
+    : role
+      ? operatorNavItemsForRole(role)
+      : [];
 
   return (
     <aside
@@ -68,11 +73,15 @@ function OperatorSidebarItem({ item, demoReadOnly }: { item: OperatorNavItem; de
   const canLink = operatorNavItemCanLink(item, demoReadOnly);
 
   if (!canLink) {
+    const disabledReason = demoReadOnly
+      ? 'No disponible en la demo pública'
+      : 'Vista pendiente de refinamiento visual';
+
     return (
       <span
         className="ops-nav-link operator-sidebar-item is-pending"
         aria-disabled="true"
-        title="Vista pendiente de refinamiento visual"
+        title={disabledReason}
       >
         <span className="ops-nav-icon" aria-hidden="true">{item.glyph}</span>
         <span className="operator-sidebar-item-label">{item.label}</span>
