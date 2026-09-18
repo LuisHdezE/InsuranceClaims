@@ -1,0 +1,109 @@
+name: Customers R3 Viewport
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web/src/pages/OperatorCustomersPage.tsx'
+      - 'apps/web/src/pages/OperatorCustomerDetailPage.tsx'
+      - 'apps/web/src/customer-policy-360.css'
+      - 'apps/web/src/r3-ui-increment-04.css'
+      - 'apps/web/src/customers-r3-visual-polish.css'
+      - 'apps/web/src/operator-navigation.ts'
+      - 'apps/web/src/components/OperatorShell.test.tsx'
+      - 'apps/web/src/demo-access.test.ts'
+      - 'apps/web/src/main.tsx'
+      - 'qa/customers-r3-mock-api.py'
+      - 'qa/customers-r3-viewport-qa.py'
+      - 'qa/operator-sidebar-viewport-qa.py'
+      - '.github/workflows/customers-r3-viewport.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  viewport:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start Customers R3 QA API stub
+        run: |
+          python qa/customers-r3-mock-api.py > .runtime-customers-r3-api.log 2>&1 &
+          echo $! > .runtime-customers-r3-api.pid
+          for attempt in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:3000/health/live >/dev/null 2>&1 && exit 0
+            if [[ "$attempt" == "20" ]]; then
+              cat .runtime-customers-r3-api.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Start web client
+        run: |
+          npm run dev --workspace=@insurance/web -- --host 127.0.0.1 > .runtime-customers-r3-web.log 2>&1 &
+          echo $! > .runtime-customers-r3-web.pid
+          for attempt in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:5173/operator/login >/dev/null 2>&1 && exit 0
+            if [[ "$attempt" == "40" ]]; then
+              cat .runtime-customers-r3-web.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Prepare Chrome QA
+        run: |
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+          browser_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$browser_bin" ]]; then
+            echo "No supported Chrome/Chromium binary found on runner" >&2
+            exit 1
+          fi
+          echo "BROWSER_BIN=$browser_bin" >> "$GITHUB_ENV"
+          "$browser_bin" --version
+
+      - name: Verify Customers R3 viewports
+        env:
+          QA_WEB_BASE_URL: http://127.0.0.1:5173
+        run: python qa/customers-r3-viewport-qa.py
+
+      - name: Upload Customers R3 screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: customers-r3-viewport-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .qa-artifacts/customers-r3/*.png
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Runtime logs on failure
+        if: failure()
+        run: |
+          echo '=== WEB ==='
+          cat .runtime-customers-r3-web.log || true
+          echo '=== API STUB ==='
+          cat .runtime-customers-r3-api.log || true
+
+      - name: Stop runtime services
+        if: always()
+        run: |
+          pkill -f 'vite --host 127.0.0.1' 2>/dev/null || true
+          [[ -f .runtime-customers-r3-web.pid ]] && kill "$(cat .runtime-customers-r3-web.pid)" 2>/dev/null || true
+          [[ -f .runtime-customers-r3-api.pid ]] && kill "$(cat .runtime-customers-r3-api.pid)" 2>/dev/null || true
