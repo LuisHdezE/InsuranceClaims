@@ -183,10 +183,9 @@ export function operatorNavItemsForRole(role: StaffRole): readonly OperatorNavIt
   return OPERATOR_NAV_ITEMS.filter((item) => !item.allOf || hasAllPermissions(role, item.allOf));
 }
 
-export function operatorNavItemCanLink(item: OperatorNavItem, demoReadOnly: boolean): boolean {
-  if (item.maturity !== 'ready') return false;
-  if (demoReadOnly) return item.to === '/operator/claims';
-  return true;
+export function operatorNavItemCanLink(item: OperatorNavItem, role: StaffRole | undefined): boolean {
+  if (item.maturity !== 'ready' || !role) return false;
+  return !item.allOf || hasAllPermissions(role, item.allOf);
 }
 
 export function operatorContextForPath(path: string): string {
