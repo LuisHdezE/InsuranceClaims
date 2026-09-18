@@ -43,6 +43,7 @@ import './claim-detail-polish.css';
 import './tasks-operational-polish.css';
 import './tasks-operational-detail-density-fix.css';
 import './analytics-r3-visual-polish.css';
+import './customers-r3-visual-polish.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
