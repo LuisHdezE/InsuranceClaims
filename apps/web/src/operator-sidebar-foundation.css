@@ -1,0 +1,169 @@
+/* Operator Sidebar Foundation
+ * Stable navigation component for the R3 operator shell.
+ * Canonical grammar derives from operations-dashboard-approved.svg and the
+ * approved R3 operator shell. Navigation maturity is handled in code; this
+ * layer only renders compact, stable states.
+ */
+
+.operator-sidebar-component {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.operator-sidebar-brand {
+  flex: 0 0 auto;
+}
+
+.operator-sidebar-nav {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(138, 181, 255, .24) transparent;
+}
+
+.operator-sidebar-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.operator-sidebar-nav::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(138, 181, 255, .22);
+}
+
+.operator-sidebar-component .r3-ui-nav {
+  gap: 13px;
+}
+
+.operator-sidebar-component .r3-ui-nav-group {
+  gap: 5px;
+}
+
+.operator-sidebar-component .r3-ui-nav-links {
+  gap: 2px;
+}
+
+.operator-sidebar-component .r3-ui-nav-label {
+  padding-inline: 10px;
+  font-size: 8px;
+  letter-spacing: .105em;
+}
+
+.operator-sidebar-component .operator-sidebar-item {
+  position: relative;
+  min-height: 34px;
+  gap: 9px;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.operator-sidebar-component .operator-sidebar-item .ops-nav-icon {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 21px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.operator-sidebar-item-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operator-sidebar-item.is-pending {
+  cursor: default;
+  color: #73839a;
+  background: transparent;
+  opacity: .78;
+  user-select: none;
+}
+
+.operator-sidebar-item.is-pending:hover {
+  background: transparent;
+  color: #73839a;
+  transform: none;
+}
+
+.operator-sidebar-item.is-pending .ops-nav-icon {
+  background: rgba(255, 255, 255, .028);
+  color: #65758d;
+}
+
+.operator-sidebar-pending-dot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #53637a;
+}
+
+.operator-sidebar-component .operator-sidebar-item.is-active {
+  background: #163262;
+  color: #fff;
+  box-shadow: inset 3px 0 0 #4e8cff;
+}
+
+.operator-sidebar-footer {
+  flex: 0 0 auto;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+@media (max-height: 780px) and (min-width: 721px) {
+  .operator-sidebar-component {
+    padding-top: 14px;
+    padding-bottom: 12px;
+  }
+
+  .operator-sidebar-component .r3-ui-brand {
+    min-height: 46px;
+    padding-bottom: 12px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav {
+    gap: 9px;
+  }
+
+  .operator-sidebar-component .operator-sidebar-item {
+    min-height: 30px;
+  }
+
+  .operator-sidebar-footer {
+    margin-top: 8px;
+    padding-top: 9px;
+  }
+}
+
+@media (max-width: 720px) {
+  .operator-sidebar-component {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .operator-sidebar-nav {
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .operator-sidebar-component .operator-sidebar-item {
+    min-height: 44px;
+    font-size: 12px;
+  }
+
+  .operator-sidebar-component .operator-sidebar-item .ops-nav-icon {
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
+  }
+}
