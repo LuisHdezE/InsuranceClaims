@@ -2,12 +2,28 @@ from __future__ import annotations
 
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 HOST = "127.0.0.1"
 PORT = 3000
 CLAIM_ID = "claim-visual-detail-001"
 TRACKING = "CLM-2026-1842"
+
+CLAIM_SUMMARY = {
+    "claimId": CLAIM_ID,
+    "trackingCode": TRACKING,
+    "status": "UNDER_REVIEW",
+    "occurredAt": "2026-09-17T08:30:00.000Z",
+    "policyReference": "POL-80421",
+    "vehicleReference": "SBC 2481",
+    "operationalStage": {
+        "stageKey": "ASSESSMENT",
+        "displayName": "Evaluación",
+        "sortOrder": 2,
+    },
+    "operationalWorkItemVersion": 4,
+    "createdAt": "2026-09-17T08:42:00.000Z",
+}
 
 DETAIL = {
     "claimId": CLAIM_ID,
@@ -75,30 +91,6 @@ DETAIL = {
     "updatedAt": "2026-09-17T09:05:00.000Z",
 }
 
-CLAIMS_PAGE = {
-    "items": [
-        {
-            "claimId": CLAIM_ID,
-            "trackingCode": TRACKING,
-            "status": "UNDER_REVIEW",
-            "occurredAt": "2026-09-17T08:30:00.000Z",
-            "policyReference": "POL-80421",
-            "vehicleReference": "SBC 2481",
-            "operationalStage": {
-                "stageKey": "ASSESSMENT",
-                "displayName": "Evaluación",
-                "sortOrder": 2,
-            },
-            "operationalWorkItemVersion": 4,
-            "createdAt": "2026-09-17T08:42:00.000Z",
-        }
-    ],
-    "page": 1,
-    "pageSize": 100,
-    "totalItems": 1,
-    "totalPages": 1,
-}
-
 TASKS = [
     {
         "taskId": "task-visual-001",
@@ -154,27 +146,29 @@ TASKS = [
     },
 ]
 
+EVIDENCE = [
+    {
+        "evidenceId": "evidence-visual-001",
+        "mediaType": "image/jpeg",
+        "sizeBytes": 248320,
+        "displayFilename": "lateral-derecho.jpg",
+        "createdAt": "2026-09-17T08:41:00.000Z",
+    },
+    {
+        "evidenceId": "evidence-visual-002",
+        "mediaType": "application/pdf",
+        "sizeBytes": 97280,
+        "displayFilename": "declaracion.pdf",
+        "createdAt": "2026-09-17T08:44:00.000Z",
+    },
+]
+
 EVIDENCE_ATTENTION = {
     "claimId": CLAIM_ID,
     "trackingCode": TRACKING,
     "attentionState": "PENDING_REVIEW",
     "evidenceCount": 2,
-    "evidence": [
-        {
-            "evidenceId": "evidence-visual-001",
-            "mediaType": "image/jpeg",
-            "sizeBytes": 248320,
-            "displayFilename": "lateral-derecho.jpg",
-            "createdAt": "2026-09-17T08:41:00.000Z",
-        },
-        {
-            "evidenceId": "evidence-visual-002",
-            "mediaType": "application/pdf",
-            "sizeBytes": 97280,
-            "displayFilename": "declaracion.pdf",
-            "createdAt": "2026-09-17T08:44:00.000Z",
-        },
-    ],
+    "evidence": EVIDENCE,
     "reviewTasks": [
         {
             "taskId": "task-visual-002",
@@ -246,13 +240,30 @@ class Handler(BaseHTTPRequestHandler):
         return
 
     def do_GET(self) -> None:
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
+
         if path == "/health/live":
             self._json(200, {"status": "ok"})
             return
+
         if path == "/api/v1/operator/claims":
-            self._json(200, CLAIMS_PAGE, {"X-Request-Id": "claim-detail-list"})
+            params = parse_qs(parsed.query)
+            requested_status = params.get("status", [None])[0]
+            items = [] if requested_status and requested_status != CLAIM_SUMMARY["status"] else [CLAIM_SUMMARY]
+            self._json(
+                200,
+                {
+                    "items": items,
+                    "page": 1,
+                    "pageSize": 100,
+                    "totalItems": len(items),
+                    "totalPages": 1 if items else 0,
+                },
+                {"X-Request-Id": "claim-detail-list"},
+            )
             return
+
         if path == f"/api/v1/operator/claims/{CLAIM_ID}":
             self._json(200, DETAIL, {"X-Request-Id": "claim-detail-detail"})
             return
@@ -265,6 +276,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == f"/api/v1/operator/claims/{CLAIM_ID}/timeline":
             self._json(200, TIMELINE, {"X-Request-Id": "claim-detail-timeline"})
             return
+
         self._json(404, {"error": "not_found", "path": path})
 
     def do_POST(self) -> None:
