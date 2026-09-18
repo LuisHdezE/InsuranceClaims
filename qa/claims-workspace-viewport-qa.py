@@ -143,13 +143,32 @@ try:
             const tracking = document.querySelector('.r3-workspace-page .claims-table tbody td:first-child strong');
             const th = document.querySelector('.r3-workspace-page .claims-table thead th');
             const badge = document.querySelector('.r3-workspace-page .claims-table .status-badge');
+            const cells = row ? Array.from(row.querySelectorAll('td')) : [];
+            const detail = row ? row.querySelector('.ops-card-link') : null;
+            const rowRect = row ? row.getBoundingClientRect() : null;
+            const detailRect = detail ? detail.getBoundingClientRect() : null;
             return {
               innerWidth: window.innerWidth,
               innerHeight: window.innerHeight,
               scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
               scrollHeight: Math.max(root.scrollHeight, body.scrollHeight),
               tableFont: table ? parseFloat(getComputedStyle(table).fontSize) : 0,
-              rowHeight: row ? Math.round(row.getBoundingClientRect().height) : 0,
+              rowHeight: row ? Math.round(rowRect.height) : 0,
+              rowClientHeight: row ? row.clientHeight : 0,
+              rowScrollHeight: row ? row.scrollHeight : 0,
+              visibleCellCount: cells.filter((node) => {
+                const style = getComputedStyle(node);
+                const rect = node.getBoundingClientRect();
+                return style.display !== 'none' && style.visibility !== 'hidden' && rect.height > 0;
+              }).length,
+              detailVisible: Boolean(
+                detail &&
+                getComputedStyle(detail).display !== 'none' &&
+                getComputedStyle(detail).visibility !== 'hidden' &&
+                detailRect &&
+                rowRect &&
+                detailRect.bottom <= rowRect.bottom + 1
+              ),
               cellFont: cell ? parseFloat(getComputedStyle(cell).fontSize) : 0,
               trackingFont: tracking ? parseFloat(getComputedStyle(tracking).fontSize) : 0,
               headerFont: th ? parseFloat(getComputedStyle(th).fontSize) : 0,
@@ -175,6 +194,19 @@ try:
                 raise AssertionError(f"Claims status badge font is too large: {list_metrics['badgeFont']}px")
             if list_metrics["rowHeight"] > 68:
                 raise AssertionError(f"Claims desktop row wastes vertical space: {list_metrics['rowHeight']}px")
+        elif width <= 520:
+            if list_metrics["visibleCellCount"] < 7:
+                raise AssertionError(
+                    f"Claims mobile record hides fields: {list_metrics['visibleCellCount']} visible cells"
+                )
+            if list_metrics["rowScrollHeight"] > list_metrics["rowClientHeight"] + 1:
+                raise AssertionError(
+                    "Claims mobile record clips content: "
+                    f"scrollHeight={list_metrics['rowScrollHeight']} "
+                    f"clientHeight={list_metrics['rowClientHeight']}"
+                )
+            if not list_metrics["detailVisible"]:
+                raise AssertionError("Claims mobile record clips or hides the detail action")
 
         results.append(
             {
