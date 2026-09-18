@@ -82,9 +82,9 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('heading', { name: 'Administración' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Clientes y pólizas' })).toBeNull();
     expect(screen.getByRole('link', { name: /Espacio de trabajo/ }).getAttribute('aria-current')).toBe('page');
+    expect(screen.getByRole('link', { name: /^Analítica$/ }).getAttribute('href')).toBe('/operator/analytics');
 
     const pendingLabels = [
-      'Analítica',
       'Pipelines',
       'Plantillas',
       'Campos',
