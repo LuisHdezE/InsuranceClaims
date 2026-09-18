@@ -1,0 +1,585 @@
+/* Claim Detail visual alignment
+ * Canonical baseline:
+ * documentation/ui-reference/r3/claim-detail-approved.jpg
+ * documentation/ui-reference/r3/claim-detail-approved.md
+ *
+ * Presentation-only. Claim Lifecycle, Operational Pipeline, Tasks, Evidence,
+ * Timeline and Audit remain separate API-backed capabilities.
+ */
+
+.r3-claim-detail-page {
+  min-width: 0;
+  padding-top: 14px;
+}
+
+.r3-claim-detail-page .ops-detail-breadcrumbs {
+  margin-bottom: 7px;
+}
+
+.r3-claim-detail-page .ops-detail-breadcrumbs a {
+  font-size: 10px;
+}
+
+/* Compact identity / decision header */
+.r3-claim-detail-page .r3-detail-hero {
+  min-height: 78px;
+  margin-bottom: 8px;
+  padding: 11px 13px;
+  grid-template-columns: minmax(260px, 1.45fr) minmax(155px, .62fr) minmax(130px, .48fr) auto;
+  gap: 12px;
+  border: 1px solid var(--ops-border);
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(11, 24, 48, .035);
+}
+
+.r3-claim-detail-page .ops-detail-identity h1 {
+  margin-bottom: 3px;
+  font-size: clamp(22px, 2vw, 28px);
+  line-height: 1.04;
+  letter-spacing: -.035em;
+}
+
+.r3-claim-detail-page .ops-detail-identity > span {
+  font-size: 10px;
+}
+
+.r3-claim-detail-page .ops-detail-stage,
+.r3-claim-detail-page .ops-detail-status {
+  min-height: 48px;
+  gap: 2px;
+  padding-left: 12px;
+}
+
+.r3-claim-detail-page .ops-detail-stage > span,
+.r3-claim-detail-page .ops-detail-status > span {
+  font-size: 8px;
+}
+
+.r3-claim-detail-page .ops-detail-stage strong {
+  font-size: 14px;
+  line-height: 1.15;
+}
+
+.r3-claim-detail-page .ops-detail-stage small {
+  font-size: 8px;
+  line-height: 1.3;
+}
+
+.r3-claim-detail-page .ops-detail-status .status-badge {
+  min-height: 23px;
+  padding-inline: 9px;
+  font-size: 8px;
+}
+
+.r3-claim-detail-page .ops-detail-actions {
+  gap: 6px;
+}
+
+.r3-claim-detail-page .ops-detail-actions .ops-primary-action,
+.r3-claim-detail-page .ops-detail-actions .ops-icon-button {
+  min-height: 36px;
+}
+
+.r3-claim-detail-page .ops-detail-actions .ops-primary-action {
+  padding-inline: 12px;
+  font-size: 10px;
+}
+
+.r3-claim-detail-page .ops-detail-actions .ops-icon-button {
+  width: 36px;
+  height: 36px;
+  font-size: 15px;
+}
+
+/* Secondary navigation should orient, not consume a second header. */
+.r3-claim-detail-page .r3-detail-anchor-nav {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  gap: 3px;
+  min-width: 0;
+  min-height: 36px;
+  margin: 0 0 9px;
+  padding: 3px;
+  overflow-x: auto;
+  border: 1px solid #e4eaf0;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 4px 12px rgba(11, 24, 48, .025);
+  scrollbar-width: none;
+}
+
+.r3-claim-detail-page .r3-detail-anchor-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.r3-claim-detail-page .r3-detail-anchor-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: max-content;
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 6px;
+  color: #52657a;
+  font-size: 9px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.r3-claim-detail-page .r3-detail-anchor-nav a:hover,
+.r3-claim-detail-page .r3-detail-anchor-nav a:focus-visible {
+  background: #eef5ff;
+  color: var(--ops-blue);
+}
+
+/* Approved desktop composition: operational main column + contextual side rail. */
+.r3-claim-detail-page .r3-claim-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.48fr) minmax(300px, .72fr);
+  grid-template-areas:
+    "summary tasks"
+    "flow tasks"
+    "stage evidence"
+    "timeline evidence";
+  gap: 9px;
+  align-items: start;
+}
+
+.r3-claim-detail-page #resumen { grid-area: summary; }
+.r3-claim-detail-page #flujo { grid-area: flow; }
+.r3-claim-detail-page #etapa { grid-area: stage; }
+.r3-claim-detail-page #tareas { grid-area: tasks; }
+.r3-claim-detail-page #evidencia { grid-area: evidence; }
+.r3-claim-detail-page #historial { grid-area: timeline; }
+
+.r3-claim-detail-page .r3-claim-detail-grid > *,
+.r3-claim-detail-page .r3-detail-section,
+.r3-claim-detail-page .ops-panel {
+  min-width: 0;
+}
+
+.r3-claim-detail-page .r3-detail-section > .ops-panel,
+.r3-claim-detail-page .r3-detail-section.ops-panel {
+  margin: 0;
+}
+
+.r3-claim-detail-page .ops-panel,
+.r3-claim-detail-page .ops-audit-details {
+  border-radius: 10px;
+  box-shadow: 0 5px 16px rgba(11, 24, 48, .028);
+}
+
+.r3-claim-detail-page .ops-panel {
+  padding: 11px 12px;
+}
+
+.r3-claim-detail-page .ops-panel-heading {
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.r3-claim-detail-page .ops-panel-heading .ops-kicker {
+  font-size: 7.5px;
+  letter-spacing: .07em;
+}
+
+.r3-claim-detail-page .ops-panel-heading h2 {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.18;
+}
+
+.r3-claim-detail-page .ops-panel-heading p {
+  margin-top: 3px;
+  font-size: 8.5px;
+  line-height: 1.38;
+}
+
+/* Summary */
+.r3-claim-detail-page .ops-summary-card,
+.r3-claim-detail-page .ops-work-card,
+.r3-claim-detail-page .ops-evidence-card,
+.r3-claim-detail-page .ops-timeline-card {
+  min-height: 0;
+}
+
+.r3-claim-detail-page .ops-summary-row {
+  grid-template-columns: 24px 100px minmax(0, 1fr);
+  gap: 7px;
+  min-height: 34px;
+  padding: 4px 0;
+}
+
+.r3-claim-detail-page .ops-summary-icon {
+  width: 23px;
+  height: 23px;
+  border-radius: 6px;
+  font-size: 9px;
+}
+
+.r3-claim-detail-page .ops-summary-row dt {
+  padding-top: 4px;
+  font-size: 8.5px;
+}
+
+.r3-claim-detail-page .ops-summary-row dd {
+  gap: 2px;
+  padding-top: 3px;
+  font-size: 9.5px;
+}
+
+.r3-claim-detail-page .ops-summary-row dd small {
+  font-size: 8px;
+}
+
+.r3-claim-detail-page .ops-detail-description {
+  gap: 7px;
+  padding-top: 6px;
+}
+
+.r3-claim-detail-page .ops-detail-description strong {
+  font-size: 9px;
+}
+
+.r3-claim-detail-page .ops-detail-description p {
+  margin-top: 3px;
+  font-size: 9px;
+  line-height: 1.42;
+}
+
+/* Claim lifecycle */
+.r3-claim-detail-page .ops-state-overview {
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.r3-claim-detail-page .ops-state-overview > div {
+  min-height: 50px;
+  gap: 3px;
+  padding: 7px 8px;
+  border-radius: 7px;
+}
+
+.r3-claim-detail-page .ops-state-overview span {
+  font-size: 7px;
+}
+
+.r3-claim-detail-page .ops-state-overview strong {
+  font-size: 9px;
+}
+
+.r3-claim-detail-page .ops-task-contract-note {
+  gap: 3px;
+  margin-bottom: 8px;
+  padding: 8px 9px;
+}
+
+.r3-claim-detail-page .ops-task-contract-note strong {
+  font-size: 9px;
+}
+
+.r3-claim-detail-page .ops-task-contract-note span {
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.r3-claim-detail-page .r3-pipeline-readonly {
+  padding: 7px 9px;
+  font-size: 8.5px;
+  line-height: 1.35;
+}
+
+/* Operational pipeline: human label first, technical stage key secondary. */
+.r3-claim-detail-page .r3-pipeline-panel .r3-version-chip {
+  min-height: 22px;
+  padding-inline: 7px;
+  font-size: 8px;
+}
+
+.r3-claim-detail-page .r3-pipeline-current {
+  min-height: 62px;
+  padding: 8px 9px;
+}
+
+.r3-claim-detail-page .r3-pipeline-current small,
+.r3-claim-detail-page .r3-pipeline-version small {
+  font-size: 7.5px;
+}
+
+.r3-claim-detail-page .r3-pipeline-current strong,
+.r3-claim-detail-page .r3-pipeline-version strong {
+  font-size: 10px;
+}
+
+.r3-claim-detail-page .r3-pipeline-current code {
+  display: none;
+}
+
+.r3-claim-detail-page .r3-pipeline-move {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #dde5ec;
+}
+
+.r3-claim-detail-page .r3-pipeline-move label {
+  color: #718096;
+  font-size: 8px;
+}
+
+.r3-claim-detail-page .r3-pipeline-move::before {
+  content: "Control avanzado";
+  display: block;
+  margin-bottom: 5px;
+  color: #718096;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.r3-claim-detail-page .r3-pipeline-move input,
+.r3-claim-detail-page .r3-pipeline-move .ops-primary-action {
+  min-height: 36px;
+}
+
+/* Context rail */
+.r3-claim-detail-page #tareas,
+.r3-claim-detail-page #evidencia {
+  position: relative;
+}
+
+.r3-claim-detail-page .r3-task-panel-heading-actions {
+  gap: 5px;
+}
+
+.r3-claim-detail-page .ops-count-pill {
+  min-width: 0;
+  min-height: 21px;
+  padding-inline: 7px;
+  font-size: 8px;
+}
+
+.r3-claim-detail-page .r3-claim-task-list li {
+  min-height: 54px;
+  padding-block: 7px;
+}
+
+.r3-claim-detail-page .ops-task-main-copy strong {
+  font-size: 9.5px;
+}
+
+.r3-claim-detail-page .ops-task-main-copy span,
+.r3-claim-detail-page .ops-task-main-copy small {
+  font-size: 8px;
+}
+
+.r3-claim-detail-page .ops-task-status {
+  font-size: 7.5px;
+}
+
+.r3-claim-detail-page .ops-evidence-review-summary {
+  gap: 5px;
+}
+
+.r3-claim-detail-page .ops-evidence-review-summary > div {
+  min-height: 47px;
+  padding: 7px 8px;
+}
+
+.r3-claim-detail-page .ops-evidence-review-summary span {
+  font-size: 7px;
+}
+
+.r3-claim-detail-page .ops-evidence-review-summary strong {
+  font-size: 10px;
+}
+
+.r3-claim-detail-page .ops-evidence-work {
+  min-height: 54px;
+  padding: 8px 9px;
+}
+
+.r3-claim-detail-page .ops-evidence-work strong {
+  font-size: 9px;
+}
+
+.r3-claim-detail-page .ops-evidence-work small,
+.r3-claim-detail-page .ops-evidence-work span {
+  font-size: 7.5px;
+}
+
+.r3-claim-detail-page .ops-evidence-list li {
+  min-height: 48px;
+}
+
+.r3-claim-detail-page .ops-evidence-list strong {
+  font-size: 9px;
+}
+
+.r3-claim-detail-page .ops-evidence-list span,
+.r3-claim-detail-page .ops-protected-note {
+  font-size: 7.5px;
+}
+
+/* Operational timeline remains distinct from technical audit. */
+.r3-claim-detail-page .ops-operational-timeline li {
+  min-height: 47px;
+}
+
+.r3-claim-detail-page .ops-operational-timeline time,
+.r3-claim-detail-page .ops-operational-timeline-actor,
+.r3-claim-detail-page .ops-operational-timeline-copy small {
+  font-size: 7.5px;
+}
+
+.r3-claim-detail-page .ops-operational-timeline-copy strong {
+  font-size: 9px;
+}
+
+.r3-claim-detail-page .ops-operational-timeline-copy span {
+  font-size: 8px;
+}
+
+/* Technical audit stays collapsed and visually secondary. */
+.r3-claim-detail-page .ops-audit-details {
+  margin-top: 9px;
+}
+
+.r3-claim-detail-page .ops-audit-details summary {
+  min-height: 36px;
+  padding-inline: 12px;
+  font-size: 9px;
+}
+
+.r3-claim-detail-page .ops-audit-details summary span {
+  font-size: 8px;
+}
+
+@media (max-width: 1180px) {
+  .r3-claim-detail-page .r3-detail-hero {
+    grid-template-columns: minmax(240px, 1fr) 150px 130px;
+  }
+
+  .r3-claim-detail-page .ops-detail-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    padding-top: 2px;
+  }
+
+  .r3-claim-detail-page .r3-claim-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "summary"
+      "flow"
+      "stage"
+      "tasks"
+      "evidence"
+      "timeline";
+  }
+}
+
+@media (max-width: 720px) {
+  .r3-claim-detail-page {
+    padding-top: 10px;
+  }
+
+  .r3-claim-detail-page .r3-detail-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .r3-claim-detail-page .ops-detail-identity {
+    grid-column: 1 / -1;
+  }
+
+  .r3-claim-detail-page .ops-detail-stage,
+  .r3-claim-detail-page .ops-detail-status {
+    min-height: 44px;
+    padding: 7px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--ops-border);
+  }
+
+  .r3-claim-detail-page .ops-detail-status {
+    padding-left: 8px;
+  }
+
+  .r3-claim-detail-page .ops-detail-actions {
+    grid-column: 1 / -1;
+  }
+
+  .r3-claim-detail-page .ops-detail-actions .ops-primary-action,
+  .r3-claim-detail-page .ops-detail-actions .ops-icon-button {
+    min-height: 44px;
+  }
+
+  .r3-claim-detail-page .ops-detail-actions .ops-icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .r3-claim-detail-page .r3-detail-anchor-nav {
+    min-height: 44px;
+  }
+
+  .r3-claim-detail-page .r3-detail-anchor-nav a {
+    min-height: 36px;
+    padding-inline: 10px;
+  }
+
+  .r3-claim-detail-page .ops-panel {
+    padding: 10px;
+  }
+
+  .r3-claim-detail-page .ops-summary-row {
+    grid-template-columns: 24px 88px minmax(0, 1fr);
+  }
+
+  .r3-claim-detail-page .ops-state-overview {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .r3-claim-detail-page .r3-detail-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-claim-detail-page .ops-detail-identity,
+  .r3-claim-detail-page .ops-detail-stage,
+  .r3-claim-detail-page .ops-detail-status,
+  .r3-claim-detail-page .ops-detail-actions {
+    grid-column: 1;
+  }
+
+  .r3-claim-detail-page .ops-detail-status {
+    padding-left: 0;
+  }
+
+  .r3-claim-detail-page .ops-detail-identity h1 {
+    font-size: 21px;
+  }
+
+  .r3-claim-detail-page .ops-state-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-claim-detail-page .ops-summary-row {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .r3-claim-detail-page .ops-summary-row dt,
+  .r3-claim-detail-page .ops-summary-row dd {
+    grid-column: 2;
+  }
+
+  .r3-claim-detail-page .r3-pipeline-move-row,
+  .r3-claim-detail-page .ops-transition-row {
+    grid-template-columns: 1fr;
+  }
+}
