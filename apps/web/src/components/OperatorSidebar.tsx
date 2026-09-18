@@ -52,7 +52,12 @@ export function OperatorSidebar({
               <h2 id={`r3-nav-${group.key}`} className="r3-ui-nav-label">{group.label}</h2>
               <div className="r3-ui-nav-links">
                 {groupItems.map((item) => (
-                  <OperatorSidebarItem key={item.to} item={item} demoReadOnly={demoReadOnly} />
+                  <OperatorSidebarItem
+                    key={item.to}
+                    item={item}
+                    role={role}
+                    demoReadOnly={demoReadOnly}
+                  />
                 ))}
               </div>
             </section>
@@ -65,8 +70,16 @@ export function OperatorSidebar({
   );
 }
 
-function OperatorSidebarItem({ item, demoReadOnly }: { item: OperatorNavItem; demoReadOnly: boolean }) {
-  const canLink = operatorNavItemCanLink(item, demoReadOnly);
+function OperatorSidebarItem({
+  item,
+  role,
+  demoReadOnly,
+}: {
+  item: OperatorNavItem;
+  role: StaffRole | undefined;
+  demoReadOnly: boolean;
+}) {
+  const canLink = operatorNavItemCanLink(item, role);
 
   if (!canLink) {
     const disabledReason = demoReadOnly
