@@ -35,6 +35,11 @@ EXPECTED_DEMO_LABELS = {
     "Importaciones",
     "Recuperación",
 }
+EXPECTED_READY_LINKS = {
+    "/operator/workspace": "Espacio de trabajo",
+    "/operator/dashboard": "Tablero",
+    "/operator/claims": "Siniestros",
+}
 
 options = webdriver.ChromeOptions()
 options.add_argument("--headless=new")
@@ -100,16 +105,20 @@ try:
         raise AssertionError(f"Unexpected demo sidebar catalog: {sorted(labels)}")
 
     pending = driver.find_elements(By.CSS_SELECTOR, ".operator-sidebar-item.is-pending[aria-disabled='true']")
-    if len(pending) != 15:
-        raise AssertionError(f"Expected 15 disabled demo destinations, got {len(pending)}")
+    if len(pending) != 13:
+        raise AssertionError(f"Expected 13 disabled demo destinations, got {len(pending)}")
 
     active = driver.find_elements(By.CSS_SELECTOR, ".operator-sidebar-item.is-active")
     if len(active) != 1 or "Siniestros" not in active[0].text:
-        raise AssertionError("Claims must be the only active demo navigation destination")
+        raise AssertionError("Claims must remain the active demo navigation destination after login")
 
     nav_links = driver.find_elements(By.CSS_SELECTOR, ".operator-sidebar-nav a.operator-sidebar-item")
-    if len(nav_links) != 1:
-        raise AssertionError(f"Demo sidebar gained unexpected clickable destinations: {len(nav_links)}")
+    actual_ready_links = {
+        link.get_attribute("href").removeprefix(WEB_BASE_URL): link.text.strip()
+        for link in nav_links
+    }
+    if actual_ready_links != EXPECTED_READY_LINKS:
+        raise AssertionError(f"Unexpected ready demo navigation: {actual_ready_links}")
 
     for width, height in TARGETS:
         set_viewport(width, height)
