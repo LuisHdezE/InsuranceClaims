@@ -1,10 +1,12 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StaffRole } from '../api/types';
+import { PUBLIC_DEMO_OPERATOR_ID } from '../demo-access';
 import { OperatorShell } from './OperatorShell';
 
 const sessionState = vi.hoisted(() => ({
+  id: 'operator-1',
   role: 'CLAIMS_OPERATOR' as StaffRole,
   signOut: vi.fn(),
 }));
@@ -15,7 +17,7 @@ vi.mock('../flow/OperatorSessionContext', () => ({
       accessToken: 'test-token',
       expiresAt: Date.now() + 60_000,
       operator: {
-        id: 'operator-1',
+        id: sessionState.id,
         login: 'operator@example.test',
         role: sessionState.role,
       },
@@ -27,6 +29,7 @@ vi.mock('../flow/OperatorSessionContext', () => ({
 
 describe('OperatorShell', () => {
   beforeEach(() => {
+    sessionState.id = 'operator-1';
     sessionState.role = 'CLAIMS_OPERATOR';
     sessionState.signOut.mockClear();
   });
@@ -35,7 +38,7 @@ describe('OperatorShell', () => {
     cleanup();
   });
 
-  it('groups visible navigation in Spanish while preserving operator permission filtering', () => {
+  it('separates authorized navigation from visual maturity for a claims operator', () => {
     render(
       <MemoryRouter initialEntries={['/operator/dashboard']}>
         <OperatorShell><div>Contenido</div></OperatorShell>
@@ -48,16 +51,24 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('heading', { name: 'Clientes y pólizas' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Administración' })).toBeNull();
 
+    expect(screen.getByRole('link', { name: /Espacio de trabajo/ })).toBeTruthy();
     expect(screen.getByRole('link', { name: /Tablero/ }).getAttribute('aria-current')).toBe('page');
     expect(screen.getByRole('link', { name: /Siniestros/ })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Tareas/ })).toBeTruthy();
-    expect(screen.queryByRole('link', { name: /Analítica/ })).toBeNull();
-    expect(screen.queryByRole('link', { name: /Pipelines/ })).toBeNull();
+
+    const pendingLabels = ['Tareas', 'Clientes', 'Pólizas', 'Renovaciones', 'Cobranzas'];
+    for (const label of pendingLabels) {
+      const text = screen.getByText(label);
+      expect(text.closest('[aria-disabled="true"]')).toBeTruthy();
+      expect(screen.queryByRole('link', { name: new RegExp(`^${label}$`) })).toBeNull();
+    }
+
+    expect(screen.queryByText('Analítica')).toBeNull();
+    expect(screen.queryByText('Pipelines')).toBeNull();
     expect(screen.queryByRole('link', { name: /^Claims$/ })).toBeNull();
     expect(screen.queryByRole('link', { name: /^Tasks$/ })).toBeNull();
   });
 
-  it('does not elevate platform admin into Claims navigation', () => {
+  it('does not elevate platform admin into business navigation while keeping authorized pending capabilities visible', () => {
     sessionState.role = 'PLATFORM_ADMIN';
 
     render(
@@ -66,16 +77,64 @@ describe('OperatorShell', () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByRole('heading', { name: 'Operación' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Administración' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Analítica/ })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Pipelines/ })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Orientación/ })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Automatizaciones/ })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Importaciones/ })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Recuperación/ })).toBeTruthy();
-    expect(screen.queryByRole('link', { name: /Tablero/ })).toBeNull();
-    expect(screen.queryByRole('link', { name: /^Siniestros$/ })).toBeNull();
-    expect(screen.queryByRole('link', { name: /^Tareas$/ })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Clientes y pólizas' })).toBeNull();
+    expect(screen.getByRole('link', { name: /Espacio de trabajo/ }).getAttribute('aria-current')).toBe('page');
+
+    const pendingLabels = [
+      'Analítica',
+      'Pipelines',
+      'Plantillas',
+      'Campos',
+      'Orientación',
+      'Automatizaciones',
+      'Importaciones',
+      'Recuperación',
+    ];
+    for (const label of pendingLabels) {
+      const text = screen.getByText(label);
+      expect(text.closest('[aria-disabled="true"]')).toBeTruthy();
+      expect(screen.queryByRole('link', { name: new RegExp(`^${label}$`) })).toBeNull();
+    }
+
+    expect(screen.queryByText('Tablero')).toBeNull();
+    expect(screen.queryByText('Siniestros')).toBeNull();
+    expect(screen.queryByText('Tareas')).toBeNull();
+    expect(screen.queryByText('Clientes')).toBeNull();
+    expect(screen.queryByText('Pólizas')).toBeNull();
+  });
+
+  it('shows the complete information architecture in the public demo without granting navigation', () => {
+    sessionState.id = PUBLIC_DEMO_OPERATOR_ID;
+
+    render(
+      <MemoryRouter initialEntries={['/operator/claims']}>
+        <OperatorShell><div>Contenido</div></OperatorShell>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Operación' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Clientes y pólizas' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Administración' })).toBeTruthy();
+
+    const navigation = screen.getByRole('navigation');
+    const nav = within(navigation);
+    const clickable = nav.getAllByRole('link');
+    expect(clickable).toHaveLength(1);
+    expect(clickable[0]?.textContent).toContain('Siniestros');
+    expect(clickable[0]?.getAttribute('aria-current')).toBe('page');
+
+    const completeCatalog = [
+      'Espacio de trabajo', 'Tablero', 'Siniestros', 'Tareas', 'Analítica',
+      'Clientes', 'Pólizas', 'Renovaciones', 'Cobranzas', 'Pipelines',
+      'Plantillas', 'Campos', 'Orientación', 'Automatizaciones', 'Importaciones', 'Recuperación',
+    ];
+    for (const label of completeCatalog) {
+      expect(nav.getByText(label)).toBeTruthy();
+    }
+
+    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(15);
   });
 
   it('keeps logout wired to the existing session action', () => {
