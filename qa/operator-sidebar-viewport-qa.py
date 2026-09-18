@@ -22,10 +22,18 @@ EXPECTED_DEMO_LABELS = {
     "Tablero",
     "Siniestros",
     "Tareas",
+    "Analítica",
     "Clientes",
     "Pólizas",
     "Renovaciones",
     "Cobranzas",
+    "Pipelines",
+    "Plantillas",
+    "Campos",
+    "Orientación",
+    "Automatizaciones",
+    "Importaciones",
+    "Recuperación",
 }
 
 options = webdriver.ChromeOptions()
@@ -81,7 +89,7 @@ try:
 
     wait.until(lambda d: "/operator/claims" in d.current_url)
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".operator-sidebar-component")))
-    wait.until(lambda d: "Siniestros" in d.find_element(By.CSS_SELECTOR, ".operator-sidebar-component").text)
+    wait.until(lambda d: "Recuperación" in d.find_element(By.CSS_SELECTOR, ".operator-sidebar-component").text)
 
     labels = {
         node.text.strip()
@@ -89,14 +97,11 @@ try:
         if node.text.strip()
     }
     if labels != EXPECTED_DEMO_LABELS:
-        raise AssertionError(f"Unexpected demo sidebar labels: {sorted(labels)}")
-
-    if "Analítica" in labels or "Pipelines" in labels:
-        raise AssertionError("Sidebar exposed capabilities not authorized for the demo operator")
+        raise AssertionError(f"Unexpected demo sidebar catalog: {sorted(labels)}")
 
     pending = driver.find_elements(By.CSS_SELECTOR, ".operator-sidebar-item.is-pending[aria-disabled='true']")
-    if len(pending) != 7:
-        raise AssertionError(f"Expected 7 disabled demo destinations, got {len(pending)}")
+    if len(pending) != 15:
+        raise AssertionError(f"Expected 15 disabled demo destinations, got {len(pending)}")
 
     active = driver.find_elements(By.CSS_SELECTOR, ".operator-sidebar-item.is-active")
     if len(active) != 1 or "Siniestros" not in active[0].text:
@@ -115,7 +120,6 @@ try:
             const sidebar = document.querySelector('.operator-sidebar-component');
             const nav = document.querySelector('.operator-sidebar-nav');
             const item = document.querySelector('.operator-sidebar-item');
-            const pending = document.querySelector('.operator-sidebar-item.is-pending');
             const label = document.querySelector('.operator-sidebar-item-label');
             return {
               innerWidth: window.innerWidth,
@@ -127,7 +131,6 @@ try:
               navScrollWidth: nav ? nav.scrollWidth : 0,
               navClientWidth: nav ? nav.clientWidth : 0,
               itemHeight: item ? Math.round(item.getBoundingClientRect().height) : 0,
-              pendingPointerEvents: pending ? getComputedStyle(pending).pointerEvents : '',
               labelDisplay: label ? getComputedStyle(label).display : '',
             };
             """
@@ -144,7 +147,7 @@ try:
             if metrics["itemHeight"] > 38:
                 raise AssertionError(f"Sidebar item is too tall: {metrics['itemHeight']}px")
             if metrics["navScrollHeight"] > metrics["navClientHeight"] + 2:
-                raise AssertionError("Authorized demo navigation should fit without vertical clipping at desktop QA height")
+                raise AssertionError("Complete demo sidebar catalog should fit without vertical clipping at desktop QA height")
         else:
             if metrics["sidebarHeight"] > 84:
                 raise AssertionError(f"Mobile sidebar/header is too tall: {metrics['sidebarHeight']}px")
@@ -152,6 +155,8 @@ try:
                 raise AssertionError(f"Mobile sidebar touch target is too short: {metrics['itemHeight']}px")
             if metrics["navScrollWidth"] <= metrics["navClientWidth"]:
                 raise AssertionError("Mobile sidebar should preserve horizontally scrollable navigation")
+            if metrics["labelDisplay"] != "none":
+                raise AssertionError("Mobile sidebar labels should collapse to icons to preserve density")
 
         results.append(
             {
