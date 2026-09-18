@@ -41,6 +41,7 @@ import './operator-dashboard-polish.css';
 import './claims-workspace-density.css';
 import './claim-detail-polish.css';
 import './tasks-operational-polish.css';
+import './tasks-operational-detail-density-fix.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
