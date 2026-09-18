@@ -37,11 +37,11 @@
 }
 
 .operator-sidebar-component .r3-ui-nav {
-  gap: 13px;
+  gap: 11px;
 }
 
 .operator-sidebar-component .r3-ui-nav-group {
-  gap: 5px;
+  gap: 4px;
 }
 
 .operator-sidebar-component .r3-ui-nav-links {
@@ -54,9 +54,13 @@
   letter-spacing: .105em;
 }
 
-.operator-sidebar-component .operator-sidebar-item {
+/* Deliberately outrank historical .ops-nav-link and R3 shell rules so the
+ * extracted sidebar owns its density instead of inheriting old 44-50px rows. */
+.operator-sidebar-component .r3-ui-nav .operator-sidebar-item {
   position: relative;
+  height: 34px;
   min-height: 34px;
+  max-height: 34px;
   gap: 9px;
   padding: 0 9px;
   border-radius: 7px;
@@ -64,7 +68,7 @@
   line-height: 1.2;
 }
 
-.operator-sidebar-component .operator-sidebar-item .ops-nav-icon {
+.operator-sidebar-component .r3-ui-nav .operator-sidebar-item .ops-nav-icon {
   width: 21px;
   height: 21px;
   flex: 0 0 21px;
@@ -115,8 +119,8 @@
 
 .operator-sidebar-footer {
   flex: 0 0 auto;
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
 }
 
 @media (max-height: 780px) and (min-width: 721px) {
@@ -131,16 +135,18 @@
   }
 
   .operator-sidebar-component .r3-ui-nav {
-    gap: 9px;
+    gap: 8px;
   }
 
-  .operator-sidebar-component .operator-sidebar-item {
+  .operator-sidebar-component .r3-ui-nav .operator-sidebar-item {
+    height: 30px;
     min-height: 30px;
+    max-height: 30px;
   }
 
   .operator-sidebar-footer {
-    margin-top: 8px;
-    padding-top: 9px;
+    margin-top: 7px;
+    padding-top: 8px;
   }
 }
 
@@ -156,14 +162,30 @@
     padding-right: 0;
   }
 
-  .operator-sidebar-component .operator-sidebar-item {
+  .operator-sidebar-component .r3-ui-nav-label {
+    display: none;
+  }
+
+  .operator-sidebar-component .r3-ui-nav .operator-sidebar-item {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
     min-height: 44px;
+    max-height: 44px;
+    flex: 0 0 44px;
+    justify-content: center;
+    padding: 0;
     font-size: 12px;
   }
 
-  .operator-sidebar-component .operator-sidebar-item .ops-nav-icon {
-    width: 24px;
-    height: 24px;
-    flex-basis: 24px;
+  .operator-sidebar-component .r3-ui-nav .operator-sidebar-item .ops-nav-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+
+  .operator-sidebar-item-label,
+  .operator-sidebar-pending-dot {
+    display: none;
   }
 }
