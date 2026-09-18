@@ -36,31 +36,32 @@
 .r3-customer-directory .cp360-toolbar {
   grid-template-columns: minmax(300px, 1.65fr) minmax(150px, .55fr) minmax(170px, .62fr);
   gap: 10px;
-  padding: 12px;
+  padding: 8px 10px;
   border-radius: 10px;
 }
 
 .r3-customer-directory .cp360-search,
 .r3-customer-directory .cp360-filter,
 .r3-customer-directory .cp360-result-summary {
-  gap: 5px;
+  gap: 3px;
 }
 
 .r3-customer-directory .cp360-search > label,
 .r3-customer-directory .cp360-filter > span,
 .r3-customer-directory .cp360-result-summary > span {
-  font-size: 10px;
+  font-size: 9px;
+  line-height: 1.2;
 }
 
 .r3-customer-directory .cp360-search input,
 .r3-customer-directory .cp360-search button,
 .r3-customer-directory .cp360-filter select {
-  min-height: 38px;
+  min-height: 36px;
   font-size: 12px;
 }
 
 .r3-customer-directory .cp360-result-summary {
-  padding-left: 11px;
+  padding-left: 10px;
 }
 
 .r3-customer-directory .cp360-result-summary strong {
@@ -325,6 +326,12 @@
   .r3-customer-directory .cp360-toolbar {
     grid-template-columns: 1fr;
     padding: 11px;
+  }
+
+  .r3-customer-directory .cp360-search,
+  .r3-customer-directory .cp360-filter,
+  .r3-customer-directory .cp360-result-summary {
+    gap: 5px;
   }
 
   .r3-customer-directory .cp360-result-summary {
