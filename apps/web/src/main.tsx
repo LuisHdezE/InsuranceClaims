@@ -39,6 +39,7 @@ import './operator-login-r3.css';
 import './operator-login-viewport.css';
 import './operator-dashboard-polish.css';
 import './claims-workspace-density.css';
+import './claim-detail-polish.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
