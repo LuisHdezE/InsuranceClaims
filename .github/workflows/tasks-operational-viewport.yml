@@ -9,6 +9,7 @@ on:
       - 'apps/web/src/claims-tasks.css'
       - 'apps/web/src/r3-ui-increment-03.css'
       - 'apps/web/src/tasks-operational-polish.css'
+      - 'apps/web/src/tasks-operational-detail-density-fix.css'
       - 'apps/web/src/operator-navigation.ts'
       - 'apps/web/src/main.tsx'
       - 'qa/tasks-operational-mock-api.py'
