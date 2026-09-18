@@ -71,7 +71,11 @@ try:
     submit.click()
     wait.until(lambda d: "/operator/claims" in d.current_url)
 
-    driver.get(f"{WEB_BASE_URL}/operator/claims/{CLAIM_ID}")
+    detail_link = wait.until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, f"a[href='/operator/claims/{CLAIM_ID}']"))
+    )
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", detail_link)
+    detail_link.click()
     wait.until(lambda d: f"/operator/claims/{CLAIM_ID}" in d.current_url)
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".r3-claim-detail-page")))
     wait.until(EC.visibility_of_element_located((By.XPATH, "//h1[contains(., 'CLM-2026-1842')]")))
