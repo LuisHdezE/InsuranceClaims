@@ -7,6 +7,8 @@ on:
       - 'apps/web/src/components/OperatorShell.tsx'
       - 'apps/web/src/components/OperatorShell.test.tsx'
       - 'apps/web/src/components/OperatorSidebar.tsx'
+      - 'apps/web/src/components/OperatorTopbar.tsx'
+      - 'apps/web/src/components/OperatorBottomBar.tsx'
       - 'apps/web/src/operator-navigation.ts'
       - 'apps/web/src/operator-sidebar-foundation.css'
       - 'qa/operator-sidebar-viewport-qa.py'
