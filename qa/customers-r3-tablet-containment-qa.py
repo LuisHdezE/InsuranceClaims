@@ -42,7 +42,12 @@ try:
     submit.click()
     wait.until(lambda d: "/operator/" in d.current_url and "/login" not in d.current_url)
 
-    driver.get(f"{WEB_BASE_URL}/operator/customers")
+    customers_link = wait.until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, "a.operator-sidebar-item[href='/operator/customers']"))
+    )
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", customers_link)
+    customers_link.click()
+    wait.until(lambda d: d.current_url.endswith("/operator/customers"))
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".r3-customer-directory")))
     wait.until(lambda d: "María Fernández" in d.find_element(By.CSS_SELECTOR, ".cp360-table").text)
     time.sleep(0.2)
