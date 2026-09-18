@@ -1,0 +1,227 @@
+/* Operator Sidebar Foundation
+ * Stable navigation component for the R3 operator shell.
+ * Canonical grammar derives from operations-dashboard-approved.svg and the
+ * approved R3 operator shell. Navigation maturity is handled in code; this
+ * layer only renders compact, stable states.
+ */
+
+.operator-sidebar-component {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.operator-sidebar-brand {
+  flex: 0 0 auto;
+}
+
+.operator-sidebar-nav {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(138, 181, 255, .24) transparent;
+}
+
+.operator-sidebar-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.operator-sidebar-nav::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(138, 181, 255, .22);
+}
+
+.operator-sidebar-component .r3-ui-nav {
+  gap: 11px;
+}
+
+.operator-sidebar-component .r3-ui-nav-group {
+  gap: 4px;
+}
+
+.operator-sidebar-component .r3-ui-nav-links {
+  gap: 2px;
+}
+
+.operator-sidebar-component .r3-ui-nav-label {
+  padding-inline: 10px;
+  font-size: 8px;
+  letter-spacing: .105em;
+}
+
+/* Deliberately outrank historical .ops-nav-link and R3 shell rules so the
+ * extracted sidebar owns its density instead of inheriting old 44-50px rows. */
+.operator-sidebar-component .r3-ui-nav .operator-sidebar-item {
+  position: relative;
+  height: 34px;
+  min-height: 34px;
+  max-height: 34px;
+  gap: 9px;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.operator-sidebar-component .r3-ui-nav .operator-sidebar-item .ops-nav-icon {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 21px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.operator-sidebar-item-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operator-sidebar-item.is-pending {
+  cursor: default;
+  color: #73839a;
+  background: transparent;
+  opacity: .78;
+  user-select: none;
+}
+
+.operator-sidebar-item.is-pending:hover {
+  background: transparent;
+  color: #73839a;
+  transform: none;
+}
+
+.operator-sidebar-item.is-pending .ops-nav-icon {
+  background: rgba(255, 255, 255, .028);
+  color: #65758d;
+}
+
+.operator-sidebar-pending-dot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #53637a;
+}
+
+.operator-sidebar-component .operator-sidebar-item.is-active {
+  background: #163262;
+  color: #fff;
+  box-shadow: inset 3px 0 0 #4e8cff;
+}
+
+.operator-sidebar-footer {
+  flex: 0 0 auto;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+@media (max-height: 780px) and (min-width: 721px) {
+  .operator-sidebar-component {
+    padding-top: 11px;
+    padding-bottom: 9px;
+  }
+
+  .operator-sidebar-component .r3-ui-brand {
+    min-height: 40px;
+    padding-bottom: 8px;
+  }
+
+  .operator-sidebar-component .r3-ui-brand-mark {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav {
+    gap: 4px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav-group {
+    gap: 2px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav-links {
+    gap: 1px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav-label {
+    font-size: 7.5px;
+    line-height: 1.2;
+  }
+
+  .operator-sidebar-component .r3-ui-nav .operator-sidebar-item {
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav .operator-sidebar-item .ops-nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+  }
+
+  .operator-sidebar-footer {
+    gap: 3px;
+    margin-top: 5px;
+    padding-top: 6px;
+    font-size: 8.5px;
+    line-height: 1.3;
+  }
+
+  .operator-sidebar-footer strong {
+    font-size: 9.5px;
+  }
+
+  .operator-sidebar-footer .ops-public-link {
+    margin-bottom: 2px;
+  }
+}
+
+@media (max-width: 720px) {
+  .operator-sidebar-component {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .operator-sidebar-nav {
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .operator-sidebar-component .r3-ui-nav-label {
+    display: none;
+  }
+
+  .operator-sidebar-component .r3-ui-nav .operator-sidebar-item {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    flex: 0 0 44px;
+    justify-content: center;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav .operator-sidebar-item .ops-nav-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+
+  .operator-sidebar-item-label,
+  .operator-sidebar-pending-dot {
+    display: none;
+  }
+}
