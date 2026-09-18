@@ -7,6 +7,7 @@ import {
   operatorNavItemsForRole,
   type OperatorNavItem,
 } from '../operator-navigation';
+import { OperatorBottomBar } from './OperatorBottomBar';
 import '../operator-sidebar-foundation.css';
 
 export function OperatorSidebar({
@@ -59,12 +60,7 @@ export function OperatorSidebar({
         })}
       </nav>
 
-      <div className="ops-sidebar-footer r3-ui-sidebar-footer operator-sidebar-footer">
-        <Link className="ops-public-link" to="/">Sitio público ↗</Link>
-        <strong>Centro de Operaciones R3</strong>
-        <span>Caso técnico no oficial · No oficial · Sin afiliación</span>
-        <span>Datos exclusivamente sintéticos.</span>
-      </div>
+      <OperatorBottomBar />
     </aside>
   );
 }
