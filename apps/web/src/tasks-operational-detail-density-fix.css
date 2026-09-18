@@ -1,9 +1,9 @@
 /* Tasks Operational viewport correction
  * Keeps the dedicated task identity compact on desktop without changing
- * task semantics or the mobile reading order.
+ * task semantics or the mobile/tablet reading order.
  */
 
-@media (min-width: 721px) {
+@media (min-width: 1101px) {
   .r3-task-detail-page .r3-task-detail-hero {
     position: relative;
     min-height: 0;
