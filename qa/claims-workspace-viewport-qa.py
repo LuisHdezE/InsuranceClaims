@@ -154,8 +154,12 @@ try:
               scrollHeight: Math.max(root.scrollHeight, body.scrollHeight),
               tableFont: table ? parseFloat(getComputedStyle(table).fontSize) : 0,
               rowHeight: row ? Math.round(rowRect.height) : 0,
+              rowWidth: row ? Math.round(rowRect.width) : 0,
               rowClientHeight: row ? row.clientHeight : 0,
               rowScrollHeight: row ? row.scrollHeight : 0,
+              minCellWidth: cells.length
+                ? Math.round(Math.min(...cells.map((node) => node.getBoundingClientRect().width)))
+                : 0,
               visibleCellCount: cells.filter((node) => {
                 const style = getComputedStyle(node);
                 const rect = node.getBoundingClientRect();
@@ -207,6 +211,11 @@ try:
                 )
             if not list_metrics["detailVisible"]:
                 raise AssertionError("Claims mobile record clips or hides the detail action")
+            if list_metrics["minCellWidth"] < list_metrics["rowWidth"] * 0.9:
+                raise AssertionError(
+                    "Claims mobile record keeps narrow desktop column widths: "
+                    f"minCellWidth={list_metrics['minCellWidth']} rowWidth={list_metrics['rowWidth']}"
+                )
 
         results.append(
             {
