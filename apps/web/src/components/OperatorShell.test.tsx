@@ -105,7 +105,7 @@ describe('OperatorShell', () => {
     expect(screen.queryByText('Pólizas')).toBeNull();
   });
 
-  it('shows the complete information architecture in the public demo without granting navigation', () => {
+  it('shows the complete information architecture in the public demo and links ready authorized views', () => {
     sessionState.id = PUBLIC_DEMO_OPERATOR_ID;
 
     render(
@@ -121,9 +121,12 @@ describe('OperatorShell', () => {
     const navigation = screen.getByRole('navigation');
     const nav = within(navigation);
     const clickable = nav.getAllByRole('link');
-    expect(clickable).toHaveLength(1);
-    expect(clickable[0]?.textContent).toContain('Siniestros');
-    expect(clickable[0]?.getAttribute('aria-current')).toBe('page');
+    expect(clickable).toHaveLength(3);
+
+    expect(nav.getByRole('link', { name: /Espacio de trabajo/ }).getAttribute('href')).toBe('/operator/workspace');
+    expect(nav.getByRole('link', { name: /Tablero/ }).getAttribute('href')).toBe('/operator/dashboard');
+    expect(nav.getByRole('link', { name: /Siniestros/ }).getAttribute('href')).toBe('/operator/claims');
+    expect(nav.getByRole('link', { name: /Siniestros/ }).getAttribute('aria-current')).toBe('page');
 
     const completeCatalog = [
       'Espacio de trabajo', 'Tablero', 'Siniestros', 'Tareas', 'Analítica',
@@ -134,7 +137,7 @@ describe('OperatorShell', () => {
       expect(nav.getByText(label)).toBeTruthy();
     }
 
-    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(15);
+    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(13);
   });
 
   it('keeps logout wired to the existing session action', () => {
