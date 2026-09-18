@@ -19,7 +19,10 @@ export function RequireStaffAccess({
     return <Navigate to="/operator/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (isPublicDemoOperator(session.operator) && !isPublicDemoPath(location.pathname)) {
+  if (
+    isPublicDemoOperator(session.operator)
+    && !isPublicDemoPath(location.pathname, session.operator.role)
+  ) {
     return <Navigate to="/operator/claims" replace />;
   }
 
