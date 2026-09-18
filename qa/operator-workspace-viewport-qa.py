@@ -37,7 +37,13 @@ try:
     wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
     wait.until(EC.visibility_of_element_located((By.ID, "operator-login"))).send_keys("platform.admin@visual-qa.invalid")
     driver.find_element(By.ID, "operator-password").send_keys("visual-qa-password")
-    driver.find_element(By.CSS_SELECTOR, "form.operator-form button[type='submit']").click()
+    submit = wait.until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "form.operator-form button[type='submit']"))
+    )
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", submit)
+    wait.until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, "form.operator-form button[type='submit']"))
+    ).click()
 
     wait.until(lambda d: "/operator/workspace" in d.current_url)
     wait.until(lambda d: "Tu espacio de trabajo" in d.find_element(By.TAG_NAME, "body").text)
