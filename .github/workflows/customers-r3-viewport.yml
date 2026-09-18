@@ -9,12 +9,14 @@ on:
       - 'apps/web/src/customer-policy-360.css'
       - 'apps/web/src/r3-ui-increment-04.css'
       - 'apps/web/src/customers-r3-visual-polish.css'
+      - 'apps/web/src/customers-r3-tablet-containment.css'
       - 'apps/web/src/operator-navigation.ts'
       - 'apps/web/src/components/OperatorShell.test.tsx'
       - 'apps/web/src/demo-access.test.ts'
       - 'apps/web/src/main.tsx'
       - 'qa/customers-r3-mock-api.py'
       - 'qa/customers-r3-viewport-qa.py'
+      - 'qa/customers-r3-tablet-containment-qa.py'
       - 'qa/operator-sidebar-viewport-qa.py'
       - '.github/workflows/customers-r3-viewport.yml'
   workflow_dispatch:
@@ -83,6 +85,11 @@ jobs:
         env:
           QA_WEB_BASE_URL: http://127.0.0.1:5173
         run: python qa/customers-r3-viewport-qa.py
+
+      - name: Verify Customers R3 tablet containment
+        env:
+          QA_WEB_BASE_URL: http://127.0.0.1:5173
+        run: python qa/customers-r3-tablet-containment-qa.py
 
       - name: Upload Customers R3 screenshots
         if: always()
