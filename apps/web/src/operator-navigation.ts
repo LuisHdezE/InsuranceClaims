@@ -84,7 +84,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '◎',
     group: 'portfolio',
     allOf: ['customers.read'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Cliente 360 R3 · Relaciones autoritativas y solo lectura',
   },
   {
