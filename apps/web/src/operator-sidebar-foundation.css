@@ -125,28 +125,64 @@
 
 @media (max-height: 780px) and (min-width: 721px) {
   .operator-sidebar-component {
-    padding-top: 14px;
-    padding-bottom: 12px;
+    padding-top: 11px;
+    padding-bottom: 9px;
   }
 
   .operator-sidebar-component .r3-ui-brand {
-    min-height: 46px;
-    padding-bottom: 12px;
+    min-height: 40px;
+    padding-bottom: 8px;
+  }
+
+  .operator-sidebar-component .r3-ui-brand-mark {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
   }
 
   .operator-sidebar-component .r3-ui-nav {
-    gap: 8px;
+    gap: 4px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav-group {
+    gap: 2px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav-links {
+    gap: 1px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav-label {
+    font-size: 7.5px;
+    line-height: 1.2;
   }
 
   .operator-sidebar-component .r3-ui-nav .operator-sidebar-item {
-    height: 30px;
-    min-height: 30px;
-    max-height: 30px;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+  }
+
+  .operator-sidebar-component .r3-ui-nav .operator-sidebar-item .ops-nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
   }
 
   .operator-sidebar-footer {
-    margin-top: 7px;
-    padding-top: 8px;
+    gap: 3px;
+    margin-top: 5px;
+    padding-top: 6px;
+    font-size: 8.5px;
+    line-height: 1.3;
+  }
+
+  .operator-sidebar-footer strong {
+    font-size: 9.5px;
+  }
+
+  .operator-sidebar-footer .ops-public-link {
+    margin-bottom: 2px;
   }
 }
 
