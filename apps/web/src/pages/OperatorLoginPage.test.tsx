@@ -56,7 +56,7 @@ describe('OperatorLoginPage demo personas', () => {
   it('renders the three governed public demo personas without changing product credential semantics', () => {
     renderPage();
 
-    expect(screen.getByRole('button', { name: 'Explorar como Operations' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Entrar en demo de solo lectura' })).toHaveTextContent('Operations');
     expect(screen.getByRole('button', { name: 'Explorar como Supervision' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Explorar como Administration' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Ingresar al workspace' })).toBeTruthy();
@@ -77,7 +77,7 @@ describe('OperatorLoginPage demo personas', () => {
     });
 
     renderPage();
-    fireEvent.click(screen.getByRole('button', { name: 'Explorar como Operations' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar en demo de solo lectura' }));
 
     await waitFor(() => expect(mockedCreateReadOnlyDemoOperatorSession).toHaveBeenCalledWith('operations'));
     expect(mockedAuthenticateOperator).not.toHaveBeenCalled();
