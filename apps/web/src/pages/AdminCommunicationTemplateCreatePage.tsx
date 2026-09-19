@@ -47,11 +47,11 @@ export function AdminCommunicationTemplateCreatePage() {
     event.preventDefault();
     setClientError(null);
     if (!key.trim() || !body.trim() || !sourceClassification.trim()) {
-      setClientError('Key, body y source classification son obligatorios.');
+      setClientError('La clave, el contenido y la clasificación de origen son obligatorios.');
       return;
     }
     if (channel === 'EMAIL' && !subject.trim()) {
-      setClientError('R3 exige subject para plantillas EMAIL.');
+      setClientError('Las plantillas EMAIL requieren asunto.');
       return;
     }
     try {
@@ -65,13 +65,13 @@ export function AdminCommunicationTemplateCreatePage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main comm-admin-main">
+      <main className="operator-main ops-main comm-admin-main communication-templates-r3-form-page">
         <div className="comm-breadcrumbs"><Link to="/operator/admin/communication-templates">Plantillas</Link><span>/</span><span>Nueva definición</span></div>
         <div className="ops-page-heading comm-admin-page-heading">
           <div>
-            <span className="ops-kicker">New Communication Template</span>
+            <span className="ops-kicker">Nueva plantilla de comunicación</span>
             <h1>Crear plantilla</h1>
-            <p>R3 crea la definición deshabilitada y su primera versión DRAFT. Activación y habilitación son pasos separados.</p>
+            <p>La nueva definición nace deshabilitada con su primera versión DRAFT. Activar una versión y habilitar la definición son pasos separados.</p>
           </div>
         </div>
 
@@ -83,7 +83,7 @@ export function AdminCommunicationTemplateCreatePage() {
             <div className="ops-panel-heading"><div><h2 id="comm-definition-title">Identidad y contenido inicial</h2><p>El canal queda asociado a la definición; el contenido vive en versiones inmutables.</p></div></div>
             <div className="comm-form-grid">
               <label>
-                <span>Key</span>
+                <span>Clave (key)</span>
                 <input value={key} maxLength={80} disabled={mutation.isPending} placeholder="claim.status.notice" onChange={(event) => setKey(event.target.value)} />
                 <small>Única y estable. El servidor valida el patrón R3.</small>
               </label>
@@ -95,18 +95,18 @@ export function AdminCommunicationTemplateCreatePage() {
                 </select>
               </label>
               <label className="comm-form-wide">
-                <span>Subject {channel === 'EMAIL' ? '(obligatorio)' : '(no aplica al contrato de WhatsApp)'}</span>
+                <span>Asunto {channel === 'EMAIL' ? '(obligatorio)' : '(no aplica a WHATSAPP)'}</span>
                 <input value={subject} maxLength={240} disabled={mutation.isPending || channel === 'WHATSAPP'} placeholder="Actualización de tu siniestro" onChange={(event) => setSubject(event.target.value)} />
               </label>
               <label className="comm-form-wide">
-                <span>Body</span>
+                <span>Contenido</span>
                 <textarea value={body} maxLength={8000} rows={9} disabled={mutation.isPending} placeholder="Contenido de la plantilla…" onChange={(event) => setBody(event.target.value)} />
                 <small>{body.length}/8000</small>
               </label>
               <label className="comm-form-wide">
-                <span>Source classification</span>
+                <span>Clasificación de origen</span>
                 <input value={sourceClassification} maxLength={80} disabled={mutation.isPending} placeholder="R3_ADMIN" onChange={(event) => setSourceClassification(event.target.value)} />
-                <small>Se conserva como clasificación opaca; la UI no añade significado de negocio.</small>
+                <small>Se conserva como clasificación opaca; la interfaz no añade significado de negocio.</small>
               </label>
             </div>
           </section>
@@ -115,7 +115,7 @@ export function AdminCommunicationTemplateCreatePage() {
 
           <div className="comm-form-actions">
             <Link className="comm-secondary-button" to="/operator/admin/communication-templates">Cancelar</Link>
-            <button className="comm-primary-button" type="submit" disabled={mutation.isPending}>{mutation.isPending ? 'Creando…' : 'Crear definición + DRAFT'}</button>
+            <button className="comm-primary-button" type="submit" disabled={mutation.isPending}>{mutation.isPending ? 'Creando…' : 'Crear plantilla + DRAFT'}</button>
           </div>
         </form>
       </main>
