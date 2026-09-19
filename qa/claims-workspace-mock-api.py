@@ -7,6 +7,24 @@ from urllib.parse import parse_qs, urlparse
 HOST = "127.0.0.1"
 PORT = 3000
 
+DEMO_PERSONAS = {
+    "operations": {
+        "id": "00000000-0000-4000-8000-000000000096",
+        "login": "demo.operator@eliasworks.invalid",
+        "role": "CLAIMS_OPERATOR",
+    },
+    "supervision": {
+        "id": "00000000-0000-4000-8000-000000000095",
+        "login": "demo.supervisor@eliasworks.invalid",
+        "role": "CLAIMS_SUPERVISOR",
+    },
+    "administration": {
+        "id": "00000000-0000-4000-8000-000000000094",
+        "login": "demo.admin@eliasworks.invalid",
+        "role": "PLATFORM_ADMIN",
+    },
+}
+
 CLAIMS = [
     {
         "claimId": "claim-visual-001",
@@ -126,19 +144,18 @@ class Handler(BaseHTTPRequestHandler):
         if length:
             self.rfile.read(length)
 
+        persona_key = self.headers.get("x-demo-persona", "operations").strip().lower()
+        persona = DEMO_PERSONAS.get(persona_key, DEMO_PERSONAS["operations"])
+
         self._json(
             200,
             {
-                "accessToken": "claims-workspace-visual-qa-token",
+                "accessToken": f"claims-workspace-visual-qa-{persona_key}-token",
                 "tokenType": "Bearer",
                 "expiresIn": 900,
-                "operator": {
-                    "id": "00000000-0000-4000-8000-000000000096",
-                    "login": "demo.operator@eliasworks.invalid",
-                    "role": "CLAIMS_OPERATOR",
-                },
+                "operator": persona,
             },
-            {"X-Request-Id": "claims-workspace-visual-qa-login"},
+            {"X-Request-Id": f"claims-workspace-visual-qa-login-{persona_key}"},
         )
 
     def _json(self, status: int, payload: object, extra_headers: dict[str, str] | None = None) -> None:
