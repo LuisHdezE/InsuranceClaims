@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
+import { resolveStaffLandingRoute } from '../auth/staff-access';
 import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import { operatorContextForPath } from '../operator-navigation';
@@ -13,7 +14,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
   const role = session?.operator.role;
   const demoReadOnly = isPublicDemoOperator(session?.operator);
   const topbarContext = operatorContextForPath(location.pathname);
-  const brandDestination = demoReadOnly ? '/operator/claims' : '/operator/workspace';
+  const brandDestination = role ? resolveStaffLandingRoute(role) : '/operator/workspace';
 
   return (
     <div className="operator-shell operator-ops-shell r3-ui-shell">
