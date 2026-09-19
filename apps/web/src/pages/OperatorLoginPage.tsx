@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { resolveStaffLandingRoute } from '../auth/staff-access';
-import { authenticateOperator, createReadOnlyDemoOperatorSession } from '../api/claims';
+import { authenticateOperator } from '../api/claims';
+import { createReadOnlyDemoOperatorSession } from '../api/demo-session';
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
-import { isPublicDemoOperator } from '../demo-access';
+import { PUBLIC_DEMO_PERSONAS, type PublicDemoPersona } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
-type PendingMode = 'credentials' | 'demo' | null;
+type PendingMode = 'credentials' | PublicDemoPersona | null;
 
 export function OperatorLoginPage() {
   const navigate = useNavigate();
@@ -21,18 +22,12 @@ export function OperatorLoginPage() {
   const pending = pendingMode !== null;
 
   if (session) {
-    const destination = isPublicDemoOperator(session.operator)
-      ? '/operator/claims'
-      : resolveStaffLandingRoute(session.operator.role, requestedPath);
-    return <Navigate to={destination} replace />;
+    return <Navigate to={resolveStaffLandingRoute(session.operator.role, requestedPath)} replace />;
   }
 
   const completeSignIn = (response: Parameters<typeof signIn>[0]) => {
     signIn(response);
-    const destination = isPublicDemoOperator(response.operator)
-      ? '/operator/claims'
-      : resolveStaffLandingRoute(response.operator.role, requestedPath);
-    navigate(destination, { replace: true });
+    navigate(resolveStaffLandingRoute(response.operator.role, requestedPath), { replace: true });
   };
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -50,11 +45,11 @@ export function OperatorLoginPage() {
     }
   };
 
-  const openReadOnlyDemo = async () => {
-    setPendingMode('demo');
+  const openReadOnlyDemo = async (persona: PublicDemoPersona) => {
+    setPendingMode(persona);
     setFailure(null);
     try {
-      const result = await createReadOnlyDemoOperatorSession();
+      const result = await createReadOnlyDemoOperatorSession(persona);
       setPassword('');
       completeSignIn(result.data);
     } catch (error) {
@@ -188,22 +183,28 @@ export function OperatorLoginPage() {
                   <div className="r3-login-demo-heading">
                     <div>
                       <span className="r3-login-demo-kicker">Demo pública</span>
-                      <strong>Explora el flujo operativo en modo seguro</strong>
+                      <strong>Elige el área que quieres explorar</strong>
                     </div>
                     <span className="r3-login-readonly-badge">Solo lectura</span>
                   </div>
                   <p>
-                    Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance. En hosting gratuito, la primera entrada puede tardar unos segundos mientras despierta la API.
+                    Cada persona usa un rol real de R3. El Sidebar muestra únicamente módulos autorizados y productizados; el API bloquea toda escritura y lecturas fuera del alcance de esa persona.
                   </p>
-                  <button
-                    className="btn btn-cyan r3-login-demo-button"
-                    type="button"
-                    disabled={pending}
-                    onClick={openReadOnlyDemo}
-                    aria-label="Entrar en demo de solo lectura"
-                  >
-                    {pendingMode === 'demo' ? 'Abriendo demo…' : 'Entrar en demo de solo lectura'}
-                  </button>
+                  <div className="r3-login-demo-personas" aria-label="Personas de la demo pública">
+                    {(Object.entries(PUBLIC_DEMO_PERSONAS) as Array<[PublicDemoPersona, (typeof PUBLIC_DEMO_PERSONAS)[PublicDemoPersona]]>).map(([persona, definition]) => (
+                      <button
+                        className="btn btn-cyan r3-login-demo-button"
+                        type="button"
+                        disabled={pending}
+                        onClick={() => openReadOnlyDemo(persona)}
+                        aria-label={`Entrar a la demo de ${definition.label}`}
+                        key={persona}
+                      >
+                        <span>{pendingMode === persona ? 'Abriendo…' : definition.label}</span>
+                        <small>{definition.description}</small>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
