@@ -95,6 +95,7 @@ try:
     wait.until(lambda d: "Revisar declaración inicial" in d.find_element(By.CSS_SELECTOR, ".r3-task-queue-list").text)
     wait.until(lambda d: "CLM-2026-1842" in d.find_element(By.CSS_SELECTOR, ".r3-task-inline-detail").text)
     wait.until(lambda d: "no modifica automáticamente" in d.find_element(By.CSS_SELECTOR, ".r3-task-domain-note").text)
+    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".ops-demo-readonly-banner")))
 
     # Ignore any transient console noise produced by the login landing route before Tasks is opened.
     driver.get_log("browser")
@@ -118,6 +119,8 @@ try:
             const detailTitle = document.querySelector('.r3-task-inline-header h2');
             const refresh = document.querySelector('.ops-page-heading .ops-refresh-button');
             const primaryAction = document.querySelector('.r3-task-inline-actions .ops-primary-action');
+            const assignAction = [...document.querySelectorAll('.r3-task-inline-actions button')]
+              .find((element) => element.textContent?.includes('Asignarme'));
             const gridStyle = grid ? getComputedStyle(grid) : null;
             return {
               innerWidth: window.innerWidth,
@@ -135,6 +138,7 @@ try:
               detailTitleFont: detailTitle ? parseFloat(getComputedStyle(detailTitle).fontSize) : 0,
               refreshHeight: refresh ? Math.round(refresh.getBoundingClientRect().height) : 0,
               primaryActionHeight: primaryAction ? Math.round(primaryAction.getBoundingClientRect().height) : 0,
+              assignActionPresent: Boolean(assignAction),
             };
             """
         )
@@ -143,6 +147,8 @@ try:
 
         if overflow > TOLERANCE_PX:
             raise AssertionError(f"Tasks workspace horizontal overflow at {width}x{height}: {overflow}px")
+        if metrics["primaryActionHeight"] != 0 or metrics["assignActionPresent"]:
+            raise AssertionError("Public demo Tasks workspace exposed a mutating action")
 
         columns = track_count(str(metrics["gridColumns"]))
         if width >= 1200:
@@ -166,7 +172,6 @@ try:
                 ("refresh", metrics["refreshHeight"]),
                 ("scope tab", metrics["firstTabHeight"]),
                 ("filter", metrics["firstFilterHeight"]),
-                ("primary action", metrics["primaryActionHeight"]),
             ):
                 if value < 44:
                     raise AssertionError(f"Tasks mobile {name} target is too short: {value}px")
@@ -194,7 +199,7 @@ try:
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".r3-task-detail-page")))
     wait.until(EC.visibility_of_element_located((By.XPATH, "//h1[contains(., 'Revisar declaración inicial')]")))
     wait.until(lambda d: "CLM-2026-1842" in d.find_element(By.CSS_SELECTOR, ".r3-task-context-card").text)
-    wait.until(lambda d: "Completar tarea" in d.find_element(By.CSS_SELECTOR, ".r3-task-decision-card").text)
+    wait.until(lambda d: "solo lectura" in d.find_element(By.CSS_SELECTOR, ".r3-task-decision-card").text.lower())
 
     for width, height in TARGETS:
         set_viewport(width, height)
@@ -212,6 +217,7 @@ try:
             const firstEditControl = document.querySelector('.r3-task-edit-grid select');
             const claimAction = document.querySelector('.r3-task-context-card .r3-full-action');
             const completeAction = document.querySelector('.r3-task-decision-grid .ops-primary-action');
+            const cancelAction = document.querySelector('.r3-task-decision-grid .r3-danger-action');
             return {
               innerWidth: window.innerWidth,
               innerHeight: window.innerHeight,
@@ -224,6 +230,7 @@ try:
               firstEditControlHeight: firstEditControl ? Math.round(firstEditControl.getBoundingClientRect().height) : 0,
               claimActionHeight: claimAction ? Math.round(claimAction.getBoundingClientRect().height) : 0,
               completeActionHeight: completeAction ? Math.round(completeAction.getBoundingClientRect().height) : 0,
+              cancelActionPresent: Boolean(cancelAction),
             };
             """
         )
@@ -232,6 +239,8 @@ try:
 
         if overflow > TOLERANCE_PX:
             raise AssertionError(f"Task detail horizontal overflow at {width}x{height}: {overflow}px")
+        if metrics["firstEditControlHeight"] != 0 or metrics["completeActionHeight"] != 0 or metrics["cancelActionPresent"]:
+            raise AssertionError("Public demo Task detail exposed edit/complete/cancel controls")
 
         columns = track_count(str(metrics["gridColumns"]))
         if width >= 1200:
@@ -245,13 +254,8 @@ try:
             raise AssertionError(f"Narrow task detail must stack into one column: {metrics['gridColumns']}")
 
         if width <= 520:
-            for name, value in (
-                ("edit control", metrics["firstEditControlHeight"]),
-                ("claim action", metrics["claimActionHeight"]),
-                ("complete action", metrics["completeActionHeight"]),
-            ):
-                if value < 44:
-                    raise AssertionError(f"Task detail mobile {name} target is too short: {value}px")
+            if metrics["claimActionHeight"] < 44:
+                raise AssertionError(f"Task detail mobile claim action target is too short: {metrics['claimActionHeight']}px")
             if metrics["heroTitleFont"] > 23:
                 raise AssertionError(f"Task detail mobile title is oversized: {metrics['heroTitleFont']}px")
 
@@ -279,7 +283,7 @@ finally:
 print(
     json.dumps(
         {
-            "event": "TASKS_OPERATIONAL_VIEWPORT_PASS",
+            "event": "TASKS_OPERATIONAL_READ_ONLY_VIEWPORT_PASS",
             "workspaceViewports": workspace_results,
             "detailViewports": detail_results,
         },

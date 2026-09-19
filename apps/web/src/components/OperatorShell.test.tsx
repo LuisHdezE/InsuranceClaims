@@ -50,6 +50,7 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('heading', { name: 'Operación' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Clientes y pólizas' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Administración' })).toBeNull();
+    expect(screen.queryByText('Demo pública · solo lectura')).toBeNull();
 
     expect(screen.getByRole('link', { name: /Espacio de trabajo/ })).toBeTruthy();
     expect(screen.getByRole('link', { name: /Tablero/ }).getAttribute('aria-current')).toBe('page');
@@ -105,7 +106,7 @@ describe('OperatorShell', () => {
     expect(screen.queryByText('Cobranzas')).toBeNull();
   });
 
-  it('shows only ready authorized navigation for the public Operations persona', () => {
+  it('shows only ready authorized navigation and read-only disclosure for the public Operations persona', () => {
     sessionState.id = PUBLIC_DEMO_OPERATOR_ID;
 
     render(
@@ -117,6 +118,8 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('heading', { name: 'Operación' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Clientes y pólizas' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Administración' })).toBeNull();
+    expect(screen.getByText('Demo pública · solo lectura')).toBeTruthy();
+    expect(screen.getByText(/acciones que cambian estado o configuración están ocultas/i)).toBeTruthy();
 
     const navigation = screen.getByRole('navigation');
     const nav = within(navigation);

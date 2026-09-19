@@ -5,6 +5,7 @@ import { listAdminCustomFields } from '../api/custom-field-admin';
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 const PAGE_SIZE = 25;
@@ -25,6 +26,7 @@ export function AdminCustomFieldsPage() {
 
   if (!session) return null;
   const result = fieldsQuery.data?.data;
+  const demoReadOnly = isPublicDemoOperator(session.operator);
 
   return (
     <OperatorShell>
@@ -35,7 +37,7 @@ export function AdminCustomFieldsPage() {
             <h1>Campos personalizados</h1>
             <p>Extensiones operacionales versionadas para CLAIM, RENEWAL y COLLECTION, gobernadas sin reemplazar identidad, estado, seguridad ni campos reservados del dominio.</p>
           </div>
-          <Link className="cf-primary-button" to="/operator/admin/custom-fields/new">+ Nuevo campo</Link>
+          {!demoReadOnly && <Link className="cf-primary-button" to="/operator/admin/custom-fields/new">+ Nuevo campo</Link>}
         </div>
 
         <section className="cf-contract-strip" aria-label="Frontera de campos personalizados">
@@ -61,7 +63,7 @@ export function AdminCustomFieldsPage() {
               </div>
 
               {result.items.length === 0 ? (
-                <div className="ops-compact-empty">No hay campos personalizados configurados.</div>
+                <div className="ops-compact-empty">{demoReadOnly ? 'La demo pública no expone campos personalizados sintéticos en este momento.' : 'No hay campos personalizados configurados.'}</div>
               ) : (
                 <div className="cf-card-grid">
                   {result.items.map((field) => {
@@ -80,7 +82,7 @@ export function AdminCustomFieldsPage() {
                           <span><small>Versión activa</small><strong>{active ? `v${active.versionNumber}` : '—'}</strong></span>
                           <span><small>Último tipo</small><strong>{latest?.valueType ?? '—'}</strong></span>
                         </div>
-                        <span className="cf-card-link">Administrar →</span>
+                        <span className="cf-card-link">{demoReadOnly ? 'Ver definición →' : 'Administrar →'}</span>
                       </Link>
                     );
                   })}

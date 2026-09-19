@@ -10,6 +10,7 @@ import type { PipelineVersionProjection } from '../api/pipeline-admin-types';
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 export function AdminPipelineDetailPage() {
@@ -62,6 +63,7 @@ export function AdminPipelineDetailPage() {
 
   if (!session) return null;
   const pipeline = pipelineQuery.data?.data;
+  const demoReadOnly = isPublicDemoOperator(session.operator);
   const mutationFailure = (activateMutation.error ?? stateMutation.error) as ApiFailure | null;
   const mutationPending = activateMutation.isPending || stateMutation.isPending;
 
@@ -95,15 +97,21 @@ export function AdminPipelineDetailPage() {
             </section>
 
             <section className="pipeline-admin-actions" aria-label="Acciones de administración">
-              <Link className="pipeline-primary-button" to={`/operator/admin/pipelines/${definitionId}/versions/new`}>+ Crear nueva versión</Link>
-              <button
-                className={`pipeline-state-button is-${pipeline.enabled ? 'disable' : 'enable'}`}
-                type="button"
-                disabled={mutationPending || (!pipeline.enabled && !pipeline.activeVersionId)}
-                onClick={() => stateMutation.mutate(!pipeline.enabled)}
-              >
-                {stateMutation.isPending ? 'Aplicando…' : pipeline.enabled ? 'Deshabilitar definición' : pipeline.activeVersionId ? 'Habilitar definición' : 'Activa una versión antes de habilitar'}
-              </button>
+              {demoReadOnly ? (
+                <div className="r3-pipeline-readonly">Demo pública de solo lectura. Crear versiones, activar DRAFT y cambiar el estado de la definición están ocultos.</div>
+              ) : (
+                <>
+                  <Link className="pipeline-primary-button" to={`/operator/admin/pipelines/${definitionId}/versions/new`}>+ Crear nueva versión</Link>
+                  <button
+                    className={`pipeline-state-button is-${pipeline.enabled ? 'disable' : 'enable'}`}
+                    type="button"
+                    disabled={mutationPending || (!pipeline.enabled && !pipeline.activeVersionId)}
+                    onClick={() => stateMutation.mutate(!pipeline.enabled)}
+                  >
+                    {stateMutation.isPending ? 'Aplicando…' : pipeline.enabled ? 'Deshabilitar definición' : pipeline.activeVersionId ? 'Habilitar definición' : 'Activa una versión antes de habilitar'}
+                  </button>
+                </>
+              )}
               <span className="pipeline-concurrency-note">Control de concurrencia activo · definición v{pipeline.version}</span>
             </section>
 
@@ -125,6 +133,7 @@ export function AdminPipelineDetailPage() {
                     version={version}
                     active={version.versionId === pipeline.activeVersionId}
                     mutationPending={mutationPending}
+                    readOnly={demoReadOnly}
                     onActivate={() => activateMutation.mutate(version.versionId)}
                   />
                 ))}
@@ -146,11 +155,13 @@ function PipelineVersionCard({
   version,
   active,
   mutationPending,
+  readOnly,
   onActivate,
 }: {
   version: PipelineVersionProjection;
   active: boolean;
   mutationPending: boolean;
+  readOnly: boolean;
   onActivate: () => void;
 }) {
   return (
@@ -164,7 +175,7 @@ function PipelineVersionCard({
             <code>{version.versionId}</code>
           </details>
         </div>
-        {version.status === 'DRAFT' && (
+        {!readOnly && version.status === 'DRAFT' && (
           <button className="pipeline-activate-button" type="button" disabled={mutationPending} onClick={onActivate}>
             {mutationPending ? 'Procesando…' : 'Activar DRAFT'}
           </button>

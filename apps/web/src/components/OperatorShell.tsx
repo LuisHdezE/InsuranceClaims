@@ -17,7 +17,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
   const brandDestination = role ? resolveStaffLandingRoute(role) : '/operator/workspace';
 
   return (
-    <div className="operator-shell operator-ops-shell r3-ui-shell">
+    <div className={`operator-shell operator-ops-shell r3-ui-shell${demoReadOnly ? ' is-public-demo-readonly' : ''}`}>
       <OperatorSidebar
         role={role}
         demoReadOnly={demoReadOnly}
@@ -32,6 +32,13 @@ export function OperatorShell({ children }: { children: ReactNode }) {
           demoReadOnly={demoReadOnly}
           onSignOut={signOut}
         />
+
+        {demoReadOnly && (
+          <div className="ops-demo-readonly-banner" role="status">
+            <strong>Demo pública · solo lectura</strong>
+            <span>Puedes recorrer datos sintéticos gobernados. Las acciones que cambian estado o configuración están ocultas y el API rechaza cualquier escritura.</span>
+          </div>
+        )}
 
         {children}
       </div>

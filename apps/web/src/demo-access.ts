@@ -40,6 +40,18 @@ const DEMO_PERSONA_BY_ID = new Map<string, DemoPersonaKey>(
   DEMO_PERSONA_OPTIONS.map((persona) => [persona.id, persona.key]),
 );
 
+const DEMO_DETAIL_ROUTES = new Set([
+  '/operator/claims',
+  '/operator/tasks',
+  '/operator/customers',
+  '/operator/policies',
+  '/operator/renewals',
+  '/operator/collections',
+  '/operator/admin/pipelines',
+  '/operator/admin/communication-templates',
+  '/operator/admin/custom-fields',
+]);
+
 export function demoPersonaForOperator(
   operator: Pick<OperatorIdentity, 'id'> | null | undefined,
 ): DemoPersonaKey | null {
@@ -51,9 +63,17 @@ export function isPublicDemoOperator(operator: Pick<OperatorIdentity, 'id'> | nu
 }
 
 export function isPublicDemoPath(pathname: string, role: StaffRole): boolean {
+  const normalizedPath = pathname.length > 1 && pathname.endsWith('/')
+    ? pathname.slice(0, -1)
+    : pathname;
   const item = OPERATOR_NAV_ITEMS.find((candidate) => (
-    pathname === candidate.to || pathname.startsWith(`${candidate.to}/`)
+    normalizedPath === candidate.to || normalizedPath.startsWith(`${candidate.to}/`)
   ));
 
-  return Boolean(item && operatorNavItemCanLink(item, role));
+  if (!item || !operatorNavItemCanLink(item, role)) return false;
+  if (normalizedPath === item.to) return true;
+  if (!DEMO_DETAIL_ROUTES.has(item.to)) return false;
+
+  const suffix = normalizedPath.slice(item.to.length + 1);
+  return Boolean(suffix && suffix !== 'new' && !suffix.includes('/'));
 }

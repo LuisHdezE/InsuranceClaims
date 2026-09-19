@@ -5,6 +5,7 @@ import { listAdminPipelines } from '../api/pipeline-admin';
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 export function AdminPipelinesPage() {
@@ -24,6 +25,7 @@ export function AdminPipelinesPage() {
   if (!session) return null;
   const result = query.data?.data;
   const items = result?.items ?? [];
+  const demoReadOnly = isPublicDemoOperator(session.operator);
 
   return (
     <OperatorShell>
@@ -34,7 +36,7 @@ export function AdminPipelinesPage() {
             <h1>Pipelines</h1>
             <p>Definiciones y versiones R3 para CLAIM, RENEWAL y COLLECTION. Las versiones son inmutables y la API conserva la autoridad de activación y concurrencia.</p>
           </div>
-          <Link className="pipeline-primary-button" to="/operator/admin/pipelines/new">+ Nuevo pipeline</Link>
+          {!demoReadOnly && <Link className="pipeline-primary-button" to="/operator/admin/pipelines/new">+ Nuevo pipeline</Link>}
         </div>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
@@ -49,7 +51,7 @@ export function AdminPipelinesPage() {
           <div className="ops-panel-heading">
             <div>
               <h2 id="pipeline-list-title">Definiciones configuradas</h2>
-              <p>La lista usa únicamente paginación porque R3 no publica filtros administrativos adicionales.</p>
+              <p>{demoReadOnly ? 'Directorio sintético gobernado para inspección en modo solo lectura.' : 'La lista usa únicamente paginación porque R3 no publica filtros administrativos adicionales.'}</p>
             </div>
             <button className="ops-refresh-button" type="button" disabled={query.isFetching} onClick={() => void query.refetch()}>
               {query.isFetching ? 'Actualizando…' : 'Actualizar'}
@@ -61,8 +63,8 @@ export function AdminPipelinesPage() {
           ) : items.length === 0 ? (
             <div className="pipeline-empty-state">
               <strong>No hay definiciones en esta página.</strong>
-              <span>Una nueva definición nace deshabilitada con su primera versión DRAFT.</span>
-              <Link to="/operator/admin/pipelines/new">Crear primera definición →</Link>
+              <span>{demoReadOnly ? 'La demo no publica más definiciones fuera de su catálogo sintético gobernado.' : 'Una nueva definición nace deshabilitada con su primera versión DRAFT.'}</span>
+              {!demoReadOnly && <Link to="/operator/admin/pipelines/new">Crear primera definición →</Link>}
             </div>
           ) : (
             <div className="pipeline-admin-grid">
@@ -89,7 +91,7 @@ export function AdminPipelinesPage() {
                       <strong>{active ? `v${active.versionNumber}` : 'Sin versión activa'}</strong>
                       {active && <small>{active.stages.length} etapa(s) · {active.sourceClassification}</small>}
                     </div>
-                    <span className="pipeline-card-link">Administrar →</span>
+                    <span className="pipeline-card-link">{demoReadOnly ? 'Ver definición →' : 'Administrar →'}</span>
                   </Link>
                 );
               })}

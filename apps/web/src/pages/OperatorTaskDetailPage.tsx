@@ -14,6 +14,7 @@ import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { cancellationReasonLabel, taskStatusLabel, taskTypeLabel } from '../components/task-presentation';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 const CANCELLATION_REASONS: ClaimTaskCancellationReason[] = ['NO_LONGER_REQUIRED', 'DUPLICATE', 'CREATED_IN_ERROR'];
@@ -116,7 +117,8 @@ export function OperatorTaskDetailPage() {
   });
 
   if (!session) return null;
-  const canManage = hasPermission(session.operator.role, 'claims.tasks.manage');
+  const demoReadOnly = isPublicDemoOperator(session.operator);
+  const canManage = !demoReadOnly && hasPermission(session.operator.role, 'claims.tasks.manage');
   const hasChanges = Boolean(task && edit && (
     edit.priority !== task.priority
       || edit.dueAt !== toDateTimeLocal(task.dueAt)
@@ -205,7 +207,13 @@ export function OperatorTaskDetailPage() {
                     <p className="r3-task-assignment-note">La selección de otro operador no se ofrece hasta contar con un directorio canónico de operadores.</p>
                   </form>
                 ) : (
-                  <div className="r3-task-readonly-state">{task.status === 'OPEN' ? 'Tu rol puede consultar esta tarea, pero no modificarla.' : 'Esta tarea ya no admite edición porque no está abierta.'}</div>
+                  <div className="r3-task-readonly-state">
+                    {demoReadOnly
+                      ? 'Demo pública de solo lectura. Prioridad, vencimiento y asignación se muestran sin controles de edición.'
+                      : task.status === 'OPEN'
+                        ? 'Tu rol puede consultar esta tarea, pero no modificarla.'
+                        : 'Esta tarea ya no admite edición porque no está abierta.'}
+                  </div>
                 )}
               </article>
             </section>
@@ -217,6 +225,8 @@ export function OperatorTaskDetailPage() {
                   <article><span className="r3-decision-icon is-success">✓</span><div><strong>Completar tarea</strong><p>Marca el trabajo como realizado. No cambia el estado del siniestro automáticamente.</p></div><button className="ops-primary-action" type="button" disabled={mutationBusy} onClick={() => { setFailure(null); setSuccess(null); completeMutation.mutate(task); }}>{completeMutation.isPending ? 'Completando…' : 'Completar tarea'}</button></article>
                   <article><span className="r3-decision-icon is-warning">×</span><div><strong>Cancelar tarea</strong><p>Requiere una razón canónica y conserva el control de concurrencia del servidor.</p><select aria-label="Razón de cancelación" value={cancelReason} onChange={(event) => setCancelReason(event.target.value as ClaimTaskCancellationReason)}>{CANCELLATION_REASONS.map((reason) => <option value={reason} key={reason}>{cancellationReasonLabel(reason)}</option>)}</select></div><button className="r3-danger-action" type="button" disabled={mutationBusy} onClick={() => { setFailure(null); setSuccess(null); cancelMutation.mutate(task); }}>{cancelMutation.isPending ? 'Cancelando…' : 'Cancelar tarea'}</button></article>
                 </div>
+              ) : demoReadOnly && task.status === 'OPEN' ? (
+                <div className="r3-task-readonly-state">Demo pública de solo lectura. Completar y cancelar están ocultos; el servidor mantiene el bloqueo `DEMO_READ_ONLY`.</div>
               ) : (
                 <div className="r3-task-terminal-state">
                   <strong>{taskStatusLabel(task.status)}</strong>
