@@ -41,7 +41,6 @@ export const PUBLIC_DEMO_CLAIMS = [
 const PUBLIC_DEMO_CLAIM_IDS = new Set(PUBLIC_DEMO_CLAIMS.map((claim) => claim.claimId));
 
 const OPERATIONS_READ_PREFIXES = [
-  '/api/v1/operator/claims',
   '/api/v1/operator/tasks',
   '/api/v1/operator/customers',
   '/api/v1/operator/policies',
