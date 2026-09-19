@@ -111,7 +111,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '¤',
     group: 'portfolio',
     allOf: ['collections.read'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Cobranzas R3 · Ciclo de vida, pago verificado y pipeline separados',
   },
   {
