@@ -42,6 +42,7 @@ EXPECTED_READY_LINKS = {
     "/operator/tasks": "Tareas",
     "/operator/customers": "Clientes",
     "/operator/policies": "Pólizas",
+    "/operator/renewals": "Renovaciones",
 }
 
 options = webdriver.ChromeOptions()
@@ -108,8 +109,8 @@ try:
         raise AssertionError(f"Unexpected demo sidebar catalog: {sorted(labels)}")
 
     pending = driver.find_elements(By.CSS_SELECTOR, ".operator-sidebar-item.is-pending[aria-disabled='true']")
-    if len(pending) != 10:
-        raise AssertionError(f"Expected 10 disabled demo destinations, got {len(pending)}")
+    if len(pending) != 9:
+        raise AssertionError(f"Expected 9 disabled demo destinations, got {len(pending)}")
 
     active = driver.find_elements(By.CSS_SELECTOR, ".operator-sidebar-item.is-active")
     if len(active) != 1 or "Siniestros" not in active[0].text:

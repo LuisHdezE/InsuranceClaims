@@ -79,7 +79,7 @@ export function OperatorRenewalDetailPage() {
           <>
             <section className="r3-case-hero" aria-labelledby="renewal-title">
               <div>
-                <span className="ops-kicker">Renewal Operations R3</span>
+                <span className="ops-kicker">Operaciones de renovación R3</span>
                 <h1 id="renewal-title">{renewal.customer?.displayName ?? 'Caso de renovación'}</h1>
                 <p>{renewal.policy?.policyReference ?? renewal.policyId}</p>
                 <div className="r3-case-hero-meta">
@@ -90,7 +90,7 @@ export function OperatorRenewalDetailPage() {
               <div className="r3-case-hero-side">
                 <small>Etapa operativa</small>
                 <strong>{renewal.pipeline?.currentStage?.displayName ?? 'Sin work item'}</strong>
-                <span>Lifecycle y pipeline permanecen independientes</span>
+                <span>Ciclo de vida y pipeline permanecen independientes</span>
               </div>
             </section>
 
@@ -119,7 +119,7 @@ export function OperatorRenewalDetailPage() {
               </section>
 
               <section className="ops-panel r3-case-lifecycle-card" aria-labelledby="renewal-lifecycle-title">
-                <div className="ops-panel-heading"><div><h2 id="renewal-lifecycle-title">Lifecycle</h2><p>Estado de negocio gobernado por las transiciones publicadas por el servidor.</p></div></div>
+                <div className="ops-panel-heading"><div><h2 id="renewal-lifecycle-title">Ciclo de vida</h2><p>Estado de negocio gobernado por las transiciones publicadas por el servidor.</p></div></div>
                 <div className="r3-case-lifecycle-state"><RenewalStatus value={renewal.status} /></div>
                 {renewal.status === 'OPEN' && canManage ? (
                   <div className="r3-case-decision-row">
@@ -136,7 +136,7 @@ export function OperatorRenewalDetailPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="r3-case-readonly-note">{renewal.status === 'OPEN' ? 'Tu rol puede leer este caso, pero no cambiar su lifecycle.' : 'El caso está en un estado terminal y no admite nuevas transiciones.'}</p>
+                  <p className="r3-case-readonly-note">{renewal.status === 'OPEN' ? 'Tu rol puede leer este caso, pero no cambiar su ciclo de vida.' : 'El caso está en un estado terminal y no admite nuevas transiciones.'}</p>
                 )}
               </section>
             </div>

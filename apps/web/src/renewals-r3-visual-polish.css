@@ -1,0 +1,258 @@
+.r3-renewals-directory,
+.r3-renewal-detail {
+  --renewals-r3-primary: #0f5fcc;
+  --renewals-r3-text: #172033;
+  --renewals-r3-muted: #667085;
+  --renewals-r3-border: #d6dee8;
+  --renewals-r3-soft: #f6f8fb;
+}
+
+.r3-renewals-directory,
+.r3-renewal-detail {
+  gap: 16px;
+}
+
+.r3-renewals-directory .r3-case-page-heading {
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+
+.r3-renewals-directory .r3-case-page-heading h1,
+.r3-renewal-detail .r3-case-hero h1 {
+  margin-top: 4px;
+  font-size: clamp(23px, 2.25vw, 29px);
+  line-height: 1.08;
+}
+
+.r3-renewals-directory .r3-case-page-heading p {
+  max-width: 760px;
+  margin: 7px 0 0;
+  color: var(--renewals-r3-muted);
+  line-height: 1.5;
+}
+
+.r3-renewals-directory .r3-case-heading-summary {
+  min-width: 168px;
+  padding: 10px 13px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.r3-renewals-directory .r3-case-heading-summary strong {
+  font-size: 18px;
+}
+
+.r3-renewals-directory .r3-case-list-panel,
+.r3-renewal-detail :is(.r3-case-context-card, .r3-case-lifecycle-card, .r3-case-pipeline-card) {
+  box-shadow: none;
+}
+
+.r3-renewals-directory .r3-case-list-panel {
+  overflow: hidden;
+}
+
+.r3-renewals-directory .ops-panel-heading {
+  gap: 14px;
+}
+
+.r3-renewals-directory .ops-panel-heading h2,
+.r3-renewal-detail .ops-panel-heading h2 {
+  margin-bottom: 3px;
+  font-size: 17px;
+}
+
+.r3-renewals-directory .ops-panel-heading p,
+.r3-renewal-detail .ops-panel-heading p {
+  max-width: 740px;
+  margin: 0;
+  color: var(--renewals-r3-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.r3-renewals-directory .r3-case-table {
+  min-width: 760px;
+}
+
+.r3-renewals-directory .r3-case-table th {
+  padding: 9px 10px;
+}
+
+.r3-renewals-directory .r3-case-table td {
+  padding: 10px;
+}
+
+.r3-renewals-directory .r3-case-table tbody tr {
+  min-height: 52px;
+}
+
+.r3-renewals-directory .r3-case-primary-link,
+.r3-renewals-directory .r3-case-table strong {
+  font-size: 13px;
+}
+
+.r3-renewals-directory .r3-case-status,
+.r3-renewals-directory .r3-case-stage {
+  min-height: 26px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.r3-renewals-directory .r3-case-row-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  font-size: 12px;
+}
+
+.r3-renewals-directory .r3-case-pagination {
+  padding-top: 12px;
+}
+
+.r3-renewal-detail .r3-case-breadcrumbs {
+  margin-bottom: 0;
+}
+
+.r3-renewal-detail .r3-case-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(245px, 310px);
+  gap: 16px;
+  margin-bottom: 0;
+  padding: 18px;
+  box-shadow: none;
+}
+
+.r3-renewal-detail .r3-case-hero > div:first-child > p {
+  font-size: 13px;
+}
+
+.r3-renewal-detail .r3-case-hero-meta {
+  margin-top: 10px;
+}
+
+.r3-renewal-detail .r3-case-hero-side {
+  padding: 14px 16px;
+}
+
+.r3-renewal-detail .r3-case-hero-side strong {
+  font-size: 18px;
+}
+
+.r3-renewal-detail .r3-case-hero-side span {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.r3-renewal-detail .r3-case-detail-grid {
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+  gap: 14px;
+  margin-bottom: 0;
+}
+
+.r3-renewal-detail .r3-case-context-grid {
+  gap: 10px;
+}
+
+.r3-renewal-detail .r3-case-context-grid > div,
+.r3-renewal-detail .r3-case-current-stage,
+.r3-renewal-detail .r3-case-next-stages {
+  padding: 12px;
+  border-radius: 9px;
+}
+
+.r3-renewal-detail .r3-case-context-grid strong {
+  font-size: 13px;
+}
+
+.r3-renewal-detail .r3-case-context-grid a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  width: fit-content;
+  font-size: 12px;
+}
+
+.r3-renewal-detail .r3-case-dates {
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.r3-renewal-detail .r3-case-dates > div {
+  padding: 8px 10px;
+}
+
+.r3-renewal-detail .r3-case-lifecycle-state {
+  margin-bottom: 10px;
+}
+
+.r3-renewal-detail .r3-case-decision,
+.r3-renewal-detail .r3-case-stage-actions button {
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.r3-renewal-detail .r3-case-pipeline-card {
+  margin-bottom: 0;
+}
+
+.r3-renewal-detail .r3-case-pipeline-layout {
+  grid-template-columns: minmax(220px, .52fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.r3-renewal-detail .r3-case-current-stage strong {
+  font-size: 18px;
+}
+
+.r3-renewal-detail .r3-case-contract-note {
+  margin-top: 0;
+  padding: 8px 10px;
+  font-size: 11px;
+}
+
+@media (max-width: 1100px) {
+  .r3-renewal-detail .r3-case-hero,
+  .r3-renewal-detail .r3-case-detail-grid,
+  .r3-renewal-detail .r3-case-pipeline-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-renewal-detail .r3-case-hero-side {
+    border-top: 1px solid #e4ebf3;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .r3-renewals-directory,
+  .r3-renewal-detail {
+    gap: 12px;
+  }
+
+  .r3-renewals-directory .r3-case-page-heading h1,
+  .r3-renewal-detail .r3-case-hero h1 {
+    font-size: 23px;
+  }
+
+  .r3-renewals-directory .r3-case-heading-summary {
+    width: 100%;
+  }
+
+  .r3-renewals-directory .ops-refresh-button,
+  .r3-renewals-directory .r3-case-pagination button,
+  .r3-renewals-directory .r3-case-row-action,
+  .r3-renewal-detail .r3-case-context-grid a,
+  .r3-renewal-detail .r3-case-decision,
+  .r3-renewal-detail .r3-case-stage-actions button {
+    min-height: 44px;
+  }
+
+  .r3-renewal-detail .r3-case-hero {
+    padding: 15px;
+  }
+
+  .r3-renewal-detail .r3-case-context-grid,
+  .r3-renewal-detail .r3-case-dates {
+    grid-template-columns: 1fr;
+  }
+}

@@ -102,7 +102,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '↻',
     group: 'portfolio',
     allOf: ['renewals.read'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Renovaciones R3 · Ciclo de vida y pipeline operativo con control de versión',
   },
   {
