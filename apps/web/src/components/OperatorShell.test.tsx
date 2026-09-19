@@ -58,13 +58,7 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('link', { name: /^Clientes$/ }).getAttribute('href')).toBe('/operator/customers');
     expect(screen.getByRole('link', { name: /^Pólizas$/ }).getAttribute('href')).toBe('/operator/policies');
     expect(screen.getByRole('link', { name: /^Renovaciones$/ }).getAttribute('href')).toBe('/operator/renewals');
-
-    const pendingLabels = ['Cobranzas'];
-    for (const label of pendingLabels) {
-      const text = screen.getByText(label);
-      expect(text.closest('[aria-disabled="true"]')).toBeTruthy();
-      expect(screen.queryByRole('link', { name: new RegExp(`^${label}$`) })).toBeNull();
-    }
+    expect(screen.getByRole('link', { name: /^Cobranzas$/ }).getAttribute('href')).toBe('/operator/collections');
 
     expect(screen.queryByText('Analítica')).toBeNull();
     expect(screen.queryByText('Pipelines')).toBeNull();
@@ -108,6 +102,7 @@ describe('OperatorShell', () => {
     expect(screen.queryByText('Clientes')).toBeNull();
     expect(screen.queryByText('Pólizas')).toBeNull();
     expect(screen.queryByText('Renovaciones')).toBeNull();
+    expect(screen.queryByText('Cobranzas')).toBeNull();
   });
 
   it('shows the complete information architecture in the public demo and links ready authorized views', () => {
@@ -126,7 +121,7 @@ describe('OperatorShell', () => {
     const navigation = screen.getByRole('navigation');
     const nav = within(navigation);
     const clickable = nav.getAllByRole('link');
-    expect(clickable).toHaveLength(7);
+    expect(clickable).toHaveLength(8);
 
     expect(nav.getByRole('link', { name: /Espacio de trabajo/ }).getAttribute('href')).toBe('/operator/workspace');
     expect(nav.getByRole('link', { name: /Tablero/ }).getAttribute('href')).toBe('/operator/dashboard');
@@ -135,6 +130,7 @@ describe('OperatorShell', () => {
     expect(nav.getByRole('link', { name: /^Clientes$/ }).getAttribute('href')).toBe('/operator/customers');
     expect(nav.getByRole('link', { name: /^Pólizas$/ }).getAttribute('href')).toBe('/operator/policies');
     expect(nav.getByRole('link', { name: /^Renovaciones$/ }).getAttribute('href')).toBe('/operator/renewals');
+    expect(nav.getByRole('link', { name: /^Cobranzas$/ }).getAttribute('href')).toBe('/operator/collections');
     expect(nav.getByRole('link', { name: /Siniestros/ }).getAttribute('aria-current')).toBe('page');
 
     const completeCatalog = [
@@ -146,7 +142,7 @@ describe('OperatorShell', () => {
       expect(nav.getByText(label)).toBeTruthy();
     }
 
-    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(9);
+    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(8);
   });
 
   it('keeps logout wired to the existing session action', () => {
