@@ -2,6 +2,7 @@ import { Body, Controller, Get, Headers, HttpCode, Inject, Param, Patch, Post, Q
 import { z } from 'zod';
 import { API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
+import { isDemoModeEnabled, isPublicDemoOperator, publicDemoFixtureIds, scopePublicDemoPage } from './demo-access.js';
 import { RateLimitService, callerIp } from './transport.js';
 
 const uuidSchema = z.string().uuid();
@@ -53,6 +54,17 @@ export class CommunicationTemplateAdminController {
   async list(@Query() query: Record<string, string | undefined>, @Req() req: any) {
     this.rate(req, false);
     const parsed = z.object({ page: z.coerce.number().int().min(1).optional(), pageSize: z.coerce.number().int().min(1).max(100).optional() }).parse(query);
+
+    if (isDemoModeEnabled() && isPublicDemoOperator(req.actor)) {
+      const page = parsed.page ?? 1;
+      const pageSize = parsed.pageSize ?? 25;
+      if (publicDemoFixtureIds('communicationTemplate').length === 0) {
+        return { items: [], page, pageSize, totalItems: 0, totalPages: 0 };
+      }
+      const source = await this.runtime.communicationTemplates.listCommunicationTemplates({ page: 1, pageSize: 100 }, req.actor);
+      return scopePublicDemoPage(source.items, 'communicationTemplate', (item) => item.definitionId, page, pageSize);
+    }
+
     return this.runtime.communicationTemplates.listCommunicationTemplates(parsed, req.actor);
   }
 
