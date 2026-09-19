@@ -93,7 +93,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '▤',
     group: 'portfolio',
     allOf: ['policies.read'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Póliza 360 R3 · Referencias modernas y legacy',
   },
   {
