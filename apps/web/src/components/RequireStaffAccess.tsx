@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import type { StaffPermission } from '../auth/staff-access';
-import { hasAllPermissions } from '../auth/staff-access';
+import { defaultStaffRoute, hasAllPermissions } from '../auth/staff-access';
 import { isPublicDemoOperator, isPublicDemoPath } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
@@ -23,7 +23,7 @@ export function RequireStaffAccess({
     isPublicDemoOperator(session.operator)
     && !isPublicDemoPath(location.pathname, session.operator.role)
   ) {
-    return <Navigate to="/operator/claims" replace />;
+    return <Navigate to={defaultStaffRoute(session.operator.role)} replace />;
   }
 
   if (allOf.length > 0 && !hasAllPermissions(session.operator.role, allOf)) {
