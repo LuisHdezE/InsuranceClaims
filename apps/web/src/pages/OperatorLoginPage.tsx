@@ -195,6 +195,7 @@ export function OperatorLoginPage() {
                         className="btn btn-cyan r3-login-demo-button"
                         type="button"
                         disabled={pending}
+                        data-demo-persona={persona.key}
                         onClick={() => void openReadOnlyDemo(persona.key)}
                         aria-label={persona.key === 'operations' ? 'Entrar en demo de solo lectura' : `Explorar como ${persona.label}`}
                         key={persona.key}
