@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StaffRole } from '../api/types';
-import { PUBLIC_DEMO_OPERATOR_ID } from '../demo-access';
+import { PUBLIC_DEMO_PERSONAS } from '../demo-access';
 import { OperatorShell } from './OperatorShell';
 
 const sessionState = vi.hoisted(() => ({
@@ -62,8 +62,6 @@ describe('OperatorShell', () => {
 
     expect(screen.queryByText('Analítica')).toBeNull();
     expect(screen.queryByText('Pipelines')).toBeNull();
-    expect(screen.queryByRole('link', { name: /^Claims$/ })).toBeNull();
-    expect(screen.queryByRole('link', { name: /^Tasks$/ })).toBeNull();
   });
 
   it('does not elevate platform admin into business navigation while linking productized admin capabilities', () => {
@@ -84,13 +82,7 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('link', { name: /^Plantillas$/ }).getAttribute('href')).toBe('/operator/admin/communication-templates');
     expect(screen.getByRole('link', { name: /^Campos$/ }).getAttribute('href')).toBe('/operator/admin/custom-fields');
 
-    const pendingLabels = [
-      'Orientación',
-      'Automatizaciones',
-      'Importaciones',
-      'Recuperación',
-    ];
-    for (const label of pendingLabels) {
+    for (const label of ['Orientación', 'Automatizaciones', 'Importaciones', 'Recuperación']) {
       const text = screen.getByText(label);
       expect(text.closest('[aria-disabled="true"]')).toBeTruthy();
       expect(screen.queryByRole('link', { name: new RegExp(`^${label}$`) })).toBeNull();
@@ -105,8 +97,9 @@ describe('OperatorShell', () => {
     expect(screen.queryByText('Cobranzas')).toBeNull();
   });
 
-  it('shows the complete information architecture in the public demo and links ready authorized views', () => {
-    sessionState.id = PUBLIC_DEMO_OPERATOR_ID;
+  it('makes the operations demo sidebar fully traversable instead of exposing dead admin links', () => {
+    sessionState.id = PUBLIC_DEMO_PERSONAS.operations.id;
+    sessionState.role = PUBLIC_DEMO_PERSONAS.operations.role;
 
     render(
       <MemoryRouter initialEntries={['/operator/claims']}>
@@ -114,15 +107,11 @@ describe('OperatorShell', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Operación' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Clientes y pólizas' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Administración' })).toBeTruthy();
-
     const navigation = screen.getByRole('navigation');
     const nav = within(navigation);
     const clickable = nav.getAllByRole('link');
-    expect(clickable).toHaveLength(8);
 
+    expect(clickable).toHaveLength(8);
     expect(nav.getByRole('link', { name: /Espacio de trabajo/ }).getAttribute('href')).toBe('/operator/workspace');
     expect(nav.getByRole('link', { name: /Tablero/ }).getAttribute('href')).toBe('/operator/dashboard');
     expect(nav.getByRole('link', { name: /Siniestros/ }).getAttribute('href')).toBe('/operator/claims');
@@ -132,17 +121,64 @@ describe('OperatorShell', () => {
     expect(nav.getByRole('link', { name: /^Renovaciones$/ }).getAttribute('href')).toBe('/operator/renewals');
     expect(nav.getByRole('link', { name: /^Cobranzas$/ }).getAttribute('href')).toBe('/operator/collections');
     expect(nav.getByRole('link', { name: /Siniestros/ }).getAttribute('aria-current')).toBe('page');
+    expect(nav.queryByText('Analítica')).toBeNull();
+    expect(nav.queryByText('Pipelines')).toBeNull();
+    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(0);
+  });
 
-    const completeCatalog = [
-      'Espacio de trabajo', 'Tablero', 'Siniestros', 'Tareas', 'Analítica',
-      'Clientes', 'Pólizas', 'Renovaciones', 'Cobranzas', 'Pipelines',
-      'Plantillas', 'Campos', 'Orientación', 'Automatizaciones', 'Importaciones', 'Recuperación',
-    ];
-    for (const label of completeCatalog) {
-      expect(nav.getByText(label)).toBeTruthy();
+  it('gives the supervision demo analytics without administrative capabilities', () => {
+    sessionState.id = PUBLIC_DEMO_PERSONAS.supervision.id;
+    sessionState.role = PUBLIC_DEMO_PERSONAS.supervision.role;
+
+    render(
+      <MemoryRouter initialEntries={['/operator/analytics']}>
+        <OperatorShell><div>Contenido</div></OperatorShell>
+      </MemoryRouter>,
+    );
+
+    const nav = within(screen.getByRole('navigation'));
+    expect(nav.getByRole('link', { name: /^Analítica$/ }).getAttribute('aria-current')).toBe('page');
+    expect(nav.getByRole('link', { name: /^Analítica$/ }).getAttribute('href')).toBe('/operator/analytics');
+    expect(nav.queryByText('Pipelines')).toBeNull();
+    expect(nav.queryByText('Campos')).toBeNull();
+  });
+
+  it('gives the administration demo only ready administration links and keeps pending modules disabled', () => {
+    sessionState.id = PUBLIC_DEMO_PERSONAS.administration.id;
+    sessionState.role = PUBLIC_DEMO_PERSONAS.administration.role;
+
+    render(
+      <MemoryRouter initialEntries={['/operator/admin/pipelines']}>
+        <OperatorShell><div>Contenido</div></OperatorShell>
+      </MemoryRouter>,
+    );
+
+    const navigation = screen.getByRole('navigation');
+    const nav = within(navigation);
+    expect(nav.getByRole('link', { name: /^Pipelines$/ }).getAttribute('aria-current')).toBe('page');
+    expect(nav.getByRole('link', { name: /^Analítica$/ })).toBeTruthy();
+    expect(nav.getByRole('link', { name: /^Plantillas$/ })).toBeTruthy();
+    expect(nav.getByRole('link', { name: /^Campos$/ })).toBeTruthy();
+    expect(nav.queryByText('Tablero')).toBeNull();
+    expect(nav.queryByText('Siniestros')).toBeNull();
+
+    for (const label of ['Orientación', 'Automatizaciones', 'Importaciones', 'Recuperación']) {
+      expect(nav.getByText(label).closest('[aria-disabled="true"]')).toBeTruthy();
     }
+    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(4);
+  });
 
-    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(8);
+  it('keeps the brand link role-safe for every demo persona', () => {
+    sessionState.id = PUBLIC_DEMO_PERSONAS.administration.id;
+    sessionState.role = PUBLIC_DEMO_PERSONAS.administration.role;
+
+    render(
+      <MemoryRouter initialEntries={['/operator/admin/custom-fields']}>
+        <OperatorShell><div>Contenido</div></OperatorShell>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: /Ir al espacio de trabajo/ }).getAttribute('href')).toBe('/operator/workspace');
   });
 
   it('keeps logout wired to the existing session action', () => {
