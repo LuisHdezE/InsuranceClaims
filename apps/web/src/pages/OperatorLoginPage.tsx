@@ -4,10 +4,10 @@ import { resolveStaffLandingRoute } from '../auth/staff-access';
 import { authenticateOperator, createReadOnlyDemoOperatorSession } from '../api/claims';
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
-import { isPublicDemoOperator } from '../demo-access';
+import { DEMO_PERSONA_OPTIONS, isPublicDemoOperator, type DemoPersonaKey } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
-type PendingMode = 'credentials' | 'demo' | null;
+type PendingMode = 'credentials' | `demo-${DemoPersonaKey}` | null;
 
 export function OperatorLoginPage() {
   const navigate = useNavigate();
@@ -21,18 +21,12 @@ export function OperatorLoginPage() {
   const pending = pendingMode !== null;
 
   if (session) {
-    const destination = isPublicDemoOperator(session.operator)
-      ? '/operator/claims'
-      : resolveStaffLandingRoute(session.operator.role, requestedPath);
-    return <Navigate to={destination} replace />;
+    return <Navigate to={resolveStaffLandingRoute(session.operator.role, requestedPath)} replace />;
   }
 
   const completeSignIn = (response: Parameters<typeof signIn>[0]) => {
     signIn(response);
-    const destination = isPublicDemoOperator(response.operator)
-      ? '/operator/claims'
-      : resolveStaffLandingRoute(response.operator.role, requestedPath);
-    navigate(destination, { replace: true });
+    navigate(resolveStaffLandingRoute(response.operator.role, requestedPath), { replace: true });
   };
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -50,11 +44,11 @@ export function OperatorLoginPage() {
     }
   };
 
-  const openReadOnlyDemo = async () => {
-    setPendingMode('demo');
+  const openReadOnlyDemo = async (persona: DemoPersonaKey) => {
+    setPendingMode(`demo-${persona}`);
     setFailure(null);
     try {
-      const result = await createReadOnlyDemoOperatorSession();
+      const result = await createReadOnlyDemoOperatorSession(persona);
       setPassword('');
       completeSignIn(result.data);
     } catch (error) {
@@ -188,22 +182,28 @@ export function OperatorLoginPage() {
                   <div className="r3-login-demo-heading">
                     <div>
                       <span className="r3-login-demo-kicker">Demo pública</span>
-                      <strong>Explora el flujo operativo en modo seguro</strong>
+                      <strong>Explora según una persona gobernada</strong>
                     </div>
                     <span className="r3-login-readonly-badge">Solo lectura</span>
                   </div>
                   <p>
-                    Explora únicamente siniestros sintéticos gobernados, sin contraseña. El API bloquea escrituras y cualquier lectura fuera de ese alcance. En hosting gratuito, la primera entrada puede tardar unos segundos mientras despierta la API.
+                    Cada persona recibe su propio JWT y conserva exactamente el RBAC productivo del rol representado. Los datos son sintéticos y el API bloquea todas las escrituras.
                   </p>
-                  <button
-                    className="btn btn-cyan r3-login-demo-button"
-                    type="button"
-                    disabled={pending}
-                    onClick={openReadOnlyDemo}
-                    aria-label="Entrar en demo de solo lectura"
-                  >
-                    {pendingMode === 'demo' ? 'Abriendo demo…' : 'Entrar en demo de solo lectura'}
-                  </button>
+                  <div className="r3-login-demo-personas" aria-label="Explore as">
+                    {DEMO_PERSONA_OPTIONS.map((persona) => (
+                      <button
+                        className="btn btn-cyan r3-login-demo-button"
+                        type="button"
+                        disabled={pending}
+                        onClick={() => void openReadOnlyDemo(persona.key)}
+                        aria-label={`Explorar como ${persona.label}`}
+                        key={persona.key}
+                      >
+                        <strong>{pendingMode === `demo-${persona.key}` ? 'Abriendo…' : persona.label}</strong>
+                        <span>{persona.description}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
