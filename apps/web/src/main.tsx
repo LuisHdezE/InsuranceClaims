@@ -53,6 +53,7 @@ import './renewals-r3-tablet-containment.css';
 import './collections-r3-visual-polish.css';
 import './collections-r3-tablet-containment.css';
 import './communication-templates-r3-visual-polish.css';
+import './custom-fields-r3-visual-polish.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
