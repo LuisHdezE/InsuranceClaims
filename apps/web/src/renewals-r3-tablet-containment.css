@@ -1,0 +1,88 @@
+@media (max-width: 1100px) {
+  .r3-renewals-directory .r3-case-table-wrap {
+    overflow: visible;
+  }
+
+  .r3-renewals-directory .r3-case-table,
+  .r3-renewals-directory .r3-case-table tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .r3-renewals-directory .r3-case-table thead {
+    display: none;
+  }
+
+  .r3-renewals-directory .r3-case-table tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .r3-renewals-directory .r3-case-table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 18px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--renewals-r3-border);
+    border-radius: 11px;
+    background: #fff;
+  }
+
+  .r3-renewals-directory .r3-case-table td {
+    display: block;
+    min-width: 0;
+    padding: 8px 0;
+    border-top: 1px solid #edf1f5;
+    overflow-wrap: anywhere;
+  }
+
+  .r3-renewals-directory .r3-case-table td:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .r3-renewals-directory .r3-case-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    color: var(--renewals-r3-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .02em;
+  }
+
+  .r3-renewals-directory .r3-case-table td[data-label='Acción'] {
+    grid-column: 1 / -1;
+  }
+
+  .r3-renewals-directory .r3-case-row-action {
+    width: fit-content;
+  }
+}
+
+@media (max-width: 620px) {
+  .r3-renewals-directory .r3-case-table tr {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .r3-renewals-directory .r3-case-table td,
+  .r3-renewals-directory .r3-case-table td:nth-child(-n + 2) {
+    border-top: 1px solid #edf1f5;
+  }
+
+  .r3-renewals-directory .r3-case-table td:first-child {
+    border-top: 0;
+  }
+
+  .r3-renewals-directory .r3-case-table td[data-label='Acción'] {
+    grid-column: auto;
+  }
+
+  .r3-renewals-directory .r3-case-row-action {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+}
