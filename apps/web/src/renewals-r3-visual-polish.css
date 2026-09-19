@@ -240,6 +240,7 @@
 
   .r3-renewals-directory .ops-refresh-button,
   .r3-renewals-directory .r3-case-pagination button,
+  .r3-renewals-directory .r3-case-row-action,
   .r3-renewal-detail .r3-case-context-grid a,
   .r3-renewal-detail .r3-case-decision,
   .r3-renewal-detail .r3-case-stage-actions button {
