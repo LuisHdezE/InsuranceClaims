@@ -180,14 +180,14 @@ export function CustomFieldContentEditor({
       </label>
 
       <label className="cf-field-full">
-        <span>Source classification</span>
+        <span>Clasificación de origen · sourceClassification</span>
         <input
           value={value.sourceClassification}
           maxLength={80}
           disabled={disabled}
           onChange={(event) => onChange({ ...value, sourceClassification: event.target.value })}
         />
-        <small>R3 la trata como clasificación opaca. La UI no le asigna semántica adicional.</small>
+        <small>R3 conserva este valor como clasificación opaca. La interfaz no le asigna semántica adicional.</small>
       </label>
 
       {value.valueType === 'ENUM' && (
@@ -207,10 +207,10 @@ export function CustomFieldContentEditor({
       <section className="cf-metadata-editor" aria-labelledby="cf-metadata-title">
         <div className="cf-editor-heading">
           <div>
-            <h3 id="cf-metadata-title">validationMetadata</h3>
-            <p>Configuración tipada y opaca. El servidor valida las claves protegidas y la semántica permitida.</p>
+            <h3 id="cf-metadata-title">Metadata de validación</h3>
+            <p><code>validationMetadata</code> admite hasta 20 entradas escalares tipadas. El servidor conserva la autoridad sobre claves protegidas y semántica permitida.</p>
           </div>
-          <button type="button" disabled={disabled || value.metadataEntries.length >= 20} onClick={addMetadata}>+ Agregar</button>
+          <button type="button" disabled={disabled || value.metadataEntries.length >= 20} onClick={addMetadata}>+ Agregar entrada</button>
         </div>
 
         {value.metadataEntries.length === 0 ? (
