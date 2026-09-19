@@ -17,9 +17,9 @@
   gap: 1rem;
 }
 
-.custom-fields-r3-directory .ops-page-heading h1,
-.custom-fields-r3-detail .cf-admin-hero h1,
-.custom-fields-r3-form-page .cf-editor-hero h1 {
+.operator-main.custom-fields-r3-directory .ops-page-heading h1,
+.operator-main.custom-fields-r3-detail .cf-admin-hero h1,
+.operator-main.custom-fields-r3-form-page .cf-editor-hero h1 {
   margin: .18rem 0 .35rem;
   font-size: clamp(1.45rem, 2vw, 1.78rem);
   line-height: 1.12;
@@ -294,9 +294,9 @@
     gap: .9rem;
   }
 
-  .custom-fields-r3-directory .ops-page-heading h1,
-  .custom-fields-r3-detail .cf-admin-hero h1,
-  .custom-fields-r3-form-page .cf-editor-hero h1 {
+  .operator-main.custom-fields-r3-directory .ops-page-heading h1,
+  .operator-main.custom-fields-r3-detail .cf-admin-hero h1,
+  .operator-main.custom-fields-r3-form-page .cf-editor-hero h1 {
     font-size: 1.4375rem;
   }
 
