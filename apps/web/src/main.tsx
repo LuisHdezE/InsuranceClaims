@@ -23,6 +23,7 @@ import './customer-policy-360.css';
 import './renewals-operations.css';
 import './collections-operations.css';
 import './pipeline-admin.css';
+import './pipelines-r3-visual-polish.css';
 import './communication-template-admin.css';
 import './recovery-admin.css';
 import './claims-analytics.css';
