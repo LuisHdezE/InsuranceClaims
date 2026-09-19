@@ -176,7 +176,10 @@ def assert_read_only_ux(path: str) -> None:
 
 def assert_admin_write_routes_redirect(landing: str) -> None:
     for path in ADMIN_WRITE_ROUTES:
-        driver.get(f"{WEB_BASE_URL}{path}")
+        driver.execute_script(
+            "window.history.pushState({}, '', arguments[0]); window.dispatchEvent(new PopStateEvent('popstate'));",
+            path,
+        )
         wait.until(lambda d: d.current_url.rstrip("/").endswith(landing))
         wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".ops-demo-readonly-banner")))
 
