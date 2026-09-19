@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post, Query, Req
 import { z } from 'zod';
 import { JwtAuthGuard } from './auth.guard.js';
 import { API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
+import { isDemoModeEnabled, isPublicDemoOperator, scopePublicDemoPage } from './demo-access.js';
 import { RateLimitService, callerIp } from './transport.js';
 
 const uuidSchema = z.string().uuid();
@@ -52,10 +53,15 @@ export class PipelineAdminController {
   @Get()
   async list(@Query() query: Record<string, string | undefined>, @Req() req: any) {
     this.limits.consume(`pipeline-admin-read:${req.actor?.operatorId ?? callerIp(req)}`, 120, 60);
-    return this.runtime.pipelineAdmin.listPipelines({
-      page: pageSchema.parse(query.page),
-      pageSize: pageSizeSchema.parse(query.pageSize),
-    }, req.actor);
+    const page = pageSchema.parse(query.page);
+    const pageSize = pageSizeSchema.parse(query.pageSize);
+
+    if (isDemoModeEnabled() && isPublicDemoOperator(req.actor)) {
+      const source = await this.runtime.pipelineAdmin.listPipelines({ page: 1, pageSize: 100 }, req.actor);
+      return scopePublicDemoPage(source.items, 'pipeline', (item) => item.definitionId, page, pageSize);
+    }
+
+    return this.runtime.pipelineAdmin.listPipelines({ page, pageSize }, req.actor);
   }
 
   @Get(':definitionId')

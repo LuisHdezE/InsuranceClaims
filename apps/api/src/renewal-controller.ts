@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req, UseGu
 import { z } from 'zod';
 import { JwtAuthGuard } from './auth.guard.js';
 import { API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
+import { isDemoModeEnabled, isPublicDemoOperator, scopePublicDemoPage } from './demo-access.js';
 import { RateLimitService, callerIp } from './transport.js';
 
 const uuidSchema = z.string().uuid();
@@ -36,6 +37,14 @@ export class OperatorRenewalsController {
   async list(@Query() query: Record<string, string | undefined>, @Req() req: any) {
     this.readRate(req);
     const parsed = z.object({ page: pageSchema, pageSize: pageSizeSchema }).strict().parse(query);
+
+    if (isDemoModeEnabled() && isPublicDemoOperator(req.actor)) {
+      const page = parsed.page ?? 1;
+      const pageSize = parsed.pageSize ?? 25;
+      const source = await this.runtime.renewals.listRenewalCases({ page: 1, pageSize: 100 }, req.actor);
+      return scopePublicDemoPage(source.items, 'renewal', (item) => item.renewalId, page, pageSize);
+    }
+
     return this.runtime.renewals.listRenewalCases(parsed, req.actor);
   }
 
