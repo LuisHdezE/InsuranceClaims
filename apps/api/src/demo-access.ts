@@ -27,7 +27,7 @@ export const PUBLIC_DEMO_PERSONAS = {
 export const PUBLIC_DEMO_OPERATOR = PUBLIC_DEMO_PERSONAS.operations;
 
 const PUBLIC_DEMO_OPERATORS = Object.values(PUBLIC_DEMO_PERSONAS);
-const PUBLIC_DEMO_PERSONA_BY_ID = new Map(
+const PUBLIC_DEMO_PERSONA_BY_ID = new Map<string, PublicDemoPersona>(
   Object.entries(PUBLIC_DEMO_PERSONAS).map(([persona, operator]) => [operator.id, persona as PublicDemoPersona]),
 );
 
