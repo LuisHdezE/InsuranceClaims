@@ -67,8 +67,8 @@ if "OperatorSidebar" not in shell_source or "OperatorTopbar" not in shell_source
     raise AssertionError("OperatorShell must compose OperatorSidebar and OperatorTopbar")
 if "OperatorBottomBar" not in sidebar_source:
     raise AssertionError("OperatorSidebar must compose OperatorBottomBar")
-if "OPERATOR_NAV_ITEMS" not in sidebar_source:
-    raise AssertionError("OperatorSidebar must consume canonical OPERATOR_NAV_ITEMS")
+if "operatorNavItemsForRole" not in sidebar_source:
+    raise AssertionError("OperatorSidebar must derive authorized items from canonical operator navigation")
 
 if "const WORKSPACE_CARDS" in workspace_source or "const WORKSPACE_GROUPS" in workspace_source:
     raise AssertionError("StaffWorkspacePage must not own a parallel navigation catalog")
