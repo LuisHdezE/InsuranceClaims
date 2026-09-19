@@ -27,11 +27,11 @@ export function AdminPipelinesPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main pipeline-admin-main">
+      <main className="operator-main ops-main pipeline-admin-main pipelines-r3-directory">
         <div className="ops-page-heading pipeline-admin-page-heading">
           <div>
             <span className="ops-kicker">Configuración de plataforma</span>
-            <h1>Administración de pipelines</h1>
+            <h1>Pipelines</h1>
             <p>Definiciones y versiones R3 para CLAIM, RENEWAL y COLLECTION. Las versiones son inmutables y la API conserva la autoridad de activación y concurrencia.</p>
           </div>
           <Link className="pipeline-primary-button" to="/operator/admin/pipelines/new">+ Nuevo pipeline</Link>
