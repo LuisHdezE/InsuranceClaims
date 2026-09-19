@@ -33,4 +33,4 @@ jobs:
         run: python qa/operator-navigation-integration-qa.py
 
       - name: Verify navigation and shell contracts
-        run: npm run test --workspace=@insurance/web -- operator-navigation.test.ts components/OperatorShell.test.tsx demo-access.test.ts
+        run: npm run test --workspace=@insurance/web -- operator-navigation.test.ts components/OperatorShell.test.tsx pages/StaffWorkspacePage.test.tsx demo-access.test.ts
