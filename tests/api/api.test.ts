@@ -5,6 +5,11 @@ import { NestFactory } from '@nestjs/core';
 import request from 'supertest';
 import { createMemoryRuntime } from '@insurance/infrastructure';
 import { ApiModule } from '../../apps/api/src/app.module.js';
+import {
+  PUBLIC_DEMO_PERSONAS,
+  isAllowedPublicDemoReadPath,
+  scopePublicDemoPage,
+} from '../../apps/api/src/demo-access.js';
 
 test('REST contract executes intake, replay, tracking, auth and transition', async () => {
   const runtime = await createMemoryRuntime();
@@ -65,7 +70,37 @@ test('REST contract preserves Nest HTTP exceptions as Problem Details', async ()
   await app.close();
 });
 
-test('public demo operations access is gated, read-only and confined to its governed persona scope', async () => {
+test('public demo fixture catalog scopes pages and direct detail routes', () => {
+  const operations = { operatorId: PUBLIC_DEMO_PERSONAS.operations.id };
+  const administration = { operatorId: PUBLIC_DEMO_PERSONAS.administration.id };
+  const rogueId = '00000000-0000-4000-8000-000000000001';
+
+  assert.equal(isAllowedPublicDemoReadPath('/api/v1/operator/tasks', operations), true);
+  assert.equal(isAllowedPublicDemoReadPath('/api/v1/operator/tasks/de100000-0000-4000-8000-000000000001', operations), true);
+  assert.equal(isAllowedPublicDemoReadPath(`/api/v1/operator/tasks/${rogueId}`, operations), false);
+  assert.equal(isAllowedPublicDemoReadPath(`/api/v1/operator/customers/${rogueId}`, operations), false);
+  assert.equal(isAllowedPublicDemoReadPath(`/api/v1/operator/policies/${rogueId}`, operations), false);
+  assert.equal(isAllowedPublicDemoReadPath(`/api/v1/operator/renewals/${rogueId}`, operations), false);
+  assert.equal(isAllowedPublicDemoReadPath(`/api/v1/operator/collections/${rogueId}`, operations), false);
+
+  assert.equal(isAllowedPublicDemoReadPath('/api/v1/admin/pipelines', administration), true);
+  assert.equal(isAllowedPublicDemoReadPath('/api/v1/admin/pipelines/a4000000-0000-4000-8000-000000000001', administration), true);
+  assert.equal(isAllowedPublicDemoReadPath(`/api/v1/admin/pipelines/${rogueId}`, administration), false);
+  assert.equal(isAllowedPublicDemoReadPath('/api/v1/admin/communication-templates', administration), true);
+  assert.equal(isAllowedPublicDemoReadPath(`/api/v1/admin/communication-templates/${rogueId}`, administration), false);
+  assert.equal(isAllowedPublicDemoReadPath('/api/v1/admin/custom-fields', administration), true);
+  assert.equal(isAllowedPublicDemoReadPath(`/api/v1/admin/custom-fields/${rogueId}`, administration), false);
+
+  const scoped = scopePublicDemoPage([
+    { taskId: 'de100000-0000-4000-8000-000000000001', title: 'governed' },
+    { taskId: rogueId, title: 'must not leak' },
+  ], 'task', (item) => item.taskId, 1, 25);
+  assert.deepEqual(scoped.items.map((item) => item.title), ['governed']);
+  assert.equal(scoped.totalItems, 1);
+  assert.equal(scoped.totalPages, 1);
+});
+
+test('public demo operations access is gated, read-only and confined to governed synthetic fixtures', async () => {
   const previousDemoMode = process.env.DEMO_MODE;
   const runtime = await createMemoryRuntime();
   const app = await NestFactory.create(ApiModule.register(runtime), { logger: false });
@@ -118,6 +153,17 @@ test('public demo operations access is gated, read-only and confined to its gove
       .set('Authorization', bearer)
       .expect(200);
 
+    for (const path of [
+      '/api/v1/operator/tasks/00000000-0000-4000-8000-000000000001',
+      '/api/v1/operator/customers/00000000-0000-4000-8000-000000000001',
+      '/api/v1/operator/policies/00000000-0000-4000-8000-000000000001',
+      '/api/v1/operator/renewals/00000000-0000-4000-8000-000000000001',
+      '/api/v1/operator/collections/00000000-0000-4000-8000-000000000001',
+    ]) {
+      const restricted = await request(http).get(path).set('Authorization', bearer).expect(403);
+      assert.equal(restricted.body.code, 'DEMO_SCOPE_RESTRICTED');
+    }
+
     const restrictedArea = await request(http)
       .get('/api/v1/admin/pipelines')
       .set('Authorization', bearer)
@@ -128,6 +174,61 @@ test('public demo operations access is gated, read-only and confined to its gove
       .post('/api/v1/operator/claims/00000000-0000-4000-8000-000000000001/transitions')
       .set('Authorization', bearer)
       .send({ expectedFromStatus: 'RECEIVED', toStatus: 'UNDER_REVIEW' })
+      .expect(403);
+    assert.equal(blocked.body.code, 'DEMO_READ_ONLY');
+  } finally {
+    if (previousDemoMode === undefined) delete process.env.DEMO_MODE;
+    else process.env.DEMO_MODE = previousDemoMode;
+    await app.close();
+  }
+});
+
+test('public demo administration exposes only governed synthetic configuration reads', async () => {
+  const previousDemoMode = process.env.DEMO_MODE;
+  const runtime = await createMemoryRuntime();
+  const app = await NestFactory.create(ApiModule.register(runtime), { logger: false });
+  await app.init();
+  const http = app.getHttpServer();
+
+  try {
+    process.env.DEMO_MODE = 'true';
+    const session = await request(http)
+      .post('/api/v1/operator/auth/login')
+      .set('X-Demo-Read-Only', 'true')
+      .set('X-Demo-Persona', 'administration')
+      .send({ login: 'demo.admin@eliasworks.invalid', password: 'public-demo-read-only' })
+      .expect(200);
+    assert.equal(session.body.operator.role, 'PLATFORM_ADMIN');
+    const bearer = `Bearer ${session.body.accessToken}`;
+
+    await request(http).get('/api/v1/admin/pipelines').set('Authorization', bearer).expect(200);
+
+    const templates = await request(http)
+      .get('/api/v1/admin/communication-templates')
+      .set('Authorization', bearer)
+      .expect(200);
+    assert.equal(templates.body.totalItems, 0);
+
+    const customFields = await request(http)
+      .get('/api/v1/admin/custom-fields')
+      .set('Authorization', bearer)
+      .expect(200);
+    assert.equal(customFields.body.totalItems, 0);
+
+    for (const path of [
+      '/api/v1/admin/pipelines/00000000-0000-4000-8000-000000000001',
+      '/api/v1/admin/communication-templates/00000000-0000-4000-8000-000000000001',
+      '/api/v1/admin/custom-fields/00000000-0000-4000-8000-000000000001',
+      '/api/v1/operator/tasks',
+    ]) {
+      const restricted = await request(http).get(path).set('Authorization', bearer).expect(403);
+      assert.equal(restricted.body.code, 'DEMO_SCOPE_RESTRICTED');
+    }
+
+    const blocked = await request(http)
+      .post('/api/v1/admin/pipelines')
+      .set('Authorization', bearer)
+      .send({})
       .expect(403);
     assert.equal(blocked.body.code, 'DEMO_READ_ONLY');
   } finally {
