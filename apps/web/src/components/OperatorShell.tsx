@@ -13,7 +13,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
   const role = session?.operator.role;
   const demoReadOnly = isPublicDemoOperator(session?.operator);
   const topbarContext = operatorContextForPath(location.pathname);
-  const brandDestination = demoReadOnly ? '/operator/claims' : '/operator/workspace';
+  const brandDestination = '/operator/workspace';
 
   return (
     <div className="operator-shell operator-ops-shell r3-ui-shell">
