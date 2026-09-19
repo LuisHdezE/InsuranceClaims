@@ -1,0 +1,363 @@
+.custom-fields-r3-directory,
+.custom-fields-r3-detail,
+.custom-fields-r3-form-page {
+  --cf-r3-border: #dbe4ee;
+  --cf-r3-muted: #64748b;
+  --cf-r3-ink: #0f172a;
+  --cf-r3-panel: #ffffff;
+  --cf-r3-soft: #f8fafc;
+  --cf-r3-accent: #0369a1;
+  width: 100%;
+  min-width: 0;
+}
+
+.custom-fields-r3-directory .ops-page-heading,
+.custom-fields-r3-detail .cf-admin-hero,
+.custom-fields-r3-form-page .cf-editor-hero {
+  gap: 1rem;
+}
+
+.operator-main.custom-fields-r3-directory .ops-page-heading h1,
+.operator-main.custom-fields-r3-detail .cf-admin-hero h1,
+.operator-main.custom-fields-r3-form-page .cf-editor-hero h1 {
+  margin: .18rem 0 .35rem;
+  font-size: clamp(1.45rem, 2vw, 1.78rem);
+  line-height: 1.12;
+  letter-spacing: -.025em;
+}
+
+.custom-fields-r3-directory .ops-page-heading p,
+.custom-fields-r3-form-page .cf-editor-hero p {
+  max-width: 780px;
+  margin: 0;
+  color: #526174;
+  line-height: 1.55;
+}
+
+.custom-fields-r3-directory .cf-contract-strip {
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
+}
+
+.custom-fields-r3-directory .cf-contract-strip > div {
+  min-width: 0;
+  padding: .78rem .9rem;
+}
+
+.custom-fields-r3-directory .cf-directory-panel,
+.custom-fields-r3-detail .cf-version-panel,
+.custom-fields-r3-form-page .cf-editor-panel {
+  border-radius: 14px;
+  border-color: var(--cf-r3-border);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, .035);
+}
+
+.custom-fields-r3-directory .cf-card-grid {
+  gap: .85rem;
+}
+
+.custom-fields-r3-directory .cf-definition-card {
+  min-width: 0;
+  min-height: 214px;
+  border-radius: 12px;
+  padding: .92rem;
+  gap: .76rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .025);
+}
+
+.custom-fields-r3-directory .cf-definition-card:hover {
+  transform: translateY(-1px);
+  border-color: #b8c8da;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .07);
+}
+
+.custom-fields-r3-directory .cf-definition-card h3 {
+  font-size: 1.02rem;
+  line-height: 1.3;
+  color: var(--cf-r3-ink);
+}
+
+.custom-fields-r3-directory .cf-card-facts {
+  gap: .48rem .7rem;
+}
+
+.custom-fields-r3-directory .cf-card-facts small {
+  font-size: .72rem;
+}
+
+.custom-fields-r3-directory .cf-card-link {
+  margin-top: auto;
+  font-size: .84rem;
+}
+
+.custom-fields-r3-directory .cf-pagination button,
+.custom-fields-r3-directory .cf-primary-button,
+.custom-fields-r3-detail .cf-primary-button,
+.custom-fields-r3-detail .cf-state-button,
+.custom-fields-r3-detail .cf-activate-button,
+.custom-fields-r3-form-page .cf-primary-button,
+.custom-fields-r3-form-page .cf-secondary-button,
+.custom-fields-r3-form-page .cf-editor-heading button,
+.custom-fields-r3-form-page .cf-remove-row {
+  min-height: 44px;
+}
+
+.custom-fields-r3-detail .cf-breadcrumbs,
+.custom-fields-r3-form-page .cf-breadcrumbs {
+  font-size: .82rem;
+}
+
+.custom-fields-r3-detail .cf-admin-hero,
+.custom-fields-r3-form-page .cf-editor-hero {
+  border-radius: 14px;
+  padding: 1.05rem 1.1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.custom-fields-r3-detail .cf-admin-hero-meta {
+  gap: .42rem;
+}
+
+.custom-fields-r3-detail .cf-admin-hero-version {
+  min-width: 152px;
+}
+
+.custom-fields-r3-detail .cf-admin-actions {
+  padding: .15rem 0;
+}
+
+.custom-fields-r3-detail .cf-concurrency-note {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: .35rem .55rem;
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.custom-fields-r3-detail .cf-version-list {
+  gap: .8rem;
+}
+
+.custom-fields-r3-detail .cf-version-card {
+  min-width: 0;
+  border-radius: 12px;
+  padding: .92rem;
+  gap: .82rem;
+}
+
+.custom-fields-r3-detail .cf-version-card.is-active {
+  border-color: #7dd3fc;
+  box-shadow: inset 3px 0 #0284c7, 0 4px 16px rgba(14, 116, 144, .05);
+}
+
+.custom-fields-r3-detail .cf-version-card-heading h3 {
+  font-size: 1rem;
+}
+
+.custom-fields-r3-detail .cf-version-facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .55rem;
+}
+
+.custom-fields-r3-detail .cf-version-facts > div {
+  min-width: 0;
+  padding: .58rem .62rem;
+  border: 1px solid #edf2f7;
+  background: #fbfdff;
+}
+
+.custom-fields-r3-detail .cf-version-facts strong {
+  overflow-wrap: anywhere;
+}
+
+.custom-fields-r3-detail .cf-content-block,
+.custom-fields-r3-detail .cf-token-summary {
+  min-width: 0;
+}
+
+.custom-fields-r3-detail .cf-token-summary > div {
+  min-width: 0;
+}
+
+.custom-fields-r3-detail .cf-token-summary code {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.cf-technical-details {
+  width: fit-content;
+  max-width: 100%;
+  color: var(--cf-r3-muted);
+  font-size: .76rem;
+}
+
+.cf-technical-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #526174;
+  list-style-position: inside;
+}
+
+.cf-technical-details code {
+  display: block;
+  max-width: 100%;
+  margin-top: .42rem;
+  padding: .4rem .52rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.custom-fields-r3-form-page .cf-editor-panel {
+  gap: .95rem;
+}
+
+.custom-fields-r3-form-page .cf-form-grid {
+  gap: .85rem;
+}
+
+.custom-fields-r3-form-page .cf-form-grid input,
+.custom-fields-r3-form-page .cf-form-grid select,
+.custom-fields-r3-form-page .cf-field-full input,
+.custom-fields-r3-form-page .cf-field-full select,
+.custom-fields-r3-form-page .cf-field-full textarea,
+.custom-fields-r3-form-page .cf-metadata-row input,
+.custom-fields-r3-form-page .cf-metadata-row select {
+  min-height: 44px;
+  border-radius: 9px;
+}
+
+.custom-fields-r3-form-page .cf-field-full textarea {
+  min-height: 132px;
+}
+
+.custom-fields-r3-form-page .cf-metadata-editor {
+  margin-top: .15rem;
+}
+
+.custom-fields-r3-form-page .cf-editor-heading {
+  align-items: center;
+}
+
+.custom-fields-r3-form-page .cf-editor-heading h3 {
+  font-size: 1rem;
+}
+
+.custom-fields-r3-form-page .cf-metadata-row {
+  grid-template-columns: 1.15fr .72fr 1.35fr 44px;
+  gap: .55rem;
+}
+
+.custom-fields-r3-form-page .cf-remove-row {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+}
+
+.custom-fields-r3-form-page .cf-editor-actions {
+  position: static;
+  margin-top: .2rem;
+  padding: .55rem 0 0;
+  border-top: 1px solid #eef2f7;
+  background: transparent;
+}
+
+.custom-fields-r3-directory .cf-admin-contract-note,
+.custom-fields-r3-detail .cf-admin-contract-note,
+.custom-fields-r3-form-page .cf-admin-contract-note {
+  border-radius: 10px;
+  background: #fbfdff;
+}
+
+@media (max-width: 1100px) {
+  .custom-fields-r3-directory .cf-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .custom-fields-r3-detail .cf-version-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .custom-fields-r3-directory,
+  .custom-fields-r3-detail,
+  .custom-fields-r3-form-page {
+    gap: .9rem;
+  }
+
+  .operator-main.custom-fields-r3-directory .ops-page-heading h1,
+  .operator-main.custom-fields-r3-detail .cf-admin-hero h1,
+  .operator-main.custom-fields-r3-form-page .cf-editor-hero h1 {
+    font-size: 1.4375rem;
+  }
+
+  .custom-fields-r3-directory .ops-page-heading,
+  .custom-fields-r3-detail .cf-admin-hero,
+  .custom-fields-r3-form-page .cf-editor-hero {
+    gap: .72rem;
+  }
+
+  .custom-fields-r3-directory .cf-contract-strip,
+  .custom-fields-r3-directory .cf-card-grid,
+  .custom-fields-r3-detail .cf-version-facts,
+  .custom-fields-r3-form-page .cf-form-grid,
+  .custom-fields-r3-form-page .cf-metadata-row {
+    grid-template-columns: 1fr;
+  }
+
+  .custom-fields-r3-directory .cf-definition-card {
+    min-height: 0;
+  }
+
+  .custom-fields-r3-directory .cf-primary-button,
+  .custom-fields-r3-detail .cf-primary-button,
+  .custom-fields-r3-detail .cf-state-button,
+  .custom-fields-r3-detail .cf-activate-button,
+  .custom-fields-r3-form-page .cf-primary-button,
+  .custom-fields-r3-form-page .cf-secondary-button,
+  .custom-fields-r3-form-page .cf-editor-heading button,
+  .custom-fields-r3-form-page .cf-remove-row {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .custom-fields-r3-detail .cf-admin-actions,
+  .custom-fields-r3-form-page .cf-editor-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .custom-fields-r3-detail .cf-concurrency-note {
+    width: 100%;
+  }
+
+  .custom-fields-r3-detail .cf-version-card-heading,
+  .custom-fields-r3-form-page .cf-editor-heading {
+    gap: .7rem;
+  }
+
+  .custom-fields-r3-form-page .cf-metadata-row {
+    padding: .72rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fbfdff;
+  }
+
+  .custom-fields-r3-directory .cf-pagination {
+    gap: .45rem;
+  }
+
+  .custom-fields-r3-directory .cf-pagination button {
+    min-width: 98px;
+  }
+}

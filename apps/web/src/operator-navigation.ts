@@ -138,7 +138,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '⊞',
     group: 'administration',
     allOf: ['custom_fields.admin'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Campos personalizados R3 · Proyecciones extendidas con versionado y límites de dominio',
   },
   {

@@ -19,10 +19,11 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/collections/collection-123', 'CLAIMS_OPERATOR')).toBe(true);
     expect(isPublicDemoPath('/operator/admin/pipelines', 'CLAIMS_OPERATOR')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/communication-templates', 'CLAIMS_OPERATOR')).toBe(false);
+    expect(isPublicDemoPath('/operator/admin/custom-fields', 'CLAIMS_OPERATOR')).toBe(false);
     expect(isPublicDemoPath('/operator/analytics', 'CLAIMS_OPERATOR')).toBe(false);
   });
 
-  it('allows Analytics, Pipelines and Communication Templates only to roles that own their permissions', () => {
+  it('allows productized admin routes only to roles that own their permissions', () => {
     expect(isPublicDemoPath('/operator/analytics', 'CLAIMS_SUPERVISOR')).toBe(true);
     expect(isPublicDemoPath('/operator/analytics', 'PLATFORM_ADMIN')).toBe(true);
     expect(isPublicDemoPath('/operator/admin/pipelines', 'PLATFORM_ADMIN')).toBe(true);
@@ -30,8 +31,13 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/admin/communication-templates', 'PLATFORM_ADMIN')).toBe(true);
     expect(isPublicDemoPath('/operator/admin/communication-templates/template-123', 'PLATFORM_ADMIN')).toBe(true);
     expect(isPublicDemoPath('/operator/admin/communication-templates/template-123/versions/new', 'PLATFORM_ADMIN')).toBe(true);
+    expect(isPublicDemoPath('/operator/admin/custom-fields', 'PLATFORM_ADMIN')).toBe(true);
+    expect(isPublicDemoPath('/operator/admin/custom-fields/new', 'PLATFORM_ADMIN')).toBe(true);
+    expect(isPublicDemoPath('/operator/admin/custom-fields/field-123', 'PLATFORM_ADMIN')).toBe(true);
+    expect(isPublicDemoPath('/operator/admin/custom-fields/field-123/versions/new', 'PLATFORM_ADMIN')).toBe(true);
     expect(isPublicDemoPath('/operator/admin/pipelines', 'CLAIMS_SUPERVISOR')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/communication-templates', 'CLAIMS_SUPERVISOR')).toBe(false);
+    expect(isPublicDemoPath('/operator/admin/custom-fields', 'CLAIMS_SUPERVISOR')).toBe(false);
   });
 
   it('does not elevate ready routes beyond the current role permissions', () => {
