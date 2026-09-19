@@ -56,8 +56,9 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('link', { name: /Siniestros/ })).toBeTruthy();
     expect(screen.getByRole('link', { name: /^Tareas$/ }).getAttribute('href')).toBe('/operator/tasks');
     expect(screen.getByRole('link', { name: /^Clientes$/ }).getAttribute('href')).toBe('/operator/customers');
+    expect(screen.getByRole('link', { name: /^Pólizas$/ }).getAttribute('href')).toBe('/operator/policies');
 
-    const pendingLabels = ['Pólizas', 'Renovaciones', 'Cobranzas'];
+    const pendingLabels = ['Renovaciones', 'Cobranzas'];
     for (const label of pendingLabels) {
       const text = screen.getByText(label);
       expect(text.closest('[aria-disabled="true"]')).toBeTruthy();
@@ -123,13 +124,14 @@ describe('OperatorShell', () => {
     const navigation = screen.getByRole('navigation');
     const nav = within(navigation);
     const clickable = nav.getAllByRole('link');
-    expect(clickable).toHaveLength(5);
+    expect(clickable).toHaveLength(6);
 
     expect(nav.getByRole('link', { name: /Espacio de trabajo/ }).getAttribute('href')).toBe('/operator/workspace');
     expect(nav.getByRole('link', { name: /Tablero/ }).getAttribute('href')).toBe('/operator/dashboard');
     expect(nav.getByRole('link', { name: /Siniestros/ }).getAttribute('href')).toBe('/operator/claims');
     expect(nav.getByRole('link', { name: /^Tareas$/ }).getAttribute('href')).toBe('/operator/tasks');
     expect(nav.getByRole('link', { name: /^Clientes$/ }).getAttribute('href')).toBe('/operator/customers');
+    expect(nav.getByRole('link', { name: /^Pólizas$/ }).getAttribute('href')).toBe('/operator/policies');
     expect(nav.getByRole('link', { name: /Siniestros/ }).getAttribute('aria-current')).toBe('page');
 
     const completeCatalog = [
@@ -141,7 +143,7 @@ describe('OperatorShell', () => {
       expect(nav.getByText(label)).toBeTruthy();
     }
 
-    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(11);
+    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(10);
   });
 
   it('keeps logout wired to the existing session action', () => {

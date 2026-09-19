@@ -1,0 +1,59 @@
+/* Policies R3 tablet containment.
+ * At shell-constrained tablet width the seven-column directory becomes compact cards
+ * so the page never relies on an internal horizontal scrollbar.
+ */
+
+@media (max-width: 1100px) {
+  .r3-policy-directory .cp360-table-wrap { overflow: visible; }
+
+  .r3-policy-directory .cp360-table,
+  .r3-policy-directory .cp360-table tbody,
+  .r3-policy-directory .cp360-table tr,
+  .r3-policy-directory .cp360-table td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .r3-policy-directory .cp360-table { min-width: 0; }
+  .r3-policy-directory .cp360-table thead { display: none; }
+  .r3-policy-directory .cp360-table tbody { display: grid; gap: 9px; }
+
+  .r3-policy-directory .cp360-table tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 12px;
+    padding: 12px;
+    border: 1px solid #e1e8f1;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .r3-policy-directory .cp360-table td {
+    padding: 0;
+    border: 0;
+  }
+
+  .r3-policy-directory .cp360-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    color: #7b8797;
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: .045em;
+    text-transform: uppercase;
+  }
+
+  .r3-policy-directory .cp360-table td[data-label='Póliza'],
+  .r3-policy-directory .cp360-table td[data-label='Cliente'],
+  .r3-policy-directory .cp360-table td[data-label='Acción'] {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .r3-policy-directory .cp360-table tr {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

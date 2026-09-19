@@ -45,6 +45,8 @@ import './tasks-operational-detail-density-fix.css';
 import './analytics-r3-visual-polish.css';
 import './customers-r3-visual-polish.css';
 import './customers-r3-tablet-containment.css';
+import './policies-r3-visual-polish.css';
+import './policies-r3-tablet-containment.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
