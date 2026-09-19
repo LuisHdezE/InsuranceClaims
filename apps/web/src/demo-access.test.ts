@@ -1,7 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { isPublicDemoPath } from './demo-access';
+import {
+  PUBLIC_DEMO_PERSONAS,
+  isPublicDemoOperator,
+  isPublicDemoPath,
+  publicDemoPersonaForOperator,
+} from './demo-access';
 
 describe('public demo route access', () => {
+  it('recognizes every governed public demo persona without treating other operators as demo actors', () => {
+    for (const [persona, definition] of Object.entries(PUBLIC_DEMO_PERSONAS)) {
+      expect(isPublicDemoOperator({ id: definition.id })).toBe(true);
+      expect(publicDemoPersonaForOperator({ id: definition.id })).toBe(persona);
+    }
+    expect(isPublicDemoOperator({ id: 'operator-real-1' })).toBe(false);
+    expect(publicDemoPersonaForOperator({ id: 'operator-real-1' })).toBeNull();
+  });
+
   it('allows ready routes authorized for a claims operator', () => {
     expect(isPublicDemoPath('/operator/workspace', 'CLAIMS_OPERATOR')).toBe(true);
     expect(isPublicDemoPath('/operator/dashboard', 'CLAIMS_OPERATOR')).toBe(true);
@@ -38,6 +52,13 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/admin/pipelines', 'CLAIMS_SUPERVISOR')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/communication-templates', 'CLAIMS_SUPERVISOR')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/custom-fields', 'CLAIMS_SUPERVISOR')).toBe(false);
+  });
+
+  it('keeps every pending admin module non-navigable even for platform admin', () => {
+    expect(isPublicDemoPath('/operator/admin/guidance', 'PLATFORM_ADMIN')).toBe(false);
+    expect(isPublicDemoPath('/operator/admin/automations', 'PLATFORM_ADMIN')).toBe(false);
+    expect(isPublicDemoPath('/operator/admin/imports', 'PLATFORM_ADMIN')).toBe(false);
+    expect(isPublicDemoPath('/operator/admin/recovery', 'PLATFORM_ADMIN')).toBe(false);
   });
 
   it('does not elevate ready routes beyond the current role permissions', () => {
