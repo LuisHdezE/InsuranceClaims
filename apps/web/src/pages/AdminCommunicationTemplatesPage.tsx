@@ -30,12 +30,12 @@ export function AdminCommunicationTemplatesPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main comm-admin-main">
+      <main className="operator-main ops-main comm-admin-main communication-templates-r3-directory">
         <div className="ops-page-heading comm-admin-page-heading">
           <div>
-            <span className="ops-kicker">Plantillas de comunicación R3</span>
+            <span className="ops-kicker">Administración de comunicaciones R3</span>
             <h1>Plantillas de comunicación</h1>
-            <p>Definiciones gobernadas por versiones inmutables para EMAIL y WHATSAPP. El listado usa solo paginación publicada por R3.</p>
+            <p>Definiciones versionadas para EMAIL y WHATSAPP. Cada contenido histórico permanece inmutable y la activación se gobierna por versión.</p>
           </div>
           <Link className="comm-primary-button" to="/operator/admin/communication-templates/new">+ Nueva plantilla</Link>
         </div>
@@ -45,7 +45,7 @@ export function AdminCommunicationTemplatesPage() {
         <section className="ops-panel comm-directory-panel" aria-labelledby="comm-directory-title">
           <div className="ops-panel-heading">
             <div>
-              <h2 id="comm-directory-title">Directorio administrado</h2>
+              <h2 id="comm-directory-title">Directorio de plantillas</h2>
               <p>{result ? `${result.totalItems} definiciones publicadas por el API` : 'Cargando definiciones…'}</p>
             </div>
             <button className="ops-refresh-button" type="button" disabled={templatesQuery.isFetching} onClick={() => void templatesQuery.refetch()}>
@@ -74,7 +74,7 @@ export function AdminCommunicationTemplatesPage() {
 
         <section className="comm-admin-contract-note">
           <strong>Frontera R3</strong>
-          <p>Este directorio administra plantillas. No se expone al rol operador como catálogo de envío, porque `communications.admin` y `communications.send` son permisos distintos.</p>
+          <p>Este módulo administra definiciones y contenido versionado. No envía mensajes ni mezcla el permiso `communications.admin` con `communications.send`.</p>
         </section>
       </main>
     </OperatorShell>
@@ -91,13 +91,16 @@ function TemplateCard({ template }: { template: CommunicationTemplateDefinitionP
         <span className={`comm-enabled is-${template.enabled ? 'enabled' : 'disabled'}`}>{template.enabled ? 'Habilitada' : 'Deshabilitada'}</span>
       </div>
       <h3>{template.key}</h3>
-      <code>{template.definitionId}</code>
       <div className="comm-template-facts">
         <span><small>Versión de definición</small><strong>v{template.version}</strong></span>
         <span><small>Versiones</small><strong>{template.versions.length}</strong></span>
         <span><small>Activa</small><strong>{active ? `v${active.versionNumber}` : '—'}</strong></span>
-        <span><small>Última</small><strong>{latest ? `${latest.status} v${latest.versionNumber}` : '—'}</strong></span>
+        <span><small>Última</small><strong>{latest ? `${latest.status} · v${latest.versionNumber}` : '—'}</strong></span>
       </div>
+      <details className="comm-technical-details">
+        <summary>Detalles técnicos</summary>
+        <code>Definition ID · {template.definitionId}</code>
+      </details>
       <Link className="comm-card-link" to={`/operator/admin/communication-templates/${template.definitionId}`}>Administrar definición →</Link>
     </article>
   );

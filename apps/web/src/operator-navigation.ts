@@ -129,7 +129,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '✉',
     group: 'administration',
     allOf: ['communications.admin'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Plantillas de comunicación R3 · Contenido versionado y activación gobernada',
   },
   {

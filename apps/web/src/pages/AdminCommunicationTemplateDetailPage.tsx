@@ -66,7 +66,7 @@ export function AdminCommunicationTemplateDetailPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main comm-admin-main">
+      <main className="operator-main ops-main comm-admin-main communication-templates-r3-detail">
         <div className="comm-breadcrumbs"><Link to="/operator/admin/communication-templates">Plantillas</Link><span>/</span><span>{template?.key ?? definitionId.slice(0, 8)}</span></div>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
@@ -78,16 +78,19 @@ export function AdminCommunicationTemplateDetailPage() {
           <>
             <section className="comm-admin-hero" aria-labelledby="comm-admin-title">
               <div>
-                <span className="ops-kicker">Communication Template Definition R3</span>
+                <span className="ops-kicker">Definición de plantilla R3</span>
                 <h1 id="comm-admin-title">{template.key}</h1>
                 <div className="comm-admin-hero-meta">
                   <span className={`comm-channel is-${template.channel.toLowerCase()}`}>{template.channel}</span>
                   <span className={`comm-enabled is-${template.enabled ? 'enabled' : 'disabled'}`}>{template.enabled ? 'Habilitada' : 'Deshabilitada'}</span>
-                  <code>{template.definitionId}</code>
                 </div>
+                <details className="comm-technical-details comm-definition-technical">
+                  <summary>Detalles técnicos</summary>
+                  <code>Definition ID · {template.definitionId}</code>
+                </details>
               </div>
               <div className="comm-admin-hero-version">
-                <small>Definition version</small>
+                <small>Versión de definición</small>
                 <strong>v{template.version}</strong>
                 <span>{template.activeVersionId ? 'Tiene versión activa' : 'Sin versión activa'}</span>
               </div>
@@ -103,7 +106,7 @@ export function AdminCommunicationTemplateDetailPage() {
               >
                 {stateMutation.isPending ? 'Aplicando…' : template.enabled ? 'Deshabilitar definición' : template.activeVersionId ? 'Habilitar definición' : 'Activa una versión antes de habilitar'}
               </button>
-              <span>La mutación usa <strong>expectedDefinitionVersion {template.version}</strong>.</span>
+              <span className="comm-concurrency-note">Control de concurrencia activo · versión {template.version}</span>
             </section>
 
             <section className="ops-panel comm-version-panel" aria-labelledby="comm-versions-title">
@@ -133,7 +136,7 @@ export function AdminCommunicationTemplateDetailPage() {
 
             <section className="comm-admin-contract-note">
               <strong>Frontera R3</strong>
-              <p>Deshabilitar una definición activa puede retirar su versión activa. La UI no simula reactivación: para volver a habilitar debe existir una versión activa válida. Los 409 refrescan la proyección autoritativa, sin reintentos ciegos.</p>
+              <p>Deshabilitar una definición activa puede retirar su versión activa. Para habilitarla de nuevo debe existir una versión activa válida. Ante un 409 se refresca la proyección autoritativa, sin reintentos ciegos.</p>
             </section>
           </>
         )}
@@ -162,7 +165,10 @@ function CommunicationVersionCard({
         <div>
           <span className={`comm-version-status is-${version.status.toLowerCase()}`}>{version.status}</span>
           <h3>Versión {version.versionNumber}</h3>
-          <code>{version.versionId}</code>
+          <details className="comm-technical-details">
+            <summary>Detalles técnicos</summary>
+            <code>Version ID · {version.versionId}</code>
+          </details>
         </div>
         {version.status === 'DRAFT' && (
           <button className="comm-activate-button" type="button" disabled={mutationPending} onClick={onActivate}>
@@ -172,16 +178,16 @@ function CommunicationVersionCard({
       </div>
 
       <div className="comm-version-facts">
-        <div><span>Source classification</span><strong>{version.sourceClassification}</strong></div>
+        <div><span>Clasificación de origen</span><strong>{version.sourceClassification}</strong></div>
         <div><span>Creada</span><strong>{formatDateTime(version.createdAt)}</strong></div>
         <div><span>Activada</span><strong>{version.activatedAt ? formatDateTime(version.activatedAt) : '—'}</strong></div>
         <div><span>Retirada</span><strong>{version.retiredAt ? formatDateTime(version.retiredAt) : '—'}</strong></div>
       </div>
 
       {channel === 'EMAIL' && (
-        <div className="comm-content-block"><span>Subject</span><strong>{version.subject ?? '—'}</strong></div>
+        <div className="comm-content-block"><span>Asunto</span><strong>{version.subject ?? '—'}</strong></div>
       )}
-      <div className="comm-content-block"><span>Body</span><pre>{version.body}</pre></div>
+      <div className="comm-content-block"><span>Contenido</span><pre>{version.body}</pre></div>
       <div className="comm-variable-summary">
         <span>Variables ({variables.length})</span>
         {variables.length > 0

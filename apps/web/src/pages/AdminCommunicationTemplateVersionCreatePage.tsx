@@ -81,11 +81,11 @@ export function AdminCommunicationTemplateVersionCreatePage() {
     setClientError(null);
     if (!template) return;
     if (!body.trim() || !sourceClassification.trim()) {
-      setClientError('Body y source classification son obligatorios.');
+      setClientError('El contenido y la clasificación de origen son obligatorios.');
       return;
     }
     if (template.channel === 'EMAIL' && !subject.trim()) {
-      setClientError('R3 exige subject para plantillas EMAIL.');
+      setClientError('Las plantillas EMAIL requieren asunto.');
       return;
     }
     try {
@@ -99,7 +99,7 @@ export function AdminCommunicationTemplateVersionCreatePage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main comm-admin-main">
+      <main className="operator-main ops-main comm-admin-main communication-templates-r3-form-page">
         <div className="comm-breadcrumbs"><Link to="/operator/admin/communication-templates">Plantillas</Link><span>/</span><Link to={`/operator/admin/communication-templates/${definitionId}`}>{template?.key ?? definitionId.slice(0, 8)}</Link><span>/</span><span>Nueva versión</span></div>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
@@ -112,7 +112,7 @@ export function AdminCommunicationTemplateVersionCreatePage() {
           <>
             <div className="ops-page-heading comm-admin-page-heading">
               <div>
-                <span className="ops-kicker">Immutable Version</span>
+                <span className="ops-kicker">Nueva versión inmutable</span>
                 <h1>Nueva versión de {template.key}</h1>
                 <p>Se parte de la versión activa, o de la más reciente si no hay activa. La versión guardada será DRAFT y no modificará contenido histórico.</p>
               </div>
@@ -121,20 +121,21 @@ export function AdminCommunicationTemplateVersionCreatePage() {
 
             <form className="comm-admin-form" onSubmit={submit}>
               <section className="ops-panel comm-definition-form-card">
-                <div className="ops-panel-heading"><div><h2>Contenido versionado</h2><p>Creación protegida por expectedDefinitionVersion {template.version}.</p></div></div>
+                <div className="ops-panel-heading"><div><h2>Contenido versionado</h2><p>Control de concurrencia activo · versión {template.version}.</p></div></div>
                 <div className="comm-form-grid">
                   <label className="comm-form-wide">
-                    <span>Subject {template.channel === 'EMAIL' ? '(obligatorio)' : '(no aplica)'}</span>
+                    <span>Asunto {template.channel === 'EMAIL' ? '(obligatorio)' : '(no aplica)'}</span>
                     <input value={subject} maxLength={240} disabled={mutation.isPending || template.channel === 'WHATSAPP'} onChange={(event) => setSubject(event.target.value)} />
                   </label>
                   <label className="comm-form-wide">
-                    <span>Body</span>
+                    <span>Contenido</span>
                     <textarea value={body} maxLength={8000} rows={9} disabled={mutation.isPending} onChange={(event) => setBody(event.target.value)} />
                     <small>{body.length}/8000</small>
                   </label>
                   <label className="comm-form-wide">
-                    <span>Source classification</span>
+                    <span>Clasificación de origen</span>
                     <input value={sourceClassification} maxLength={80} disabled={mutation.isPending} onChange={(event) => setSourceClassification(event.target.value)} />
+                    <small>Se mantiene opaca; la interfaz no añade semántica de negocio.</small>
                   </label>
                 </div>
               </section>

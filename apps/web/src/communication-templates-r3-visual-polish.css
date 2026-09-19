@@ -1,0 +1,308 @@
+/* Final Communication Templates R3 productization layer.
+ * Scope is intentionally limited to the communication-template admin screens.
+ * Contract values, version lifecycle and concurrency remain API-authoritative.
+ */
+
+.r3-ui-shell .communication-templates-r3-directory,
+.r3-ui-shell .communication-templates-r3-detail,
+.r3-ui-shell .communication-templates-r3-form-page {
+  gap: 13px;
+}
+
+.r3-ui-shell .communication-templates-r3-directory .comm-admin-page-heading h1,
+.r3-ui-shell .communication-templates-r3-detail .comm-admin-hero h1,
+.r3-ui-shell .communication-templates-r3-form-page .comm-admin-page-heading h1 {
+  font-size: clamp(24px, 2vw, 29px);
+}
+
+.r3-ui-shell .communication-templates-r3-directory .comm-admin-page-heading p,
+.r3-ui-shell .communication-templates-r3-form-page .comm-admin-page-heading p {
+  max-width: 760px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.r3-ui-shell .communication-templates-r3-directory .comm-directory-panel,
+.r3-ui-shell .communication-templates-r3-detail .comm-version-panel,
+.r3-ui-shell .communication-templates-r3-form-page .comm-definition-form-card,
+.r3-ui-shell .communication-templates-r3-form-page .comm-variable-panel {
+  padding: 14px;
+}
+
+.r3-ui-shell .communication-templates-r3-directory .comm-template-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.r3-ui-shell .communication-templates-r3-directory .comm-template-card {
+  gap: 9px;
+  padding: 12px;
+}
+
+.r3-ui-shell .communication-templates-r3-directory .comm-template-card h3 {
+  font-size: 13px;
+}
+
+.r3-ui-shell .communication-templates-r3-directory .comm-template-facts {
+  gap: 6px;
+}
+
+.r3-ui-shell .communication-templates-r3-directory .comm-template-facts span {
+  padding: 7px;
+}
+
+.r3-ui-shell .comm-technical-details {
+  width: fit-content;
+  max-width: 100%;
+  color: #7d8896;
+  font-size: 9px;
+}
+
+.r3-ui-shell .comm-technical-details summary {
+  width: fit-content;
+  cursor: pointer;
+  color: #6f7a89;
+  font-weight: 750;
+}
+
+.r3-ui-shell .comm-technical-details code {
+  display: block;
+  max-width: min(560px, 100%);
+  margin-top: 5px;
+  padding: 5px 7px;
+  border: 1px solid #e4e9ef;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #8b95a3;
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-admin-hero {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-definition-technical {
+  margin-top: 8px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-admin-hero-version {
+  min-width: 132px;
+  padding-left: 14px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-admin-hero-version strong {
+  font-size: 22px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-admin-actions {
+  padding: 10px 12px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-concurrency-note {
+  color: #7c8796;
+  font-size: 9px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-version-list {
+  gap: 9px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-version-card {
+  gap: 10px;
+  padding: 12px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-version-card-heading h3 {
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-version-facts {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-version-facts > div {
+  padding: 7px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-content-block,
+.r3-ui-shell .communication-templates-r3-detail .comm-variable-summary {
+  gap: 5px;
+  padding: 8px 9px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-content-block pre {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-admin-contract-note,
+.r3-ui-shell .communication-templates-r3-directory .comm-admin-contract-note {
+  padding: 9px 11px;
+}
+
+.r3-ui-shell .communication-templates-r3-detail .comm-admin-contract-note p,
+.r3-ui-shell .communication-templates-r3-directory .comm-admin-contract-note p {
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.r3-ui-shell .communication-templates-r3-form-page .comm-admin-form {
+  gap: 11px;
+}
+
+.r3-ui-shell .communication-templates-r3-form-page .comm-form-grid {
+  gap: 9px 11px;
+}
+
+.r3-ui-shell .communication-templates-r3-form-page .comm-form-grid label,
+.r3-ui-shell .communication-templates-r3-form-page .comm-variable-row label {
+  gap: 5px;
+}
+
+.r3-ui-shell .communication-templates-r3-form-page .comm-form-grid label > span,
+.r3-ui-shell .communication-templates-r3-form-page .comm-variable-row label > span {
+  color: #5f6c7b;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.r3-ui-shell .communication-templates-r3-form-page .comm-form-grid small {
+  color: #7d8896;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.r3-ui-shell .communication-templates-r3-form-page .comm-form-grid textarea {
+  min-height: 142px;
+}
+
+.r3-ui-shell .communication-templates-r3-form-page .comm-variable-list {
+  gap: 8px;
+}
+
+.r3-ui-shell .communication-templates-r3-form-page .comm-variable-row {
+  grid-template-columns: minmax(0, 1fr) 160px auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.r3-ui-shell .communication-templates-r3-form-page .comm-remove-button {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.r3-ui-shell .communication-templates-r3-form-page .comm-form-actions {
+  margin: 0;
+}
+
+@media (max-width: 1100px) {
+  .r3-ui-shell .communication-templates-r3-directory .comm-template-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .r3-ui-shell .communication-templates-r3-detail .comm-version-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .r3-ui-shell .communication-templates-r3-form-page .comm-variable-row {
+    grid-template-columns: minmax(0, 1fr) 145px;
+  }
+
+  .r3-ui-shell .communication-templates-r3-form-page .comm-variable-row .comm-remove-button {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 760px) {
+  .r3-ui-shell .communication-templates-r3-directory .comm-template-grid,
+  .r3-ui-shell .communication-templates-r3-detail .comm-version-facts,
+  .r3-ui-shell .communication-templates-r3-form-page .comm-form-grid,
+  .r3-ui-shell .communication-templates-r3-form-page .comm-variable-row {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-ui-shell .communication-templates-r3-detail .comm-admin-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-ui-shell .communication-templates-r3-detail .comm-admin-hero-version {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 10px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--r3-config-border);
+    text-align: left;
+  }
+
+  .r3-ui-shell .communication-templates-r3-detail .comm-version-card-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .r3-ui-shell .communication-templates-r3-detail .comm-activate-button {
+    width: 100%;
+  }
+
+  .r3-ui-shell .communication-templates-r3-form-page .comm-form-wide,
+  .r3-ui-shell .communication-templates-r3-form-page .comm-variable-row .comm-remove-button {
+    grid-column: auto;
+  }
+
+  .r3-ui-shell .communication-templates-r3-form-page .comm-variable-row .comm-remove-button {
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 620px) {
+  .r3-ui-shell .communication-templates-r3-directory,
+  .r3-ui-shell .communication-templates-r3-detail,
+  .r3-ui-shell .communication-templates-r3-form-page {
+    gap: 11px;
+  }
+
+  .r3-ui-shell .communication-templates-r3-directory .comm-admin-page-heading h1,
+  .r3-ui-shell .communication-templates-r3-detail .comm-admin-hero h1,
+  .r3-ui-shell .communication-templates-r3-form-page .comm-admin-page-heading h1 {
+    font-size: 23px;
+  }
+
+  .r3-ui-shell .communication-templates-r3-directory .comm-primary-button,
+  .r3-ui-shell .communication-templates-r3-directory .comm-pagination button,
+  .r3-ui-shell .communication-templates-r3-detail .comm-primary-button,
+  .r3-ui-shell .communication-templates-r3-detail .comm-state-button,
+  .r3-ui-shell .communication-templates-r3-detail .comm-activate-button,
+  .r3-ui-shell .communication-templates-r3-form-page .comm-primary-button,
+  .r3-ui-shell .communication-templates-r3-form-page .comm-secondary-button,
+  .r3-ui-shell .communication-templates-r3-form-page .comm-remove-button {
+    min-height: 44px;
+  }
+
+  .r3-ui-shell .communication-templates-r3-detail .comm-admin-actions,
+  .r3-ui-shell .communication-templates-r3-form-page .comm-form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .r3-ui-shell .communication-templates-r3-detail .comm-admin-actions > *,
+  .r3-ui-shell .communication-templates-r3-form-page .comm-form-actions > * {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .r3-ui-shell .communication-templates-r3-detail .comm-admin-actions > span {
+    width: 100%;
+  }
+
+  .r3-ui-shell .communication-templates-r3-form-page .comm-definition-form-card,
+  .r3-ui-shell .communication-templates-r3-form-page .comm-variable-panel {
+    padding: 11px;
+  }
+}
