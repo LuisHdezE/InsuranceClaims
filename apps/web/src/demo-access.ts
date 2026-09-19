@@ -36,7 +36,7 @@ export const DEMO_PERSONA_OPTIONS = Object.entries(PUBLIC_DEMO_PERSONAS).map(([k
   ...persona,
 }));
 
-const DEMO_PERSONA_BY_ID = new Map(
+const DEMO_PERSONA_BY_ID = new Map<string, DemoPersonaKey>(
   DEMO_PERSONA_OPTIONS.map((persona) => [persona.id, persona.key]),
 );
 
