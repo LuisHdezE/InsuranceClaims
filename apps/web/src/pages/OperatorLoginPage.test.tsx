@@ -1,7 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { authenticateOperator, createReadOnlyDemoOperatorSession } from '../api/claims';
+import { authenticateOperator } from '../api/claims';
+import { createReadOnlyDemoOperatorSession } from '../api/demo-session';
+import { PUBLIC_DEMO_PERSONAS } from '../demo-access';
 import { OperatorLoginPage } from './OperatorLoginPage';
 
 const sessionHarness = vi.hoisted(() => ({
@@ -24,6 +26,9 @@ vi.mock('../flow/OperatorSessionContext', () => ({
 
 vi.mock('../api/claims', () => ({
   authenticateOperator: vi.fn(),
+}));
+
+vi.mock('../api/demo-session', () => ({
   createReadOnlyDemoOperatorSession: vi.fn(),
 }));
 
@@ -55,7 +60,7 @@ describe('OperatorLoginPage R3 contract', () => {
 
   afterEach(() => cleanup());
 
-  it('renders contract credentials plus the explicit governed read-only demo entry', () => {
+  it('renders contract credentials plus three explicit governed read-only demo personas', () => {
     renderPage();
 
     const login = screen.getByLabelText('Usuario') as HTMLInputElement;
@@ -72,8 +77,10 @@ describe('OperatorLoginPage R3 contract', () => {
     expect(password.autocomplete).toBe('current-password');
     expect(password.type).toBe('password');
     expect(screen.getByRole('button', { name: 'Ingresar al workspace' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Entrar en demo de solo lectura' })).toBeTruthy();
-    expect(screen.getByText(/bloquea escrituras y cualquier lectura fuera de ese alcance/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Entrar a la demo de Operación' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Entrar a la demo de Supervisión' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Entrar a la demo de Administración' })).toBeTruthy();
+    expect(screen.getByText(/Sidebar muestra únicamente módulos autorizados y productizados/i)).toBeTruthy();
     expect(screen.getByRole('link', { name: /volver al sitio público/i })).toBeTruthy();
 
     expect(screen.getByText(/No se selecciona aquí/i)).toBeTruthy();
@@ -86,31 +93,64 @@ describe('OperatorLoginPage R3 contract', () => {
     expect(screen.queryByText(/google|microsoft|apple/i)).toBeNull();
   });
 
-  it('opens the public read-only demo without collecting credentials and lands inside the governed claims scope', async () => {
+  it('opens the operations demo without collecting credentials and lands on its role-safe dashboard', async () => {
     mockedCreateReadOnlyDemoOperatorSession.mockResolvedValue({
       data: {
         accessToken: 'demo-token',
         tokenType: 'Bearer',
         expiresIn: 900,
         operator: {
-          id: '00000000-0000-4000-8000-000000000096',
-          login: 'demo.operator@eliasworks.invalid',
-          role: 'CLAIMS_OPERATOR',
+          id: PUBLIC_DEMO_PERSONAS.operations.id,
+          login: PUBLIC_DEMO_PERSONAS.operations.login,
+          role: PUBLIC_DEMO_PERSONAS.operations.role,
         },
       },
       requestId: 'req-demo-1',
     });
 
     renderPage();
-    fireEvent.click(screen.getByRole('button', { name: 'Entrar en demo de solo lectura' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar a la demo de Operación' }));
 
-    await waitFor(() => expect(mockedCreateReadOnlyDemoOperatorSession).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockedCreateReadOnlyDemoOperatorSession).toHaveBeenCalledWith('operations'));
     expect(mockedAuthenticateOperator).not.toHaveBeenCalled();
     expect(sessionHarness.signIn).toHaveBeenCalledWith(expect.objectContaining({
       accessToken: 'demo-token',
       operator: expect.objectContaining({ role: 'CLAIMS_OPERATOR' }),
     }));
-    expect(await screen.findByText('Siniestros destino')).toBeTruthy();
+    expect(await screen.findByText('Dashboard destino')).toBeTruthy();
+  });
+
+  it('opens supervision and administration with their real server roles and distinct safe landings', async () => {
+    mockedCreateReadOnlyDemoOperatorSession.mockImplementation(async (persona) => {
+      const definition = PUBLIC_DEMO_PERSONAS[persona];
+      return {
+        data: {
+          accessToken: `${persona}-token`,
+          tokenType: 'Bearer' as const,
+          expiresIn: 900,
+          operator: { id: definition.id, login: definition.login, role: definition.role },
+        },
+        requestId: `req-${persona}`,
+      };
+    });
+
+    const supervision = renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar a la demo de Supervisión' }));
+    expect(await screen.findByText('Dashboard destino')).toBeTruthy();
+    expect(mockedCreateReadOnlyDemoOperatorSession).toHaveBeenCalledWith('supervision');
+    supervision.unmount();
+    cleanup();
+
+    sessionHarness.signIn.mockClear();
+    mockedCreateReadOnlyDemoOperatorSession.mockClear();
+
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar a la demo de Administración' }));
+    expect(await screen.findByText('Workspace destino')).toBeTruthy();
+    expect(mockedCreateReadOnlyDemoOperatorSession).toHaveBeenCalledWith('administration');
+    expect(sessionHarness.signIn).toHaveBeenCalledWith(expect.objectContaining({
+      operator: expect.objectContaining({ role: 'PLATFORM_ADMIN' }),
+    }));
   });
 
   it('submits only login and password, trims login and follows the API role', async () => {
