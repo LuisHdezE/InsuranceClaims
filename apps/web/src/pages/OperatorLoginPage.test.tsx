@@ -56,7 +56,8 @@ describe('OperatorLoginPage demo personas', () => {
   it('renders the three governed public demo personas without changing product credential semantics', () => {
     renderPage();
 
-    expect(screen.getByRole('button', { name: 'Entrar en demo de solo lectura' })).toHaveTextContent('Operations');
+    const operations = screen.getByRole('button', { name: 'Entrar en demo de solo lectura' });
+    expect(operations.textContent).toContain('Operations');
     expect(screen.getByRole('button', { name: 'Explorar como Supervision' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Explorar como Administration' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Ingresar al workspace' })).toBeTruthy();
