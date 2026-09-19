@@ -264,6 +264,25 @@ class Handler(BaseHTTPRequestHandler):
             )
             return
 
+        if path == "/api/v1/operator/tasks":
+            params = parse_qs(parsed.query)
+            requested_status = params.get("status", [None])[0]
+            items = [task for task in TASKS if requested_status is None or task["status"] == requested_status]
+            page = max(1, int(params.get("page", ["1"])[0]))
+            page_size = max(1, int(params.get("pageSize", ["25"])[0]))
+            self._json(
+                200,
+                {
+                    "items": items[:page_size],
+                    "page": page,
+                    "pageSize": page_size,
+                    "totalItems": len(items),
+                    "totalPages": 1 if items else 0,
+                },
+                {"X-Request-Id": "claim-detail-dashboard-tasks"},
+            )
+            return
+
         if path == f"/api/v1/operator/claims/{CLAIM_ID}":
             self._json(200, DETAIL, {"X-Request-Id": "claim-detail-detail"})
             return
