@@ -79,7 +79,7 @@ export function OperatorCollectionDetailPage() {
           <>
             <section className="r3-case-hero" aria-labelledby="collection-title">
               <div>
-                <span className="ops-kicker">Collections Operations R3</span>
+                <span className="ops-kicker">Operaciones de cobranzas R3</span>
                 <h1 id="collection-title">{collection.customer?.displayName ?? 'Caso de cobranza'}</h1>
                 <p>{collection.policy?.policyReference ?? collection.policyId}</p>
                 <div className="r3-case-hero-meta">
@@ -119,7 +119,7 @@ export function OperatorCollectionDetailPage() {
               </section>
 
               <section className="ops-panel r3-case-lifecycle-card" aria-labelledby="collection-lifecycle-title">
-                <div className="ops-panel-heading"><div><h2 id="collection-lifecycle-title">Lifecycle</h2><p>Estado del caso separado del pago y del pipeline operativo.</p></div></div>
+                <div className="ops-panel-heading"><div><h2 id="collection-lifecycle-title">Ciclo de vida</h2><p>Estado del caso separado del pago y del pipeline operativo.</p></div></div>
                 <div className="r3-case-lifecycle-state"><CollectionStatus value={collection.status} /></div>
                 {collection.status === 'OPEN' && canManage ? (
                   <div className="r3-case-decision-row">
@@ -136,14 +136,14 @@ export function OperatorCollectionDetailPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="r3-case-readonly-note">{collection.status === 'OPEN' ? 'Tu rol puede leer este caso, pero no cambiar su lifecycle.' : 'El caso está en un estado terminal y no admite nuevas transiciones.'}</p>
+                  <p className="r3-case-readonly-note">{collection.status === 'OPEN' ? 'Tu rol puede leer este caso, pero no cambiar su ciclo de vida.' : 'El caso está en un estado terminal y no admite nuevas transiciones.'}</p>
                 )}
               </section>
             </div>
 
             <section className="ops-panel r3-payment-card" aria-labelledby="collection-payment-title">
               <div className="ops-panel-heading">
-                <div><h2 id="collection-payment-title">Estado de pago</h2><p>Valor autoritativo publicado por el servidor, independiente del lifecycle del caso.</p></div>
+                <div><h2 id="collection-payment-title">Estado de pago</h2><p>Valor autoritativo publicado por el servidor, independiente del ciclo de vida del caso.</p></div>
               </div>
               <div className="r3-payment-current">
                 <span>Valor actual</span>
