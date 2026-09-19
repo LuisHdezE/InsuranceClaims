@@ -196,7 +196,7 @@ export function OperatorLoginPage() {
                         type="button"
                         disabled={pending}
                         onClick={() => void openReadOnlyDemo(persona.key)}
-                        aria-label={`Explorar como ${persona.label}`}
+                        aria-label={persona.key === 'operations' ? 'Entrar en demo de solo lectura' : `Explorar como ${persona.label}`}
                         key={persona.key}
                       >
                         <strong>{pendingMode === `demo-${persona.key}` ? 'Abriendo…' : persona.label}</strong>
