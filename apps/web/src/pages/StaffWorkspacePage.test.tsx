@@ -46,14 +46,15 @@ describe('StaffWorkspacePage', () => {
     cleanup();
   });
 
-  it('renders Platform Admin as a Spanish platform launchpad without implicit business operations', () => {
+  it('renders Platform Admin with only authorized and productized launch cards', () => {
     renderWorkspace();
 
     expect(screen.getByRole('heading', { name: 'Tu espacio de trabajo' })).toBeTruthy();
     expect(screen.getAllByText('Administrador de plataforma').length).toBeGreaterThan(0);
+    expect(screen.getByText('4 módulos disponibles')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Supervisión' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Configuración de plataforma' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Operación técnica' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Operación técnica' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Operación' })).toBeNull();
 
     const expectedLinks = [
@@ -61,16 +62,21 @@ describe('StaffWorkspacePage', () => {
       'Administración de pipelines',
       'Plantillas de comunicación',
       'Campos personalizados',
-      'Orientación',
-      'Automatizaciones',
-      'Importaciones gobernadas',
-      'Integraciones y recuperación',
     ];
 
     for (const name of expectedLinks) {
       expect(screen.getByRole('link', { name: new RegExp(name, 'i') })).toBeTruthy();
     }
     expect(screen.getAllByRole('link')).toHaveLength(expectedLinks.length);
+
+    for (const pending of [
+      'Orientación',
+      'Automatizaciones',
+      'Importaciones gobernadas',
+      'Integraciones y recuperación',
+    ]) {
+      expect(screen.queryByRole('link', { name: new RegExp(pending, 'i') })).toBeNull();
+    }
 
     expect(screen.queryByText('Custom Fields')).toBeNull();
     expect(screen.queryByText('Guidance')).toBeNull();

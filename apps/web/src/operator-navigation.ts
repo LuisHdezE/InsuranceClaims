@@ -3,6 +3,8 @@ import { hasAllPermissions, type StaffPermission } from './auth/staff-access';
 
 export type OperatorNavGroupKey = 'operations' | 'portfolio' | 'administration';
 export type OperatorNavMaturity = 'ready' | 'pending';
+export type OperatorWorkspaceGroupKey = 'operations' | 'supervision' | 'platform' | 'technical';
+export type OperatorWorkspaceTone = 'cyan' | 'blue' | 'violet' | 'yellow' | 'green';
 
 export type OperatorNavGroup = {
   key: OperatorNavGroupKey;
@@ -19,6 +21,23 @@ export type OperatorNavItem = {
   context: string;
 };
 
+export type OperatorWorkspaceGroup = {
+  key: OperatorWorkspaceGroupKey;
+  label: string;
+  description: string;
+};
+
+export type OperatorWorkspaceCard = {
+  group: OperatorWorkspaceGroupKey;
+  kicker: string;
+  title: string;
+  description: string;
+  navPaths: readonly string[];
+  href: string;
+  action: string;
+  tone: OperatorWorkspaceTone;
+};
+
 export const OPERATOR_NAV_GROUPS: readonly OperatorNavGroup[] = [
   { key: 'operations', label: 'Operación' },
   { key: 'portfolio', label: 'Clientes y pólizas' },
@@ -30,8 +49,8 @@ export const OPERATOR_NAV_GROUPS: readonly OperatorNavGroup[] = [
  *
  * A route can be real and authorized while still being visually pending. In that case
  * the sidebar reserves its permanent place but does not link it until the corresponding
- * visual increment is approved. This lets the shell stabilize once while screens mature
- * independently.
+ * visual increment is approved. Workspace launch cards consume this same maturity
+ * authority, so a pending module cannot become clickable through a second catalog.
  */
 export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
   {
@@ -179,6 +198,161 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
   },
 ] as const;
 
+export const OPERATOR_WORKSPACE_GROUPS: readonly OperatorWorkspaceGroup[] = [
+  {
+    key: 'operations',
+    label: 'Operación',
+    description: 'El trabajo diario de clientes, pólizas, siniestros, renovaciones y cobranzas.',
+  },
+  {
+    key: 'supervision',
+    label: 'Supervisión',
+    description: 'Visión agregada para seguimiento y control operacional.',
+  },
+  {
+    key: 'platform',
+    label: 'Configuración de plataforma',
+    description: 'Herramientas administrativas productizadas para perfiles autorizados.',
+  },
+  {
+    key: 'technical',
+    label: 'Operación técnica',
+    description: 'Importaciones, integraciones y recuperación operativa cuando alcanzan madurez visual.',
+  },
+] as const;
+
+/*
+ * Workspace presentation is intentionally declared beside the canonical navigation.
+ * A card may summarize several related modules, but it cannot invent permissions or
+ * readiness. navPaths are resolved back to OPERATOR_NAV_ITEMS at runtime.
+ */
+export const OPERATOR_WORKSPACE_CARDS: readonly OperatorWorkspaceCard[] = [
+  {
+    group: 'operations',
+    kicker: 'Operación de siniestros',
+    title: 'Siniestros y trabajo operativo',
+    description: 'Revisa el tablero, los siniestros y las tareas que requieren atención.',
+    navPaths: ['/operator/dashboard', '/operator/claims', '/operator/tasks'],
+    href: '/operator/dashboard',
+    action: 'Abrir operaciones',
+    tone: 'cyan',
+  },
+  {
+    group: 'operations',
+    kicker: 'Cliente 360',
+    title: 'Clientes y pólizas',
+    description: 'Consulta la información disponible de clientes y sus pólizas asociadas.',
+    navPaths: ['/operator/customers', '/operator/policies'],
+    href: '/operator/customers',
+    action: 'Abrir Cliente 360',
+    tone: 'blue',
+  },
+  {
+    group: 'operations',
+    kicker: 'Ciclo de póliza',
+    title: 'Renovaciones',
+    description: 'Da seguimiento al ciclo operativo de renovación de pólizas.',
+    navPaths: ['/operator/renewals'],
+    href: '/operator/renewals',
+    action: 'Abrir renovaciones',
+    tone: 'violet',
+  },
+  {
+    group: 'operations',
+    kicker: 'Finanzas',
+    title: 'Cobranzas',
+    description: 'Consulta el estado de pago y el flujo operativo de cobranzas.',
+    navPaths: ['/operator/collections'],
+    href: '/operator/collections',
+    action: 'Abrir cobranzas',
+    tone: 'yellow',
+  },
+  {
+    group: 'supervision',
+    kicker: 'Analítica',
+    title: 'Métricas operacionales',
+    description: 'Consulta indicadores y distribuciones agregadas del trabajo operativo.',
+    navPaths: ['/operator/analytics'],
+    href: '/operator/analytics',
+    action: 'Abrir analítica',
+    tone: 'violet',
+  },
+  {
+    group: 'platform',
+    kicker: 'Pipelines',
+    title: 'Administración de pipelines',
+    description: 'Gestiona definiciones, versiones y activación de pipelines.',
+    navPaths: ['/operator/admin/pipelines'],
+    href: '/operator/admin/pipelines',
+    action: 'Administrar pipelines',
+    tone: 'yellow',
+  },
+  {
+    group: 'platform',
+    kicker: 'Comunicaciones',
+    title: 'Plantillas de comunicación',
+    description: 'Administra plantillas versionadas para los canales disponibles.',
+    navPaths: ['/operator/admin/communication-templates'],
+    href: '/operator/admin/communication-templates',
+    action: 'Administrar plantillas',
+    tone: 'green',
+  },
+  {
+    group: 'platform',
+    kicker: 'Configuración',
+    title: 'Campos personalizados',
+    description: 'Gestiona los campos configurables disponibles para cada dominio.',
+    navPaths: ['/operator/admin/custom-fields'],
+    href: '/operator/admin/custom-fields',
+    action: 'Administrar campos',
+    tone: 'blue',
+  },
+  {
+    group: 'platform',
+    kicker: 'Orientación',
+    title: 'Orientación',
+    description: 'Administra el contenido de orientación configurado en la plataforma.',
+    navPaths: ['/operator/admin/guidance'],
+    href: '/operator/admin/guidance',
+    action: 'Administrar orientación',
+    tone: 'green',
+  },
+  {
+    group: 'platform',
+    kicker: 'Reglas',
+    title: 'Automatizaciones',
+    description: 'Gestiona reglas versionadas, disparadores y acciones disponibles.',
+    navPaths: ['/operator/admin/automations'],
+    href: '/operator/admin/automations',
+    action: 'Administrar automatizaciones',
+    tone: 'violet',
+  },
+  {
+    group: 'technical',
+    kicker: 'Datos',
+    title: 'Importaciones gobernadas',
+    description: 'Carga, valida y confirma importaciones mediante el flujo disponible.',
+    navPaths: ['/operator/admin/imports'],
+    href: '/operator/admin/imports',
+    action: 'Abrir importaciones',
+    tone: 'yellow',
+  },
+  {
+    group: 'technical',
+    kicker: 'Recuperación',
+    title: 'Integraciones y recuperación',
+    description: 'Consulta integraciones y trabajos pendientes de recuperación operativa.',
+    navPaths: ['/operator/admin/recovery'],
+    href: '/operator/admin/recovery',
+    action: 'Abrir recuperación',
+    tone: 'blue',
+  },
+] as const;
+
+export function operatorNavItemForPath(path: string): OperatorNavItem | undefined {
+  return OPERATOR_NAV_ITEMS.find((item) => item.to === path);
+}
+
 export function operatorNavItemsForRole(role: StaffRole): readonly OperatorNavItem[] {
   return OPERATOR_NAV_ITEMS.filter((item) => !item.allOf || hasAllPermissions(role, item.allOf));
 }
@@ -186,6 +360,18 @@ export function operatorNavItemsForRole(role: StaffRole): readonly OperatorNavIt
 export function operatorNavItemCanLink(item: OperatorNavItem, role: StaffRole | undefined): boolean {
   if (item.maturity !== 'ready' || !role) return false;
   return !item.allOf || hasAllPermissions(role, item.allOf);
+}
+
+export function operatorWorkspaceCardCanLink(card: OperatorWorkspaceCard, role: StaffRole | undefined): boolean {
+  if (!role || !card.navPaths.includes(card.href)) return false;
+  return card.navPaths.every((path) => {
+    const item = operatorNavItemForPath(path);
+    return Boolean(item && operatorNavItemCanLink(item, role));
+  });
+}
+
+export function operatorWorkspaceCardsForRole(role: StaffRole): readonly OperatorWorkspaceCard[] {
+  return OPERATOR_WORKSPACE_CARDS.filter((card) => operatorWorkspaceCardCanLink(card, role));
 }
 
 export function operatorContextForPath(path: string): string {
