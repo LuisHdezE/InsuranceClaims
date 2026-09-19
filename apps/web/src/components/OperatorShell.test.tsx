@@ -66,7 +66,7 @@ describe('OperatorShell', () => {
     expect(screen.queryByRole('link', { name: /^Tasks$/ })).toBeNull();
   });
 
-  it('does not elevate platform admin into business navigation while keeping authorized pending capabilities visible', () => {
+  it('does not elevate platform admin into business navigation while linking productized admin capabilities', () => {
     sessionState.role = 'PLATFORM_ADMIN';
 
     render(
@@ -80,9 +80,9 @@ describe('OperatorShell', () => {
     expect(screen.queryByRole('heading', { name: 'Clientes y pólizas' })).toBeNull();
     expect(screen.getByRole('link', { name: /Espacio de trabajo/ }).getAttribute('aria-current')).toBe('page');
     expect(screen.getByRole('link', { name: /^Analítica$/ }).getAttribute('href')).toBe('/operator/analytics');
+    expect(screen.getByRole('link', { name: /^Pipelines$/ }).getAttribute('href')).toBe('/operator/admin/pipelines');
 
     const pendingLabels = [
-      'Pipelines',
       'Plantillas',
       'Campos',
       'Orientación',
