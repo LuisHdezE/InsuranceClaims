@@ -124,6 +124,25 @@ export function publicDemoFixtureIds(kind: PublicDemoFixtureKind): readonly stri
   return PUBLIC_DEMO_FIXTURES[kind];
 }
 
+export function scopePublicDemoPage<T>(
+  items: readonly T[],
+  kind: PublicDemoFixtureKind,
+  idOf: (item: T) => string,
+  page = 1,
+  pageSize = 25,
+) {
+  const allowed = PUBLIC_DEMO_FIXTURE_IDS[kind];
+  const scoped = items.filter((item) => allowed.has(idOf(item).toLowerCase()));
+  const start = (page - 1) * pageSize;
+  return {
+    items: scoped.slice(start, start + pageSize),
+    page,
+    pageSize,
+    totalItems: scoped.length,
+    totalPages: scoped.length === 0 ? 0 : Math.ceil(scoped.length / pageSize),
+  };
+}
+
 function allowsOperationalPersona(persona: PublicDemoPersona): boolean {
   return persona === 'operations' || persona === 'supervision';
 }
