@@ -65,7 +65,7 @@ test('REST contract preserves Nest HTTP exceptions as Problem Details', async ()
   await app.close();
 });
 
-test('public demo operator access is gated, read-only and confined to governed synthetic fixtures', async () => {
+test('public demo operations access is gated, read-only and confined to its governed persona scope', async () => {
   const previousDemoMode = process.env.DEMO_MODE;
   const runtime = await createMemoryRuntime();
   const app = await NestFactory.create(ApiModule.register(runtime), { logger: false });
@@ -74,6 +74,7 @@ test('public demo operator access is gated, read-only and confined to governed s
   const demoLogin = () => request(http)
     .post('/api/v1/operator/auth/login')
     .set('X-Demo-Read-Only', 'true')
+    .set('X-Demo-Persona', 'operations')
     .send({ login: 'demo.operator@eliasworks.invalid', password: 'public-demo-read-only' });
 
   try {
@@ -112,8 +113,13 @@ test('public demo operator access is gated, read-only and confined to governed s
       .expect(403);
     assert.equal(restrictedClaim.body.code, 'DEMO_SCOPE_RESTRICTED');
 
-    const restrictedArea = await request(http)
+    await request(http)
       .get('/api/v1/operator/tasks')
+      .set('Authorization', bearer)
+      .expect(200);
+
+    const restrictedArea = await request(http)
+      .get('/api/v1/admin/pipelines')
       .set('Authorization', bearer)
       .expect(403);
     assert.equal(restrictedArea.body.code, 'DEMO_SCOPE_RESTRICTED');

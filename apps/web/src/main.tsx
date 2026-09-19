@@ -38,6 +38,7 @@ import './r3-ui-increment-03.css';
 import './r3-mobile-nav-containment.css';
 import './operator-login-r3.css';
 import './operator-login-viewport.css';
+import './operator-login-demo-personas.css';
 import './operator-dashboard-polish.css';
 import './claims-workspace-density.css';
 import './claim-detail-polish.css';

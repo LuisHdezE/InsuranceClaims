@@ -7,6 +7,24 @@ from urllib.parse import parse_qs, urlparse
 HOST = "127.0.0.1"
 PORT = 3000
 
+DEMO_PERSONAS = {
+    "operations": {
+        "id": "00000000-0000-4000-8000-000000000096",
+        "login": "demo.operator@eliasworks.invalid",
+        "role": "CLAIMS_OPERATOR",
+    },
+    "supervision": {
+        "id": "00000000-0000-4000-8000-000000000095",
+        "login": "demo.supervisor@eliasworks.invalid",
+        "role": "CLAIMS_SUPERVISOR",
+    },
+    "administration": {
+        "id": "00000000-0000-4000-8000-000000000094",
+        "login": "demo.admin@eliasworks.invalid",
+        "role": "PLATFORM_ADMIN",
+    },
+}
+
 CLAIMS = [
     {
         "claimId": "claim-visual-001",
@@ -87,6 +105,54 @@ CLAIMS = [
     },
 ]
 
+ANALYTICS = {
+    "window": {
+        "from": "2026-08-19T12:00:00.000Z",
+        "to": "2026-09-18T12:00:00.000Z",
+        "semantics": "[from,to)",
+    },
+    "generatedAt": "2026-09-18T12:00:00.000Z",
+    "openClaims": 7,
+    "reportedInWindow": 7,
+    "claimsByStatus": {
+        "RECEIVED": 2,
+        "UNDER_REVIEW": 1,
+        "OBSERVED": 1,
+        "APPROVED": 1,
+        "IN_REPAIR": 1,
+        "CLOSED": 1,
+    },
+    "claimsByOperationalStage": [],
+    "evidencePendingReviewClaims": 0,
+    "openTasks": 0,
+    "overdueTasks": 0,
+    "closedClaims": 1,
+}
+
+PAGINATED_EMPTY_PATHS = {
+    "/api/v1/operator/tasks",
+    "/api/v1/operator/customers",
+    "/api/v1/operator/policies",
+    "/api/v1/operator/renewals",
+    "/api/v1/operator/collections",
+    "/api/v1/admin/pipelines",
+    "/api/v1/admin/communication-templates",
+    "/api/v1/admin/custom-fields",
+}
+
+
+def paginated_empty(parsed_query: str) -> dict[str, object]:
+    params = parse_qs(parsed_query)
+    page = max(1, int(params.get("page", ["1"])[0]))
+    page_size = max(1, int(params.get("pageSize", ["25"])[0]))
+    return {
+        "items": [],
+        "page": page,
+        "pageSize": page_size,
+        "totalItems": 0,
+        "totalPages": 0,
+    }
+
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
@@ -102,17 +168,29 @@ class Handler(BaseHTTPRequestHandler):
             params = parse_qs(parsed.query)
             status = params.get("status", [None])[0]
             items = [claim for claim in CLAIMS if status is None or claim["status"] == status]
+            page = max(1, int(params.get("page", ["1"])[0]))
+            page_size = max(1, int(params.get("pageSize", ["20"])[0]))
             self._json(
                 200,
                 {
                     "items": items,
-                    "page": 1,
-                    "pageSize": 20,
+                    "page": page,
+                    "pageSize": page_size,
                     "totalItems": len(items),
                     "totalPages": 1 if items else 0,
                 },
                 {"X-Request-Id": "claims-workspace-visual-qa-list"},
             )
+            return
+        if path in PAGINATED_EMPTY_PATHS:
+            self._json(
+                200,
+                paginated_empty(parsed.query),
+                {"X-Request-Id": "demo-persona-navigation-empty-list"},
+            )
+            return
+        if path == "/api/v1/operator/analytics/claims":
+            self._json(200, ANALYTICS, {"X-Request-Id": "demo-persona-navigation-analytics"})
             return
         self._json(404, {"error": "not_found", "path": path})
 
@@ -126,19 +204,18 @@ class Handler(BaseHTTPRequestHandler):
         if length:
             self.rfile.read(length)
 
+        persona_key = self.headers.get("x-demo-persona", "operations").strip().lower()
+        persona = DEMO_PERSONAS.get(persona_key, DEMO_PERSONAS["operations"])
+
         self._json(
             200,
             {
-                "accessToken": "claims-workspace-visual-qa-token",
+                "accessToken": f"claims-workspace-visual-qa-{persona_key}-token",
                 "tokenType": "Bearer",
                 "expiresIn": 900,
-                "operator": {
-                    "id": "00000000-0000-4000-8000-000000000096",
-                    "login": "demo.operator@eliasworks.invalid",
-                    "role": "CLAIMS_OPERATOR",
-                },
+                "operator": persona,
             },
-            {"X-Request-Id": "claims-workspace-visual-qa-login"},
+            {"X-Request-Id": f"claims-workspace-visual-qa-login-{persona_key}"},
         )
 
     def _json(self, status: int, payload: object, extra_headers: dict[str, str] | None = None) -> None:

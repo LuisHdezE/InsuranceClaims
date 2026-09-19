@@ -7,6 +7,7 @@ import {
   isDemoModeEnabled,
   isPublicDemoOperator,
   isSafeReadOnlyMethod,
+  publicDemoPersonaForActor,
 } from './demo-access.js';
 import { ApiProblemError } from './transport.js';
 
@@ -32,8 +33,13 @@ export class JwtAuthGuard implements CanActivate {
           : typeof req.originalUrl === 'string'
             ? req.originalUrl.split('?')[0]
             : '';
-        if (!isAllowedPublicDemoReadPath(requestPath)) {
-          throw new ApiProblemError(403, 'DEMO_SCOPE_RESTRICTED', 'The public demo session can read only governed synthetic Claim fixtures.');
+        if (!isAllowedPublicDemoReadPath(requestPath, actor)) {
+          const persona = publicDemoPersonaForActor(actor) ?? 'unknown';
+          throw new ApiProblemError(
+            403,
+            'DEMO_SCOPE_RESTRICTED',
+            `The ${persona} public demo persona can read only its governed synthetic fixtures.`,
+          );
         }
       }
       req.actor = actor;

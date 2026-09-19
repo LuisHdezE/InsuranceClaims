@@ -1,4 +1,5 @@
 import type { AxiosInstance } from 'axios';
+import { PUBLIC_DEMO_PERSONAS, type DemoPersonaKey } from '../demo-access';
 import { createApiClient, toApiFailure } from './client';
 import type {
   ApiResult,
@@ -102,17 +103,22 @@ export async function authenticateOperator(
 }
 
 export async function createReadOnlyDemoOperatorSession(
+  persona: DemoPersonaKey = 'operations',
   client: AxiosInstance = browserClient,
 ): Promise<ApiResult<OperatorLoginResponse>> {
+  const demo = PUBLIC_DEMO_PERSONAS[persona];
   try {
     const response = await client.post<OperatorLoginResponse>(
       '/api/v1/operator/auth/login',
       {
-        login: 'demo.operator@eliasworks.invalid',
+        login: demo.login,
         password: 'public-demo-read-only',
       },
       {
-        headers: { 'X-Demo-Read-Only': 'true' },
+        headers: {
+          'X-Demo-Read-Only': 'true',
+          'X-Demo-Persona': persona,
+        },
         // Render free services may need more than the default client timeout to wake from idle.
         timeout: 60_000,
       },

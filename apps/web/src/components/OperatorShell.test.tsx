@@ -105,7 +105,7 @@ describe('OperatorShell', () => {
     expect(screen.queryByText('Cobranzas')).toBeNull();
   });
 
-  it('shows the complete information architecture in the public demo and links ready authorized views', () => {
+  it('shows only ready authorized navigation for the public Operations persona', () => {
     sessionState.id = PUBLIC_DEMO_OPERATOR_ID;
 
     render(
@@ -116,7 +116,7 @@ describe('OperatorShell', () => {
 
     expect(screen.getByRole('heading', { name: 'Operación' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Clientes y pólizas' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Administración' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Administración' })).toBeNull();
 
     const navigation = screen.getByRole('navigation');
     const nav = within(navigation);
@@ -133,16 +133,18 @@ describe('OperatorShell', () => {
     expect(nav.getByRole('link', { name: /^Cobranzas$/ }).getAttribute('href')).toBe('/operator/collections');
     expect(nav.getByRole('link', { name: /Siniestros/ }).getAttribute('aria-current')).toBe('page');
 
-    const completeCatalog = [
-      'Espacio de trabajo', 'Tablero', 'Siniestros', 'Tareas', 'Analítica',
-      'Clientes', 'Pólizas', 'Renovaciones', 'Cobranzas', 'Pipelines',
-      'Plantillas', 'Campos', 'Orientación', 'Automatizaciones', 'Importaciones', 'Recuperación',
+    const authorizedCatalog = [
+      'Espacio de trabajo', 'Tablero', 'Siniestros', 'Tareas',
+      'Clientes', 'Pólizas', 'Renovaciones', 'Cobranzas',
     ];
-    for (const label of completeCatalog) {
+    for (const label of authorizedCatalog) {
       expect(nav.getByText(label)).toBeTruthy();
     }
 
-    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(8);
+    for (const hiddenLabel of ['Analítica', 'Pipelines', 'Plantillas', 'Campos', 'Orientación', 'Automatizaciones', 'Importaciones', 'Recuperación']) {
+      expect(nav.queryByText(hiddenLabel)).toBeNull();
+    }
+    expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(0);
   });
 
   it('keeps logout wired to the existing session action', () => {
