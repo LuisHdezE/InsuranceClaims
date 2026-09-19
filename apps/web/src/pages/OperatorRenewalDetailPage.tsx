@@ -7,6 +7,7 @@ import type { ApiFailure } from '../api/types';
 import { hasPermission } from '../auth/staff-access';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import '../r3-ui-increment-06.css';
 
@@ -59,7 +60,8 @@ export function OperatorRenewalDetailPage() {
 
   if (!session) return null;
   const renewal = renewalQuery.data?.data;
-  const canManage = hasPermission(session.operator.role, 'renewals.manage');
+  const demoReadOnly = isPublicDemoOperator(session.operator);
+  const canManage = !demoReadOnly && hasPermission(session.operator.role, 'renewals.manage');
   const canReadCustomers = hasPermission(session.operator.role, 'customers.read');
   const canReadPolicies = hasPermission(session.operator.role, 'policies.read');
   const mutationFailure = (transitionMutation.error ?? pipelineMutation.error) as ApiFailure | null;
@@ -136,7 +138,13 @@ export function OperatorRenewalDetailPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="r3-case-readonly-note">{renewal.status === 'OPEN' ? 'Tu rol puede leer este caso, pero no cambiar su ciclo de vida.' : 'El caso está en un estado terminal y no admite nuevas transiciones.'}</p>
+                  <p className="r3-case-readonly-note">
+                    {demoReadOnly && renewal.status === 'OPEN'
+                      ? 'Demo pública de solo lectura. Completar o cancelar la renovación está oculto y el API rechaza escrituras.'
+                      : renewal.status === 'OPEN'
+                        ? 'Tu rol puede leer este caso, pero no cambiar su ciclo de vida.'
+                        : 'El caso está en un estado terminal y no admite nuevas transiciones.'}
+                  </p>
                 )}
               </section>
             </div>
