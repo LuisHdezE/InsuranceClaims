@@ -4,7 +4,7 @@ import { resolveStaffLandingRoute } from '../auth/staff-access';
 import { authenticateOperator, createReadOnlyDemoOperatorSession } from '../api/claims';
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
-import { DEMO_PERSONA_OPTIONS, isPublicDemoOperator, type DemoPersonaKey } from '../demo-access';
+import { DEMO_PERSONA_OPTIONS, type DemoPersonaKey } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 type PendingMode = 'credentials' | `demo-${DemoPersonaKey}` | null;
