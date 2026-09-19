@@ -67,7 +67,7 @@ export function AdminPipelineDetailPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main pipeline-admin-main">
+      <main className="operator-main ops-main pipeline-admin-main pipelines-r3-detail">
         <div className="pipeline-breadcrumbs"><Link to="/operator/admin/pipelines">Pipelines</Link><span>/</span><span>{pipeline?.key ?? definitionId.slice(0, 8)}</span></div>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
@@ -79,7 +79,7 @@ export function AdminPipelineDetailPage() {
           <>
             <section className="pipeline-admin-hero" aria-labelledby="pipeline-admin-title">
               <div>
-                <span className="ops-kicker">Pipeline Definition R3</span>
+                <span className="ops-kicker">Definición de pipeline R3</span>
                 <h1 id="pipeline-admin-title">{pipeline.displayName}</h1>
                 <div className="pipeline-admin-hero-meta">
                   <code>{pipeline.key}</code>
@@ -88,7 +88,7 @@ export function AdminPipelineDetailPage() {
                 </div>
               </div>
               <div className="pipeline-admin-hero-version">
-                <small>Definition version</small>
+                <small>Versión de definición</small>
                 <strong>v{pipeline.version}</strong>
                 <span>{pipeline.activeVersionId ? 'Tiene versión activa' : 'Sin versión activa'}</span>
               </div>
@@ -104,7 +104,7 @@ export function AdminPipelineDetailPage() {
               >
                 {stateMutation.isPending ? 'Aplicando…' : pipeline.enabled ? 'Deshabilitar definición' : pipeline.activeVersionId ? 'Habilitar definición' : 'Activa una versión antes de habilitar'}
               </button>
-              <span>El cambio usa <strong>expectedDefinitionVersion {pipeline.version}</strong>.</span>
+              <span className="pipeline-concurrency-note">Control de concurrencia activo · definición v{pipeline.version}</span>
             </section>
 
             <section className="ops-panel pipeline-version-panel" aria-labelledby="pipeline-versions-title">
@@ -133,7 +133,7 @@ export function AdminPipelineDetailPage() {
 
             <section className="pipeline-admin-contract-note">
               <strong>Frontera R3</strong>
-              <p>Enable/disable y activación pueden fallar por conflictos de configuración o versión. Ante 409 la UI refresca la proyección autoritativa y no reintenta a ciegas.</p>
+              <p>Habilitar, deshabilitar y activar una versión pueden fallar por conflictos de configuración o versión. Ante 409 la UI refresca la proyección autoritativa y no reintenta a ciegas.</p>
             </section>
           </>
         )}
@@ -159,7 +159,10 @@ function PipelineVersionCard({
         <div>
           <span className={`pipeline-version-status is-${version.status.toLowerCase()}`}>{version.status}</span>
           <h3>Versión {version.versionNumber}</h3>
-          <code>{version.versionId}</code>
+          <details className="pipeline-technical-details">
+            <summary>Detalles técnicos</summary>
+            <code>{version.versionId}</code>
+          </details>
         </div>
         {version.status === 'DRAFT' && (
           <button className="pipeline-activate-button" type="button" disabled={mutationPending} onClick={onActivate}>
@@ -169,7 +172,7 @@ function PipelineVersionCard({
       </div>
 
       <div className="pipeline-version-facts">
-        <div><span>Source classification</span><strong>{version.sourceClassification}</strong></div>
+        <div><span>Clasificación de origen</span><strong>{version.sourceClassification}</strong></div>
         <div><span>Creada</span><strong>{formatDateTime(version.createdAt)}</strong></div>
         <div><span>Activada</span><strong>{version.activatedAt ? formatDateTime(version.activatedAt) : '—'}</strong></div>
         <div><span>Retirada</span><strong>{version.retiredAt ? formatDateTime(version.retiredAt) : '—'}</strong></div>
