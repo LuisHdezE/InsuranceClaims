@@ -72,10 +72,12 @@ try:
         EC.presence_of_element_located((By.CSS_SELECTOR, "form.operator-form button[type='submit']"))
     )
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", submit)
-    wait.until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, "form.operator-form button[type='submit']"))
-    ).click()
+    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "form.operator-form button[type='submit']")))
+    driver.execute_script("arguments[0].click();", submit)
 
+    wait.until(lambda d: "/operator/dashboard" in d.current_url)
+    claims_link = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a.operator-sidebar-item[href="/operator/claims"]')))
+    driver.execute_script("arguments[0].click();", claims_link)
     wait.until(lambda d: "/operator/claims" in d.current_url)
     wait.until(lambda d: "Gestión de siniestros" in d.find_element(By.TAG_NAME, "body").text)
     wait.until(lambda d: "SYN-QA-BULK-TRACK-001" in d.find_element(By.TAG_NAME, "body").text)
