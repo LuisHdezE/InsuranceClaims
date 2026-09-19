@@ -1,0 +1,38 @@
+.r3-login-demo-personas {
+  display: grid;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.r3-login-demo-personas .r3-login-demo-button {
+  display: grid;
+  gap: 3px;
+  min-height: 56px;
+  margin-top: 0;
+  padding: 9px 12px;
+  text-align: left;
+}
+
+.r3-login-demo-personas .r3-login-demo-button span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.r3-login-demo-personas .r3-login-demo-button small {
+  display: block;
+  color: rgba(255, 255, 255, .82);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.r3-login-demo-personas .r3-login-demo-button:disabled small {
+  color: rgba(255, 255, 255, .68);
+}
+
+@media (max-width: 760px) {
+  .r3-login-demo-personas .r3-login-demo-button {
+    min-height: 60px;
+  }
+}
