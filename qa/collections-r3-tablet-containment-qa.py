@@ -11,6 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 WEB_BASE_URL = os.environ.get("QA_WEB_BASE_URL", "http://127.0.0.1:5173").rstrip("/")
 TOLERANCE_PX = 2
+MIN_CARD_METADATA_WIDTH_PX = 150
 
 options = webdriver.ChromeOptions()
 options.add_argument("--headless=new")
@@ -60,6 +61,7 @@ try:
         const table = document.querySelector('.r3-collections-directory .r3-case-table');
         const head = document.querySelector('.r3-collections-directory .r3-case-table thead');
         const row = document.querySelector('.r3-collections-directory .r3-case-table tbody tr');
+        const lifecycleCell = document.querySelector(".r3-collections-directory .r3-case-table td[data-label='Ciclo de vida']");
         return {
           innerWidth: window.innerWidth,
           pageScrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
@@ -67,6 +69,7 @@ try:
           tableMinWidth: table ? getComputedStyle(table).minWidth : '',
           theadDisplay: head ? getComputedStyle(head).display : '',
           rowDisplay: row ? getComputedStyle(row).display : '',
+          lifecycleCellWidth: lifecycleCell ? Math.round(lifecycleCell.getBoundingClientRect().width) : 0,
           tableScrollWidth: wrap ? wrap.scrollWidth : 0,
           tableClientWidth: wrap ? wrap.clientWidth : 0,
         };
@@ -85,6 +88,10 @@ try:
         raise AssertionError(f"1024px Collections directory must render cards: {metrics['rowDisplay']}")
     if metrics["tableMinWidth"] != "0px":
         raise AssertionError(f"1024px Collections directory must remove table min-width: {metrics['tableMinWidth']}")
+    if metrics["lifecycleCellWidth"] < MIN_CARD_METADATA_WIDTH_PX:
+        raise AssertionError(
+            f"1024px Collections card metadata column is too narrow: {metrics['lifecycleCellWidth']}px"
+        )
 
     print(
         json.dumps(
