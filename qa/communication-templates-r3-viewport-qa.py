@@ -75,6 +75,11 @@ def assert_mobile_actions(selector: str, context: str) -> None:
             raise AssertionError(f"{context} mobile action is too short: {node.rect['height']}px")
 
 
+def select_option_values(selector: str) -> list[str | None]:
+    select = driver.find_element(By.CSS_SELECTOR, selector)
+    return [node.get_attribute("value") for node in select.find_elements(By.TAG_NAME, "option")]
+
+
 try:
     set_viewport(1366, 768)
     driver.get(f"{WEB_BASE_URL}/operator/login")
@@ -260,7 +265,7 @@ try:
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".communication-templates-r3-form-page")))
     wait.until(lambda d: "nueva versión inmutable" in d.find_element(By.CSS_SELECTOR, ".ops-kicker").text.lower())
     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".comm-variable-row select")))
-    variable_type_values = [node.get_attribute("value") for node in driver.find_elements(By.CSS_SELECTOR, ".comm-variable-row select:first-of-type option")]
+    variable_type_values = select_option_values(".comm-variable-row select")
     if variable_type_values != ["STRING", "NUMBER", "BOOLEAN"]:
         raise AssertionError(f"Version form published unsupported variable types: {variable_type_values}")
     assert_mobile_actions(
@@ -286,7 +291,7 @@ try:
     wait.until(lambda d: d.current_url.endswith("/operator/admin/communication-templates/new"))
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".communication-templates-r3-form-page")))
 
-    channel_values = [node.get_attribute("value") for node in driver.find_elements(By.CSS_SELECTOR, ".comm-form-grid select option")]
+    channel_values = select_option_values(".comm-form-grid select")
     if channel_values != ["EMAIL", "WHATSAPP"]:
         raise AssertionError(f"Template create form published unsupported channels: {channel_values}")
 
@@ -295,7 +300,7 @@ try:
     )
     add_variable.click()
     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".comm-variable-row select")))
-    create_variable_types = [node.get_attribute("value") for node in driver.find_elements(By.CSS_SELECTOR, ".comm-variable-row select option")]
+    create_variable_types = select_option_values(".comm-variable-row select")
     if create_variable_types != ["STRING", "NUMBER", "BOOLEAN"]:
         raise AssertionError(f"Template create form published unsupported variable types: {create_variable_types}")
     assert_mobile_actions(
