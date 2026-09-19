@@ -68,17 +68,23 @@
 }
 
 .r3-collections-directory .r3-case-table {
+  width: 100%;
+  max-width: 100%;
   min-width: 860px;
   table-layout: fixed;
 }
 
+.r3-collections-directory .r3-case-table :is(th, td) {
+  box-sizing: border-box;
+}
+
 .r3-collections-directory .r3-case-table :is(th, td):nth-child(1) { width: 15%; }
-.r3-collections-directory .r3-case-table :is(th, td):nth-child(2) { width: 18%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(2) { width: 17%; }
 .r3-collections-directory .r3-case-table :is(th, td):nth-child(3) { width: 11%; }
 .r3-collections-directory .r3-case-table :is(th, td):nth-child(4) { width: 16%; }
 .r3-collections-directory .r3-case-table :is(th, td):nth-child(5) { width: 15%; }
-.r3-collections-directory .r3-case-table :is(th, td):nth-child(6) { width: 16%; }
-.r3-collections-directory .r3-case-table :is(th, td):nth-child(7) { width: 9%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(6) { width: 15%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(7) { width: 11%; }
 
 .r3-collections-directory .r3-case-table th {
   padding: 9px 8px;
