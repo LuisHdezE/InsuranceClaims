@@ -51,7 +51,7 @@ export function AdminPipelineCreatePage() {
     event.preventDefault();
     setClientError(null);
     if (!key.trim() || !displayName.trim() || !sourceClassification.trim()) {
-      setClientError('Key, nombre visible y source classification son obligatorios.');
+      setClientError('La clave, el nombre visible y la clasificación de origen son obligatorios.');
       return;
     }
     try {
@@ -65,14 +65,14 @@ export function AdminPipelineCreatePage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main pipeline-admin-main">
+      <main className="operator-main ops-main pipeline-admin-main pipelines-r3-form-page">
         <div className="pipeline-breadcrumbs"><Link to="/operator/admin/pipelines">Pipelines</Link><span>/</span><span>Nueva definición</span></div>
 
         <div className="ops-page-heading pipeline-admin-page-heading">
           <div>
-            <span className="ops-kicker">New Definition</span>
+            <span className="ops-kicker">Nueva definición</span>
             <h1>Crear pipeline</h1>
-            <p>R3 crea la definición deshabilitada y una primera versión DRAFT. La activación y el enable son pasos separados y explícitos.</p>
+            <p>R3 crea la definición deshabilitada y una primera versión DRAFT. La activación de la versión y la habilitación de la definición son pasos separados y explícitos.</p>
           </div>
         </div>
 
@@ -86,16 +86,16 @@ export function AdminPipelineCreatePage() {
             </div>
             <div className="pipeline-form-grid">
               <label>
-                <span>Key</span>
+                <span>Clave técnica</span>
                 <input value={key} maxLength={80} disabled={mutation.isPending} placeholder="claims-main" onChange={(event) => setKey(event.target.value)} />
                 <small>Única y estable. El servidor valida el patrón admitido.</small>
               </label>
               <label>
                 <span>Nombre visible</span>
-                <input value={displayName} maxLength={160} disabled={mutation.isPending} placeholder="Claims principal" onChange={(event) => setDisplayName(event.target.value)} />
+                <input value={displayName} maxLength={160} disabled={mutation.isPending} placeholder="Siniestros principal" onChange={(event) => setDisplayName(event.target.value)} />
               </label>
               <label>
-                <span>Consumer type</span>
+                <span>Tipo de consumidor</span>
                 <select value={consumerType} disabled={mutation.isPending} onChange={(event) => setConsumerType(event.target.value as PipelineConsumerType)}>
                   <option value="CLAIM">CLAIM</option>
                   <option value="RENEWAL">RENEWAL</option>
@@ -103,7 +103,7 @@ export function AdminPipelineCreatePage() {
                 </select>
               </label>
               <label>
-                <span>Source classification</span>
+                <span>Clasificación de origen</span>
                 <input value={sourceClassification} maxLength={80} disabled={mutation.isPending} placeholder="R3_ADMIN" onChange={(event) => setSourceClassification(event.target.value)} />
                 <small>Clasificación opaca conservada por R3; la UI no le asigna semántica adicional.</small>
               </label>
