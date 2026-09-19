@@ -28,20 +28,20 @@ export function AdminCustomFieldsPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main cf-admin-main">
+      <main className="operator-main ops-main cf-admin-main custom-fields-r3-directory">
         <div className="ops-page-heading cf-directory-heading">
           <div>
-            <span className="ops-kicker">Configuración de plataforma R3</span>
+            <span className="ops-kicker">Configuración de plataforma</span>
             <h1>Campos personalizados</h1>
-            <p>Definiciones versionadas para proyecciones operacionales aprobadas. La API conserva la autoridad sobre campos protegidos, activación y concurrencia.</p>
+            <p>Extensiones operacionales versionadas para CLAIM, RENEWAL y COLLECTION, gobernadas sin reemplazar identidad, estado, seguridad ni campos reservados del dominio.</p>
           </div>
-          <Link className="cf-primary-button" to="/operator/admin/custom-fields/new">+ Nuevo campo personalizado</Link>
+          <Link className="cf-primary-button" to="/operator/admin/custom-fields/new">+ Nuevo campo</Link>
         </div>
 
         <section className="cf-contract-strip" aria-label="Frontera de campos personalizados">
-          <div><strong>Tipos objetivo</strong><span>CLAIM · RENEWAL · COLLECTION</span></div>
+          <div><strong>Ámbitos</strong><span>CLAIM · RENEWAL · COLLECTION</span></div>
           <div><strong>Versionado</strong><span>DRAFT → ACTIVE → RETIRED</span></div>
-          <div><strong>Listado</strong><span>Solo paginación del servidor</span></div>
+          <div><strong>Directorio</strong><span>25 por página · sin filtros locales</span></div>
         </section>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
@@ -75,9 +75,9 @@ export function AdminCustomFieldsPage() {
                         </div>
                         <h3>{field.fieldKey}</h3>
                         <div className="cf-card-facts">
-                          <span><small>Versión de definición</small><strong>v{field.version}</strong></span>
+                          <span><small>Versión definición</small><strong>v{field.version}</strong></span>
                           <span><small>Versiones</small><strong>{field.versions.length}</strong></span>
-                          <span><small>Activa</small><strong>{active ? `v${active.versionNumber}` : '—'}</strong></span>
+                          <span><small>Versión activa</small><strong>{active ? `v${active.versionNumber}` : '—'}</strong></span>
                           <span><small>Último tipo</small><strong>{latest?.valueType ?? '—'}</strong></span>
                         </div>
                         <span className="cf-card-link">Administrar →</span>
@@ -97,8 +97,8 @@ export function AdminCustomFieldsPage() {
         )}
 
         <section className="cf-admin-contract-note">
-          <strong>Sin filtros inventados</strong>
-          <p>R3 publica paginación para este directorio, no búsqueda por key, target, estado o tipo. La UI no simula filtros locales parciales.</p>
+          <strong>Frontera R3</strong>
+          <p>El directorio publicado solo admite paginación. La UI no inventa búsqueda por clave, ámbito, estado o tipo, ni replica la lista interna de claves protegidas.</p>
         </section>
       </main>
     </OperatorShell>
