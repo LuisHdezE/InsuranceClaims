@@ -134,10 +134,13 @@ try:
             """
         )
         overflow = metrics["scrollWidth"] - metrics["innerWidth"]
+        table_overflow = metrics["tableScrollWidth"] - metrics["tableClientWidth"]
         shot, full = capture(f"collections-directory-{width}x{height}")
 
         if overflow > TOLERANCE_PX:
             raise AssertionError(f"Collections directory horizontal overflow at {width}x{height}: {overflow}px")
+        if table_overflow > TOLERANCE_PX:
+            raise AssertionError(f"Collections directory internal table overflow at {width}x{height}: {table_overflow}px")
         if width >= 1200:
             if metrics["titleFont"] > 29:
                 raise AssertionError(f"Collections directory title is oversized: {metrics['titleFont']}px")
@@ -150,8 +153,6 @@ try:
                 raise AssertionError("Narrow Collections directory must hide the table header and render cards")
             if metrics["rowDisplay"] != "grid":
                 raise AssertionError(f"Narrow collection rows must render as cards: {metrics['rowDisplay']}")
-            if metrics["tableScrollWidth"] - metrics["tableClientWidth"] > TOLERANCE_PX:
-                raise AssertionError("Narrow Collections directory must not rely on internal horizontal scrolling")
         if width <= 620:
             for name, value in (("refresh", metrics["refreshHeight"]), ("case action", metrics["actionHeight"])):
                 if value < 44:
@@ -165,6 +166,7 @@ try:
                 "height": height,
                 **metrics,
                 "horizontalOverflow": overflow,
+                "tableOverflow": table_overflow,
                 "screenshot": shot,
                 "fullPageScreenshot": full,
             }
