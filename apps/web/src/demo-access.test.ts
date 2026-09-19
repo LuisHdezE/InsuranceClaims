@@ -13,11 +13,12 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/customers/customer-123', 'CLAIMS_OPERATOR')).toBe(true);
     expect(isPublicDemoPath('/operator/policies', 'CLAIMS_OPERATOR')).toBe(true);
     expect(isPublicDemoPath('/operator/policies/policy-123', 'CLAIMS_OPERATOR')).toBe(true);
+    expect(isPublicDemoPath('/operator/renewals', 'CLAIMS_OPERATOR')).toBe(true);
+    expect(isPublicDemoPath('/operator/renewals/renewal-123', 'CLAIMS_OPERATOR')).toBe(true);
     expect(isPublicDemoPath('/operator/analytics', 'CLAIMS_OPERATOR')).toBe(false);
   });
 
   it('keeps visually pending routes closed even when the role is authorized', () => {
-    expect(isPublicDemoPath('/operator/renewals', 'CLAIMS_OPERATOR')).toBe(false);
     expect(isPublicDemoPath('/operator/collections', 'CLAIMS_OPERATOR')).toBe(false);
   });
 
@@ -33,5 +34,6 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/tasks', 'PLATFORM_ADMIN')).toBe(false);
     expect(isPublicDemoPath('/operator/customers', 'PLATFORM_ADMIN')).toBe(false);
     expect(isPublicDemoPath('/operator/policies', 'PLATFORM_ADMIN')).toBe(false);
+    expect(isPublicDemoPath('/operator/renewals', 'PLATFORM_ADMIN')).toBe(false);
   });
 });
