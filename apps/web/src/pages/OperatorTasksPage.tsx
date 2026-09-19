@@ -8,6 +8,7 @@ import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { taskStatusLabel, taskTypeLabel } from '../components/task-presentation';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 const TASK_TYPES: ClaimTaskType[] = ['CLAIM_REVIEW', 'EVIDENCE_REVIEW', 'MISSING_DOCUMENT_FOLLOWUP', 'CUSTOMER_FOLLOWUP', 'CLOSURE_REVIEW'];
@@ -121,7 +122,8 @@ export function OperatorTasksPage() {
   if (!session) return null;
 
   const selectedTask = tasks.find((task) => task.taskId === selectedTaskId) ?? null;
-  const canManage = hasPermission(session.operator.role, 'claims.tasks.manage');
+  const demoReadOnly = isPublicDemoOperator(session.operator);
+  const canManage = !demoReadOnly && hasPermission(session.operator.role, 'claims.tasks.manage');
   const mutationBusy = completeMutation.isPending || assignToMeMutation.isPending;
   const totalItems = tasksQuery.data?.data.totalItems ?? 0;
   const hasFilters = Boolean(status !== 'OPEN' || type || priority || search);
@@ -215,7 +217,7 @@ export function OperatorTasksPage() {
           <section className="r3-task-master-detail" aria-label="Cola y detalle de tareas">
             <div className="ops-panel r3-task-queue-panel">
               <div className="ops-panel-heading">
-                <div><h2>Cola de trabajo</h2><p>Selecciona una Task para gestionarla sin perder el contexto de la cola.</p></div>
+                <div><h2>Cola de trabajo</h2><p>{demoReadOnly ? 'Selecciona una Task para consultar su contexto sin modificarla.' : 'Selecciona una Task para gestionarla sin perder el contexto de la cola.'}</p></div>
               </div>
               <div className="r3-task-queue-list" role="list">
                 {tasks.map((task) => (
@@ -261,7 +263,7 @@ export function OperatorTasksPage() {
                 </dl>
 
                 <div className="r3-task-inline-actions">
-                  <Link className="r3-secondary-action" to={`/operator/tasks/${selectedTask.taskId}`}>Abrir detalle</Link>
+                  <Link className="r3-secondary-action" to={`/operator/tasks/${selectedTask.taskId}`}>{demoReadOnly ? 'Ver detalle' : 'Abrir detalle'}</Link>
                   {canManage && selectedTask.status === 'OPEN' && selectedTask.assignedOperatorId !== session.operator.id && (
                     <button
                       type="button"
