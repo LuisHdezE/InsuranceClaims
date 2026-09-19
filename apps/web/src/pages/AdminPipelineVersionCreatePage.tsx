@@ -68,7 +68,7 @@ export function AdminPipelineVersionCreatePage() {
     event.preventDefault();
     setClientError(null);
     if (!sourceClassification.trim()) {
-      setClientError('Source classification es obligatoria.');
+      setClientError('La clasificación de origen es obligatoria.');
       return;
     }
     try {
@@ -82,7 +82,7 @@ export function AdminPipelineVersionCreatePage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main pipeline-admin-main">
+      <main className="operator-main ops-main pipeline-admin-main pipelines-r3-form-page">
         <div className="pipeline-breadcrumbs">
           <Link to="/operator/admin/pipelines">Pipelines</Link><span>/</span>
           <Link to={`/operator/admin/pipelines/${definitionId}`}>{pipeline?.key ?? definitionId.slice(0, 8)}</Link><span>/</span>
@@ -99,22 +99,22 @@ export function AdminPipelineVersionCreatePage() {
           <form className="pipeline-admin-form" onSubmit={submit}>
             <div className="ops-page-heading pipeline-admin-page-heading">
               <div>
-                <span className="ops-kicker">Immutable Configuration Version</span>
+                <span className="ops-kicker">Versión de configuración inmutable</span>
                 <h1>Nueva versión · {pipeline.displayName}</h1>
                 <p>Se parte de la última versión como ayuda de edición. Guardar crea una DRAFT nueva; ninguna versión existente se modifica.</p>
               </div>
-              <span className="pipeline-definition-version">definition v{pipeline.version}</span>
+              <span className="pipeline-definition-version">definición v{pipeline.version}</span>
             </div>
 
             <section className="ops-panel pipeline-definition-form-card">
               <div className="pipeline-form-grid is-compact">
                 <label>
-                  <span>Source classification</span>
+                  <span>Clasificación de origen</span>
                   <input value={sourceClassification} maxLength={80} disabled={mutation.isPending} onChange={(event) => setSourceClassification(event.target.value)} />
                 </label>
                 <div className="pipeline-form-context">
-                  <span>Consumer</span><strong>{pipeline.consumerType}</strong>
-                  <small>Key: <code>{pipeline.key}</code></small>
+                  <span>Consumidor</span><strong>{pipeline.consumerType}</strong>
+                  <small>Clave: <code>{pipeline.key}</code></small>
                 </div>
               </div>
             </section>

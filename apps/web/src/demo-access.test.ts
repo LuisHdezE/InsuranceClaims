@@ -17,12 +17,16 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/renewals/renewal-123', 'CLAIMS_OPERATOR')).toBe(true);
     expect(isPublicDemoPath('/operator/collections', 'CLAIMS_OPERATOR')).toBe(true);
     expect(isPublicDemoPath('/operator/collections/collection-123', 'CLAIMS_OPERATOR')).toBe(true);
+    expect(isPublicDemoPath('/operator/admin/pipelines', 'CLAIMS_OPERATOR')).toBe(false);
     expect(isPublicDemoPath('/operator/analytics', 'CLAIMS_OPERATOR')).toBe(false);
   });
 
-  it('allows Analytics only to roles that own claims.analytics.read', () => {
+  it('allows Analytics and Pipelines only to roles that own their permissions', () => {
     expect(isPublicDemoPath('/operator/analytics', 'CLAIMS_SUPERVISOR')).toBe(true);
     expect(isPublicDemoPath('/operator/analytics', 'PLATFORM_ADMIN')).toBe(true);
+    expect(isPublicDemoPath('/operator/admin/pipelines', 'PLATFORM_ADMIN')).toBe(true);
+    expect(isPublicDemoPath('/operator/admin/pipelines/pipeline-123', 'PLATFORM_ADMIN')).toBe(true);
+    expect(isPublicDemoPath('/operator/admin/pipelines', 'CLAIMS_SUPERVISOR')).toBe(false);
   });
 
   it('does not elevate ready routes beyond the current role permissions', () => {

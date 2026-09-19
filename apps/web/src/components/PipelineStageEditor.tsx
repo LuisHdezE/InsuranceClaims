@@ -38,20 +38,20 @@ export function stageDraftsToPayload(drafts: PipelineStageDraft[]): PipelineStag
     const displayName = draft.displayName.trim();
     const sortOrder = Number(draft.sortOrder);
     if (!stageKey || !displayName) {
-      throw new Error(`La etapa ${index + 1} necesita key y nombre visible.`);
+      throw new Error(`La etapa ${index + 1} necesita clave y nombre visible.`);
     }
     if (!Number.isInteger(sortOrder) || sortOrder < 1 || sortOrder > 1000) {
-      throw new Error(`La etapa ${stageKey} necesita sortOrder entero entre 1 y 1000.`);
+      throw new Error(`La etapa ${stageKey} necesita un orden entero entre 1 y 1000.`);
     }
 
     let reportingFlags: unknown;
     try {
       reportingFlags = JSON.parse(draft.reportingFlagsText || '{}');
     } catch {
-      throw new Error(`Reporting flags de ${stageKey} debe ser JSON válido.`);
+      throw new Error(`Los indicadores de reporte de ${stageKey} deben ser JSON válido.`);
     }
     if (!isBooleanRecord(reportingFlags)) {
-      throw new Error(`Reporting flags de ${stageKey} debe ser un objeto JSON de booleanos.`);
+      throw new Error(`Los indicadores de reporte de ${stageKey} deben ser un objeto JSON de booleanos.`);
     }
 
     const allowedNextStageKeys = draft.allowedNextStageKeysText
@@ -90,9 +90,9 @@ export function PipelineStageEditor({
     <section className="pipeline-stage-editor" aria-labelledby="pipeline-stages-title">
       <div className="pipeline-editor-heading">
         <div>
-          <span className="ops-kicker">Version content</span>
+          <span className="ops-kicker">Contenido de versión</span>
           <h2 id="pipeline-stages-title">Etapas del pipeline</h2>
-          <p>Las transiciones deben referenciar keys existentes en esta misma versión. Reporting flags se conservan como booleanos autoritativos, sin semántica añadida por la UI.</p>
+          <p>Las transiciones deben referenciar claves existentes en esta misma versión. Los indicadores de reporte se conservan como booleanos autoritativos, sin semántica añadida por la UI.</p>
         </div>
         <button className="pipeline-secondary-button" type="button" disabled={disabled || stages.length >= 50} onClick={add}>
           + Agregar etapa
@@ -110,7 +110,7 @@ export function PipelineStageEditor({
             </div>
 
             <label>
-              <span>Stage key</span>
+              <span>Clave de etapa</span>
               <input
                 value={stage.stageKey}
                 maxLength={80}
@@ -141,7 +141,7 @@ export function PipelineStageEditor({
               />
             </label>
             <label className="pipeline-wide-field">
-              <span>Próximas stage keys permitidas</span>
+              <span>Próximas claves de etapa permitidas</span>
               <input
                 value={stage.allowedNextStageKeysText}
                 disabled={disabled}
@@ -151,14 +151,14 @@ export function PipelineStageEditor({
               <small>Separadas por comas. Vacío significa que esta etapa no publica movimientos siguientes.</small>
             </label>
             <label className="pipeline-wide-field">
-              <span>Reporting flags · JSON boolean object</span>
+              <span>Indicadores de reporte · objeto JSON booleano</span>
               <input
                 value={stage.reportingFlagsText}
                 disabled={disabled}
                 placeholder='{"terminal":false}'
                 onChange={(event) => update(index, { reportingFlagsText: event.target.value })}
               />
-              <small>Ejemplo de forma, no de dominio: las keys y su significado pertenecen a la configuración R3.</small>
+              <small>Ejemplo de forma, no de dominio: las claves y su significado pertenecen a la configuración R3.</small>
             </label>
           </article>
         ))}
