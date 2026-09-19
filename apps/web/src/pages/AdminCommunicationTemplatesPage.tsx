@@ -6,6 +6,7 @@ import type { CommunicationTemplateDefinitionProjection } from '../api/communica
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import '../r3-admin-config.css';
 
@@ -27,6 +28,7 @@ export function AdminCommunicationTemplatesPage() {
 
   if (!session) return null;
   const result = templatesQuery.data?.data;
+  const demoReadOnly = isPublicDemoOperator(session.operator);
 
   return (
     <OperatorShell>
@@ -37,7 +39,7 @@ export function AdminCommunicationTemplatesPage() {
             <h1>Plantillas de comunicación</h1>
             <p>Definiciones versionadas para EMAIL y WHATSAPP. Cada contenido histórico permanece inmutable y la activación se gobierna por versión.</p>
           </div>
-          <Link className="comm-primary-button" to="/operator/admin/communication-templates/new">+ Nueva plantilla</Link>
+          {!demoReadOnly && <Link className="comm-primary-button" to="/operator/admin/communication-templates/new">+ Nueva plantilla</Link>}
         </div>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
@@ -57,10 +59,10 @@ export function AdminCommunicationTemplatesPage() {
             <div className="ops-compact-empty" role="status">Cargando plantillas…</div>
           ) : result && result.items.length > 0 ? (
             <div className="comm-template-grid">
-              {result.items.map((template) => <TemplateCard key={template.definitionId} template={template} />)}
+              {result.items.map((template) => <TemplateCard key={template.definitionId} template={template} readOnly={demoReadOnly} />)}
             </div>
           ) : (
-            <div className="ops-compact-empty">No hay definiciones de plantilla en esta página.</div>
+            <div className="ops-compact-empty">{demoReadOnly ? 'La demo pública no expone plantillas sintéticas en este momento.' : 'No hay definiciones de plantilla en esta página.'}</div>
           )}
 
           {result && (
@@ -81,7 +83,7 @@ export function AdminCommunicationTemplatesPage() {
   );
 }
 
-function TemplateCard({ template }: { template: CommunicationTemplateDefinitionProjection }) {
+function TemplateCard({ template, readOnly }: { template: CommunicationTemplateDefinitionProjection; readOnly: boolean }) {
   const active = template.versions.find((version) => version.versionId === template.activeVersionId) ?? null;
   const latest = template.versions.slice().sort((a, b) => b.versionNumber - a.versionNumber)[0] ?? null;
   return (
@@ -101,7 +103,7 @@ function TemplateCard({ template }: { template: CommunicationTemplateDefinitionP
         <summary>Detalles técnicos</summary>
         <code>Definition ID · {template.definitionId}</code>
       </details>
-      <Link className="comm-card-link" to={`/operator/admin/communication-templates/${template.definitionId}`}>Administrar definición →</Link>
+      <Link className="comm-card-link" to={`/operator/admin/communication-templates/${template.definitionId}`}>{readOnly ? 'Ver definición →' : 'Administrar definición →'}</Link>
     </article>
   );
 }
