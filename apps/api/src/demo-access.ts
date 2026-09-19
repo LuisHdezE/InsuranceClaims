@@ -1,6 +1,15 @@
 import type { ActorContext, OperatorRecord } from '@insurance/application';
 
 export type PublicDemoPersona = 'operations' | 'supervision' | 'administration';
+export type PublicDemoFixtureKind =
+  | 'task'
+  | 'customer'
+  | 'policy'
+  | 'renewal'
+  | 'collection'
+  | 'pipeline'
+  | 'communicationTemplate'
+  | 'customField';
 
 export const PUBLIC_DEMO_ACCESS_HEADER = 'x-demo-read-only';
 export const PUBLIC_DEMO_PERSONA_HEADER = 'x-demo-persona';
@@ -38,27 +47,36 @@ export const PUBLIC_DEMO_CLAIMS = [
   { claimId: '86359138-f525-4820-931c-010b7246d3ab', trackingCode: 'IC-FUW5DaoFvfUvSmuxMwwID_Fe' },
 ] as const;
 
-const PUBLIC_DEMO_CLAIM_IDS = new Set(PUBLIC_DEMO_CLAIMS.map((claim) => claim.claimId));
+export const PUBLIC_DEMO_FIXTURES = {
+  task: [
+    'de100000-0000-4000-8000-000000000001',
+    'de100000-0000-4000-8000-000000000002',
+    'de100000-0000-4000-8000-000000000003',
+  ],
+  customer: [
+    '91000000-0000-4000-8000-000000000001',
+    'a1000000-0000-4000-8000-000000000001',
+    'b1000000-0000-4000-8000-000000000001',
+  ],
+  policy: [
+    '92000000-0000-4000-8000-000000000001',
+    'a2000000-0000-4000-8000-000000000001',
+    'b2000000-0000-4000-8000-000000000001',
+  ],
+  renewal: ['a3000000-0000-4000-8000-000000000001'],
+  collection: ['b3000000-0000-4000-8000-000000000001'],
+  pipeline: [
+    'a4000000-0000-4000-8000-000000000001',
+    'b4000000-0000-4000-8000-000000000001',
+  ],
+  communicationTemplate: [],
+  customField: [],
+} as const satisfies Record<PublicDemoFixtureKind, readonly string[]>;
 
-const OPERATIONS_READ_PREFIXES = [
-  '/api/v1/operator/tasks',
-  '/api/v1/operator/customers',
-  '/api/v1/operator/policies',
-  '/api/v1/operator/renewals',
-  '/api/v1/operator/collections',
-] as const;
-
-const SUPERVISION_READ_PREFIXES = [
-  ...OPERATIONS_READ_PREFIXES,
-  '/api/v1/operator/analytics',
-] as const;
-
-const ADMINISTRATION_READ_PREFIXES = [
-  '/api/v1/operator/analytics',
-  '/api/v1/admin/pipelines',
-  '/api/v1/admin/communication-templates',
-  '/api/v1/admin/custom-fields',
-] as const;
+const PUBLIC_DEMO_CLAIM_IDS = new Set<string>(PUBLIC_DEMO_CLAIMS.map((claim) => claim.claimId));
+const PUBLIC_DEMO_FIXTURE_IDS = Object.fromEntries(
+  Object.entries(PUBLIC_DEMO_FIXTURES).map(([kind, ids]) => [kind, new Set<string>(ids)]),
+) as Record<PublicDemoFixtureKind, Set<string>>;
 
 export function isDemoModeEnabled(): boolean {
   return process.env.DEMO_MODE === 'true';
@@ -95,7 +113,24 @@ export function isSafeReadOnlyMethod(method: unknown): boolean {
 }
 
 export function isPublicDemoClaimId(value: unknown): value is string {
-  return typeof value === 'string' && PUBLIC_DEMO_CLAIM_IDS.has(value.toLowerCase() as (typeof PUBLIC_DEMO_CLAIMS)[number]['claimId']);
+  return typeof value === 'string' && PUBLIC_DEMO_CLAIM_IDS.has(value.toLowerCase());
+}
+
+export function isPublicDemoFixtureId(kind: PublicDemoFixtureKind, value: unknown): value is string {
+  return typeof value === 'string' && PUBLIC_DEMO_FIXTURE_IDS[kind].has(value.toLowerCase());
+}
+
+export function publicDemoFixtureIds(kind: PublicDemoFixtureKind): readonly string[] {
+  return PUBLIC_DEMO_FIXTURES[kind];
+}
+
+function allowsOperationalPersona(persona: PublicDemoPersona): boolean {
+  return persona === 'operations' || persona === 'supervision';
+}
+
+function matchesGovernedDetail(path: string, prefix: string, kind: PublicDemoFixtureKind): boolean {
+  const match = path.match(new RegExp(`^${prefix}/([0-9a-f-]{36})$`, 'i'));
+  return Boolean(match?.[1] && isPublicDemoFixtureId(kind, match[1]));
 }
 
 export function isAllowedPublicDemoReadPath(
@@ -113,11 +148,31 @@ export function isAllowedPublicDemoReadPath(
     return persona !== 'administration' && isPublicDemoClaimId(claimRoute[1]);
   }
 
-  const prefixes = persona === 'operations'
-    ? OPERATIONS_READ_PREFIXES
-    : persona === 'supervision'
-      ? SUPERVISION_READ_PREFIXES
-      : ADMINISTRATION_READ_PREFIXES;
+  if (allowsOperationalPersona(persona)) {
+    if (path === '/api/v1/operator/tasks') return true;
+    if (matchesGovernedDetail(path, '/api/v1/operator/tasks', 'task')) return true;
+    if (path === '/api/v1/operator/customers') return true;
+    if (matchesGovernedDetail(path, '/api/v1/operator/customers', 'customer')) return true;
+    if (path === '/api/v1/operator/policies') return true;
+    if (matchesGovernedDetail(path, '/api/v1/operator/policies', 'policy')) return true;
+    if (path === '/api/v1/operator/renewals') return true;
+    if (matchesGovernedDetail(path, '/api/v1/operator/renewals', 'renewal')) return true;
+    if (path === '/api/v1/operator/collections') return true;
+    if (matchesGovernedDetail(path, '/api/v1/operator/collections', 'collection')) return true;
+  }
 
-  return prefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+  if ((persona === 'supervision' || persona === 'administration') && path === '/api/v1/operator/analytics/claims') {
+    return true;
+  }
+
+  if (persona === 'administration') {
+    if (path === '/api/v1/admin/pipelines') return true;
+    if (matchesGovernedDetail(path, '/api/v1/admin/pipelines', 'pipeline')) return true;
+    if (path === '/api/v1/admin/communication-templates') return true;
+    if (matchesGovernedDetail(path, '/api/v1/admin/communication-templates', 'communicationTemplate')) return true;
+    if (path === '/api/v1/admin/custom-fields') return true;
+    if (matchesGovernedDetail(path, '/api/v1/admin/custom-fields', 'customField')) return true;
+  }
+
+  return false;
 }
