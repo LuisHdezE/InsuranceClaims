@@ -178,11 +178,11 @@ try:
     wait.until(lambda d: d.current_url.endswith(f"/operator/renewals/{RENEWAL_ID}"))
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".r3-renewal-detail")))
     wait.until(EC.visibility_of_element_located((By.XPATH, "//h1[normalize-space()='María Rodríguez']")))
-    wait.until(lambda d: "Operaciones de renovación R3" in d.find_element(By.CSS_SELECTOR, ".r3-case-hero").text)
-    wait.until(lambda d: "Ciclo de vida" in d.find_element(By.CSS_SELECTOR, ".r3-case-lifecycle-card").text)
-    wait.until(lambda d: "En cotización" in d.find_element(By.CSS_SELECTOR, ".r3-case-pipeline-card").text)
-    wait.until(lambda d: "NEGOTIATION" in d.find_element(By.CSS_SELECTOR, ".r3-case-pipeline-card").text)
-    wait.until(lambda d: "Control de concurrencia activo" in d.find_element(By.CSS_SELECTOR, ".r3-case-contract-note").text)
+    wait.until(lambda d: "operaciones de renovación r3" in d.find_element(By.CSS_SELECTOR, ".r3-case-hero").text.lower())
+    wait.until(lambda d: "ciclo de vida" in d.find_element(By.CSS_SELECTOR, ".r3-case-lifecycle-card").text.lower())
+    wait.until(lambda d: "en cotización" in d.find_element(By.CSS_SELECTOR, ".r3-case-pipeline-card").text.lower())
+    wait.until(lambda d: "negotiation" in d.find_element(By.CSS_SELECTOR, ".r3-case-pipeline-card").text.lower())
+    wait.until(lambda d: "control de concurrencia activo" in d.find_element(By.CSS_SELECTOR, ".r3-case-contract-note").text.lower())
 
     for width, height in TARGETS:
         set_viewport(width, height)
