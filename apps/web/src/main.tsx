@@ -49,6 +49,8 @@ import './policies-r3-visual-polish.css';
 import './policies-r3-tablet-containment.css';
 import './renewals-r3-visual-polish.css';
 import './renewals-r3-tablet-containment.css';
+import './collections-r3-visual-polish.css';
+import './collections-r3-tablet-containment.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
