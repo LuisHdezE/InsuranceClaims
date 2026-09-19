@@ -298,6 +298,8 @@ try:
     add_variable = wait.until(
         EC.element_to_be_clickable((By.CSS_SELECTOR, ".comm-variable-panel button.comm-secondary-button"))
     )
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", add_variable)
+    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".comm-variable-panel button.comm-secondary-button")))
     add_variable.click()
     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".comm-variable-row select")))
     create_variable_types = select_option_values(".comm-variable-row select")
