@@ -10,6 +10,7 @@ import type { CommunicationTemplateVersionProjection } from '../api/communicatio
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 export function AdminCommunicationTemplateDetailPage() {
@@ -61,6 +62,7 @@ export function AdminCommunicationTemplateDetailPage() {
 
   if (!session) return null;
   const template = templateQuery.data?.data;
+  const demoReadOnly = isPublicDemoOperator(session.operator);
   const mutationFailure = (activateMutation.error ?? stateMutation.error) as ApiFailure | null;
   const mutationPending = activateMutation.isPending || stateMutation.isPending;
 
@@ -97,15 +99,21 @@ export function AdminCommunicationTemplateDetailPage() {
             </section>
 
             <section className="comm-admin-actions" aria-label="Acciones de administración de plantilla">
-              <Link className="comm-primary-button" to={`/operator/admin/communication-templates/${definitionId}/versions/new`}>+ Crear nueva versión</Link>
-              <button
-                className={`comm-state-button is-${template.enabled ? 'disable' : 'enable'}`}
-                type="button"
-                disabled={mutationPending || (!template.enabled && !template.activeVersionId)}
-                onClick={() => stateMutation.mutate(!template.enabled)}
-              >
-                {stateMutation.isPending ? 'Aplicando…' : template.enabled ? 'Deshabilitar definición' : template.activeVersionId ? 'Habilitar definición' : 'Activa una versión antes de habilitar'}
-              </button>
+              {demoReadOnly ? (
+                <div className="r3-pipeline-readonly">Demo pública de solo lectura. Crear versiones, activar DRAFT y cambiar el estado de la plantilla están ocultos.</div>
+              ) : (
+                <>
+                  <Link className="comm-primary-button" to={`/operator/admin/communication-templates/${definitionId}/versions/new`}>+ Crear nueva versión</Link>
+                  <button
+                    className={`comm-state-button is-${template.enabled ? 'disable' : 'enable'}`}
+                    type="button"
+                    disabled={mutationPending || (!template.enabled && !template.activeVersionId)}
+                    onClick={() => stateMutation.mutate(!template.enabled)}
+                  >
+                    {stateMutation.isPending ? 'Aplicando…' : template.enabled ? 'Deshabilitar definición' : template.activeVersionId ? 'Habilitar definición' : 'Activa una versión antes de habilitar'}
+                  </button>
+                </>
+              )}
               <span className="comm-concurrency-note">Control de concurrencia activo · versión {template.version}</span>
             </section>
 
@@ -128,6 +136,7 @@ export function AdminCommunicationTemplateDetailPage() {
                     active={version.versionId === template.activeVersionId}
                     channel={template.channel}
                     mutationPending={mutationPending}
+                    readOnly={demoReadOnly}
                     onActivate={() => activateMutation.mutate(version.versionId)}
                   />
                 ))}
@@ -150,12 +159,14 @@ function CommunicationVersionCard({
   active,
   channel,
   mutationPending,
+  readOnly,
   onActivate,
 }: {
   version: CommunicationTemplateVersionProjection;
   active: boolean;
   channel: 'EMAIL' | 'WHATSAPP';
   mutationPending: boolean;
+  readOnly: boolean;
   onActivate: () => void;
 }) {
   const variables = Object.entries(version.variableSchema);
@@ -170,7 +181,7 @@ function CommunicationVersionCard({
             <code>Version ID · {version.versionId}</code>
           </details>
         </div>
-        {version.status === 'DRAFT' && (
+        {!readOnly && version.status === 'DRAFT' && (
           <button className="comm-activate-button" type="button" disabled={mutationPending} onClick={onActivate}>
             {mutationPending ? 'Procesando…' : 'Activar DRAFT'}
           </button>
