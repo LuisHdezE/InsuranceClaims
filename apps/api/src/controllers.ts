@@ -11,9 +11,9 @@ import { JwtAuthGuard } from './auth.guard.js';
 import {
   PUBLIC_DEMO_ACCESS_HEADER,
   PUBLIC_DEMO_CLAIMS,
-  PUBLIC_DEMO_OPERATOR,
   isDemoModeEnabled,
   isPublicDemoOperator,
+  publicDemoOperatorForLogin,
 } from './demo-access.js';
 import { RateLimitService, callerIp } from './transport.js';
 
@@ -105,25 +105,26 @@ export class OperatorAuthController {
     this.limits.consume(`login-ip:${callerIp(req)}`, 5, 60);
     this.limits.consume(`login-user:${normalizedLogin}`, 10, 15 * 60);
 
+    const demoOperator = publicDemoOperatorForLogin(normalizedLogin);
     if (
       isDemoModeEnabled()
       && demoReadOnlyHeader?.toLowerCase() === 'true'
-      && normalizedLogin === PUBLIC_DEMO_OPERATOR.login
+      && demoOperator
     ) {
-      const accessToken = await this.tokens.issue(PUBLIC_DEMO_OPERATOR, 900);
+      const accessToken = await this.tokens.issue(demoOperator, 900);
       console.info(JSON.stringify({
         level: 'info',
         event: 'PUBLIC_DEMO_SESSION_ISSUED',
         requestId: req.requestId ?? null,
-        actorId: PUBLIC_DEMO_OPERATOR.id,
-        role: PUBLIC_DEMO_OPERATOR.role,
+        actorId: demoOperator.id,
+        role: demoOperator.role,
         readOnly: true,
       }));
       return {
         accessToken,
         tokenType: 'Bearer' as const,
         expiresIn: 900,
-        operator: PUBLIC_DEMO_OPERATOR,
+        operator: demoOperator,
       };
     }
 
