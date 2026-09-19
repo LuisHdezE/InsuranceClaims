@@ -10,6 +10,7 @@ import type { CustomFieldVersionProjection } from '../api/custom-field-admin-typ
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
+import { isPublicDemoOperator } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 export function AdminCustomFieldDetailPage() {
@@ -61,6 +62,7 @@ export function AdminCustomFieldDetailPage() {
 
   if (!session) return null;
   const field = fieldQuery.data?.data;
+  const demoReadOnly = isPublicDemoOperator(session.operator);
   const mutationFailure = (activateMutation.error ?? stateMutation.error) as ApiFailure | null;
   const mutationPending = activateMutation.isPending || stateMutation.isPending;
 
@@ -97,15 +99,21 @@ export function AdminCustomFieldDetailPage() {
             </section>
 
             <section className="cf-admin-actions" aria-label="Acciones de administración del campo personalizado">
-              <Link className="cf-primary-button" to={`/operator/admin/custom-fields/${definitionId}/versions/new`}>+ Crear nueva versión</Link>
-              <button
-                className={`cf-state-button is-${field.enabled ? 'disable' : 'enable'}`}
-                type="button"
-                disabled={mutationPending || (!field.enabled && !field.activeVersionId)}
-                onClick={() => stateMutation.mutate(!field.enabled)}
-              >
-                {stateMutation.isPending ? 'Aplicando…' : field.enabled ? 'Deshabilitar definición' : field.activeVersionId ? 'Habilitar definición' : 'Activa una versión antes de habilitar'}
-              </button>
+              {demoReadOnly ? (
+                <div className="r3-pipeline-readonly">Demo pública de solo lectura. Crear versiones, activar DRAFT y cambiar el estado del campo están ocultos.</div>
+              ) : (
+                <>
+                  <Link className="cf-primary-button" to={`/operator/admin/custom-fields/${definitionId}/versions/new`}>+ Crear nueva versión</Link>
+                  <button
+                    className={`cf-state-button is-${field.enabled ? 'disable' : 'enable'}`}
+                    type="button"
+                    disabled={mutationPending || (!field.enabled && !field.activeVersionId)}
+                    onClick={() => stateMutation.mutate(!field.enabled)}
+                  >
+                    {stateMutation.isPending ? 'Aplicando…' : field.enabled ? 'Deshabilitar definición' : field.activeVersionId ? 'Habilitar definición' : 'Activa una versión antes de habilitar'}
+                  </button>
+                </>
+              )}
               <span className="cf-concurrency-note">Control de concurrencia activo · versión {field.version}</span>
             </section>
 
@@ -127,6 +135,7 @@ export function AdminCustomFieldDetailPage() {
                     version={version}
                     active={version.versionId === field.activeVersionId}
                     mutationPending={mutationPending}
+                    readOnly={demoReadOnly}
                     onActivate={() => activateMutation.mutate(version.versionId)}
                   />
                 ))}
@@ -148,11 +157,13 @@ function CustomFieldVersionCard({
   version,
   active,
   mutationPending,
+  readOnly,
   onActivate,
 }: {
   version: CustomFieldVersionProjection;
   active: boolean;
   mutationPending: boolean;
+  readOnly: boolean;
   onActivate: () => void;
 }) {
   const metadata = Object.entries(version.validationMetadata);
@@ -167,7 +178,7 @@ function CustomFieldVersionCard({
             <code>{version.versionId}</code>
           </details>
         </div>
-        {version.status === 'DRAFT' && (
+        {!readOnly && version.status === 'DRAFT' && (
           <button className="cf-activate-button" type="button" disabled={mutationPending} onClick={onActivate}>
             {mutationPending ? 'Procesando…' : 'Activar DRAFT'}
           </button>
