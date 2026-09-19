@@ -240,7 +240,32 @@ try:
         })
 
     set_viewport(390, 844)
-    driver.get(f"{WEB_BASE_URL}/operator/admin/pipelines/new")
+    version_create_link = wait.until(EC.element_to_be_clickable((
+        By.CSS_SELECTOR,
+        f"a.pipeline-primary-button[href='/operator/admin/pipelines/{DEFINITION_ID}/versions/new']",
+    )))
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", version_create_link)
+    version_create_link.click()
+    wait.until(lambda d: d.current_url.endswith(f"/operator/admin/pipelines/{DEFINITION_ID}/versions/new"))
+    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".pipelines-r3-form-page")))
+    wait.until(lambda d: "versión de configuración inmutable" in d.find_element(By.CSS_SELECTOR, ".pipeline-admin-page-heading").text.lower())
+    capture("pipeline-version-create-390x844")
+
+    directory_breadcrumb = wait.until(EC.element_to_be_clickable((
+        By.CSS_SELECTOR,
+        "a[href='/operator/admin/pipelines']",
+    )))
+    directory_breadcrumb.click()
+    wait.until(lambda d: d.current_url.endswith("/operator/admin/pipelines"))
+    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".pipelines-r3-directory")))
+
+    create_pipeline_link = wait.until(EC.element_to_be_clickable((
+        By.CSS_SELECTOR,
+        "a.pipeline-primary-button[href='/operator/admin/pipelines/new']",
+    )))
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", create_pipeline_link)
+    create_pipeline_link.click()
+    wait.until(lambda d: d.current_url.endswith("/operator/admin/pipelines/new"))
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".pipelines-r3-form-page")))
     options_values = [node.get_attribute("value") for node in driver.find_elements(By.CSS_SELECTOR, "select option")]
     if options_values != ["CLAIM", "RENEWAL", "COLLECTION"]:
@@ -250,11 +275,6 @@ try:
         if node.is_displayed() and round(node.rect["height"]) < 44 and node.tag_name in {"button", "a"}:
             raise AssertionError(f"Pipeline create mobile action is too short: {node.rect['height']}px")
     capture("pipeline-create-390x844")
-
-    driver.get(f"{WEB_BASE_URL}/operator/admin/pipelines/{DEFINITION_ID}/versions/new")
-    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".pipelines-r3-form-page")))
-    wait.until(lambda d: "versión de configuración inmutable" in d.find_element(By.CSS_SELECTOR, ".pipeline-admin-page-heading").text.lower())
-    capture("pipeline-version-create-390x844")
 
     severe = severe_console_entries()
     if severe:
