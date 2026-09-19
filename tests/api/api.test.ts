@@ -65,20 +65,20 @@ test('REST contract preserves Nest HTTP exceptions as Problem Details', async ()
   await app.close();
 });
 
-test('public demo operator access is gated, read-only and confined to governed synthetic fixtures', async () => {
+test('public demo personas are role-real, read-only and confined to governed module scopes', async () => {
   const previousDemoMode = process.env.DEMO_MODE;
   const runtime = await createMemoryRuntime();
   const app = await NestFactory.create(ApiModule.register(runtime), { logger: false });
   await app.init();
   const http = app.getHttpServer();
-  const demoLogin = () => request(http)
+  const demoLogin = (login: string) => request(http)
     .post('/api/v1/operator/auth/login')
     .set('X-Demo-Read-Only', 'true')
-    .send({ login: 'demo.operator@eliasworks.invalid', password: 'public-demo-read-only' });
+    .send({ login, password: 'public-demo-read-only' });
 
   try {
     process.env.DEMO_MODE = 'false';
-    const disabled = await demoLogin().expect(401);
+    const disabled = await demoLogin('demo.operator@eliasworks.invalid').expect(401);
     assert.equal(disabled.body.code, 'INVALID_CREDENTIALS');
 
     process.env.DEMO_MODE = 'true';
@@ -93,37 +93,79 @@ test('public demo operator access is gated, read-only and confined to governed s
       .field('description', 'A visitor-created claim must never appear in the public operator demo.')
       .expect(201);
 
-    const session = await demoLogin().expect(200);
-    assert.equal(session.body.tokenType, 'Bearer');
-    assert.equal(session.body.expiresIn, 900);
-    assert.deepEqual(session.body.operator, {
+    const operationsSession = await demoLogin('demo.operator@eliasworks.invalid').expect(200);
+    assert.equal(operationsSession.body.tokenType, 'Bearer');
+    assert.equal(operationsSession.body.expiresIn, 900);
+    assert.deepEqual(operationsSession.body.operator, {
       id: '00000000-0000-4000-8000-000000000096',
       login: 'demo.operator@eliasworks.invalid',
       role: 'CLAIMS_OPERATOR',
     });
 
-    const bearer = `Bearer ${session.body.accessToken}`;
-    const scopedList = await request(http).get('/api/v1/operator/claims').set('Authorization', bearer).expect(200);
+    const operationsBearer = `Bearer ${operationsSession.body.accessToken}`;
+    const scopedList = await request(http).get('/api/v1/operator/claims').set('Authorization', operationsBearer).expect(200);
     assert.equal(scopedList.body.totalItems, 0, 'visitor-created claims must be excluded from the public demo list');
 
     const restrictedClaim = await request(http)
       .get('/api/v1/operator/claims/00000000-0000-4000-8000-000000000001')
-      .set('Authorization', bearer)
+      .set('Authorization', operationsBearer)
       .expect(403);
     assert.equal(restrictedClaim.body.code, 'DEMO_SCOPE_RESTRICTED');
 
-    const restrictedArea = await request(http)
+    await request(http)
       .get('/api/v1/operator/tasks')
-      .set('Authorization', bearer)
+      .set('Authorization', operationsBearer)
+      .expect(200);
+
+    const operationsAnalytics = await request(http)
+      .get('/api/v1/operator/analytics/claims')
+      .query({ from: '2026-09-01T00:00:00Z', to: '2026-09-30T23:59:59Z' })
+      .set('Authorization', operationsBearer)
       .expect(403);
-    assert.equal(restrictedArea.body.code, 'DEMO_SCOPE_RESTRICTED');
+    assert.equal(operationsAnalytics.body.code, 'DEMO_SCOPE_RESTRICTED');
 
     const blocked = await request(http)
       .post('/api/v1/operator/claims/00000000-0000-4000-8000-000000000001/transitions')
-      .set('Authorization', bearer)
+      .set('Authorization', operationsBearer)
       .send({ expectedFromStatus: 'RECEIVED', toStatus: 'UNDER_REVIEW' })
       .expect(403);
     assert.equal(blocked.body.code, 'DEMO_READ_ONLY');
+
+    const supervisionSession = await demoLogin('demo.supervisor@eliasworks.invalid').expect(200);
+    assert.equal(supervisionSession.body.operator.role, 'CLAIMS_SUPERVISOR');
+    const supervisionBearer = `Bearer ${supervisionSession.body.accessToken}`;
+    await request(http)
+      .get('/api/v1/operator/analytics/claims')
+      .query({ from: '2026-09-01T00:00:00Z', to: '2026-09-30T23:59:59Z' })
+      .set('Authorization', supervisionBearer)
+      .expect(200);
+
+    const supervisionAdmin = await request(http)
+      .get('/api/v1/admin/pipelines')
+      .set('Authorization', supervisionBearer)
+      .expect(403);
+    assert.equal(supervisionAdmin.body.code, 'DEMO_SCOPE_RESTRICTED');
+
+    const administrationSession = await demoLogin('demo.admin@eliasworks.invalid').expect(200);
+    assert.equal(administrationSession.body.operator.role, 'PLATFORM_ADMIN');
+    const administrationBearer = `Bearer ${administrationSession.body.accessToken}`;
+    await request(http)
+      .get('/api/v1/admin/pipelines')
+      .set('Authorization', administrationBearer)
+      .expect(200);
+
+    const administrationClaims = await request(http)
+      .get('/api/v1/operator/claims')
+      .set('Authorization', administrationBearer)
+      .expect(403);
+    assert.equal(administrationClaims.body.code, 'DEMO_SCOPE_RESTRICTED');
+
+    const administrationWrite = await request(http)
+      .post('/api/v1/admin/pipelines')
+      .set('Authorization', administrationBearer)
+      .send({})
+      .expect(403);
+    assert.equal(administrationWrite.body.code, 'DEMO_READ_ONLY');
   } finally {
     if (previousDemoMode === undefined) delete process.env.DEMO_MODE;
     else process.env.DEMO_MODE = previousDemoMode;
