@@ -2,7 +2,6 @@ import { Link, NavLink } from 'react-router-dom';
 import type { StaffRole } from '../api/types';
 import {
   OPERATOR_NAV_GROUPS,
-  OPERATOR_NAV_ITEMS,
   operatorNavItemCanLink,
   operatorNavItemsForRole,
   type OperatorNavItem,
@@ -19,11 +18,9 @@ export function OperatorSidebar({
   demoReadOnly: boolean;
   brandDestination: string;
 }) {
-  const items = demoReadOnly
-    ? OPERATOR_NAV_ITEMS
-    : role
-      ? operatorNavItemsForRole(role)
-      : [];
+  // The sidebar is an executable navigation contract, not an IA preview.
+  // Demo personas therefore see exactly the same role-authorized catalog as a real session.
+  const items = role ? operatorNavItemsForRole(role) : [];
 
   return (
     <aside
@@ -83,7 +80,7 @@ function OperatorSidebarItem({
 
   if (!canLink) {
     const disabledReason = demoReadOnly
-      ? 'No disponible en la demo pública'
+      ? 'Vista todavía no productizada en la demo pública'
       : 'Vista pendiente de refinamiento visual';
 
     return (
