@@ -87,7 +87,9 @@ describe('OperatorCollectionDetailPage R3', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: 'Cliente Cobranza API' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Ciclo de vida' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Estado de pago' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Pipeline operativo' })).toBeTruthy();
     expect(screen.getAllByText('SERVER_STATE_ALPHA').length).toBeGreaterThan(0);
     expect(screen.getByText(/todavía no publica el catálogo permitido/i)).toBeTruthy();
     expect(screen.queryByRole('textbox')).toBeNull();

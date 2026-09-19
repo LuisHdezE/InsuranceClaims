@@ -1,0 +1,304 @@
+.r3-collections-directory,
+.r3-collection-detail {
+  --collections-r3-primary: #0f5fcc;
+  --collections-r3-text: #172033;
+  --collections-r3-muted: #667085;
+  --collections-r3-border: #d6dee8;
+  --collections-r3-soft: #f6f8fb;
+  gap: 16px;
+}
+
+.r3-collections-directory .r3-case-page-heading {
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+
+.r3-collections-directory .r3-case-page-heading h1,
+.r3-collection-detail .r3-case-hero h1 {
+  margin-top: 4px;
+  font-size: clamp(23px, 2.25vw, 29px);
+  line-height: 1.08;
+}
+
+.r3-collections-directory .r3-case-page-heading p {
+  max-width: 760px;
+  margin: 7px 0 0;
+  color: var(--collections-r3-muted);
+  line-height: 1.5;
+}
+
+.r3-collections-directory .r3-case-heading-summary {
+  min-width: 168px;
+  padding: 10px 13px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.r3-collections-directory .r3-case-heading-summary strong {
+  font-size: 18px;
+}
+
+.r3-collections-directory .r3-case-list-panel,
+.r3-collection-detail :is(.r3-case-context-card, .r3-case-lifecycle-card, .r3-payment-card, .r3-case-pipeline-card) {
+  box-shadow: none;
+}
+
+.r3-collections-directory .r3-case-list-panel {
+  overflow: hidden;
+}
+
+.r3-collections-directory .ops-panel-heading,
+.r3-collection-detail .ops-panel-heading {
+  gap: 14px;
+}
+
+.r3-collections-directory .ops-panel-heading h2,
+.r3-collection-detail .ops-panel-heading h2 {
+  margin-bottom: 3px;
+  font-size: 17px;
+}
+
+.r3-collections-directory .ops-panel-heading p,
+.r3-collection-detail .ops-panel-heading p {
+  max-width: 740px;
+  margin: 0;
+  color: var(--collections-r3-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.r3-collections-directory .r3-case-table {
+  width: 100%;
+  max-width: 100%;
+  min-width: 860px;
+  table-layout: fixed;
+}
+
+.r3-collections-directory .r3-case-table :is(th, td) {
+  box-sizing: border-box;
+}
+
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(1) { width: 15%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(2) { width: 17%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(3) { width: 11%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(4) { width: 16%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(5) { width: 15%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(6) { width: 15%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(7) { width: 11%; }
+
+.r3-collections-directory .r3-case-table th {
+  padding: 9px 8px;
+}
+
+.r3-collections-directory .r3-case-table td {
+  padding: 9px 8px;
+}
+
+.r3-collections-directory .r3-case-table tbody tr {
+  min-height: 52px;
+}
+
+.r3-collections-directory .r3-case-primary-link,
+.r3-collections-directory .r3-case-table strong {
+  font-size: 13px;
+}
+
+.r3-collections-directory :is(.r3-case-status, .r3-payment-state, .r3-case-stage) {
+  min-height: 26px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.r3-collections-directory :is(.r3-case-status, .r3-payment-state, .r3-case-stage, .r3-case-row-action, time) {
+  white-space: nowrap;
+}
+
+.r3-collections-directory .r3-case-row-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  font-size: 12px;
+}
+
+.r3-collections-directory .r3-case-pagination {
+  padding-top: 12px;
+}
+
+.r3-collection-detail .r3-case-breadcrumbs {
+  margin-bottom: 0;
+}
+
+.r3-collection-detail .r3-case-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(245px, 310px);
+  gap: 16px;
+  margin-bottom: 0;
+  padding: 18px;
+  box-shadow: none;
+}
+
+.r3-collection-detail .r3-case-hero > div:first-child > p {
+  font-size: 13px;
+}
+
+.r3-collection-detail .r3-case-hero-meta {
+  margin-top: 10px;
+}
+
+.r3-collection-detail .r3-case-hero-side {
+  padding: 14px 16px;
+}
+
+.r3-collection-detail .r3-case-hero-side strong {
+  font-size: 18px;
+}
+
+.r3-collection-detail .r3-case-hero-side span {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.r3-collection-detail .r3-case-detail-grid {
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+  gap: 14px;
+  margin-bottom: 0;
+}
+
+.r3-collection-detail .r3-case-context-grid {
+  gap: 10px;
+}
+
+.r3-collection-detail :is(.r3-case-context-grid > div, .r3-case-current-stage, .r3-case-next-stages) {
+  padding: 12px;
+  border-radius: 9px;
+}
+
+.r3-collection-detail .r3-case-context-grid strong {
+  font-size: 13px;
+}
+
+.r3-collection-detail .r3-case-context-grid a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  width: fit-content;
+  font-size: 12px;
+}
+
+.r3-collection-detail .r3-case-dates {
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.r3-collection-detail .r3-case-dates > div {
+  padding: 8px 10px;
+}
+
+.r3-collection-detail .r3-case-lifecycle-state {
+  margin-bottom: 10px;
+}
+
+.r3-collection-detail .r3-case-decision,
+.r3-collection-detail .r3-case-stage-actions button {
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.r3-collection-detail .r3-payment-card,
+.r3-collection-detail .r3-case-pipeline-card {
+  margin-bottom: 0;
+}
+
+.r3-collection-detail .r3-payment-current {
+  display: grid;
+  grid-template-columns: minmax(150px, .28fr) minmax(180px, .32fr) minmax(0, 1fr);
+  gap: 12px 16px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--collections-r3-border);
+  border-radius: 10px;
+  background: var(--collections-r3-soft);
+}
+
+.r3-collection-detail .r3-payment-current > span {
+  color: var(--collections-r3-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.r3-collection-detail .r3-payment-current > strong {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.r3-collection-detail .r3-payment-current > p {
+  margin: 0;
+  color: var(--collections-r3-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.r3-collection-detail .r3-case-pipeline-layout {
+  grid-template-columns: minmax(220px, .52fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.r3-collection-detail .r3-case-current-stage strong {
+  font-size: 18px;
+}
+
+.r3-collection-detail .r3-case-contract-note {
+  margin-top: 0;
+  padding: 8px 10px;
+  font-size: 11px;
+}
+
+@media (max-width: 1100px) {
+  .r3-collection-detail .r3-case-hero,
+  .r3-collection-detail .r3-case-detail-grid,
+  .r3-collection-detail .r3-payment-current,
+  .r3-collection-detail .r3-case-pipeline-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-collection-detail .r3-case-hero-side {
+    border-top: 1px solid #e4ebf3;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .r3-collections-directory,
+  .r3-collection-detail {
+    gap: 12px;
+  }
+
+  .r3-collections-directory .r3-case-page-heading h1,
+  .r3-collection-detail .r3-case-hero h1 {
+    font-size: 23px;
+  }
+
+  .r3-collections-directory .r3-case-heading-summary {
+    width: 100%;
+  }
+
+  .r3-collections-directory .ops-refresh-button,
+  .r3-collections-directory .r3-case-pagination button,
+  .r3-collections-directory .r3-case-row-action,
+  .r3-collection-detail .r3-case-context-grid a,
+  .r3-collection-detail .r3-case-decision,
+  .r3-collection-detail .r3-case-stage-actions button {
+    min-height: 44px;
+  }
+
+  .r3-collection-detail .r3-case-hero {
+    padding: 15px;
+  }
+
+  .r3-collection-detail .r3-case-context-grid,
+  .r3-collection-detail .r3-case-dates {
+    grid-template-columns: 1fr;
+  }
+}
