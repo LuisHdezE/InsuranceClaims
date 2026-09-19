@@ -86,7 +86,7 @@ describe('OperatorRenewalDetailPage R3', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: 'Cliente Renovación API' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Lifecycle' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Ciclo de vida' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Pipeline operativo' })).toBeTruthy();
     expect(screen.getAllByText('Contactar cliente').length).toBeGreaterThan(0);
     expect(screen.getByText('Clave: CONTACT_CUSTOMER')).toBeTruthy();
