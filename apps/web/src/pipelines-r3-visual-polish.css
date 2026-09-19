@@ -195,12 +195,8 @@
 }
 
 .r3-ui-shell .pipeline-form-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  margin: 0 -2px;
-  padding: 9px 2px 2px;
-  background: linear-gradient(to bottom, rgba(246, 249, 252, 0), #f6f9fc 34%);
+  margin-top: 2px;
+  padding-top: 8px;
 }
 
 @media (max-width: 1100px) {
@@ -286,8 +282,19 @@
   .r3-ui-shell .pipeline-secondary-button,
   .r3-ui-shell .pipeline-state-button,
   .r3-ui-shell .pipeline-activate-button,
-  .r3-ui-shell .pipeline-pagination button {
+  .r3-ui-shell .pipeline-pagination button,
+  .r3-ui-shell .pipeline-stage-editor-index button {
     min-height: 44px;
+  }
+
+  .r3-ui-shell .pipeline-stage-editor-card {
+    grid-template-columns: 48px minmax(0, 1fr);
+    padding: 9px;
+  }
+
+  .r3-ui-shell .pipeline-stage-editor-index button {
+    width: 44px;
+    min-width: 44px;
   }
 
   .r3-ui-shell .pipeline-admin-actions .pipeline-primary-button,
@@ -300,9 +307,5 @@
   .r3-ui-shell .pipeline-form-actions {
     display: grid;
     grid-template-columns: 1fr;
-  }
-
-  .r3-ui-shell .pipeline-stage-editor-card {
-    padding: 9px;
   }
 }
