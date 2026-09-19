@@ -2,6 +2,7 @@ import { Body, Controller, Get, Headers, HttpCode, Inject, Param, Patch, Post, Q
 import { z } from 'zod';
 import { API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
+import { isDemoModeEnabled, isPublicDemoOperator, scopePublicDemoPage } from './demo-access.js';
 import { RateLimitService, callerIp } from './transport.js';
 
 const uuidSchema = z.string().uuid();
@@ -67,6 +68,14 @@ export class OperatorTasksController {
       assignedOperatorId: uuidSchema.optional(),
       overdue: z.enum(['true', 'false']).transform((value) => value === 'true').optional(),
     }).parse(query);
+
+    if (isDemoModeEnabled() && isPublicDemoOperator(req.actor)) {
+      const page = parsed.page ?? 1;
+      const pageSize = parsed.pageSize ?? 25;
+      const source = await this.runtime.tasks.listTasks({ ...parsed, page: 1, pageSize: 100 }, req.actor);
+      return scopePublicDemoPage(source.items, 'task', (item) => item.taskId, page, pageSize);
+    }
+
     return this.runtime.tasks.listTasks(parsed, req.actor);
   }
 
