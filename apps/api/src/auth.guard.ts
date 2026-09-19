@@ -32,8 +32,8 @@ export class JwtAuthGuard implements CanActivate {
           : typeof req.originalUrl === 'string'
             ? req.originalUrl.split('?')[0]
             : '';
-        if (!isAllowedPublicDemoReadPath(requestPath)) {
-          throw new ApiProblemError(403, 'DEMO_SCOPE_RESTRICTED', 'The public demo session can read only governed synthetic Claim fixtures.');
+        if (!isAllowedPublicDemoReadPath(requestPath, actor)) {
+          throw new ApiProblemError(403, 'DEMO_SCOPE_RESTRICTED', 'The public demo session cannot read this module for the selected demo persona.');
         }
       }
       req.actor = actor;
