@@ -18,7 +18,8 @@ ARTIFACT_DIR = Path(".qa-artifacts/operator-sidebar")
 ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 
 PERSONAS = {
-    "Operations": {
+    "operations": {
+        "label": "Operations",
         "landing": "/operator/dashboard",
         "links": {
             "/operator/workspace",
@@ -31,7 +32,8 @@ PERSONAS = {
             "/operator/collections",
         },
     },
-    "Supervision": {
+    "supervision": {
+        "label": "Supervision",
         "landing": "/operator/dashboard",
         "links": {
             "/operator/workspace",
@@ -45,7 +47,8 @@ PERSONAS = {
             "/operator/collections",
         },
     },
-    "Administration": {
+    "administration": {
+        "label": "Administration",
         "landing": "/operator/workspace",
         "links": {
             "/operator/workspace",
@@ -108,12 +111,14 @@ def clear_session() -> None:
     driver.delete_all_cookies()
 
 
-def open_persona(persona: str, expected_landing: str) -> None:
+def open_persona(persona_key: str, expected_landing: str) -> None:
     clear_session()
     driver.get(f"{WEB_BASE_URL}/operator/login")
     wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
-    button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, f'button[aria-label="Explorar como {persona}"]')))
-    button.click()
+    button = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, f'button[data-demo-persona="{persona_key}"]')))
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, f'button[data-demo-persona="{persona_key}"]')))
+    driver.execute_script("arguments[0].click();", button)
     wait.until(lambda d: d.current_url.rstrip("/").endswith(expected_landing))
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".operator-sidebar-component")))
 
@@ -178,18 +183,19 @@ def viewport_metrics() -> dict[str, object]:
 
 
 try:
-    for persona, contract in PERSONAS.items():
+    for persona_key, contract in PERSONAS.items():
+        persona_label = contract["label"]
         expected_paths = contract["links"]
         for width, height in TARGETS:
             set_viewport(width, height)
-            open_persona(persona, contract["landing"])
+            open_persona(persona_key, contract["landing"])
             actual_paths = visible_sidebar_paths()
             if actual_paths != expected_paths:
                 raise AssertionError(
-                    f"{persona} Sidebar mismatch at {width}x{height}: expected={sorted(expected_paths)} actual={sorted(actual_paths)}"
+                    f"{persona_label} Sidebar mismatch at {width}x{height}: expected={sorted(expected_paths)} actual={sorted(actual_paths)}"
                 )
             if actual_paths & PENDING_PATHS:
-                raise AssertionError(f"{persona} exposed pending demo modules: {sorted(actual_paths & PENDING_PATHS)}")
+                raise AssertionError(f"{persona_label} exposed pending demo modules: {sorted(actual_paths & PENDING_PATHS)}")
 
             for path in sorted(expected_paths):
                 link = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, f'a.operator-sidebar-item[href="{path}"]')))
@@ -201,31 +207,31 @@ try:
 
             forbidden = collect_forbidden_api_responses()
             if forbidden:
-                raise AssertionError(f"{persona} produced unexpected API 403 responses: {forbidden[:10]}")
+                raise AssertionError(f"{persona_label} produced unexpected API 403 responses: {forbidden[:10]}")
 
             metrics = viewport_metrics()
             overflow = int(metrics["scrollWidth"]) - int(metrics["innerWidth"])
-            shot, full = capture(f"{persona.lower()}-{width}x{height}")
+            shot, full = capture(f"{persona_key}-{width}x{height}")
             if overflow > TOLERANCE_PX:
-                raise AssertionError(f"{persona} shell horizontal overflow at {width}x{height}: {overflow}px")
+                raise AssertionError(f"{persona_label} shell horizontal overflow at {width}x{height}: {overflow}px")
 
             if width >= 1024:
                 if int(metrics["sidebarWidth"]) > 240:
-                    raise AssertionError(f"{persona} Sidebar is too wide: {metrics['sidebarWidth']}px")
+                    raise AssertionError(f"{persona_label} Sidebar is too wide: {metrics['sidebarWidth']}px")
                 if int(metrics["itemHeight"]) > 38:
-                    raise AssertionError(f"{persona} Sidebar item is too tall: {metrics['itemHeight']}px")
+                    raise AssertionError(f"{persona_label} Sidebar item is too tall: {metrics['itemHeight']}px")
             else:
                 if int(metrics["sidebarHeight"]) > 84:
-                    raise AssertionError(f"{persona} mobile Sidebar/header is too tall: {metrics['sidebarHeight']}px")
+                    raise AssertionError(f"{persona_label} mobile Sidebar/header is too tall: {metrics['sidebarHeight']}px")
                 if int(metrics["itemHeight"]) < 44:
-                    raise AssertionError(f"{persona} mobile Sidebar touch target is too short: {metrics['itemHeight']}px")
+                    raise AssertionError(f"{persona_label} mobile Sidebar touch target is too short: {metrics['itemHeight']}px")
                 if int(metrics["navScrollWidth"]) <= int(metrics["navClientWidth"]):
-                    raise AssertionError(f"{persona} mobile Sidebar should remain horizontally scrollable")
+                    raise AssertionError(f"{persona_label} mobile Sidebar should remain horizontally scrollable")
                 if metrics["labelDisplay"] != "none":
-                    raise AssertionError(f"{persona} mobile Sidebar labels should collapse to icons")
+                    raise AssertionError(f"{persona_label} mobile Sidebar labels should collapse to icons")
 
             results.append({
-                "persona": persona,
+                "persona": persona_label,
                 "width": width,
                 "height": height,
                 "paths": sorted(actual_paths),
