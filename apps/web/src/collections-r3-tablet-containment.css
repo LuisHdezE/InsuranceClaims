@@ -30,7 +30,7 @@
     background: #fff;
   }
 
-  .r3-collections-directory .r3-case-table :is(th, td) {
+  .r3-collections-directory .r3-case-table :is(th, td):nth-child(n) {
     width: auto;
   }
 
