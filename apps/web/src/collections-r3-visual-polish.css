@@ -69,14 +69,23 @@
 
 .r3-collections-directory .r3-case-table {
   min-width: 860px;
+  table-layout: fixed;
 }
 
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(1) { width: 15%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(2) { width: 18%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(3) { width: 11%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(4) { width: 16%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(5) { width: 15%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(6) { width: 16%; }
+.r3-collections-directory .r3-case-table :is(th, td):nth-child(7) { width: 9%; }
+
 .r3-collections-directory .r3-case-table th {
-  padding: 9px 10px;
+  padding: 9px 8px;
 }
 
 .r3-collections-directory .r3-case-table td {
-  padding: 10px;
+  padding: 9px 8px;
 }
 
 .r3-collections-directory .r3-case-table tbody tr {
@@ -92,6 +101,10 @@
   min-height: 26px;
   padding: 4px 8px;
   font-size: 11px;
+}
+
+.r3-collections-directory :is(.r3-case-status, .r3-payment-state, .r3-case-stage, .r3-case-row-action, time) {
+  white-space: nowrap;
 }
 
 .r3-collections-directory .r3-case-row-action {
