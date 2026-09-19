@@ -78,9 +78,9 @@ export function AdminCustomFieldVersionCreatePage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main cf-admin-main">
+      <main className="operator-main ops-main cf-admin-main custom-fields-r3-form-page">
         <div className="cf-breadcrumbs">
-          <Link to="/operator/admin/custom-fields">Custom Fields</Link><span>/</span>
+          <Link to="/operator/admin/custom-fields">Campos personalizados</Link><span>/</span>
           <Link to={`/operator/admin/custom-fields/${definitionId}`}>{field?.fieldKey ?? definitionId.slice(0, 8)}</Link><span>/</span>
           <span>Nueva versión</span>
         </div>
@@ -97,9 +97,9 @@ export function AdminCustomFieldVersionCreatePage() {
               <div>
                 <span className="ops-kicker">Nueva versión inmutable</span>
                 <h1>{field.fieldKey}</h1>
-                <p>Target <strong>{field.targetType}</strong>. El formulario se inicializa desde la versión activa o, si no existe, desde la versión más reciente.</p>
+                <p>Ámbito <strong>{field.targetType}</strong>. El formulario parte de la versión activa o, si no existe, de la versión más reciente. Guardar siempre crea una nueva DRAFT.</p>
               </div>
-              <span className="cf-draft-badge">expectedDefinitionVersion {field.version}</span>
+              <span className="cf-draft-badge">Control de concurrencia · v{field.version}</span>
             </section>
 
             <section className="ops-panel cf-editor-panel">
@@ -113,8 +113,8 @@ export function AdminCustomFieldVersionCreatePage() {
             </section>
 
             <section className="cf-admin-contract-note">
-              <strong>No edita historia</strong>
-              <p>Esta pantalla nunca modifica una versión existente. Todo cambio crea una nueva DRAFT y conserva fieldKey/target como identidad de la definición.</p>
+              <strong>La historia no se edita</strong>
+              <p>Esta pantalla nunca modifica una versión existente. fieldKey y target permanecen como identidad estable de la definición.</p>
             </section>
           </>
         )}
