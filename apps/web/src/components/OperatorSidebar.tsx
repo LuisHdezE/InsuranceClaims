@@ -20,7 +20,7 @@ export function OperatorSidebar({
   brandDestination: string;
 }) {
   const items = demoReadOnly
-    ? OPERATOR_NAV_ITEMS
+    ? OPERATOR_NAV_ITEMS.filter((item) => operatorNavItemCanLink(item, role))
     : role
       ? operatorNavItemsForRole(role)
       : [];
