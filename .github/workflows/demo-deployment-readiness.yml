@@ -147,6 +147,82 @@ jobs:
             http://127.0.0.1:3000/health/live
           grep -qi '^access-control-allow-origin: http://127.0.0.1:4173' "$headers"
 
+      - name: Verify governed public-demo fixture isolation
+        shell: bash
+        run: |
+          extract_token() {
+            node -e "const fs=require('fs');const body=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(body.accessToken);" "$1"
+          }
+
+          verify_page_ids() {
+            local file="$1"
+            local id_key="$2"
+            local expected_csv="$3"
+            node - "$file" "$id_key" "$expected_csv" <<'NODE'
+          const fs = require('fs');
+          const [file, idKey, expectedCsv] = process.argv.slice(2);
+          const body = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const actual = [...body.items.map((item) => item[idKey])].sort();
+          const expected = expectedCsv ? expectedCsv.split(',').sort() : [];
+          if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+            console.error({ idKey, actual, expected, body });
+            process.exit(1);
+          }
+          if (body.totalItems !== expected.length) {
+            console.error(`Unexpected totalItems for ${idKey}: ${body.totalItems}`);
+            process.exit(1);
+          }
+          NODE
+          }
+
+          curl -fsS \
+            -H 'Content-Type: application/json' \
+            -H 'X-Demo-Read-Only: true' \
+            -H 'X-Demo-Persona: operations' \
+            -d '{"login":"demo.operator@eliasworks.invalid","password":"public-demo-read-only"}' \
+            http://127.0.0.1:3000/api/v1/operator/auth/login > /tmp/demo-operations-login.json
+          operations_token="$(extract_token /tmp/demo-operations-login.json)"
+
+          curl -fsS -H "Authorization: Bearer $operations_token" http://127.0.0.1:3000/api/v1/operator/tasks > /tmp/demo-tasks.json
+          verify_page_ids /tmp/demo-tasks.json taskId 'de100000-0000-4000-8000-000000000001,de100000-0000-4000-8000-000000000002,de100000-0000-4000-8000-000000000003'
+
+          curl -fsS -H "Authorization: Bearer $operations_token" http://127.0.0.1:3000/api/v1/operator/customers > /tmp/demo-customers.json
+          verify_page_ids /tmp/demo-customers.json customerId '91000000-0000-4000-8000-000000000001,a1000000-0000-4000-8000-000000000001,b1000000-0000-4000-8000-000000000001'
+
+          curl -fsS -H "Authorization: Bearer $operations_token" http://127.0.0.1:3000/api/v1/operator/policies > /tmp/demo-policies.json
+          verify_page_ids /tmp/demo-policies.json policyId '92000000-0000-4000-8000-000000000001,a2000000-0000-4000-8000-000000000001,b2000000-0000-4000-8000-000000000001'
+
+          curl -fsS -H "Authorization: Bearer $operations_token" http://127.0.0.1:3000/api/v1/operator/renewals > /tmp/demo-renewals.json
+          verify_page_ids /tmp/demo-renewals.json renewalId 'a3000000-0000-4000-8000-000000000001'
+
+          curl -fsS -H "Authorization: Bearer $operations_token" http://127.0.0.1:3000/api/v1/operator/collections > /tmp/demo-collections.json
+          verify_page_ids /tmp/demo-collections.json collectionId 'b3000000-0000-4000-8000-000000000001'
+
+          status="$(curl -sS -o /tmp/demo-rogue-task.json -w '%{http_code}' -H "Authorization: Bearer $operations_token" http://127.0.0.1:3000/api/v1/operator/tasks/00000000-0000-4000-8000-000000000001)"
+          test "$status" = '403'
+          grep -q '"code":"DEMO_SCOPE_RESTRICTED"' /tmp/demo-rogue-task.json
+
+          curl -fsS \
+            -H 'Content-Type: application/json' \
+            -H 'X-Demo-Read-Only: true' \
+            -H 'X-Demo-Persona: administration' \
+            -d '{"login":"demo.admin@eliasworks.invalid","password":"public-demo-read-only"}' \
+            http://127.0.0.1:3000/api/v1/operator/auth/login > /tmp/demo-administration-login.json
+          administration_token="$(extract_token /tmp/demo-administration-login.json)"
+
+          curl -fsS -H "Authorization: Bearer $administration_token" http://127.0.0.1:3000/api/v1/admin/pipelines > /tmp/demo-pipelines.json
+          verify_page_ids /tmp/demo-pipelines.json definitionId 'a4000000-0000-4000-8000-000000000001,b4000000-0000-4000-8000-000000000001'
+
+          curl -fsS -H "Authorization: Bearer $administration_token" http://127.0.0.1:3000/api/v1/admin/communication-templates > /tmp/demo-templates.json
+          verify_page_ids /tmp/demo-templates.json definitionId ''
+
+          curl -fsS -H "Authorization: Bearer $administration_token" http://127.0.0.1:3000/api/v1/admin/custom-fields > /tmp/demo-custom-fields.json
+          verify_page_ids /tmp/demo-custom-fields.json definitionId ''
+
+          status="$(curl -sS -o /tmp/demo-rogue-pipeline.json -w '%{http_code}' -H "Authorization: Bearer $administration_token" http://127.0.0.1:3000/api/v1/admin/pipelines/00000000-0000-4000-8000-000000000001)"
+          test "$status" = '403'
+          grep -q '"code":"DEMO_SCOPE_RESTRICTED"' /tmp/demo-rogue-pipeline.json
+
       - name: Runtime logs on failure
         if: failure()
         run: cat .runtime-demo-api.log 2>/dev/null || true
