@@ -67,6 +67,22 @@ PENDING_PATHS = {
     "/operator/admin/recovery",
 }
 
+FORBIDDEN_WRITE_LABELS = {
+    "/operator/tasks": ("Asignarme", "Completar tarea"),
+    "/operator/admin/pipelines": ("Nuevo pipeline", "Crear primera definición"),
+    "/operator/admin/communication-templates": ("Nueva plantilla",),
+    "/operator/admin/custom-fields": ("Nuevo campo",),
+}
+
+ADMIN_WRITE_ROUTES = (
+    "/operator/admin/pipelines/new",
+    "/operator/admin/pipelines/00000000-0000-4000-8000-000000000001/versions/new",
+    "/operator/admin/communication-templates/new",
+    "/operator/admin/communication-templates/00000000-0000-4000-8000-000000000001/versions/new",
+    "/operator/admin/custom-fields/new",
+    "/operator/admin/custom-fields/00000000-0000-4000-8000-000000000001/versions/new",
+)
+
 options = webdriver.ChromeOptions()
 options.add_argument("--headless=new")
 options.add_argument("--no-sandbox")
@@ -141,6 +157,30 @@ def assert_active(path: str) -> None:
         raise AssertionError(f"Active Sidebar item mismatch at {path}: {href}")
 
 
+def assert_read_only_ux(path: str) -> None:
+    banner = driver.find_elements(By.CSS_SELECTOR, ".ops-demo-readonly-banner")
+    if len(banner) != 1 or not banner[0].is_displayed():
+        raise AssertionError(f"Public demo read-only disclosure is missing at {path}")
+    if "solo lectura" not in banner[0].text.lower():
+        raise AssertionError(f"Public demo disclosure does not identify read-only mode at {path}")
+
+    for label in FORBIDDEN_WRITE_LABELS.get(path, ()):
+        matches = driver.find_elements(
+            By.XPATH,
+            f"//*[self::button or self::a][contains(normalize-space(.), '{label}')]",
+        )
+        visible = [element for element in matches if element.is_displayed()]
+        if visible:
+            raise AssertionError(f"Public demo exposed write action '{label}' at {path}")
+
+
+def assert_admin_write_routes_redirect(landing: str) -> None:
+    for path in ADMIN_WRITE_ROUTES:
+        driver.get(f"{WEB_BASE_URL}{path}")
+        wait.until(lambda d: d.current_url.rstrip("/").endswith(landing))
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".ops-demo-readonly-banner")))
+
+
 def collect_forbidden_api_responses() -> list[str]:
     forbidden: list[str] = []
     for entry in driver.get_log("performance"):
@@ -203,7 +243,11 @@ try:
                 wait.until(lambda d, target=path: d.current_url.rstrip("/").endswith(target))
                 wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".operator-sidebar-component")))
                 assert_active(path)
+                assert_read_only_ux(path)
                 time.sleep(0.15)
+
+            if persona_key == "administration":
+                assert_admin_write_routes_redirect(contract["landing"])
 
             forbidden = collect_forbidden_api_responses()
             if forbidden:
@@ -255,4 +299,4 @@ finally:
         pass
     driver.quit()
 
-print(json.dumps({"event": "DEMO_PERSONA_SIDEBAR_GATE_PASS", "viewports": results}, ensure_ascii=False))
+print(json.dumps({"event": "DEMO_PERSONA_READ_ONLY_UX_GATE_PASS", "viewports": results}, ensure_ascii=False))
