@@ -2,7 +2,12 @@ import { Body, Controller, Get, Headers, HttpCode, Inject, Param, Patch, Post, Q
 import { z } from 'zod';
 import { API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
-import { isDemoModeEnabled, isPublicDemoOperator, scopePublicDemoPage } from './demo-access.js';
+import {
+  isDemoModeEnabled,
+  isPublicDemoFixtureId,
+  isPublicDemoOperator,
+  scopePublicDemoPage,
+} from './demo-access.js';
 import { RateLimitService, callerIp } from './transport.js';
 
 const uuidSchema = z.string().uuid();
@@ -82,7 +87,11 @@ export class OperatorTasksController {
   @Get('claims/:claimId/tasks')
   async listForClaim(@Param('claimId') claimIdRaw: string, @Req() req: any) {
     this.rate(req, 'task-read', 120);
-    return this.runtime.tasks.listClaimTasks(uuidSchema.parse(claimIdRaw), req.actor);
+    const items = await this.runtime.tasks.listClaimTasks(uuidSchema.parse(claimIdRaw), req.actor);
+    if (isDemoModeEnabled() && isPublicDemoOperator(req.actor)) {
+      return items.filter((item) => isPublicDemoFixtureId('task', item.taskId));
+    }
+    return items;
   }
 
   @Post('claims/:claimId/tasks')
