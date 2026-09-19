@@ -1,0 +1,36 @@
+name: Operator Navigation Integration
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  navigation-integration:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck web
+        run: npm run typecheck --workspace=@insurance/web
+
+      - name: Verify navigation source of truth
+        run: python qa/operator-navigation-integration-qa.py
+
+      - name: Verify navigation and shell contracts
+        run: npm run test --workspace=@insurance/web -- operator-navigation.test.ts components/OperatorShell.test.tsx demo-access.test.ts
