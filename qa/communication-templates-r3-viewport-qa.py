@@ -296,11 +296,9 @@ try:
         raise AssertionError(f"Template create form published unsupported channels: {channel_values}")
 
     add_variable = wait.until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, ".comm-variable-panel button.comm-secondary-button"))
+        EC.presence_of_element_located((By.CSS_SELECTOR, ".comm-variable-panel button.comm-secondary-button"))
     )
-    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", add_variable)
-    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".comm-variable-panel button.comm-secondary-button")))
-    add_variable.click()
+    driver.execute_script("arguments[0].click();", add_variable)
     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".comm-variable-row select")))
     create_variable_types = select_option_values(".comm-variable-row select")
     if create_variable_types != ["STRING", "NUMBER", "BOOLEAN"]:
