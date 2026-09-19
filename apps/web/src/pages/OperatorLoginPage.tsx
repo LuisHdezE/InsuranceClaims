@@ -4,10 +4,12 @@ import { resolveStaffLandingRoute } from '../auth/staff-access';
 import { authenticateOperator, createReadOnlyDemoOperatorSession } from '../api/claims';
 import type { ApiFailure } from '../api/types';
 import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
-import { DEMO_PERSONA_OPTIONS, type DemoPersonaKey } from '../demo-access';
+import { DEMO_PERSONA_OPTIONS, isPublicDemoOperator, type DemoPersonaKey } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
 type PendingMode = 'credentials' | `demo-${DemoPersonaKey}` | null;
+
+type SignInResponse = Parameters<ReturnType<typeof useOperatorSession>['signIn']>[0];
 
 export function OperatorLoginPage() {
   const navigate = useNavigate();
@@ -24,7 +26,15 @@ export function OperatorLoginPage() {
     return <Navigate to={resolveStaffLandingRoute(session.operator.role, requestedPath)} replace />;
   }
 
-  const completeSignIn = (response: Parameters<typeof signIn>[0]) => {
+  const completeCredentialSignIn = (response: SignInResponse) => {
+    signIn(response);
+    const destination = isPublicDemoOperator(response.operator)
+      ? '/operator/claims'
+      : resolveStaffLandingRoute(response.operator.role, requestedPath);
+    navigate(destination, { replace: true });
+  };
+
+  const completeDemoSignIn = (response: SignInResponse) => {
     signIn(response);
     navigate(resolveStaffLandingRoute(response.operator.role, requestedPath), { replace: true });
   };
@@ -36,7 +46,7 @@ export function OperatorLoginPage() {
     try {
       const result = await authenticateOperator({ login: login.trim(), password });
       setPassword('');
-      completeSignIn(result.data);
+      completeCredentialSignIn(result.data);
     } catch (error) {
       setFailure(error as ApiFailure);
     } finally {
@@ -50,7 +60,7 @@ export function OperatorLoginPage() {
     try {
       const result = await createReadOnlyDemoOperatorSession(persona);
       setPassword('');
-      completeSignIn(result.data);
+      completeDemoSignIn(result.data);
     } catch (error) {
       setFailure(error as ApiFailure);
     } finally {
