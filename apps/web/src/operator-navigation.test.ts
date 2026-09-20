@@ -66,8 +66,8 @@ describe('operator navigation integration baseline', () => {
       'Administración de pipelines',
       'Plantillas de comunicación',
       'Campos personalizados',
+      'Orientación',
     ]);
-    expect(adminTitles).not.toContain('Orientación');
     expect(adminTitles).not.toContain('Automatizaciones');
     expect(adminTitles).not.toContain('Importaciones gobernadas');
     expect(adminTitles).not.toContain('Integraciones y recuperación');
