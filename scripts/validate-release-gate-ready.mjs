@@ -3,9 +3,11 @@ import { execFileSync } from 'node:child_process';
 
 const HISTORICAL_ACCEPTED_BASELINE = 'ba7f519f36567b142604e213f50e13de4732348d';
 const HISTORICAL_APPROVED_CANDIDATE = '05bb93081248c02ecfb93b7b77477bd4862d3281';
-const CURRENT_GOVERNED_BASELINE = 'db9d8092d9ed34be283bef0b1908aa7c7a6c8ab9';
+const PRIOR_GOVERNED_BASELINE = 'db9d8092d9ed34be283bef0b1908aa7c7a6c8ab9';
+const CURRENT_GOVERNED_BASELINE = 'c107703e5d1f41058fb18b878cc1833afb9d85ff';
 const R3_RELEASE_COMMIT = '014b2a4c4c38d94b07346aaa54bc32a8bbb7c5f9';
-const FRESH_VFR_REVIEWED_COMMIT = 'a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a';
+const PRIOR_FRESH_VFR_REVIEWED_COMMIT = 'a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a';
+const FRESH_VFR_REVIEWED_COMMIT = '1f774dc4f3c0ce4a02b3c3caa664c78f304e7de1';
 const RELEASE_EVIDENCE = 'EVD-RELEASE-GATE-001';
 const APPROVAL_EVIDENCE = 'EVD-RELEASE-GATE-APPROVAL-001';
 const APPROVAL_FILE = 'documentation/release/RELEASE_GATE_APPROVAL.md';
@@ -157,13 +159,16 @@ const lineage = read(LINEAGE_FILE);
 for (const marker of [
   HISTORICAL_ACCEPTED_BASELINE,
   HISTORICAL_APPROVED_CANDIDATE,
+  PRIOR_GOVERNED_BASELINE,
   CURRENT_GOVERNED_BASELINE,
   R3_RELEASE_COMMIT,
+  PRIOR_FRESH_VFR_REVIEWED_COMMIT,
   FRESH_VFR_REVIEWED_COMMIT,
   'API-IMPACT-001',
   'API-IMPACT-002',
   'v0.3.0',
   'Apruebo VFR fresco PR #132',
+  'Apruebo VFR fresco PR #140',
 ]) {
   assert(lineage.includes(marker), `Release Gate lineage reconciliation missing marker: ${marker}`);
 }
@@ -174,12 +179,16 @@ assert(publicationGate.includes('Annotated tag: `v0.3.0`'), 'R3 publication gate
 
 const freshVfr = read('documentation/visual-functional-review/VFR_APPROVAL_RECONCILIATION.md');
 assert(freshVfr.includes(`Browser-tested product/review commit: \`${FRESH_VFR_REVIEWED_COMMIT}\``), 'fresh VFR reviewed commit drifted');
-assert(freshVfr.includes('Explicit approval statement: `Apruebo VFR fresco PR #132`'), 'fresh VFR human approval binding missing');
+assert(freshVfr.includes('Explicit approval statement: `Apruebo VFR fresco PR #140`'), 'fresh VFR human approval binding missing');
+assert(freshVfr.includes(`Browser-tested commit: \`${PRIOR_FRESH_VFR_REVIEWED_COMMIT}\``), 'prior VFR reviewed commit history missing');
+assert(freshVfr.includes('Approval statement: `Apruebo VFR fresco PR #132`'), 'prior VFR approval history missing');
 
 assert(isAncestor(HISTORICAL_ACCEPTED_BASELINE, HISTORICAL_APPROVED_CANDIDATE), 'historical accepted baseline must remain ancestor of the approved Release Gate candidate');
 assert(isAncestor(HISTORICAL_APPROVED_CANDIDATE, R3_RELEASE_COMMIT), 'R3 release must descend from the historical approved Release Gate candidate');
-assert(isAncestor(R3_RELEASE_COMMIT, CURRENT_GOVERNED_BASELINE), 'current governed lineage checkpoint must descend from the published R3 release');
-assert(isAncestor(FRESH_VFR_REVIEWED_COMMIT, CURRENT_GOVERNED_BASELINE), 'current governed lineage checkpoint must include the fresh VFR-reviewed product');
+assert(isAncestor(R3_RELEASE_COMMIT, PRIOR_GOVERNED_BASELINE), 'prior governed lineage checkpoint must descend from the published R3 release');
+assert(isAncestor(PRIOR_FRESH_VFR_REVIEWED_COMMIT, PRIOR_GOVERNED_BASELINE), 'prior governed lineage checkpoint must include the PR #132 VFR-reviewed product');
+assert(isAncestor(PRIOR_GOVERNED_BASELINE, CURRENT_GOVERNED_BASELINE), 'current governed lineage checkpoint must descend from the prior governed checkpoint');
+assert(isAncestor(FRESH_VFR_REVIEWED_COMMIT, CURRENT_GOVERNED_BASELINE), 'current governed lineage checkpoint must include the fresh PR #140 VFR-reviewed product');
 assert(isAncestor(CURRENT_GOVERNED_BASELINE, 'HEAD'), 'current governed lineage checkpoint must be an ancestor of HEAD');
 
 // From the current governed checkpoint onward, product/API/runtime drift is
@@ -225,6 +234,7 @@ console.log(JSON.stringify({
   event: gateApproved ? 'RELEASE_GATE_PASS_WITH_GOVERNED_EVOLUTION' : 'RELEASE_GATE_READY',
   historicalAcceptedBaseline: HISTORICAL_ACCEPTED_BASELINE,
   historicalApprovedCandidate: HISTORICAL_APPROVED_CANDIDATE,
+  priorGovernedLineageCheckpoint: PRIOR_GOVERNED_BASELINE,
   governedLineageCheckpoint: CURRENT_GOVERNED_BASELINE,
   r3ReleaseCommit: R3_RELEASE_COMMIT,
   releaseChecks,

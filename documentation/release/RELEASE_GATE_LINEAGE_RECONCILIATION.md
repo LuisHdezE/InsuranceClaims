@@ -4,7 +4,7 @@
 
 Reconcile the `Release Gate Ready State` validator with the governed product evolution that occurred after the original MVP Release Gate approval, without rewriting or reinterpreting that historical human decision.
 
-This reconciliation belongs to the post-PR #132 governance lane. It changes no product behavior, API contract, RBAC, demo fixtures, runtime configuration, Operations evidence or R3 Full Product Technical Closure evidence.
+This reconciliation advances the fail-closed lineage checkpoint after PR #140. It changes no product behavior, API contract, auth, RBAC, demo fixtures, runtime configuration, Operations evidence or R3 Full Product Technical Closure evidence.
 
 ## Historical Release Gate remains immutable
 
@@ -55,35 +55,54 @@ R3 was separately closed and released rather than being retroactively folded int
 
 The published `v0.3.0` release records PostgreSQL 18 QA, Integration QA, backup/restore, observability, OpenAPI/Postman zero drift and R3 full-product closure as part of its accepted evidence chain.
 
-## Post-release demo hardening and fresh VFR
+## Prior governed checkpoint - PR #132
 
-After `v0.3.0`, the repository continued through explicitly reviewed demo-readiness and visual-governance increments. The latest visual checkpoint before this reconciliation is PR #132:
+The first post-release lineage reconciliation was established after the fresh PR #132 VFR:
 
-- PR #132 merge: `db9d8092d9ed34be283bef0b1908aa7c7a6c8ab9`
+- PR #132 merge / prior governed checkpoint: `db9d8092d9ed34be283bef0b1908aa7c7a6c8ab9`
 - Fresh browser-reviewed product commit: `a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a`
 - Browser evidence commit: `9703deeac7e96988b6a3bb290537f058df46151a`
-- Browser evidence run: `35478752855` — SUCCESS
+- Browser evidence run: `35478752855` - SUCCESS
 - Explicit approval statement: `Apruebo VFR fresco PR #132`
+
+That checkpoint remains preserved as audit history and as an ancestry requirement. It no longer supplies the active fail-closed boundary after later governed product evolution.
+
+## Product evolution after PR #132
+
+After the PR #132 checkpoint, the repository continued through separately reviewed product and visual increments, including Guidance productization and the operator-login demo-persona containment fix. Those increments were not silently inherited by the historical Release Gate: the Release Gate sentinel correctly turned red once product drift occurred beyond `db9d8092...`.
+
+The current product was then revalidated through PR #140:
+
+- PR #139 merge with operator-login containment fix: `20a842de8868fe96ed0010b9a22a68ba0d2a6b30`
+- PR #140 browser-reviewed commit: `1f774dc4f3c0ce4a02b3c3caa664c78f304e7de1`
+- PR #140 browser evidence commit: `68fcc89f9c722159529e95e71b3924b8b5bb0e59`
+- PR #140 browser evidence run: `35525301921` - SUCCESS
+- Browser: Chrome `152.0.7977.82`
+- Fresh evidence: 12/12 screenshots
+- Explicit approval statement: `Apruebo VFR fresco PR #140`
+- VFR approval recording HEAD: `21013d13d874664c2022db1e20d07fbbc9346d8a`
+- PR #140 merge / current governed checkpoint: `c107703e5d1f41058fb18b878cc1833afb9d85ff`
 - Fresh VFR reconciliation: `documentation/visual-functional-review/VFR_APPROVAL_RECONCILIATION.md`
 
-PR #132 exact-head regression also passed Release Gate Evidence, API QA, Integration QA, all three governed functional slices, OpenAPI, Postman, Design System, Interface Inventory, Operator Navigation, CI QA Hardening and Operations Observability Evidence.
+On the exact PR #140 approval HEAD, `Visual Functional Review Ready - Web`, API Implementation, API QA, Integration QA, all three governed functional slices, OpenAPI validation, OpenAPI Post-MVP R2, Postman Contract, Design System, Interface Inventory, Operator Navigation Integration, CI QA Hardening, Operations Observability Evidence and Release Gate Evidence all passed. The VFR gate specifically verified the exact human approval binding, ancestry and zero product drift after the browser-reviewed commit.
 
 ## Current governed lineage checkpoint
 
 The Release Gate lineage checkpoint is now:
 
-`db9d8092d9ed34be283bef0b1908aa7c7a6c8ab9`
+`c107703e5d1f41058fb18b878cc1833afb9d85ff`
 
-This SHA is **not a new historical Release Gate approval**. It is the exact repository checkpoint through which the post-release evolution chain has already been governed and reviewed.
+This SHA is **not a new historical Release Gate approval**. It is the exact repository checkpoint through which the later product evolution has now been explicitly reviewed, browser-validated, regression-tested, human-approved at VFR and merged under governed review.
 
-The validator must therefore apply two different rules:
+The validator therefore applies three linked rules:
 
 1. preserve and verify the historical Release Gate decision against its original baseline and evidence;
-2. reject any new product/API/runtime drift after the governed lineage checkpoint unless a later explicit reconciliation advances the checkpoint.
+2. preserve the prior PR #132 governed checkpoint as ancestry and audit history;
+3. reject any new product/API/runtime drift after `c107703e...` unless a later explicit reconciliation advances the checkpoint.
 
 ## Fail-closed boundary after the checkpoint
 
-After `db9d8092...`, governance/evidence-only maintenance may proceed without pretending it is product drift. Product/API/runtime changes remain fail-closed.
+After `c107703e...`, governance/evidence-only maintenance may proceed without being classified as product drift. Product/API/runtime changes remain fail-closed.
 
 Examples that must continue to invalidate the Release Gate lineage until separately reconciled include changes under:
 
@@ -93,7 +112,7 @@ Examples that must continue to invalidate the Release Gate lineage until separat
 - runtime/environment configuration such as `.env.example`
 - authoritative API contract/runtime surfaces
 
-This allows historical release, Operations and closure governance documents/validators to be maintained while preventing future product work from silently inheriting the old Release Gate.
+This does not weaken the sentinel. It moves the closed boundary to the latest product state that has already completed the required governed revalidation.
 
 ## Separation from the next governance lanes
 
@@ -102,7 +121,7 @@ This reconciliation does **not** fix or weaken:
 - `Operations State`
 - `R3 Full Product Technical Closure`
 
-Those remain separate lanes with their own baselines and evidence. A green Release Gate Ready State after this reconciliation means only that the historical Release Gate is preserved and all evolution through `db9d8092...` is explicitly checkpointed, with future product drift again fail-closed.
+Those remain separate lanes with their own baselines and evidence. A green `Release Gate Ready State` after this reconciliation means only that the historical Release Gate is preserved, PR #132 remains preserved in lineage, all governed evolution through `c107703e...` is explicitly checkpointed, and future product drift is again fail-closed.
 
 ## Merge boundary
 
