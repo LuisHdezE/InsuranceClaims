@@ -29,7 +29,7 @@ if browser_bin:
 
 driver = webdriver.Chrome(options=options)
 wait = WebDriverWait(driver, 20)
-results: list[dict[str, int | str]] = []
+results: list[dict[str, object]] = []
 
 try:
     driver.get(f"{WEB_BASE_URL}/operator/login")
@@ -53,6 +53,24 @@ try:
             """
             const root = document.documentElement;
             const body = document.body;
+            const personas = Array.from(document.querySelectorAll('.r3-login-demo-button')).map((button) => {
+              const copy = button.querySelector('span');
+              const buttonRect = button.getBoundingClientRect();
+              const copyRect = copy ? copy.getBoundingClientRect() : null;
+              const buttonStyle = getComputedStyle(button);
+              return {
+                key: button.dataset.demoPersona || '',
+                flexDirection: buttonStyle.flexDirection,
+                copyClientWidth: copy ? copy.clientWidth : 0,
+                copyScrollWidth: copy ? copy.scrollWidth : 0,
+                copyClientHeight: copy ? copy.clientHeight : 0,
+                copyScrollHeight: copy ? copy.scrollHeight : 0,
+                copyRight: copyRect ? copyRect.right : 0,
+                copyBottom: copyRect ? copyRect.bottom : 0,
+                buttonRight: buttonRect.right,
+                buttonBottom: buttonRect.bottom,
+              };
+            });
             return {
               innerWidth: window.innerWidth,
               innerHeight: window.innerHeight,
@@ -60,6 +78,7 @@ try:
               clientHeight: root.clientHeight,
               scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
               scrollHeight: Math.max(root.scrollHeight, body.scrollHeight),
+              personas,
             };
             """
         )
@@ -69,6 +88,7 @@ try:
 
         vertical_overflow = metrics["scrollHeight"] - metrics["innerHeight"]
         horizontal_overflow = metrics["scrollWidth"] - metrics["innerWidth"]
+        personas = metrics["personas"]
         result = {
             "width": width,
             "height": height,
@@ -76,6 +96,7 @@ try:
             "innerHeight": metrics["innerHeight"],
             "verticalOverflow": vertical_overflow,
             "horizontalOverflow": horizontal_overflow,
+            "personas": personas,
             "screenshot": str(screenshot_path),
         }
         results.append(result)
@@ -92,6 +113,36 @@ try:
                 f"scrollWidth={metrics['scrollWidth']} innerWidth={metrics['innerWidth']} "
                 f"overflow={horizontal_overflow}px"
             )
+
+        if len(personas) != 3:
+            raise AssertionError(
+                f"Operator login expected 3 demo persona buttons at {width}x{height}, got {len(personas)}"
+            )
+
+        for persona in personas:
+            if persona["flexDirection"] != "column":
+                raise AssertionError(
+                    f"Demo persona {persona['key']} copy is not vertically stacked at {width}x{height}: "
+                    f"flexDirection={persona['flexDirection']}"
+                )
+            if persona["copyScrollWidth"] - persona["copyClientWidth"] > TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} copy clips horizontally at {width}x{height}: "
+                    f"scrollWidth={persona['copyScrollWidth']} clientWidth={persona['copyClientWidth']}"
+                )
+            if persona["copyScrollHeight"] - persona["copyClientHeight"] > TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} copy clips vertically at {width}x{height}: "
+                    f"scrollHeight={persona['copyScrollHeight']} clientHeight={persona['copyClientHeight']}"
+                )
+            if persona["copyRight"] - persona["buttonRight"] > TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} copy escapes button horizontally at {width}x{height}"
+                )
+            if persona["copyBottom"] - persona["buttonBottom"] > TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} copy escapes button vertically at {width}x{height}"
+                )
 
     severe = [
         entry.get("message", "")
