@@ -4,9 +4,22 @@ import { resolve } from 'node:path';
 
 const root = process.cwd();
 const manifestPath = 'documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.json';
+const lineagePath = 'documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_LINEAGE_RECONCILIATION.md';
+const releaseLineagePath = 'documentation/release/RELEASE_GATE_LINEAGE_RECONCILIATION.md';
+const operationsLineagePath = 'documentation/operations/OPERATIONS_LINEAGE_RECONCILIATION.md';
+const demoReadinessPath = 'documentation/deployment/DEMO_DEPLOYMENT_READINESS.md';
+
 const expectedBaseline = 'cbace18fc1b00dcd6c17aca79dc12bb668cbd9a9';
+const expectedClosureCandidate = 'c5a3f7a88f9de4383214d9c1516862c79f1cc2c8';
 const expectedClosureMerge = '54f791707d6a4e2f9425f57d0a18e20e139fb518';
 const expectedReferencePostUiHead = '24817b7d36a23cc184a0615da9fb8a4e251ab2e2';
+const r3ReleaseCommit = '014b2a4c4c38d94b07346aaa54bc32a8bbb7c5f9';
+const demoReadinessMerge = 'de64afb68dfd2ab2fc3e48f266d25c9fcb8ccd6f';
+const demoEnvCommit = '2e9707016506cfbd14bb14f54f79d2694a12f07c';
+const freshVfrReviewedCommit = 'a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a';
+const freshVfrMerge = 'db9d8092d9ed34be283bef0b1908aa7c7a6c8ab9';
+const releaseLineageMerge = 'b2f089476559795f30a3c0eec2b05fd0ac32531f';
+const currentGovernedCheckpoint = 'ac555d064cf8a9a68fe4c10e04ec625396f94a6b';
 
 const expectedApi = {
   operations: 90,
@@ -93,24 +106,14 @@ const expectedClosureAllowlist = [
   'scripts/validate-r3-full-product-closure.mjs',
 ];
 
-const postClosureExactAllowlist = new Set([
-  '.github/workflows/release-formalization-0.2.0.yml',
-  '.github/workflows/release-formalization-0.3.0.yml',
-  'README.md',
-  'apps/api/package.json',
-  'apps/legacy-simulator/package.json',
-  'apps/mcp/package.json',
-  'apps/web/package.json',
-  'documentation/release/R3_RELEASE_FORMALIZATION_0.3.0.md',
-  'package-lock.json',
-  'package.json',
-  'packages/application/package.json',
-  'packages/domain/package.json',
-  'packages/infrastructure/package.json',
+const postCheckpointGovernancePaths = new Set([
+  'documentation/release/RELEASE_GATE_LINEAGE_RECONCILIATION.md',
+  'scripts/validate-release-gate-ready.mjs',
+  'documentation/operations/OPERATIONS_LINEAGE_RECONCILIATION.md',
+  'scripts/validate-operations-state.mjs',
+  lineagePath,
   'scripts/validate-r3-full-product-closure.mjs',
-  'scripts/validate-release-formalization-0.3.0.mjs',
 ]);
-const postClosurePrefixAllowlist = ['documentation/portfolio/'];
 
 function fail(message) {
   throw new Error(`[r3-full-product-closure] ${message}`);
@@ -133,8 +136,13 @@ function changedPaths(base, head) {
   return output ? output.split(/\r?\n/u).filter(Boolean) : [];
 }
 
-function isAllowedPostClosurePath(path) {
-  return postClosureExactAllowlist.has(path) || postClosurePrefixAllowlist.some((prefix) => path.startsWith(prefix));
+function isAncestor(ancestor, descendant = 'HEAD') {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', ancestor, descendant], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function readText(path) {
@@ -143,6 +151,7 @@ async function readText(path) {
 
 const manifest = JSON.parse(await readText(manifestPath));
 
+// Preserve the original PR #90 closure record exactly as historical evidence.
 assert(manifest.schemaVersion === 1, 'schemaVersion must remain 1');
 assert(manifest.status === 'CANDIDATE', 'historical closure manifest must remain the merged candidate record');
 assert(manifest.productBaseline === expectedBaseline, `product baseline must be ${expectedBaseline}`);
@@ -205,11 +214,10 @@ for (const [path, marker] of workflowExpectations) {
   assert(workflow.includes(marker), `${path} must retain workflow marker ${marker}`);
 }
 
-try {
-  execFileSync('git', ['merge-base', '--is-ancestor', expectedClosureMerge, 'HEAD'], { stdio: 'pipe' });
-} catch {
-  fail(`HEAD must descend from approved full-product closure merge ${expectedClosureMerge}`);
-}
+// The historical closure boundary itself must still be exactly the five files approved by PR #90.
+assert(isAncestor(expectedBaseline, expectedClosureCandidate), 'historical product baseline must remain ancestor of the closure candidate');
+assert(isAncestor(expectedClosureCandidate, expectedClosureMerge), 'historical closure candidate must remain ancestor of the approved closure merge');
+assert(isAncestor(expectedClosureMerge, 'HEAD'), `HEAD must descend from approved full-product closure merge ${expectedClosureMerge}`);
 
 const historicalClosurePaths = changedPaths(expectedBaseline, expectedClosureMerge);
 assert(historicalClosurePaths.length === expectedClosureAllowlist.length, `historical closure boundary drift: expected ${expectedClosureAllowlist.length} files, got ${historicalClosurePaths.length}`);
@@ -221,18 +229,80 @@ for (const path of expectedClosureAllowlist) {
   await readText(path);
 }
 
-const postClosurePaths = changedPaths(expectedClosureMerge, 'HEAD');
-for (const path of postClosurePaths) {
-  assert(isAllowedPostClosurePath(path), `product/API/runtime drift detected after full-product closure: ${path}`);
+// Later evolution is accepted only because its lineage is explicit and its current product was freshly revalidated.
+const lineage = await readText(lineagePath);
+for (const marker of [
+  expectedBaseline,
+  expectedClosureCandidate,
+  expectedClosureMerge,
+  r3ReleaseCommit,
+  demoReadinessMerge,
+  demoEnvCommit,
+  freshVfrReviewedCommit,
+  freshVfrMerge,
+  releaseLineageMerge,
+  currentGovernedCheckpoint,
+  'v0.3.0',
+  '101/101 PASS',
+  '128/128 PASS',
+  '90/90 PASS',
+  'Apruebo VFR fresco PR #132',
+]) {
+  assert(lineage.includes(marker), `R3 closure lineage reconciliation missing marker: ${marker}`);
 }
 
-console.log('R3 FULL PRODUCT TECHNICAL CLOSURE CONTRACT: PASS');
-console.log(`Product baseline: ${expectedBaseline}`);
-console.log(`Approved closure merge: ${expectedClosureMerge}`);
+const releaseLineage = await readText(releaseLineagePath);
+for (const marker of [r3ReleaseCommit, freshVfrReviewedCommit, freshVfrMerge, 'API-IMPACT-001', 'API-IMPACT-002']) {
+  assert(releaseLineage.includes(marker), `Release Gate lineage missing marker required by R3 closure: ${marker}`);
+}
+
+const operationsLineage = await readText(operationsLineagePath);
+for (const marker of [expectedClosureMerge, r3ReleaseCommit, freshVfrReviewedCommit, releaseLineageMerge, 'API-IMPACT-001', 'API-IMPACT-002']) {
+  assert(operationsLineage.includes(marker), `Operations lineage missing marker required by R3 closure: ${marker}`);
+}
+
+const demoReadiness = await readText(demoReadinessPath);
+for (const marker of ['DEMO_MODE', 'PostgreSQL 18', 'CORS', 'VITE_API_BASE_URL']) {
+  assert(demoReadiness.includes(marker), `demo deployment readiness evidence missing marker: ${marker}`);
+}
+
+const envExample = await readText('.env.example');
+for (const marker of [
+  'DEMO_MODE=false',
+  'CUSTOMER_JWT_SECRET=',
+  'CORS_ALLOWED_ORIGINS=',
+  'VITE_API_BASE_URL=',
+  'IMPORT_SOURCE_STORAGE_DIR=',
+  'DEMO_DB_INIT_CONFIRM=',
+  'DEMO_SEED_CONFIRM=',
+]) {
+  assert(envExample.includes(marker), `.env.example no longer contains governed demo/runtime marker: ${marker}`);
+}
+
+assert(isAncestor(expectedClosureMerge, r3ReleaseCommit), 'published R3 release must descend from the historical full-product closure');
+assert(isAncestor(r3ReleaseCommit, demoReadinessMerge), 'demo readiness must descend from the published R3 release');
+assert(isAncestor(demoReadinessMerge, freshVfrReviewedCommit), 'fresh VFR product must descend from demo readiness evolution');
+assert(isAncestor(freshVfrReviewedCommit, freshVfrMerge), 'fresh VFR merge must contain the browser-reviewed product');
+assert(isAncestor(freshVfrMerge, releaseLineageMerge), 'Release Gate reconciliation must descend from fresh VFR');
+assert(isAncestor(releaseLineageMerge, currentGovernedCheckpoint), 'Operations reconciliation must descend from Release Gate reconciliation');
+assert(isAncestor(currentGovernedCheckpoint, 'HEAD'), 'HEAD must descend from the current governed R3 closure checkpoint');
+
+// Fail closed after the reconciled checkpoint. Governance maintenance for the three lineage clocks is allowed;
+// product/API/runtime changes are not silently admitted.
+const postCheckpointPaths = changedPaths(currentGovernedCheckpoint, 'HEAD');
+for (const path of postCheckpointPaths) {
+  assert(postCheckpointGovernancePaths.has(path), `product/API/runtime drift detected after reconciled full-product closure checkpoint: ${path}`);
+}
+
+console.log('R3 FULL PRODUCT TECHNICAL CLOSURE: PASS WITH GOVERNED EVOLUTION');
+console.log(`Historical product baseline: ${expectedBaseline}`);
+console.log(`Historical closure merge: ${expectedClosureMerge}`);
+console.log(`Current governed checkpoint: ${currentGovernedCheckpoint}`);
 console.log(`Historical closure files preserved: ${historicalClosurePaths.length}`);
-console.log(`Post-closure non-product maintenance files: ${postClosurePaths.length}`);
+console.log(`Post-checkpoint governance-only files: ${postCheckpointPaths.length}`);
+console.log(`Post-checkpoint product drift: ${postCheckpointPaths.some((path) => !postCheckpointGovernancePaths.has(path))}`);
 console.log(`R3 API: ${manifest.api.operations} operations / ${manifest.api.paths} paths / ${manifest.api.families} families`);
 console.log(`Productized web surfaces: ${manifest.webSurfaces.length}`);
 console.log(`Required success workflows: ${manifest.requiredSuccessWorkflows.length}`);
 console.log(`Deliberate exclusions preserved: ${manifest.deliberateExclusions.length}`);
-console.log(`Allowed historical sentinel failures: ${manifest.allowedHistoricalSentinelFailures.length}`);
+console.log(`Historical sentinel policy preserved: ${manifest.allowedHistoricalSentinelFailures.length}`);
