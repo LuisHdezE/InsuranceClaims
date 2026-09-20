@@ -60,6 +60,7 @@ jobs:
         shell: bash
         run: |
           echo "JWT_SECRET=visual-review-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=visual-review-customer-jwt-$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "QA_OPERATOR_PASSWORD=Visual-review-$(openssl rand -hex 12)!" >> "$GITHUB_ENV"
       - name: Ensure PostgreSQL client
         shell: bash
