@@ -109,6 +109,9 @@ const expectedClosureAllowlist = [
 const postCheckpointGovernancePaths = new Set([
   'documentation/release/RELEASE_GATE_LINEAGE_RECONCILIATION.md',
   'scripts/validate-release-gate-ready.mjs',
+  'documentation/release/R3_RELEASE_PUBLICATION_LINEAGE_RECONCILIATION.md',
+  'scripts/validate-release-formalization-0.3.0.mjs',
+  '.github/workflows/release-formalization-0.3.0.yml',
   'documentation/operations/OPERATIONS_LINEAGE_RECONCILIATION.md',
   'scripts/validate-operations-state.mjs',
   lineagePath,
@@ -287,7 +290,7 @@ assert(isAncestor(freshVfrMerge, releaseLineageMerge), 'Release Gate reconciliat
 assert(isAncestor(releaseLineageMerge, currentGovernedCheckpoint), 'Operations reconciliation must descend from Release Gate reconciliation');
 assert(isAncestor(currentGovernedCheckpoint, 'HEAD'), 'HEAD must descend from the current governed R3 closure checkpoint');
 
-// Fail closed after the reconciled checkpoint. Governance maintenance for the three lineage clocks is allowed;
+// Fail closed after the reconciled checkpoint. Governance maintenance for the four release/operations/closure clocks is allowed;
 // product/API/runtime changes are not silently admitted.
 const postCheckpointPaths = changedPaths(currentGovernedCheckpoint, 'HEAD');
 for (const path of postCheckpointPaths) {

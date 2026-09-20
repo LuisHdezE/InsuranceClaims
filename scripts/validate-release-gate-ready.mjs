@@ -183,9 +183,9 @@ assert(isAncestor(FRESH_VFR_REVIEWED_COMMIT, CURRENT_GOVERNED_BASELINE), 'curren
 assert(isAncestor(CURRENT_GOVERNED_BASELINE, 'HEAD'), 'current governed lineage checkpoint must be an ancestor of HEAD');
 
 // From the current governed checkpoint onward, product/API/runtime drift is
-// again fail-closed. Only governance/evidence maintenance for the release,
-// Operations and technical-closure lanes may advance without moving the
-// product checkpoint.
+// again fail-closed. Only governance/evidence maintenance for release-related
+// sentinels, Operations and technical-closure lanes may advance without moving
+// the product checkpoint.
 const changed = execFileSync('git', ['diff', '--name-only', `${CURRENT_GOVERNED_BASELINE}...HEAD`], { encoding: 'utf8' })
   .split('\n')
   .map((line) => line.trim())
@@ -195,6 +195,8 @@ const allowedExact = new Set([
   'documentation/release/RELEASE_GATE_LINEAGE_RECONCILIATION.md',
   'scripts/validate-release-gate-ready.mjs',
   '.github/workflows/release-gate-ready.yml',
+  'scripts/validate-release-formalization-0.3.0.mjs',
+  '.github/workflows/release-formalization-0.3.0.yml',
   '.blueprint/status.yaml',
   'README.md',
   'qa/operations-observability.mjs',

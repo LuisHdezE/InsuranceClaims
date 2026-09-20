@@ -151,9 +151,9 @@ assert(isAncestor(FRESH_VFR_REVIEWED_COMMIT, CURRENT_GOVERNED_BASELINE), 'curren
 assert(isAncestor(CURRENT_GOVERNED_BASELINE, 'HEAD'), 'current Operations lineage checkpoint must be an ancestor of HEAD');
 
 // From the reconciled checkpoint onward, product/API/runtime drift is again
-// fail-closed. Governance-only maintenance for Release, Operations and the
-// separate R3 technical-closure lane may advance without being misclassified
-// as product drift.
+// fail-closed. Governance-only maintenance for Release-related sentinels,
+// Operations and the separate R3 technical-closure lane may advance without
+// being misclassified as product drift.
 const changed = execFileSync('git', ['diff', '--name-only', `${CURRENT_GOVERNED_BASELINE}...HEAD`], { encoding: 'utf8' })
   .split('\n')
   .map((line) => line.trim())
@@ -165,10 +165,12 @@ const allowedExact = new Set([
   'qa/operations-observability.mjs',
   'scripts/validate-operations-state.mjs',
   'scripts/validate-release-gate-ready.mjs',
+  'scripts/validate-release-formalization-0.3.0.mjs',
   'scripts/validate-r3-full-product-closure.mjs',
   '.github/workflows/operations-observability.yml',
   '.github/workflows/operations-state.yml',
   '.github/workflows/release-gate-ready.yml',
+  '.github/workflows/release-formalization-0.3.0.yml',
   '.github/workflows/r3-full-product-technical-closure.yml',
 ]);
 const allowedGovernancePrefixes = [

@@ -5,34 +5,24 @@ on:
     branches:
       - main
     paths:
-      - 'package.json'
-      - 'package-lock.json'
-      - 'apps/**/package.json'
-      - 'packages/**/package.json'
-      - 'README.md'
+      - '.github/workflows/release-formalization-0.3.0.yml'
+      - 'scripts/validate-release-formalization-0.3.0.mjs'
       - 'documentation/release/R3_RELEASE_FORMALIZATION_0.3.0.md'
+      - 'documentation/release/R3_RELEASE_PUBLICATION_LINEAGE_RECONCILIATION.md'
       - 'documentation/portfolio/RELEASE_NOTES_v0.3.0.md'
       - 'documentation/portfolio/GITHUB_RELEASE_BODY_v0.3.0.md'
       - 'documentation/portfolio/R3_RELEASE_PUBLICATION_GATE_0.3.0.md'
-      - 'scripts/validate-release-formalization-0.3.0.mjs'
-      - 'scripts/validate-r3-full-product-closure.mjs'
-      - '.github/workflows/release-formalization-0.3.0.yml'
   push:
     branches:
       - main
     paths:
-      - 'package.json'
-      - 'package-lock.json'
-      - 'apps/**/package.json'
-      - 'packages/**/package.json'
-      - 'README.md'
+      - '.github/workflows/release-formalization-0.3.0.yml'
+      - 'scripts/validate-release-formalization-0.3.0.mjs'
       - 'documentation/release/R3_RELEASE_FORMALIZATION_0.3.0.md'
+      - 'documentation/release/R3_RELEASE_PUBLICATION_LINEAGE_RECONCILIATION.md'
       - 'documentation/portfolio/RELEASE_NOTES_v0.3.0.md'
       - 'documentation/portfolio/GITHUB_RELEASE_BODY_v0.3.0.md'
       - 'documentation/portfolio/R3_RELEASE_PUBLICATION_GATE_0.3.0.md'
-      - 'scripts/validate-release-formalization-0.3.0.mjs'
-      - 'scripts/validate-r3-full-product-closure.mjs'
-      - '.github/workflows/release-formalization-0.3.0.yml'
 
 permissions:
   contents: read
@@ -44,13 +34,17 @@ concurrency:
 env:
   RELEASE_TAG: v0.3.0
   RELEASE_COMMIT: 014b2a4c4c38d94b07346aaa54bc32a8bbb7c5f9
+  RELEASE_TAG_OBJECT: 20c9d933e89854229259819ccbbb71b1a72a08fc
+  RELEASE_ID: '388080952'
   RELEASE_NAME: Insurance Claims Legacy Modernization — R3 Full Product v0.3.0
+  RELEASE_PUBLISHED_AT: '2026-09-14T00:27:06Z'
+  PREVIOUS_RELEASE_COMMIT: 9265417849f398f5d1efa56b7cd8ff365b950dbb
 
 jobs:
   validate-release-formalization:
     name: R3 Release Formalization 0.3.0
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - name: Checkout exact candidate head
         uses: actions/checkout@v7
@@ -63,137 +57,13 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: '24'
-          cache: npm
 
-      - name: Verify lockfile reproducibility
-        run: npm ci --ignore-scripts --no-audit --no-fund
-
-      - name: Emit Prisma 8 contract
-        run: npm run contract:emit
-
-      - name: Validate 0.3.0 release identity and publication boundary
+      - name: Validate historical formalization and publication integrity
         run: node scripts/validate-release-formalization-0.3.0.mjs
 
-      - name: Revalidate R3 full-product closure boundary
-        run: npm run r3:product-closure:validate
-
-      - name: Reconcile R3 runtime inventory
-        run: npm run api:reconcile:r3
-
-      - name: Verify OpenAPI R3 zero drift
-        run: npm run openapi:check:r3
-
-      - name: Verify Postman R3 zero drift
-        run: npm run postman:check:r3
-
-      - name: Verify remote v0.3.0 publication is absent
+      - name: Verify remote v0.3.0 publication integrity
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          api="https://api.github.com/repos/${GITHUB_REPOSITORY}"
-          headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28")
-
-          tag_status=$(curl -sS -o /tmp/v030-tag.json -w '%{http_code}' "${headers[@]}" "${api}/git/ref/tags/${RELEASE_TAG}")
-          release_status=$(curl -sS -o /tmp/v030-release.json -w '%{http_code}' "${headers[@]}" "${api}/releases/tags/${RELEASE_TAG}")
-
-          test "${tag_status}" = '404' || { cat /tmp/v030-tag.json; echo "${RELEASE_TAG} already exists"; exit 1; }
-          test "${release_status}" = '404' || { cat /tmp/v030-release.json; echo "GitHub Release ${RELEASE_TAG} already exists"; exit 1; }
-
-      - name: Candidate summary
-        shell: bash
-        run: |
-          echo 'R3_RELEASE_PUBLICATION_PREFLIGHT_0_3_0_PASS'
-          echo "candidate_sha=$(git rev-parse HEAD)"
-          echo 'candidate_version=0.3.0'
-          echo "release_commit=${RELEASE_COMMIT}"
-          echo "release_tag=${RELEASE_TAG}"
-          if [ "${GITHUB_EVENT_NAME}" = 'pull_request' ]; then
-            echo 'publication_status=READY_FOR_HUMAN_GATE_B'
-            echo 'publication_side_effects=NONE'
-          else
-            echo 'publication_status=PREFLIGHT_PASSED_ON_MAIN'
-          fi
-
-  publish-release:
-    name: Publish immutable v0.3.0
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: validate-release-formalization
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout publication gate merge
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.sha }}
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Prove immutable publication target
-        shell: bash
-        run: |
-          set -euo pipefail
-          git merge-base --is-ancestor "${RELEASE_COMMIT}" HEAD
-          test "$(git show "${RELEASE_COMMIT}:package.json" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).version))")" = '0.3.0'
-          test "$(git rev-parse 'v0.2.0^{commit}')" = '9265417849f398f5d1efa56b7cd8ff365b950dbb'
-          test ! -e "refs/tags/${RELEASE_TAG}"
-
-      - name: Create annotated tag and GitHub Release
-        id: publish
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          api="https://api.github.com/repos/${GITHUB_REPOSITORY}"
-          auth=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28")
-
-          tag_payload=$(jq -n \
-            --arg tag "${RELEASE_TAG}" \
-            --arg message "Insurance Claims Legacy Modernization — R3 Full Product v0.3.0" \
-            --arg object "${RELEASE_COMMIT}" \
-            '{tag:$tag,message:$message,object:$object,type:"commit"}')
-
-          tag_response=$(curl --fail-with-body -sS -X POST "${auth[@]}" \
-            "${api}/git/tags" \
-            -d "${tag_payload}")
-          tag_object_sha=$(jq -r '.sha' <<<"${tag_response}")
-          test -n "${tag_object_sha}" && test "${tag_object_sha}" != 'null'
-
-          ref_payload=$(jq -n --arg ref "refs/tags/${RELEASE_TAG}" --arg sha "${tag_object_sha}" '{ref:$ref,sha:$sha}')
-          curl --fail-with-body -sS -X POST "${auth[@]}" \
-            "${api}/git/refs" \
-            -d "${ref_payload}" >/tmp/v030-ref-created.json
-
-          release_body=$(cat documentation/portfolio/GITHUB_RELEASE_BODY_v0.3.0.md)
-          release_payload=$(jq -n \
-            --arg tag "${RELEASE_TAG}" \
-            --arg target "${RELEASE_COMMIT}" \
-            --arg name "${RELEASE_NAME}" \
-            --arg body "${release_body}" \
-            '{tag_name:$tag,target_commitish:$target,name:$name,body:$body,draft:false,prerelease:false,generate_release_notes:false,make_latest:"true"}')
-
-          release_response=$(curl --fail-with-body -sS -X POST "${auth[@]}" \
-            "${api}/releases" \
-            -d "${release_payload}")
-
-          release_id=$(jq -r '.id' <<<"${release_response}")
-          release_url=$(jq -r '.html_url' <<<"${release_response}")
-          test -n "${release_id}" && test "${release_id}" != 'null'
-          test -n "${release_url}" && test "${release_url}" != 'null'
-
-          echo "tag_object_sha=${tag_object_sha}" >> "${GITHUB_OUTPUT}"
-          echo "release_id=${release_id}" >> "${GITHUB_OUTPUT}"
-          echo "release_url=${release_url}" >> "${GITHUB_OUTPUT}"
-
-      - name: Verify immutable remote publication
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          TAG_OBJECT_SHA: ${{ steps.publish.outputs.tag_object_sha }}
-          RELEASE_ID: ${{ steps.publish.outputs.release_id }}
         shell: bash
         run: |
           set -euo pipefail
@@ -202,38 +72,42 @@ jobs:
 
           ref_json=$(curl --fail-with-body -sS "${auth[@]}" "${api}/git/ref/tags/${RELEASE_TAG}")
           test "$(jq -r '.object.type' <<<"${ref_json}")" = 'tag'
-          test "$(jq -r '.object.sha' <<<"${ref_json}")" = "${TAG_OBJECT_SHA}"
+          test "$(jq -r '.object.sha' <<<"${ref_json}")" = "${RELEASE_TAG_OBJECT}"
 
-          tag_json=$(curl --fail-with-body -sS "${auth[@]}" "${api}/git/tags/${TAG_OBJECT_SHA}")
+          tag_json=$(curl --fail-with-body -sS "${auth[@]}" "${api}/git/tags/${RELEASE_TAG_OBJECT}")
           test "$(jq -r '.tag' <<<"${tag_json}")" = "${RELEASE_TAG}"
           test "$(jq -r '.object.type' <<<"${tag_json}")" = 'commit'
           test "$(jq -r '.object.sha' <<<"${tag_json}")" = "${RELEASE_COMMIT}"
+          test "$(jq -r '.message' <<<"${tag_json}")" = "${RELEASE_NAME}"
 
-          release_json=$(curl --fail-with-body -sS "${auth[@]}" "${api}/releases/${RELEASE_ID}")
+          release_json=$(curl --fail-with-body -sS "${auth[@]}" "${api}/releases/tags/${RELEASE_TAG}")
+          test "$(jq -r '.id | tostring' <<<"${release_json}")" = "${RELEASE_ID}"
           test "$(jq -r '.tag_name' <<<"${release_json}")" = "${RELEASE_TAG}"
+          test "$(jq -r '.target_commitish' <<<"${release_json}")" = "${RELEASE_COMMIT}"
+          test "$(jq -r '.name' <<<"${release_json}")" = "${RELEASE_NAME}"
           test "$(jq -r '.draft' <<<"${release_json}")" = 'false'
           test "$(jq -r '.prerelease' <<<"${release_json}")" = 'false'
+          test "$(jq -r '.published_at' <<<"${release_json}")" = "${RELEASE_PUBLISHED_AT}"
+
+          expected_body=$(cat documentation/portfolio/GITHUB_RELEASE_BODY_v0.3.0.md)
+          actual_body=$(jq -r '.body' <<<"${release_json}")
+          test "${actual_body}" = "${expected_body}"
 
           previous_ref=$(curl --fail-with-body -sS "${auth[@]}" "${api}/git/ref/tags/v0.2.0")
+          test "$(jq -r '.object.type' <<<"${previous_ref}")" = 'tag'
           previous_tag_object=$(jq -r '.object.sha' <<<"${previous_ref}")
           previous_tag=$(curl --fail-with-body -sS "${auth[@]}" "${api}/git/tags/${previous_tag_object}")
-          test "$(jq -r '.object.sha' <<<"${previous_tag}")" = '9265417849f398f5d1efa56b7cd8ff365b950dbb'
+          test "$(jq -r '.object.sha' <<<"${previous_tag}")" = "${PREVIOUS_RELEASE_COMMIT}"
 
-      - name: Publication summary
-        env:
-          TAG_OBJECT_SHA: ${{ steps.publish.outputs.tag_object_sha }}
-          RELEASE_ID: ${{ steps.publish.outputs.release_id }}
-          RELEASE_URL: ${{ steps.publish.outputs.release_url }}
+      - name: Publication integrity summary
         shell: bash
         run: |
-          {
-            echo '## R3 v0.3.0 publication complete'
-            echo
-            echo "- Release commit: \`${RELEASE_COMMIT}\`"
-            echo "- Annotated tag: \`${RELEASE_TAG}\`"
-            echo "- Tag object: \`${TAG_OBJECT_SHA}\`"
-            echo "- GitHub Release ID: \`${RELEASE_ID}\`"
-            echo "- Release URL: ${RELEASE_URL}"
-            echo '- Draft: false'
-            echo '- Prerelease: false'
-          } >> "${GITHUB_STEP_SUMMARY}"
+          echo 'R3_RELEASE_PUBLICATION_INTEGRITY_0_3_0_PASS'
+          echo "checked_sha=$(git rev-parse HEAD)"
+          echo "release_commit=${RELEASE_COMMIT}"
+          echo "release_tag=${RELEASE_TAG}"
+          echo "release_tag_object=${RELEASE_TAG_OBJECT}"
+          echo "release_id=${RELEASE_ID}"
+          echo 'historical_publication_run=34792695296'
+          echo 'publication_status=PUBLISHED_IMMUTABLE'
+          echo 'publication_side_effects=NONE'
