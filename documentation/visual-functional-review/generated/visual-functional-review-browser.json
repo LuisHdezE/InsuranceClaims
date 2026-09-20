@@ -1,9 +1,9 @@
 {
   "schema_version": "0.5.0",
   "review_type": "visual_functional_review",
-  "reviewed_commit": "d92298bb13f32257bc2154e0be071a290c82c926",
+  "reviewed_commit": "4542733f77bacdae03be24f5b1389a0307677478",
   "web_base_url": "http://127.0.0.1:5173",
-  "generated_at": "2026-09-20T16:17:32Z",
+  "generated_at": "2026-09-20T16:21:21Z",
   "browser": {
     "name": "chrome",
     "version": "152.0.7977.82"
