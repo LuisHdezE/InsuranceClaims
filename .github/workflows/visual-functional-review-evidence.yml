@@ -1,5 +1,6 @@
 name: Visual Functional Review Evidence - Web
 
+# Fresh browser-evidence trigger for post-Guidance current-product revalidation.
 on:
   push:
     branches:
