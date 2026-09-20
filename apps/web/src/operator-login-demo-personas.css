@@ -57,9 +57,9 @@
   }
 }
 
-@media (min-width: 821px) and (max-width: 1100px) {
+@media (min-width: 821px) and (max-width: 1320px) {
   .r3-login-demo-panel {
-    grid-template-columns: minmax(150px, .65fr) minmax(0, 1.35fr);
+    grid-template-columns: minmax(140px, .6fr) minmax(0, 1.4fr);
     gap: 8px 12px;
   }
 
