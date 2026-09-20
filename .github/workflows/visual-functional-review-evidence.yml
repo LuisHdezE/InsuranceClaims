@@ -2,7 +2,9 @@ name: Visual Functional Review Evidence - Web
 
 on:
   push:
-    branches: [blueprint/visual-functional-review-web]
+    branches:
+      - blueprint/visual-functional-review-web
+      - 'review/vfr-*'
     paths:
       - qa/visual-functional-review-browser.py
       - .github/workflows/visual-functional-review-evidence.yml
@@ -40,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: blueprint/visual-functional-review-web
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
@@ -149,7 +151,7 @@ jobs:
             exit 0
           fi
           git commit -m "test(ui): capture browser visual functional review evidence"
-          git push origin HEAD:blueprint/visual-functional-review-web
+          git push origin HEAD:"$GITHUB_REF_NAME"
       - name: Stop runtime services
         if: always()
         shell: bash
