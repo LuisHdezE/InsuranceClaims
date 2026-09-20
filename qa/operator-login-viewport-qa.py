@@ -55,8 +55,12 @@ try:
             const body = document.body;
             const personas = Array.from(document.querySelectorAll('.r3-login-demo-button')).map((button) => {
               const copy = button.querySelector('span');
+              const container = button.closest('.r3-login-demo-personas');
+              const card = button.closest('.r3-login-card');
               const buttonRect = button.getBoundingClientRect();
               const copyRect = copy ? copy.getBoundingClientRect() : null;
+              const containerRect = container ? container.getBoundingClientRect() : null;
+              const cardRect = card ? card.getBoundingClientRect() : null;
               const buttonStyle = getComputedStyle(button);
               return {
                 key: button.dataset.demoPersona || '',
@@ -65,10 +69,22 @@ try:
                 copyScrollWidth: copy ? copy.scrollWidth : 0,
                 copyClientHeight: copy ? copy.clientHeight : 0,
                 copyScrollHeight: copy ? copy.scrollHeight : 0,
+                copyLeft: copyRect ? copyRect.left : 0,
                 copyRight: copyRect ? copyRect.right : 0,
+                copyTop: copyRect ? copyRect.top : 0,
                 copyBottom: copyRect ? copyRect.bottom : 0,
+                buttonLeft: buttonRect.left,
                 buttonRight: buttonRect.right,
+                buttonTop: buttonRect.top,
                 buttonBottom: buttonRect.bottom,
+                containerLeft: containerRect ? containerRect.left : 0,
+                containerRight: containerRect ? containerRect.right : 0,
+                containerTop: containerRect ? containerRect.top : 0,
+                containerBottom: containerRect ? containerRect.bottom : 0,
+                cardLeft: cardRect ? cardRect.left : 0,
+                cardRight: cardRect ? cardRect.right : 0,
+                cardTop: cardRect ? cardRect.top : 0,
+                cardBottom: cardRect ? cardRect.bottom : 0,
               };
             });
             return {
@@ -135,13 +151,29 @@ try:
                     f"Demo persona {persona['key']} copy clips vertically at {width}x{height}: "
                     f"scrollHeight={persona['copyScrollHeight']} clientHeight={persona['copyClientHeight']}"
                 )
-            if persona["copyRight"] - persona["buttonRight"] > TOLERANCE_PX:
+            if persona["copyLeft"] < persona["buttonLeft"] - TOLERANCE_PX or persona["copyRight"] > persona["buttonRight"] + TOLERANCE_PX:
                 raise AssertionError(
                     f"Demo persona {persona['key']} copy escapes button horizontally at {width}x{height}"
                 )
-            if persona["copyBottom"] - persona["buttonBottom"] > TOLERANCE_PX:
+            if persona["copyTop"] < persona["buttonTop"] - TOLERANCE_PX or persona["copyBottom"] > persona["buttonBottom"] + TOLERANCE_PX:
                 raise AssertionError(
                     f"Demo persona {persona['key']} copy escapes button vertically at {width}x{height}"
+                )
+            if persona["buttonLeft"] < persona["containerLeft"] - TOLERANCE_PX or persona["buttonRight"] > persona["containerRight"] + TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} button escapes persona grid at {width}x{height}"
+                )
+            if persona["buttonTop"] < persona["containerTop"] - TOLERANCE_PX or persona["buttonBottom"] > persona["containerBottom"] + TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} button escapes persona grid vertically at {width}x{height}"
+                )
+            if persona["buttonLeft"] < persona["cardLeft"] - TOLERANCE_PX or persona["buttonRight"] > persona["cardRight"] + TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} button escapes login card at {width}x{height}"
+                )
+            if persona["buttonTop"] < persona["cardTop"] - TOLERANCE_PX or persona["buttonBottom"] > persona["cardBottom"] + TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} button escapes login card vertically at {width}x{height}"
                 )
 
     severe = [
