@@ -7,6 +7,7 @@ const ALLOWED_HEADERS = [
   'Idempotency-Key',
   'X-Request-Id',
   'X-Demo-Read-Only',
+  'X-Demo-Persona',
 ] as const;
 
 const EXPOSED_HEADERS = [
