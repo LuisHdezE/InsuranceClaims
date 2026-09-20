@@ -131,6 +131,15 @@ jobs:
           print(json.dumps(data['summary']))
           PY
           test "$(find documentation/visual-functional-review/generated/assets -name '*.png' | wc -l)" -eq 12
+      - name: Upload browser review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-functional-review-${{ github.sha }}
+          path: |
+            documentation/visual-functional-review/generated/visual-functional-review-browser.json
+            documentation/visual-functional-review/generated/assets/*.png
+          if-no-files-found: error
+          retention-days: 14
       - name: Runtime logs on failure
         if: failure()
         shell: bash
