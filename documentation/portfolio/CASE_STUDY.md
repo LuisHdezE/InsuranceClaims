@@ -6,9 +6,9 @@ Insurance Claims Legacy Modernization is a portfolio case study showing how an i
 
 The implementation is deliberately **GREENFIELD** with legacy coexistence **SIMULATED**. It is an unofficial technical case study with no affiliation with FAR Seguros. All policy, claim, customer, staff and operational data are synthetic/demo data.
 
-The current product state is **R3 Full Product Technical Closure**. R3 exposes **90 REST operations across 76 paths and 16 operation families**, productizes **22 web surfaces**, and preserves Clean Architecture + Ports & Adapters across API, web, MCP, persistence, workers and legacy integration.
+The current product state is **R3 Full Product Technical Closure** with subsequent governed demo and presentation evolution. R3 exposes **90 REST operations across 76 paths and 16 operation families**, productizes **22 web surfaces**, and preserves Clean Architecture + Ports & Adapters across API, web, MCP, persistence, workers and legacy integration.
 
-The latest published GitHub release remains **v0.2.0**. R3 release formalization as `v0.3.0` is intentionally a separate human-governed step.
+The latest published GitHub release is **v0.3.0**, published through the separate human-governed Gate B flow. Its annotated tag remains pinned to release commit `014b2a4c4c38d94b07346aaa54bc32a8bbb7c5f9`, while later main-branch evolution is governed independently rather than being retroactively folded into the release.
 
 ## The challenge
 
@@ -153,7 +153,7 @@ R3 also contains worker runtime, integration events, automation execution, dead-
 
 The project deliberately avoids “screenshot theater”. Its evidence includes:
 
-- backend test baseline of **91 tests**;
+- backend test baseline of **91 tests** for the R3 release;
 - architecture conformance checks;
 - real PostgreSQL 18 runtime API QA;
 - R3 runtime endpoint reconciliation at **90/90**;
@@ -167,7 +167,8 @@ The project deliberately avoids “screenshot theater”. Its evidence includes:
 - durable audit/persistence invariants;
 - async and dead-letter/recovery behavior;
 - production builds and strict typechecks;
-- exact-head full-product closure validation.
+- exact-head full-product closure validation;
+- read-only verification that the historical `v0.3.0` tag and GitHub Release still match the governed publication identity.
 
 The final technical closure was merged through PR #90 as commit:
 
@@ -184,6 +185,8 @@ Important governance decisions include:
 - R1/R2/R3 contract evolution is explicit;
 - post-MVP validation reuses accepted evidence only where that reuse is justified;
 - product scope is reduced or deferred instead of bypassing missing permissions/contracts;
+- release publication is a separate human-authorized event from technical closure;
+- after publication, the release workflow verifies immutable historical identity without retaining publication side effects;
 - Blueprint Master is not modified in the middle of the consumer project.
 
 ## Deliberate exclusions
@@ -221,7 +224,7 @@ The project shows more than framework familiarity. It demonstrates the ability t
 - design for security and operational failure modes;
 - use CI as evidence rather than ceremony;
 - handle scope pressure without inventing unauthorized functionality;
-- carry a product from discovery through technical closure.
+- carry a product from discovery through technical closure and governed publication.
 
 ## Evidence map
 
@@ -232,6 +235,7 @@ The project shows more than framework familiarity. It demonstrates the ability t
 - [R3 endpoint inventory](../api/r3/API_ENDPOINT_INVENTORY_R3.json)
 - [R3 UI reference index](../ui-reference/r3/README.md)
 - [Full-system presentation reconciliation](../ui-reference/r3/task12-full-system-reconciliation-note.md)
+- [R3 publication integrity lineage](../release/R3_RELEASE_PUBLICATION_LINEAGE_RECONCILIATION.md)
 - [Architecture](../architecture/ARCHITECTURE.md)
 - [Architecture implementation conformance](../architecture/ARCHITECTURE_IMPLEMENTATION_CONFORMANCE.md)
 - [Security threat model](../security/SECURITY_THREAT_MODEL.md)
@@ -241,4 +245,4 @@ The project shows more than framework familiarity. It demonstrates the ability t
 
 ## Release state
 
-`v0.2.0` remains the latest published release and immutable historical pointer. R3 is technically closed, but `v0.3.0` is **not** claimed here as published. Version alignment, release notes, tag creation and GitHub Release publication belong to the next separately governed roadmap task.
+`v0.3.0` is the latest published release and remains an immutable historical pointer to `014b2a4c4c38d94b07346aaa54bc32a8bbb7c5f9`. The annotated tag and GitHub Release were published through the human-approved Gate B flow on September 14, 2026. Later demo, visual and governance evolution on `main` is intentionally separate and does not retarget or rewrite the published release.
