@@ -140,8 +140,10 @@
 
 .guidance-r3-directory .guidance-card-facts strong {
   color: #334155;
-  font-size: .82rem;
-  overflow-wrap: anywhere;
+  font-size: .76rem;
+  letter-spacing: -.01em;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .guidance-r3-directory .guidance-card-link {
@@ -460,9 +462,7 @@
   .guidance-r3-directory .guidance-card-grid,
   .guidance-r3-detail .guidance-version-facts,
   .guidance-r3-detail .guidance-content-columns,
-  .guidance-r3-form-page .guidance-editor-grid,
-  .guidance-r3-form-page .guidance-metadata-row,
-  .guidance-r3-form-page .guidance-string-row {
+  .guidance-r3-form-page .guidance-editor-grid {
     grid-template-columns: 1fr;
   }
 
@@ -480,9 +480,7 @@
   .guidance-r3-detail .guidance-state-button,
   .guidance-r3-detail .guidance-activate-button,
   .guidance-r3-form-page .guidance-primary-button,
-  .guidance-r3-form-page .guidance-editor-section-heading button,
-  .guidance-r3-form-page .guidance-string-row button,
-  .guidance-r3-form-page .guidance-metadata-row button {
+  .guidance-r3-form-page .guidance-editor-section-heading button {
     width: 100%;
     min-width: 0;
   }
@@ -501,6 +499,35 @@
   .guidance-r3-detail .guidance-version-card-heading,
   .guidance-r3-form-page .guidance-editor-section-heading {
     gap: .7rem;
+  }
+
+  .guidance-r3-form-page .guidance-string-row {
+    grid-template-columns: minmax(0, 1fr) 44px;
+    align-items: start;
+  }
+
+  .guidance-r3-form-page .guidance-metadata-row {
+    grid-template-columns: minmax(0, 1fr) 44px;
+    align-items: start;
+  }
+
+  .guidance-r3-form-page .guidance-metadata-row input:first-of-type {
+    grid-column: 1 / -1;
+  }
+
+  .guidance-r3-form-page .guidance-metadata-row input:nth-of-type(2) {
+    grid-column: 1;
+  }
+
+  .guidance-r3-form-page .guidance-metadata-row button {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .guidance-r3-form-page .guidance-string-row button,
+  .guidance-r3-form-page .guidance-metadata-row button {
+    width: 44px;
+    min-width: 44px;
   }
 
   .guidance-r3-form-page .guidance-metadata-row,
