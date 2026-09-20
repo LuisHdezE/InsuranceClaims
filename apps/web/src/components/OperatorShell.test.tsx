@@ -84,9 +84,9 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('link', { name: /^Pipelines$/ }).getAttribute('href')).toBe('/operator/admin/pipelines');
     expect(screen.getByRole('link', { name: /^Plantillas$/ }).getAttribute('href')).toBe('/operator/admin/communication-templates');
     expect(screen.getByRole('link', { name: /^Campos$/ }).getAttribute('href')).toBe('/operator/admin/custom-fields');
+    expect(screen.getByRole('link', { name: /^Orientación$/ }).getAttribute('href')).toBe('/operator/admin/guidance');
 
     const pendingLabels = [
-      'Orientación',
       'Automatizaciones',
       'Importaciones',
       'Recuperación',
