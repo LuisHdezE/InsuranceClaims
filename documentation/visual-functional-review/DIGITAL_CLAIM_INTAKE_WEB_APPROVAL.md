@@ -1,6 +1,6 @@
 # Visual & Functional Review Approval — digital-claim-intake / web
 
-## Decision
+## Fresh revalidation — PR #132
 
 - Blueprint baseline: **0.5.2**
 - Gate: `visual_functional_review_pass`
@@ -9,52 +9,41 @@
 - Platform: `web`
 - Decision: **APPROVED / PASS**
 - Approver: **Luis Hernández**
-- Approval time: **2026-09-06T09:43:43-03:00** (`America/Montevideo`)
-- Pull request: **#17**
-- Base `main`: `732e91bde67bc1aa56bca50f0aa37d99b795b7a5`
-- Approved review head: `7275fd9c500b45232e24e0c24a173af40f0c20ae`
-- Browser-tested commit: `f1e0cb490c0ee75ef21dcab6e8b2066db558e6e0`
-- Browser evidence commit: `87a7b713fae7c5fe0511f1c84ff147b4c18ca5ca`
-- Browser evidence run: `34033186654` — **SUCCESS**
+- Approval statement: `Apruebo VFR fresco PR #132`
+- Approval time: **2026-09-19T22:05:58-03:00** (`America/Montevideo`)
+- Pull request: **#132**
+- Base `main`: `2c704f05cf48ef71167b23209308e2b68215b580`
+- Approved review head at human decision: `3a12d8fe5465936912df60a920fc21b3ad7bb796`
+- Browser-tested commit: `a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a`
+- Browser evidence commit: `9703deeac7e96988b6a3bb290537f058df46151a`
+- Browser evidence run: `35478752855` — **SUCCESS**
+- Browser: Chrome `152.0.7977.82`
 
-## Approved scope
+### Approved fresh evidence
 
-This approval applies only to the exact Visual & Functional Review gate for `digital-claim-intake / web`, covering inventory items `WEB-002`, `WEB-003`, `WEB-004` and `WEB-005` and the already-approved API bindings `verifyPolicyVehicle` and `createClaim`.
+This approval applies to the fresh browser evidence for `digital-claim-intake / web`, covering inventory items `WEB-002`, `WEB-003`, `WEB-004` and `WEB-005` and the governed API bindings `verifyPolicyVehicle` and `createClaim`.
 
-The approved candidate preserves the committed Interface Inventory, FAR-aligned Design System, API/Application authority, authoritative synthetic business-data flow, required interaction states, responsive behavior, accessibility obligations and the approved public visual reference comparison.
+The accepted evidence is the immutable machine summary at `documentation/visual-functional-review/generated/visual-functional-review-browser.json` plus the four fresh intake screenshots under `documentation/visual-functional-review/generated/assets/`. The machine review recorded PASS for interface fidelity, design-system fidelity, API/permission fidelity, business-data fidelity, interaction states, responsive behavior, accessibility and reference comparison, while preserving `review.human_complete = PENDING_MANUAL` until this explicit approval.
 
-## Evidence accepted
+The browser-reviewed commit differs from the post-PR #131 `main` only by VFR workflow compatibility changes; no product implementation, API contract, RBAC or fixture semantics changed before capture.
 
-The human decision accepts the machine/browser evidence in:
+### Gate consequence
 
-- `documentation/visual-functional-review/generated/visual-functional-review-browser.json`
-- `documentation/visual-functional-review/DIGITAL_CLAIM_INTAKE_WEB_EVIDENCE.md`
-- the versioned intake screenshots under `documentation/visual-functional-review/generated/assets/`
+This explicit approval refreshes the human binding for `digital-claim-intake / web` to browser-reviewed commit `a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a`. It does not independently authorize merge of PR #132 and does not rewrite downstream Integration QA, Human Acceptance, Release Gate or Operations State decisions.
 
-Immediately before the human gate, the exact approved review head completed all 11 applicable pull-request workflows successfully:
+## Historical approval record — PR #17
 
-- Visual Functional Review Ready - Web `34033736714`
-- Functional Slice - Digital Claim Intake Web `34033736667`
-- Functional Slice - Customer Claim Tracking Web `34033736666`
-- Functional Slice - Claims Backoffice Web `34033736682`
-- API Implementation `34033736670`
-- API QA `34033736672`
-- OpenAPI Validation `34033736674`
-- Postman Contract `34033736710`
-- Interface Inventory `34033736678`
-- Design System `34033736679`
-- Client Architecture `34033736689`
+The original VFR approval remains preserved as historical evidence:
 
-## Gate consequence
+- Historical approval time: `2026-09-06T09:43:43-03:00`
+- Historical PR: `#17`
+- Historical approved review head: `7275fd9c500b45232e24e0c24a173af40f0c20ae`
+- Historical browser-tested commit: `f1e0cb490c0ee75ef21dcab6e8b2066db558e6e0`
+- Historical browser evidence commit: `87a7b713fae7c5fe0511f1c84ff147b4c18ca5ca`
+- Historical browser evidence run: `34033186654` — **SUCCESS**
 
-This explicit human approval authorizes `digital-claim-intake / web` to move from `visual_functional_review.status = READY_FOR_REVIEW` to `PASS` and `human_complete = true` once the approval-recording state is reconciled and revalidated.
-
-The slice lifecycle remains `FUNCTIONAL`. Integration QA remains `PENDING` and has not been started by this approval.
-
-## Scope exclusions
-
-This decision does **not** approve Integration QA, Human Acceptance, Release Gate, deployment, another project, or any change to the Blueprint Master.
+That historical decision is retained for audit history but no longer supplies the active browser-commit binding for this slice.
 
 ## Merge separation
 
-**This approval does not authorize merge of PR #17.** Merge remains a separate human decision after the approval-recording head completes exact-head validation successfully.
+**This approval does not authorize merge of PR #132.** Merge remains a separate explicit human decision after exact-head validation.
