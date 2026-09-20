@@ -36,7 +36,7 @@ This project demonstrates that transition as an end-to-end product: public claim
 | **Blueprint consumer** | Software Development Blueprint **0.5.2** |
 | **Legacy coexistence** | **SIMULATED** behind an adapter boundary |
 
-## Published release state
+## Release candidate scope, now published as v0.3.0
 
 The historical MVP Release Gate remains preserved as accepted evidence. R3 does not rewrite that decision: it is a later governed product evolution whose technical closure was recorded separately and whose `v0.3.0` release was published through its own human-approved Gate B.
 
