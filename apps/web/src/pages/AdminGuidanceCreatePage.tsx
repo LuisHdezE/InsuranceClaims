@@ -54,10 +54,10 @@ export function AdminGuidanceCreatePage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main guidance-admin-main">
-        <div className="guidance-breadcrumbs"><Link to="/operator/admin/guidance">Guidance</Link><span>/</span><span>Nueva</span></div>
+      <main className="operator-main ops-main guidance-admin-main guidance-r3-form-page">
+        <div className="guidance-breadcrumbs"><Link to="/operator/admin/guidance">Orientación</Link><span>/</span><span>Nueva</span></div>
         <section className="guidance-form-hero">
-          <span className="ops-kicker">Nueva Guidance R3</span>
+          <span className="ops-kicker">Nueva orientación R3</span>
           <h1>Crear definición + primera DRAFT</h1>
           <p>La definición nace deshabilitada. Activación y habilitación son pasos posteriores e independientes.</p>
         </section>
@@ -67,7 +67,7 @@ export function AdminGuidanceCreatePage() {
 
         <form className="guidance-admin-form" onSubmit={submit}>
           <label className="guidance-key-field">
-            <span>Definition key</span>
+            <span>Key de definición</span>
             <input required maxLength={80} value={key} disabled={mutation.isPending} onChange={(event) => setKey(event.target.value)} placeholder="claims.intake.help" />
             <small>Identidad estable de la definición. No se modifica en versiones posteriores.</small>
           </label>
@@ -76,7 +76,7 @@ export function AdminGuidanceCreatePage() {
 
           <div className="guidance-form-actions">
             <Link to="/operator/admin/guidance">Cancelar</Link>
-            <button className="guidance-primary-button" type="submit" disabled={mutation.isPending}>{mutation.isPending ? 'Creando…' : 'Crear Guidance'}</button>
+            <button className="guidance-primary-button" type="submit" disabled={mutation.isPending}>{mutation.isPending ? 'Creando…' : 'Crear orientación'}</button>
           </div>
         </form>
       </main>
