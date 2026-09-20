@@ -51,7 +51,7 @@ describe('StaffWorkspacePage', () => {
 
     expect(screen.getByRole('heading', { name: 'Tu espacio de trabajo' })).toBeTruthy();
     expect(screen.getAllByText('Administrador de plataforma').length).toBeGreaterThan(0);
-    expect(screen.getByText('4 módulos disponibles')).toBeTruthy();
+    expect(screen.getByText('5 módulos disponibles')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Supervisión' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Configuración de plataforma' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Operación técnica' })).toBeNull();
@@ -62,6 +62,7 @@ describe('StaffWorkspacePage', () => {
       'Administración de pipelines',
       'Plantillas de comunicación',
       'Campos personalizados',
+      'Orientación',
     ];
 
     for (const name of expectedLinks) {
@@ -70,7 +71,6 @@ describe('StaffWorkspacePage', () => {
     expect(screen.getAllByRole('link')).toHaveLength(expectedLinks.length);
 
     for (const pending of [
-      'Orientación',
       'Automatizaciones',
       'Importaciones gobernadas',
       'Integraciones y recuperación',

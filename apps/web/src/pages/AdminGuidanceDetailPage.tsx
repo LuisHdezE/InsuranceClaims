@@ -66,33 +66,36 @@ export function AdminGuidanceDetailPage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main guidance-admin-main">
-        <div className="guidance-breadcrumbs"><Link to="/operator/admin/guidance">Guidance</Link><span>/</span><span>{definition?.key ?? definitionId.slice(0, 8)}</span></div>
+      <main className="operator-main ops-main guidance-admin-main guidance-r3-detail">
+        <div className="guidance-breadcrumbs"><Link to="/operator/admin/guidance">Orientación</Link><span>/</span><span>{definition?.key ?? definitionId.slice(0, 8)}</span></div>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
         {mutationFailure && mutationFailure.problem?.status !== 401 && <OperatorApiErrorNotice failure={mutationFailure} />}
 
         {guidanceQuery.isLoading ? (
-          <div className="ops-compact-empty" role="status">Cargando Guidance…</div>
+          <div className="ops-compact-empty" role="status">Cargando orientación…</div>
         ) : !definition ? null : (
           <>
             <section className="guidance-admin-hero" aria-labelledby="guidance-admin-title">
               <div>
-                <span className="ops-kicker">Insurer Guidance Definition R3</span>
+                <span className="ops-kicker">Definición de orientación R3</span>
                 <h1 id="guidance-admin-title">{definition.key}</h1>
                 <div className="guidance-admin-hero-meta">
                   <span className={`guidance-enabled is-${definition.enabled ? 'enabled' : 'disabled'}`}>{definition.enabled ? 'Habilitada' : 'Deshabilitada'}</span>
-                  <code>{definition.definitionId}</code>
+                  <details className="guidance-technical-details">
+                    <summary>ID técnico</summary>
+                    <code>{definition.definitionId}</code>
+                  </details>
                 </div>
               </div>
               <div className="guidance-admin-hero-version">
-                <small>Definition version</small>
+                <small>Versión de definición</small>
                 <strong>v{definition.version}</strong>
                 <span>{definition.activeVersionId ? 'Tiene versión activa' : 'Sin versión activa'}</span>
               </div>
             </section>
 
-            <section className="guidance-admin-actions" aria-label="Acciones de administración de Guidance">
+            <section className="guidance-admin-actions" aria-label="Acciones de administración de orientación">
               <Link className="guidance-primary-button" to={`/operator/admin/guidance/${definitionId}/versions/new`}>+ Crear nueva versión</Link>
               <button
                 className={`guidance-state-button is-${definition.enabled ? 'disable' : 'enable'}`}
@@ -102,7 +105,7 @@ export function AdminGuidanceDetailPage() {
               >
                 {stateMutation.isPending ? 'Aplicando…' : definition.enabled ? 'Deshabilitar definición' : definition.activeVersionId ? 'Habilitar definición' : 'Activa una versión antes de habilitar'}
               </button>
-              <span>La mutación usa <strong>expectedDefinitionVersion {definition.version}</strong>.</span>
+              <span>Control de concurrencia activo: <strong>expectedDefinitionVersion {definition.version}</strong>.</span>
             </section>
 
             <section className="ops-panel guidance-version-panel" aria-labelledby="guidance-versions-title">
@@ -148,12 +151,15 @@ function GuidanceVersionCard({ version, active, mutationPending, onActivate }: {
 }) {
   const metadata = Object.entries(version.assistanceMetadata);
   return (
-    <article className={`guidance-version-card${active ? ' is-active' : ''}`}>
+    <article className={`guidance-version-card is-${version.status.toLowerCase()}${active ? ' is-active' : ''}`}>
       <div className="guidance-version-card-heading">
         <div>
           <span className={`guidance-version-status is-${version.status.toLowerCase()}`}>{version.status}</span>
           <h3>Versión {version.versionNumber}</h3>
-          <code>{version.versionId}</code>
+          <details className="guidance-technical-details">
+            <summary>ID técnico</summary>
+            <code>{version.versionId}</code>
+          </details>
         </div>
         {version.status === 'DRAFT' && (
           <button className="guidance-activate-button" type="button" disabled={mutationPending} onClick={onActivate}>
@@ -163,9 +169,9 @@ function GuidanceVersionCard({ version, active, mutationPending, onActivate }: {
       </div>
 
       <div className="guidance-version-facts">
-        <div><span>Context reference</span><strong>{version.insurerContextReference}</strong></div>
-        <div><span>Guidance category</span><strong>{version.guidanceCategory}</strong></div>
-        <div><span>Source classification</span><strong>{version.sourceClassification}</strong></div>
+        <div><span>Referencia de contexto</span><strong>{version.insurerContextReference}</strong></div>
+        <div><span>Categoría de orientación</span><strong>{version.guidanceCategory}</strong></div>
+        <div><span>Clasificación de origen</span><strong>{version.sourceClassification}</strong></div>
         <div><span>Creada</span><strong>{formatDateTime(version.createdAt)}</strong></div>
         <div><span>Activada</span><strong>{version.activatedAt ? formatDateTime(version.activatedAt) : '—'}</strong></div>
         <div><span>Retirada</span><strong>{version.retiredAt ? formatDateTime(version.retiredAt) : '—'}</strong></div>
@@ -173,11 +179,11 @@ function GuidanceVersionCard({ version, active, mutationPending, onActivate }: {
 
       <div className="guidance-content-columns">
         <div className="guidance-content-block">
-          <span>Document categories ({version.documentCategories.length})</span>
+          <span>Categorías documentales ({version.documentCategories.length})</span>
           {version.documentCategories.length ? <ul>{version.documentCategories.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul> : <small>Sin categorías documentales.</small>}
         </div>
         <div className="guidance-content-block">
-          <span>Instructions ({version.instructions.length})</span>
+          <span>Instrucciones ({version.instructions.length})</span>
           {version.instructions.length ? <ol>{version.instructions.map((item, index) => <li key={index}>{item}</li>)}</ol> : <small>Sin instrucciones.</small>}
         </div>
       </div>

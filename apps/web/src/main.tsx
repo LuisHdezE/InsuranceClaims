@@ -29,6 +29,7 @@ import './recovery-admin.css';
 import './claims-analytics.css';
 import './custom-field-admin.css';
 import './guidance-admin.css';
+import './guidance-r3-visual-polish.css';
 import './automation-admin.css';
 import './import-admin.css';
 import './r3-ui-increment-01.css';

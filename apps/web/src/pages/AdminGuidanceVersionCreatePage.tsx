@@ -84,8 +84,8 @@ export function AdminGuidanceVersionCreatePage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main guidance-admin-main">
-        <div className="guidance-breadcrumbs"><Link to="/operator/admin/guidance">Guidance</Link><span>/</span><Link to={`/operator/admin/guidance/${definitionId}`}>{definition?.key ?? definitionId.slice(0, 8)}</Link><span>/</span><span>Nueva versión</span></div>
+      <main className="operator-main ops-main guidance-admin-main guidance-r3-form-page">
+        <div className="guidance-breadcrumbs"><Link to="/operator/admin/guidance">Orientación</Link><span>/</span><Link to={`/operator/admin/guidance/${definitionId}`}>{definition?.key ?? definitionId.slice(0, 8)}</Link><span>/</span><span>Nueva versión</span></div>
 
         {failure && failure.problem?.status !== 401 && <OperatorApiErrorNotice failure={failure} />}
         {guidanceQuery.isLoading ? <div className="ops-compact-empty" role="status">Cargando definición…</div> : definition && (
@@ -93,7 +93,7 @@ export function AdminGuidanceVersionCreatePage() {
             <section className="guidance-form-hero">
               <span className="ops-kicker">Nueva versión inmutable</span>
               <h1>{definition.key}</h1>
-              <p>Se crea una nueva DRAFT sobre definition version <strong>{definition.version}</strong>. El contenido histórico permanece intacto.</p>
+              <p>Se crea una nueva DRAFT sobre la versión de definición <strong>{definition.version}</strong>. El contenido histórico permanece intacto.</p>
             </section>
 
             {validationMessage && <div className="guidance-validation" role="alert">{validationMessage}</div>}

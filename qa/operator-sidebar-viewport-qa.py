@@ -56,12 +56,12 @@ PERSONAS = {
             "/operator/admin/pipelines",
             "/operator/admin/communication-templates",
             "/operator/admin/custom-fields",
+            "/operator/admin/guidance",
         },
     },
 }
 
 PENDING_PATHS = {
-    "/operator/admin/guidance",
     "/operator/admin/automations",
     "/operator/admin/imports",
     "/operator/admin/recovery",
@@ -72,6 +72,7 @@ FORBIDDEN_WRITE_LABELS = {
     "/operator/admin/pipelines": ("Nuevo pipeline", "Crear primera definición"),
     "/operator/admin/communication-templates": ("Nueva plantilla",),
     "/operator/admin/custom-fields": ("Nuevo campo",),
+    "/operator/admin/guidance": ("Nueva orientación",),
 }
 
 ADMIN_WRITE_ROUTES = (
@@ -81,6 +82,8 @@ ADMIN_WRITE_ROUTES = (
     "/operator/admin/communication-templates/00000000-0000-4000-8000-000000000001/versions/new",
     "/operator/admin/custom-fields/new",
     "/operator/admin/custom-fields/00000000-0000-4000-8000-000000000001/versions/new",
+    "/operator/admin/guidance/new",
+    "/operator/admin/guidance/00000000-0000-4000-8000-000000000001/versions/new",
 )
 
 options = webdriver.ChromeOptions()

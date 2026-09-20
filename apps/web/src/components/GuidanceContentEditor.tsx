@@ -32,12 +32,12 @@ export function guidanceEditorValueFromVersion(version: GuidanceVersionProjectio
 }
 
 export function validateGuidanceEditorValue(value: GuidanceEditorValue): string | null {
-  if (!value.insurerContextReference.trim() || value.insurerContextReference.trim().length > 80) return 'Insurer context reference es obligatorio y admite hasta 80 caracteres.';
-  if (!value.guidanceCategory.trim() || value.guidanceCategory.trim().length > 80) return 'Guidance category es obligatoria y admite hasta 80 caracteres.';
-  if (!value.sourceClassification.trim() || value.sourceClassification.trim().length > 80) return 'Source classification es obligatoria y admite hasta 80 caracteres.';
+  if (!value.insurerContextReference.trim() || value.insurerContextReference.trim().length > 80) return 'La referencia de contexto es obligatoria y admite hasta 80 caracteres.';
+  if (!value.guidanceCategory.trim() || value.guidanceCategory.trim().length > 80) return 'La categoría de orientación es obligatoria y admite hasta 80 caracteres.';
+  if (!value.sourceClassification.trim() || value.sourceClassification.trim().length > 80) return 'La clasificación de origen es obligatoria y admite hasta 80 caracteres.';
   if (value.documentCategories.length > 20) return 'Se admiten como máximo 20 categorías documentales.';
   if (value.instructions.length > 20) return 'Se admiten como máximo 20 instrucciones.';
-  if (value.assistanceMetadataRows.length > 20) return 'Se admiten como máximo 20 entradas de assistance metadata.';
+  if (value.assistanceMetadataRows.length > 20) return 'Se admiten como máximo 20 entradas de metadata de asistencia.';
 
   for (const [index, item] of value.documentCategories.entries()) {
     if (!item.trim() || item.trim().length > 80) return `La categoría documental ${index + 1} debe tener entre 1 y 80 caracteres.`;
@@ -48,7 +48,7 @@ export function validateGuidanceEditorValue(value: GuidanceEditorValue): string 
 
   const keyPattern = /^[A-Za-z][A-Za-z0-9._-]{0,79}$/;
   const normalizedKeys = value.assistanceMetadataRows.map((row) => row.key.trim());
-  if (new Set(normalizedKeys).size !== normalizedKeys.length) return 'Las claves de assistance metadata deben ser únicas.';
+  if (new Set(normalizedKeys).size !== normalizedKeys.length) return 'Las claves de metadata de asistencia deben ser únicas.';
   for (const [index, row] of value.assistanceMetadataRows.entries()) {
     if (!keyPattern.test(row.key.trim())) return `La clave de metadata ${index + 1} no cumple el patrón estable publicado por R3.`;
     if (!row.value.trim() || row.value.trim().length > 500) return `El valor de metadata ${index + 1} debe tener entre 1 y 500 caracteres.`;
@@ -78,21 +78,21 @@ export function GuidanceContentEditor({ value, onChange, disabled = false }: {
     <div className="guidance-editor">
       <div className="guidance-editor-grid">
         <label>
-          <span>Insurer context reference</span>
+          <span>Referencia de contexto</span>
           <input required maxLength={80} disabled={disabled} value={value.insurerContextReference} onChange={(event) => update('insurerContextReference', event.target.value)} placeholder="Contexto opaco publicado por configuración" />
         </label>
         <label>
-          <span>Guidance category</span>
+          <span>Categoría de orientación</span>
           <input required maxLength={80} disabled={disabled} value={value.guidanceCategory} onChange={(event) => update('guidanceCategory', event.target.value)} placeholder="Categoría opaca" />
         </label>
         <label className="guidance-editor-wide">
-          <span>Source classification</span>
+          <span>Clasificación de origen</span>
           <input required maxLength={80} disabled={disabled} value={value.sourceClassification} onChange={(event) => update('sourceClassification', event.target.value)} placeholder="Clasificación de origen" />
         </label>
       </div>
 
       <GuidanceStringList
-        title="Document categories"
+        title="Categorías documentales"
         description="Hasta 20 valores, máximo 80 caracteres cada uno. R3 no publica un catálogo cerrado."
         values={value.documentCategories}
         maxItems={20}
@@ -103,7 +103,7 @@ export function GuidanceContentEditor({ value, onChange, disabled = false }: {
       />
 
       <GuidanceStringList
-        title="Instructions"
+        title="Instrucciones"
         description="Hasta 20 instrucciones, máximo 1000 caracteres cada una. Cada fila representa una instrucción independiente."
         values={value.instructions}
         maxItems={20}
@@ -116,7 +116,7 @@ export function GuidanceContentEditor({ value, onChange, disabled = false }: {
       <section className="guidance-editor-section" aria-labelledby="guidance-metadata-title">
         <div className="guidance-editor-section-heading">
           <div>
-            <h3 id="guidance-metadata-title">Assistance metadata</h3>
+            <h3 id="guidance-metadata-title">Metadata de asistencia</h3>
             <p>Hasta 20 pares clave/valor. Las claves siguen el patrón estable R3; la UI no les asigna significado de negocio.</p>
           </div>
           <button type="button" disabled={disabled || value.assistanceMetadataRows.length >= 20} onClick={() => update('assistanceMetadataRows', [...value.assistanceMetadataRows, { key: '', value: '' }])}>+ Agregar metadata</button>
@@ -127,12 +127,12 @@ export function GuidanceContentEditor({ value, onChange, disabled = false }: {
           <div className="guidance-metadata-list">
             {value.assistanceMetadataRows.map((row, index) => (
               <div className="guidance-metadata-row" key={index}>
-                <input aria-label={`Metadata key ${index + 1}`} maxLength={80} disabled={disabled} value={row.key} onChange={(event) => {
+                <input aria-label={`Clave de metadata ${index + 1}`} maxLength={80} disabled={disabled} value={row.key} onChange={(event) => {
                   const next = value.assistanceMetadataRows.slice();
                   next[index] = { ...row, key: event.target.value };
                   update('assistanceMetadataRows', next);
                 }} placeholder="stable.key" />
-                <input aria-label={`Metadata value ${index + 1}`} maxLength={500} disabled={disabled} value={row.value} onChange={(event) => {
+                <input aria-label={`Valor de metadata ${index + 1}`} maxLength={500} disabled={disabled} value={row.value} onChange={(event) => {
                   const next = value.assistanceMetadataRows.slice();
                   next[index] = { ...row, value: event.target.value };
                   update('assistanceMetadataRows', next);
