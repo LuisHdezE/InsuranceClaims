@@ -166,7 +166,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '◈',
     group: 'administration',
     allOf: ['guidance.admin'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Administración de orientación R3 · Contenido versionado sin semántica inventada',
   },
   {
