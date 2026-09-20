@@ -45,6 +45,40 @@ jobs:
           fetch-depth: 0
       - name: Validate VFR state and immutable evidence
         run: python qa/validate-visual-functional-review-ready.py
+      - name: Bind human approval to browser-reviewed commit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          reviewed = json.loads(
+              Path('documentation/visual-functional-review/generated/visual-functional-review-browser.json').read_text(encoding='utf-8')
+          )['reviewed_commit']
+
+          approvals = [
+              Path('documentation/visual-functional-review/DIGITAL_CLAIM_INTAKE_WEB_APPROVAL.md'),
+              Path('documentation/visual-functional-review/CUSTOMER_CLAIM_TRACKING_WEB_APPROVAL.md'),
+              Path('documentation/visual-functional-review/CLAIMS_BACKOFFICE_WEB_APPROVAL.md'),
+          ]
+
+          failures = []
+          for path in approvals:
+              text = path.read_text(encoding='utf-8')
+              match = re.search(r'Browser-tested commit:\s*`([0-9a-f]{40})`', text)
+              if not match:
+                  failures.append(f'{path}: missing Browser-tested commit binding')
+                  continue
+              approved = match.group(1)
+              if approved != reviewed:
+                  failures.append(f'{path}: approved {approved}, browser reviewed {reviewed}')
+
+          if failures:
+              raise SystemExit('Human VFR approval is stale for current browser evidence:\n' + '\n'.join(failures))
+
+          print(json.dumps({'event': 'VFR_HUMAN_APPROVAL_BINDING_PASS', 'reviewed_commit': reviewed}, sort_keys=True))
+          PY
       - name: Verify reviewed commit is an ancestor
         shell: bash
         run: |
