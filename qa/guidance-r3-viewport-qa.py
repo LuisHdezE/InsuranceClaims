@@ -46,6 +46,15 @@ def set_viewport(width: int, height: int) -> None:
     driver.execute_script("window.scrollTo(0, 0)")
 
 
+def spa_navigate(path: str) -> None:
+    driver.execute_script(
+        "window.history.pushState({}, '', arguments[0]); window.dispatchEvent(new PopStateEvent('popstate'));",
+        path,
+    )
+    wait.until(lambda d: d.current_url.endswith(path))
+    time.sleep(0.2)
+
+
 def capture(name: str) -> tuple[str, str]:
     viewport_path = ARTIFACT_DIR / f"{name}.png"
     driver.save_screenshot(str(viewport_path))
@@ -107,7 +116,9 @@ try:
     wait.until(lambda d: "/operator/" in d.current_url and "/login" not in d.current_url)
 
     # Guidance intentionally remains pending in navigation until human visual approval.
-    driver.get(f"{WEB_BASE_URL}/operator/admin/guidance")
+    # Navigate through browser history so BrowserRouter handles the route without a reload;
+    # OperatorSessionContext is intentionally in-memory and a full reload would sign out.
+    spa_navigate("/operator/admin/guidance")
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".guidance-r3-directory")))
     wait.until(EC.visibility_of_element_located((By.XPATH, "//h1[normalize-space()='Orientación']")))
     wait.until(lambda d: "claims.intake.help" in d.find_element(By.CSS_SELECTOR, ".guidance-card-grid").text)
@@ -286,7 +297,7 @@ try:
     shot, full = capture("guidance-version-create-390x844")
     form_results.append({"form": "version", "width": 390, "height": 844, "screenshot": shot, "fullPageScreenshot": full})
 
-    driver.get(f"{WEB_BASE_URL}/operator/admin/guidance/new")
+    spa_navigate("/operator/admin/guidance/new")
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".guidance-r3-form-page")))
     wait.until(lambda d: "nueva orientación r3" in d.find_element(By.CSS_SELECTOR, ".ops-kicker").text.lower())
     key_input = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".guidance-key-field input")))
