@@ -9,6 +9,7 @@ on:
       - 'apps/web/src/pages/OperatorLoginPage.tsx'
       - 'apps/web/src/operator-login-r3.css'
       - 'apps/web/src/operator-login-viewport.css'
+      - 'apps/web/src/operator-login-demo-personas.css'
       - 'qa/operator-login-viewport-qa.py'
       - '.github/workflows/operator-login-viewport.yml'
   workflow_dispatch:

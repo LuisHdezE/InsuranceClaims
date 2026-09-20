@@ -29,7 +29,7 @@ if browser_bin:
 
 driver = webdriver.Chrome(options=options)
 wait = WebDriverWait(driver, 20)
-results: list[dict[str, int | str]] = []
+results: list[dict[str, object]] = []
 
 try:
     driver.get(f"{WEB_BASE_URL}/operator/login")
@@ -53,6 +53,40 @@ try:
             """
             const root = document.documentElement;
             const body = document.body;
+            const personas = Array.from(document.querySelectorAll('.r3-login-demo-button')).map((button) => {
+              const copy = button.querySelector('span');
+              const container = button.closest('.r3-login-demo-personas');
+              const card = button.closest('.r3-login-card');
+              const buttonRect = button.getBoundingClientRect();
+              const copyRect = copy ? copy.getBoundingClientRect() : null;
+              const containerRect = container ? container.getBoundingClientRect() : null;
+              const cardRect = card ? card.getBoundingClientRect() : null;
+              const buttonStyle = getComputedStyle(button);
+              return {
+                key: button.dataset.demoPersona || '',
+                flexDirection: buttonStyle.flexDirection,
+                copyClientWidth: copy ? copy.clientWidth : 0,
+                copyScrollWidth: copy ? copy.scrollWidth : 0,
+                copyClientHeight: copy ? copy.clientHeight : 0,
+                copyScrollHeight: copy ? copy.scrollHeight : 0,
+                copyLeft: copyRect ? copyRect.left : 0,
+                copyRight: copyRect ? copyRect.right : 0,
+                copyTop: copyRect ? copyRect.top : 0,
+                copyBottom: copyRect ? copyRect.bottom : 0,
+                buttonLeft: buttonRect.left,
+                buttonRight: buttonRect.right,
+                buttonTop: buttonRect.top,
+                buttonBottom: buttonRect.bottom,
+                containerLeft: containerRect ? containerRect.left : 0,
+                containerRight: containerRect ? containerRect.right : 0,
+                containerTop: containerRect ? containerRect.top : 0,
+                containerBottom: containerRect ? containerRect.bottom : 0,
+                cardLeft: cardRect ? cardRect.left : 0,
+                cardRight: cardRect ? cardRect.right : 0,
+                cardTop: cardRect ? cardRect.top : 0,
+                cardBottom: cardRect ? cardRect.bottom : 0,
+              };
+            });
             return {
               innerWidth: window.innerWidth,
               innerHeight: window.innerHeight,
@@ -60,6 +94,7 @@ try:
               clientHeight: root.clientHeight,
               scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
               scrollHeight: Math.max(root.scrollHeight, body.scrollHeight),
+              personas,
             };
             """
         )
@@ -69,6 +104,7 @@ try:
 
         vertical_overflow = metrics["scrollHeight"] - metrics["innerHeight"]
         horizontal_overflow = metrics["scrollWidth"] - metrics["innerWidth"]
+        personas = metrics["personas"]
         result = {
             "width": width,
             "height": height,
@@ -76,6 +112,7 @@ try:
             "innerHeight": metrics["innerHeight"],
             "verticalOverflow": vertical_overflow,
             "horizontalOverflow": horizontal_overflow,
+            "personas": personas,
             "screenshot": str(screenshot_path),
         }
         results.append(result)
@@ -92,6 +129,52 @@ try:
                 f"scrollWidth={metrics['scrollWidth']} innerWidth={metrics['innerWidth']} "
                 f"overflow={horizontal_overflow}px"
             )
+
+        if len(personas) != 3:
+            raise AssertionError(
+                f"Operator login expected 3 demo persona buttons at {width}x{height}, got {len(personas)}"
+            )
+
+        for persona in personas:
+            if persona["flexDirection"] != "column":
+                raise AssertionError(
+                    f"Demo persona {persona['key']} copy is not vertically stacked at {width}x{height}: "
+                    f"flexDirection={persona['flexDirection']}"
+                )
+            if persona["copyScrollWidth"] - persona["copyClientWidth"] > TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} copy clips horizontally at {width}x{height}: "
+                    f"scrollWidth={persona['copyScrollWidth']} clientWidth={persona['copyClientWidth']}"
+                )
+            if persona["copyScrollHeight"] - persona["copyClientHeight"] > TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} copy clips vertically at {width}x{height}: "
+                    f"scrollHeight={persona['copyScrollHeight']} clientHeight={persona['copyClientHeight']}"
+                )
+            if persona["copyLeft"] < persona["buttonLeft"] - TOLERANCE_PX or persona["copyRight"] > persona["buttonRight"] + TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} copy escapes button horizontally at {width}x{height}"
+                )
+            if persona["copyTop"] < persona["buttonTop"] - TOLERANCE_PX or persona["copyBottom"] > persona["buttonBottom"] + TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} copy escapes button vertically at {width}x{height}"
+                )
+            if persona["buttonLeft"] < persona["containerLeft"] - TOLERANCE_PX or persona["buttonRight"] > persona["containerRight"] + TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} button escapes persona grid at {width}x{height}"
+                )
+            if persona["buttonTop"] < persona["containerTop"] - TOLERANCE_PX or persona["buttonBottom"] > persona["containerBottom"] + TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} button escapes persona grid vertically at {width}x{height}"
+                )
+            if persona["buttonLeft"] < persona["cardLeft"] - TOLERANCE_PX or persona["buttonRight"] > persona["cardRight"] + TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} button escapes login card at {width}x{height}"
+                )
+            if persona["buttonTop"] < persona["cardTop"] - TOLERANCE_PX or persona["buttonBottom"] > persona["cardBottom"] + TOLERANCE_PX:
+                raise AssertionError(
+                    f"Demo persona {persona['key']} button escapes login card vertically at {width}x{height}"
+                )
 
     severe = [
         entry.get("message", "")
