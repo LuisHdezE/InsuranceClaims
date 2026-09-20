@@ -107,6 +107,8 @@ const expectedClosureAllowlist = [
 ];
 
 const postCheckpointGovernancePaths = new Set([
+  'README.md',
+  'documentation/portfolio/CASE_STUDY.md',
   'documentation/release/RELEASE_GATE_LINEAGE_RECONCILIATION.md',
   'scripts/validate-release-gate-ready.mjs',
   'documentation/release/R3_RELEASE_PUBLICATION_LINEAGE_RECONCILIATION.md',

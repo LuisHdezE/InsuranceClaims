@@ -6,7 +6,7 @@
 [![Integration QA](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/integration-qa-web.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/integration-qa-web.yml)
 [![R3 Final Closure](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-final-closure.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-final-closure.yml)
 [![R3 Full Product Closure](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-full-product-technical-closure.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/r3-full-product-technical-closure.yml)
-[![R3 Release Formalization](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/release-formalization-0.3.0.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/release-formalization-0.3.0.yml)
+[![R3 Release Integrity](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/release-formalization-0.3.0.yml/badge.svg)](https://github.com/LuisHdezE/InsuranceClaims/actions/workflows/release-formalization-0.3.0.yml)
 
 > **Portfolio case-study disclaimer**  
 > This is an unofficial technical case study with no affiliation with FAR Seguros. All policy, claim, operator and operational data are synthetic/demo data. Delivery mode is **GREENFIELD** and legacy coexistence is **SIMULATED**.
@@ -21,13 +21,13 @@ This project demonstrates that transition as an end-to-end product: public claim
 
 | | |
 |---|---|
-| **Current product state** | **R3 — Full Product Technical Closure completed** |
-| **Latest published release** | **v0.2.0 — Claims Operations Experience** |
-| **Release candidate** | **v0.3.0 — formalization candidate; publication pending** |
+| **Current main state** | **R3 product + governed post-release demo/presentation evolution** |
+| **Latest published release** | **v0.3.0 — R3 Full Product** |
+| **Release integrity** | **Published, immutable historical release verified read-only** |
 | **API revision** | `api-v1-r3` |
 | **REST surface** | **90 operations · 76 paths · 16 families** |
 | **Productized web surfaces** | **22** |
-| **Backend test baseline** | **91 tests** |
+| **R3 release backend test baseline** | **91 tests** |
 | **Architecture** | Clean Architecture + Ports & Adapters |
 | **Backend** | Node.js 24 · NestJS 12 · TypeScript |
 | **Frontend** | React 19 · Vite 7 · TypeScript |
@@ -36,9 +36,11 @@ This project demonstrates that transition as an end-to-end product: public claim
 | **Blueprint consumer** | Software Development Blueprint **0.5.2** |
 | **Legacy coexistence** | **SIMULATED** behind an adapter boundary |
 
-## Release candidate scope
+## Release candidate scope, now published as v0.3.0
 
-The historical MVP Release Gate remains preserved as accepted evidence. R3 does not rewrite that decision: it is a later governed product evolution whose technical closure is recorded separately. The monorepo is now being formalized as candidate `0.3.0`, while **v0.2.0 remains the latest published release**. Tag `v0.3.0` and its GitHub Release require a separate explicit publication gate after the formalization PR is merged.
+The historical MVP Release Gate remains preserved as accepted evidence. R3 does not rewrite that decision: it is a later governed product evolution whose technical closure was recorded separately and whose `v0.3.0` release was published through its own human-approved Gate B.
+
+The annotated `v0.3.0` tag remains pinned to release commit `014b2a4c4c38d94b07346aaa54bc32a8bbb7c5f9`. The GitHub Release is public, non-draft and non-prerelease. The former one-time publication workflow has been reconciled into a read-only integrity sentinel, so later main-branch evolution cannot accidentally republish or retarget the historical release.
 
 ## Product experience
 
@@ -134,7 +136,7 @@ The repository contains executable evidence for:
 - async/recovery flows;
 - production web build and strict typecheck;
 - full-product technical closure on the exact approved head;
-- fail-closed `0.3.0` release identity and changed-file validation.
+- fail-closed historical `v0.3.0` publication integrity validation with no publication side effects.
 
 R3 was closed technically through PR #90. The accepted merge commit is `54f791707d6a4e2f9425f57d0a18e20e139fb518`.
 
@@ -152,14 +154,15 @@ These are explicit product decisions, not hidden gaps.
 
 - **v0.1.0** — governed modernization MVP.
 - **v0.2.0** — Claims Operations Experience, published and immutable.
-- **0.3.0 candidate** — R3 Full Product release formalization; `v0.3.0` tag and GitHub Release are not published until the separate human publication gate.
+- **v0.3.0** — R3 Full Product, published through the governed Gate B flow and preserved as an immutable historical release.
 
 The repository does not move or rewrite historical tags to make newer work appear released retroactively.
 
 ## Release documentation and evidence
 
-- [R3 0.3.0 Release Formalization candidate](documentation/release/R3_RELEASE_FORMALIZATION_0.3.0.md)
-- [R3 v0.3.0 candidate release notes](documentation/portfolio/RELEASE_NOTES_v0.3.0.md)
+- [R3 0.3.0 Release Formalization, historical Gate A](documentation/release/R3_RELEASE_FORMALIZATION_0.3.0.md)
+- [R3 v0.3.0 release notes](documentation/portfolio/RELEASE_NOTES_v0.3.0.md)
+- [R3 publication integrity lineage](documentation/release/R3_RELEASE_PUBLICATION_LINEAGE_RECONCILIATION.md)
 - [R3 Technical Case Study](documentation/portfolio/CASE_STUDY.md)
 - [R3 Portfolio Hardening record](documentation/portfolio/R3_PORTFOLIO_HARDENING.md)
 - [Full Product Technical Closure](documentation/product-closure/r3/FULL_PRODUCT_TECHNICAL_CLOSURE_R3.md)
@@ -167,6 +170,7 @@ The repository does not move or rewrite historical tags to make newer work appea
 - [R3 UI reference index](documentation/ui-reference/r3/README.md)
 - [Architecture](documentation/architecture/ARCHITECTURE.md)
 - [Security threat model](documentation/security/SECURITY_THREAT_MODEL.md)
+- [Published v0.3.0 release](https://github.com/LuisHdezE/InsuranceClaims/releases/tag/v0.3.0)
 - [Published v0.2.0 release](https://github.com/LuisHdezE/InsuranceClaims/releases/tag/v0.2.0)
 
 ## Local verification
