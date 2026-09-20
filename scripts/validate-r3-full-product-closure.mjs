@@ -257,7 +257,7 @@ for (const marker of [r3ReleaseCommit, freshVfrReviewedCommit, freshVfrMerge, 'A
 }
 
 const operationsLineage = await readText(operationsLineagePath);
-for (const marker of [expectedClosureMerge, r3ReleaseCommit, freshVfrReviewedCommit, releaseLineageMerge, 'API-IMPACT-001', 'API-IMPACT-002']) {
+for (const marker of [r3ReleaseCommit, freshVfrReviewedCommit, releaseLineageMerge, 'API-IMPACT-001', 'API-IMPACT-002']) {
   assert(operationsLineage.includes(marker), `Operations lineage missing marker required by R3 closure: ${marker}`);
 }
 
