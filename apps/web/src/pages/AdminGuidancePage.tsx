@@ -28,7 +28,7 @@ export function AdminGuidancePage() {
 
   return (
     <OperatorShell>
-      <main className="operator-main ops-main guidance-admin-main">
+      <main className="operator-main ops-main guidance-admin-main guidance-r3-directory">
         <div className="ops-page-heading guidance-directory-heading">
           <div>
             <span className="ops-kicker">Orientación de plataforma R3</span>
