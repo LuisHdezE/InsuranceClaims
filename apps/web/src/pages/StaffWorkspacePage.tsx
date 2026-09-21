@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { STAFF_ROLE_LABELS } from '../auth/staff-access';
 import { OperatorShell } from '../components/OperatorShell';
+import { isPublicDemoOperator, isPublicDemoPath } from '../demo-access';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 import {
   OPERATOR_WORKSPACE_GROUPS,
@@ -14,7 +15,10 @@ export function StaffWorkspacePage() {
   if (!session) return null;
 
   const role = session.operator.role;
-  const visibleCards = operatorWorkspaceCardsForRole(role);
+  const publicDemo = isPublicDemoOperator(session.operator);
+  const visibleCards = operatorWorkspaceCardsForRole(role).filter((card) => (
+    !publicDemo || isPublicDemoPath(card.href, role)
+  ));
 
   return (
     <OperatorShell>
