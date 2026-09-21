@@ -1,0 +1,311 @@
+/* UI-AUTOMATIONS-001
+ * Productized directory/detail layer aligned with the approved operator shell.
+ * This file only styles read/list/detail presentation. Existing editors keep their
+ * original automation-admin.css behavior.
+ */
+
+.r3-ui-shell .automations-r3-directory,
+.r3-ui-shell .automations-r3-detail {
+  gap: 18px;
+}
+
+.r3-ui-shell .automations-r3-heading {
+  align-items: flex-end;
+  padding-top: 2px;
+}
+
+.r3-ui-shell .automations-r3-heading > div:first-child {
+  min-width: 0;
+}
+
+.r3-ui-shell .automations-r3-heading h1 {
+  margin-top: 4px;
+}
+
+.r3-ui-shell .automations-r3-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.r3-ui-shell .automations-r3-summary-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 104px;
+  padding: 16px;
+  border: 1px solid #dbe4ee;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(11, 24, 48, .045);
+}
+
+.r3-ui-shell .automations-r3-summary-mark {
+  width: 42px;
+  height: 42px;
+  display: block;
+  border-radius: 12px;
+  background: #edf5ff;
+  box-shadow: inset 0 0 0 1px #d3e4fa;
+}
+
+.r3-ui-shell .automations-r3-summary-card.is-green .automations-r3-summary-mark {
+  background: #eaf8f0;
+  box-shadow: inset 0 0 0 1px #cae9d8;
+}
+
+.r3-ui-shell .automations-r3-summary-card.is-violet .automations-r3-summary-mark {
+  background: #f1edff;
+  box-shadow: inset 0 0 0 1px #ddd5fb;
+}
+
+.r3-ui-shell .automations-r3-summary-card.is-yellow .automations-r3-summary-mark {
+  background: #fff7e3;
+  box-shadow: inset 0 0 0 1px #f0dfb0;
+}
+
+.r3-ui-shell .automations-r3-summary-card > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.r3-ui-shell .automations-r3-summary-card > div > span {
+  color: #475467;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.r3-ui-shell .automations-r3-summary-card strong {
+  color: #101828;
+  font-size: 25px;
+  line-height: 1;
+  letter-spacing: -.03em;
+}
+
+.r3-ui-shell .automations-r3-summary-card small {
+  color: #7a8697;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.r3-ui-shell .automations-r3-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.r3-ui-shell .automations-r3-panel-heading {
+  padding: 17px 18px;
+  border-bottom: 1px solid #e5ebf1;
+}
+
+.r3-ui-shell .automations-r3-panel-heading h2 {
+  font-size: 17px;
+}
+
+.r3-ui-shell .automations-r3-empty {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  padding: 32px 18px;
+  color: #667085;
+}
+
+.r3-ui-shell .automations-r3-empty strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+.r3-ui-shell .automations-r3-empty span,
+.r3-ui-shell .automations-r3-empty a {
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.r3-ui-shell .automations-r3-empty a {
+  color: #0f5fcc;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.r3-ui-shell .automations-r3-table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.r3-ui-shell .automations-r3-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+  color: #344054;
+  font-size: 10px;
+}
+
+.r3-ui-shell .automations-r3-table th,
+.r3-ui-shell .automations-r3-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e7edf3;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.r3-ui-shell .automations-r3-table th {
+  background: #f7f9fc;
+  color: #475467;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .025em;
+  white-space: nowrap;
+}
+
+.r3-ui-shell .automations-r3-table tbody tr {
+  background: #fff;
+  transition: background .15s ease;
+}
+
+.r3-ui-shell .automations-r3-table tbody tr:hover {
+  background: #fbfdff;
+}
+
+.r3-ui-shell .automations-r3-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.r3-ui-shell .automations-r3-name-cell {
+  min-width: 245px;
+}
+
+.r3-ui-shell .automations-r3-name-cell > a {
+  display: block;
+  color: #172033;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.r3-ui-shell .automations-r3-name-cell > a:hover,
+.r3-ui-shell .automations-r3-open-cell a:hover {
+  color: #0f5fcc;
+}
+
+.r3-ui-shell .automations-r3-name-cell code {
+  display: block;
+  margin-top: 4px;
+  color: #8490a2;
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+.r3-ui-shell .automations-r3-number {
+  color: #172033;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.r3-ui-shell .automations-r3-date {
+  color: #667085;
+  white-space: nowrap;
+}
+
+.r3-ui-shell .automations-r3-open-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.r3-ui-shell .automations-r3-open-cell a {
+  color: #0f5fcc;
+  font-size: 9px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.r3-ui-shell .automations-r3-footer {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 18px;
+  border-top: 1px solid #e7edf3;
+  color: #667085;
+  font-size: 10px;
+}
+
+.r3-ui-shell .automations-r3-footer .aa-pagination {
+  margin-left: auto;
+}
+
+.r3-ui-shell .automations-r3-detail-hero {
+  border-radius: 14px;
+}
+
+.r3-ui-shell .automations-r3-readonly-badge {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid #cbdcf2;
+  border-radius: 999px;
+  background: #f0f6ff;
+  color: #245b9e;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.r3-ui-shell .automations-r3-detail-summary {
+  border-radius: 14px;
+}
+
+.r3-ui-shell .automations-r3-version-panel {
+  border-radius: 14px;
+}
+
+.r3-ui-shell .automations-r3-version-panel .aa-version-card {
+  box-shadow: 0 4px 14px rgba(11, 24, 48, .025);
+}
+
+@media (max-width: 1180px) {
+  .r3-ui-shell .automations-r3-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .r3-ui-shell .automations-r3-heading {
+    align-items: flex-start;
+  }
+
+  .r3-ui-shell .automations-r3-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .r3-ui-shell .automations-r3-footer .aa-pagination {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .r3-ui-shell .automations-r3-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-ui-shell .automations-r3-summary-card {
+    min-height: 92px;
+  }
+
+  .r3-ui-shell .automations-r3-panel-heading {
+    padding: 14px;
+  }
+
+  .r3-ui-shell .automations-r3-footer {
+    padding: 12px 14px;
+  }
+}
