@@ -55,6 +55,7 @@ const scenarioFiles = [
   'qa/collections-seed.sql',
   'qa/bulk-actions-seed.sql',
   'qa/demo-operational-seed.sql',
+  'qa/demo-automations-seed.sql',
 ];
 
 for (const file of scenarioFiles) {
