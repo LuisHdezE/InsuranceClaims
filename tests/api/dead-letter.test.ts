@@ -134,7 +134,7 @@ test('R3 REST dead-letter mutations enforce the 20/min/admin contract limit', as
     .send({ expectedVersion: 2 })
     .expect(429);
   assert.equal(limited.body.code, 'RATE_LIMITED');
-  assert.match(limited.headers['retry-after'], /^\d+$/);
+  assert.match(limited.headers['retry-after'] ?? '', /^\d+$/);
 
   await app.close();
 });
