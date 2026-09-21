@@ -103,3 +103,38 @@ test('R3 REST dead-letter administration is sanitized, least-privilege and optim
   assert.equal(after.body.totalItems, 0);
   await app.close();
 });
+
+test('R3 REST dead-letter mutations enforce the 20/min/admin contract limit', async () => {
+  const runtime = await createMemoryRuntime();
+  await seedAdmin(runtime);
+  const deadLetterId = '95000000-0000-4000-8000-000000000003';
+  runtime.asyncStore.seedJob(deadLetterJob(deadLetterId));
+
+  const app = await NestFactory.create(ApiModule.register(runtime), { logger: false, rawBody: true });
+  await app.init();
+  const http = app.getHttpServer();
+  const adminLogin = await request(http)
+    .post('/api/v1/operator/auth/login')
+    .send({ login: 'deadletter.admin@example.invalid', password: 'deadletter-admin-password' })
+    .expect(200);
+  const adminToken = adminLogin.body.accessToken as string;
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const stale = await request(http)
+      .post(`/api/v1/admin/dead-letters/${deadLetterId}/requeue`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ expectedVersion: 2 })
+      .expect(409);
+    assert.equal(stale.body.code, 'RESOURCE_VERSION_CONFLICT');
+  }
+
+  const limited = await request(http)
+    .post(`/api/v1/admin/dead-letters/${deadLetterId}/requeue`)
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ expectedVersion: 2 })
+    .expect(429);
+  assert.equal(limited.body.code, 'RATE_LIMITED');
+  assert.match(limited.headers['retry-after'] ?? '', /^\d+$/);
+
+  await app.close();
+});
