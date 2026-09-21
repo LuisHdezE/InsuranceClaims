@@ -184,7 +184,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '⇧',
     group: 'administration',
     allOf: ['imports.execute'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Importaciones gobernadas R3 · Vista previa, mapeo, validación, dry-run y commit gobernados',
   },
   {
