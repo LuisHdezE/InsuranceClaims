@@ -19,6 +19,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { z } from 'zod';
 import { API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
+import { isPublicDemoOperator, scopePublicDemoPage } from './demo-access.js';
 import { ApiProblemError, RateLimitService, callerIp } from './transport.js';
 
 const uuidSchema = z.string().uuid();
@@ -60,7 +61,14 @@ export class GovernedImportsController {
   @Get()
   async list(@Query() query: Record<string, string | undefined>, @Req() req: any) {
     this.readRate(req);
-    return this.runtime.governedImports.listJobs(pageSchema.parse(query), req.actor);
+    const parsed = pageSchema.parse(query);
+    if (isPublicDemoOperator(req.actor)) {
+      const page = parsed.page ?? 1;
+      const pageSize = parsed.pageSize ?? 25;
+      const catalog = await this.runtime.governedImports.listJobs({ page: 1, pageSize: 100 }, req.actor);
+      return scopePublicDemoPage(catalog.items, 'importJob', (item) => item.importJobId, page, pageSize);
+    }
+    return this.runtime.governedImports.listJobs(parsed, req.actor);
   }
 
   @Post()
