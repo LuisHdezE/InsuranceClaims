@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlparse
 
 HOST = "127.0.0.1"
 PORT = 3000
-ADMIN_ID = "00000000-0000-4000-8000-000000000094"
+ADMIN_ID = "00000000-0000-4000-8000-000000000090"
 EVENT_ID = "88888888-8888-4888-8888-888888888888"
 DEAD_LETTER_ID = "77777777-7777-4777-8777-777777777777"
 
@@ -110,7 +110,7 @@ class Handler(BaseHTTPRequestHandler):
                 "expiresIn": 900,
                 "operator": {
                     "id": ADMIN_ID,
-                    "login": "demo.admin@eliasworks.invalid",
+                    "login": "qa.recovery.admin@eliasworks.invalid",
                     "role": "PLATFORM_ADMIN",
                 },
             })
