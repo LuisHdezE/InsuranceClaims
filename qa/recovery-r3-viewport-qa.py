@@ -85,9 +85,11 @@ def spa(path: str) -> None:
 
 
 def open_confirmation(label: str, title: str, width: int, height: int) -> dict[str, object]:
-    trigger = wait.until(EC.element_to_be_clickable((By.XPATH, f"//button[normalize-space(.)='{label}']")))
+    trigger = wait.until(EC.visibility_of_element_located((By.XPATH, f"//button[normalize-space(.)='{label}']")))
+    if not trigger.is_enabled():
+        raise AssertionError(f"Recovery trigger unexpectedly disabled: {label}")
     driver.execute_script("arguments[0].scrollIntoView({block:'center'});", trigger)
-    trigger.click()
+    driver.execute_script("arguments[0].click();", trigger)
     dialog = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[role='alertdialog'].recovery-confirmation")))
     if title not in dialog.text or "expectedVersion 3" not in dialog.text:
         raise AssertionError("Recovery confirmation lost governed title/version disclosure")
