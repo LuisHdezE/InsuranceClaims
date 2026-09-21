@@ -16,10 +16,21 @@ const expectedReferencePostUiHead = '24817b7d36a23cc184a0615da9fb8a4e251ab2e2';
 const r3ReleaseCommit = '014b2a4c4c38d94b07346aaa54bc32a8bbb7c5f9';
 const demoReadinessMerge = 'de64afb68dfd2ab2fc3e48f266d25c9fcb8ccd6f';
 const demoEnvCommit = '2e9707016506cfbd14bb14f54f79d2694a12f07c';
-const freshVfrReviewedCommit = 'a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a';
-const freshVfrMerge = 'db9d8092d9ed34be283bef0b1908aa7c7a6c8ab9';
-const releaseLineageMerge = 'b2f089476559795f30a3c0eec2b05fd0ac32531f';
-const currentGovernedCheckpoint = 'ac555d064cf8a9a68fe4c10e04ec625396f94a6b';
+const earlierVfrReviewedCommit = 'a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a';
+const earlierVfrMerge = 'db9d8092d9ed34be283bef0b1908aa7c7a6c8ab9';
+const earlierReleaseLineageMerge = 'b2f089476559795f30a3c0eec2b05fd0ac32531f';
+const priorGovernedCheckpoint = 'ac555d064cf8a9a68fe4c10e04ec625396f94a6b';
+const priorVfrReviewedCommit = '1f774dc4f3c0ce4a02b3c3caa664c78f304e7de1';
+const priorProductCheckpoint = 'c107703e5d1f41058fb18b878cc1833afb9d85ff';
+const priorReleaseLineageMerge = '50c77fec8482e87295ec7cfd4b800a132557a728';
+const priorOperationsLineageMerge = '7452ee3036abbc99aecba5e0c973e84176bd5438';
+const currentVfrReviewedCommit = '37fb75846e0cd38a88d8773c937bc42d6c408d57';
+const currentProductCheckpoint = 'ecd8bb99e49a3393d821de2349fad1eb44cc4339';
+const currentReleaseLineageMerge = '06f730418518784246d8bf416260483ca4347290';
+const currentTechnicalRevalidationHead = 'a1fd208f797a75d0b55796f4d3f54908ed739082';
+const currentTechnicalRevalidationRun = '35610337205';
+const currentOperationsLineageMerge = '838f928703cb6a0dbcd284d05f72410e0d5628ce';
+const currentGovernedCheckpoint = currentOperationsLineageMerge;
 
 const expectedApi = {
   operations: 90,
@@ -234,7 +245,7 @@ for (const path of expectedClosureAllowlist) {
   await readText(path);
 }
 
-// Later evolution is accepted only because its lineage is explicit and its current product was freshly revalidated.
+// Later evolution is accepted only because every product checkpoint and governance reconciliation is explicit.
 const lineage = await readText(lineagePath);
 for (const marker of [
   expectedBaseline,
@@ -243,26 +254,58 @@ for (const marker of [
   r3ReleaseCommit,
   demoReadinessMerge,
   demoEnvCommit,
-  freshVfrReviewedCommit,
-  freshVfrMerge,
-  releaseLineageMerge,
-  currentGovernedCheckpoint,
+  earlierVfrReviewedCommit,
+  earlierVfrMerge,
+  earlierReleaseLineageMerge,
+  priorGovernedCheckpoint,
+  priorVfrReviewedCommit,
+  priorProductCheckpoint,
+  priorReleaseLineageMerge,
+  priorOperationsLineageMerge,
+  currentVfrReviewedCommit,
+  currentProductCheckpoint,
+  currentReleaseLineageMerge,
+  currentTechnicalRevalidationHead,
+  currentTechnicalRevalidationRun,
+  currentOperationsLineageMerge,
   'v0.3.0',
   '101/101 PASS',
+  '106/106 PASS',
   '128/128 PASS',
   '90/90 PASS',
   'Apruebo VFR fresco PR #132',
+  'Apruebo VFR fresco PR #140',
+  'Apruebo VFR fresco PR #146',
 ]) {
   assert(lineage.includes(marker), `R3 closure lineage reconciliation missing marker: ${marker}`);
 }
 
 const releaseLineage = await readText(releaseLineagePath);
-for (const marker of [r3ReleaseCommit, freshVfrReviewedCommit, freshVfrMerge, 'API-IMPACT-001', 'API-IMPACT-002']) {
+for (const marker of [
+  r3ReleaseCommit,
+  earlierVfrReviewedCommit,
+  priorVfrReviewedCommit,
+  currentVfrReviewedCommit,
+  currentProductCheckpoint,
+  'Apruebo VFR fresco PR #146',
+  'API-IMPACT-001',
+  'API-IMPACT-002',
+]) {
   assert(releaseLineage.includes(marker), `Release Gate lineage missing marker required by R3 closure: ${marker}`);
 }
 
 const operationsLineage = await readText(operationsLineagePath);
-for (const marker of [r3ReleaseCommit, freshVfrReviewedCommit, releaseLineageMerge, 'API-IMPACT-001', 'API-IMPACT-002']) {
+for (const marker of [
+  r3ReleaseCommit,
+  earlierVfrReviewedCommit,
+  priorVfrReviewedCommit,
+  currentVfrReviewedCommit,
+  currentProductCheckpoint,
+  currentReleaseLineageMerge,
+  'Apruebo VFR fresco PR #146',
+  'API-IMPACT-001',
+  'API-IMPACT-002',
+]) {
   assert(operationsLineage.includes(marker), `Operations lineage missing marker required by R3 closure: ${marker}`);
 }
 
@@ -286,13 +329,23 @@ for (const marker of [
 
 assert(isAncestor(expectedClosureMerge, r3ReleaseCommit), 'published R3 release must descend from the historical full-product closure');
 assert(isAncestor(r3ReleaseCommit, demoReadinessMerge), 'demo readiness must descend from the published R3 release');
-assert(isAncestor(demoReadinessMerge, freshVfrReviewedCommit), 'fresh VFR product must descend from demo readiness evolution');
-assert(isAncestor(freshVfrReviewedCommit, freshVfrMerge), 'fresh VFR merge must contain the browser-reviewed product');
-assert(isAncestor(freshVfrMerge, releaseLineageMerge), 'Release Gate reconciliation must descend from fresh VFR');
-assert(isAncestor(releaseLineageMerge, currentGovernedCheckpoint), 'Operations reconciliation must descend from Release Gate reconciliation');
+assert(isAncestor(demoReadinessMerge, earlierVfrReviewedCommit), 'earlier fresh VFR product must descend from demo readiness evolution');
+assert(isAncestor(earlierVfrReviewedCommit, earlierVfrMerge), 'earlier fresh VFR merge must contain the PR #132 browser-reviewed product');
+assert(isAncestor(earlierVfrMerge, earlierReleaseLineageMerge), 'earlier Release Gate reconciliation must descend from PR #132 fresh VFR');
+assert(isAncestor(earlierReleaseLineageMerge, priorGovernedCheckpoint), 'prior R3 governed checkpoint must descend from the earlier Release Gate reconciliation');
+assert(isAncestor(priorGovernedCheckpoint, priorVfrReviewedCommit), 'PR #140 browser-reviewed product must descend from the prior R3 governed checkpoint');
+assert(isAncestor(priorVfrReviewedCommit, priorProductCheckpoint), 'PR #140 product checkpoint must contain its browser-reviewed product');
+assert(isAncestor(priorProductCheckpoint, priorReleaseLineageMerge), 'PR #141 Release Gate reconciliation must descend from the PR #140 product checkpoint');
+assert(isAncestor(priorReleaseLineageMerge, priorOperationsLineageMerge), 'PR #142 Operations reconciliation must descend from PR #141 Release Gate reconciliation');
+assert(isAncestor(priorOperationsLineageMerge, currentVfrReviewedCommit), 'current PR #146 browser-reviewed product must descend from the prior Operations lineage');
+assert(isAncestor(currentVfrReviewedCommit, currentProductCheckpoint), 'current PR #146 product checkpoint must contain the browser-reviewed product');
+assert(isAncestor(currentProductCheckpoint, currentReleaseLineageMerge), 'current PR #147 Release Gate reconciliation must descend from the current product checkpoint');
+assert(isAncestor(currentReleaseLineageMerge, currentTechnicalRevalidationHead), 'PR #148 exact review head must descend from the current Release Gate reconciliation');
+assert(isAncestor(currentTechnicalRevalidationHead, currentOperationsLineageMerge), 'PR #148 Operations merge must contain the exact technical revalidation head');
+assert(isAncestor(currentReleaseLineageMerge, currentOperationsLineageMerge), 'current Operations reconciliation must descend from current Release Gate reconciliation');
 assert(isAncestor(currentGovernedCheckpoint, 'HEAD'), 'HEAD must descend from the current governed R3 closure checkpoint');
 
-// Fail closed after the reconciled checkpoint. Governance maintenance for the four release/operations/closure clocks is allowed;
+// Fail closed after the reconciled checkpoint. Governance maintenance for the release/operations/closure clocks is allowed;
 // product/API/runtime changes are not silently admitted.
 const postCheckpointPaths = changedPaths(currentGovernedCheckpoint, 'HEAD');
 for (const path of postCheckpointPaths) {
@@ -302,6 +355,11 @@ for (const path of postCheckpointPaths) {
 console.log('R3 FULL PRODUCT TECHNICAL CLOSURE: PASS WITH GOVERNED EVOLUTION');
 console.log(`Historical product baseline: ${expectedBaseline}`);
 console.log(`Historical closure merge: ${expectedClosureMerge}`);
+console.log(`Prior governed checkpoint: ${priorGovernedCheckpoint}`);
+console.log(`Current product checkpoint: ${currentProductCheckpoint}`);
+console.log(`Current Release Gate reconciliation: ${currentReleaseLineageMerge}`);
+console.log(`Current Operations reconciliation: ${currentOperationsLineageMerge}`);
+console.log(`Current technical revalidation run: ${currentTechnicalRevalidationRun}`);
 console.log(`Current governed checkpoint: ${currentGovernedCheckpoint}`);
 console.log(`Historical closure files preserved: ${historicalClosurePaths.length}`);
 console.log(`Post-checkpoint governance-only files: ${postCheckpointPaths.length}`);
