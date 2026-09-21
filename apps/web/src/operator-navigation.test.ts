@@ -68,8 +68,8 @@ describe('operator navigation integration baseline', () => {
       'Campos personalizados',
       'Orientación',
       'Automatizaciones',
+      'Importaciones gobernadas',
     ]);
-    expect(adminTitles).not.toContain('Importaciones gobernadas');
     expect(adminTitles).not.toContain('Integraciones y recuperación');
   });
 
