@@ -20,6 +20,7 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/admin/pipelines', 'CLAIMS_OPERATOR')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/communication-templates', 'CLAIMS_OPERATOR')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/custom-fields', 'CLAIMS_OPERATOR')).toBe(false);
+    expect(isPublicDemoPath('/operator/admin/automations', 'CLAIMS_OPERATOR')).toBe(false);
     expect(isPublicDemoPath('/operator/analytics', 'CLAIMS_OPERATOR')).toBe(false);
   });
 
@@ -32,9 +33,12 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/admin/communication-templates/template-123', 'PLATFORM_ADMIN')).toBe(true);
     expect(isPublicDemoPath('/operator/admin/custom-fields', 'PLATFORM_ADMIN')).toBe(true);
     expect(isPublicDemoPath('/operator/admin/custom-fields/field-123', 'PLATFORM_ADMIN')).toBe(true);
+    expect(isPublicDemoPath('/operator/admin/automations', 'PLATFORM_ADMIN')).toBe(true);
+    expect(isPublicDemoPath('/operator/admin/automations/automation-123', 'PLATFORM_ADMIN')).toBe(true);
     expect(isPublicDemoPath('/operator/admin/pipelines', 'CLAIMS_SUPERVISOR')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/communication-templates', 'CLAIMS_SUPERVISOR')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/custom-fields', 'CLAIMS_SUPERVISOR')).toBe(false);
+    expect(isPublicDemoPath('/operator/admin/automations', 'CLAIMS_SUPERVISOR')).toBe(false);
   });
 
   it('rejects public demo create and nested mutation routes', () => {
@@ -44,6 +48,8 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/admin/communication-templates/template-123/versions/new', 'PLATFORM_ADMIN')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/custom-fields/new', 'PLATFORM_ADMIN')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/custom-fields/field-123/versions/new', 'PLATFORM_ADMIN')).toBe(false);
+    expect(isPublicDemoPath('/operator/admin/automations/new', 'PLATFORM_ADMIN')).toBe(false);
+    expect(isPublicDemoPath('/operator/admin/automations/automation-123/versions/new', 'PLATFORM_ADMIN')).toBe(false);
     expect(isPublicDemoPath('/operator/tasks/task-123/complete', 'CLAIMS_OPERATOR')).toBe(false);
     expect(isPublicDemoPath('/operator/renewals/renewal-123/edit', 'CLAIMS_OPERATOR')).toBe(false);
   });
