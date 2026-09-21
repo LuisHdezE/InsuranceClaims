@@ -86,13 +86,11 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('link', { name: /^Campos$/ }).getAttribute('href')).toBe('/operator/admin/custom-fields');
     expect(screen.getByRole('link', { name: /^Orientación$/ }).getAttribute('href')).toBe('/operator/admin/guidance');
     expect(screen.getByRole('link', { name: /^Automatizaciones$/ }).getAttribute('href')).toBe('/operator/admin/automations');
+    expect(screen.getByRole('link', { name: /^Importaciones$/ }).getAttribute('href')).toBe('/operator/admin/imports');
 
-    const pendingLabels = ['Importaciones', 'Recuperación'];
-    for (const label of pendingLabels) {
-      const text = screen.getByText(label);
-      expect(text.closest('[aria-disabled="true"]')).toBeTruthy();
-      expect(screen.queryByRole('link', { name: new RegExp(`^${label}$`) })).toBeNull();
-    }
+    const recovery = screen.getByText('Recuperación');
+    expect(recovery.closest('[aria-disabled="true"]')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /^Recuperación$/ })).toBeNull();
 
     expect(screen.queryByText('Tablero')).toBeNull();
     expect(screen.queryByText('Siniestros')).toBeNull();
