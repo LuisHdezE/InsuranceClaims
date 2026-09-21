@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import type { StaffRole } from '../api/types';
+import { isPublicDemoPath } from '../demo-access';
 import {
   OPERATOR_NAV_GROUPS,
   OPERATOR_NAV_ITEMS,
@@ -20,7 +21,9 @@ export function OperatorSidebar({
   brandDestination: string;
 }) {
   const items = demoReadOnly
-    ? OPERATOR_NAV_ITEMS.filter((item) => operatorNavItemCanLink(item, role))
+    ? OPERATOR_NAV_ITEMS.filter((item) => (
+      operatorNavItemCanLink(item, role) && Boolean(role && isPublicDemoPath(item.to, role))
+    ))
     : role
       ? operatorNavItemsForRole(role)
       : [];

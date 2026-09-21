@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getDeadLetter, requeueDeadLetter, resolveDeadLetter } from '../api/recovery-admin';
@@ -8,10 +8,17 @@ import { OperatorApiErrorNotice } from '../components/OperatorApiErrorNotice';
 import { OperatorShell } from '../components/OperatorShell';
 import { useOperatorSession } from '../flow/OperatorSessionContext';
 
+type RecoveryAction = 'requeue' | 'resolve';
+
 export function AdminDeadLetterDetailPage() {
   const { deadLetterId = '' } = useParams();
   const { session, signOut } = useOperatorSession();
   const navigate = useNavigate();
+  const [confirmationAction, setConfirmationAction] = useState<RecoveryAction | null>(null);
+  const lastTriggerAction = useRef<RecoveryAction | null>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+  const requeueTriggerRef = useRef<HTMLButtonElement>(null);
+  const resolveTriggerRef = useRef<HTMLButtonElement>(null);
 
   const detailQuery = useQuery({
     queryKey: ['admin', 'recovery', 'dead-letter', deadLetterId],
@@ -19,10 +26,13 @@ export function AdminDeadLetterDetailPage() {
     enabled: Boolean(session && deadLetterId),
   });
 
+  const closeConfirmation = () => setConfirmationAction(null);
+
   const handleMutationError = async (error: Error) => {
     const failure = error as ApiFailure;
     if (failure.problem?.status === 401) signOut();
     if (failure.problem?.status === 409) await detailQuery.refetch();
+    closeConfirmation();
   };
 
   const requeueMutation = useMutation({
@@ -50,12 +60,42 @@ export function AdminDeadLetterDetailPage() {
     if (failure?.problem?.status === 401) signOut();
   }, [failure, signOut]);
 
+  useEffect(() => {
+    if (confirmationAction) {
+      confirmButtonRef.current?.focus();
+      return;
+    }
+
+    const previousAction = lastTriggerAction.current;
+    if (!previousAction) return;
+    const trigger = previousAction === 'requeue' ? requeueTriggerRef.current : resolveTriggerRef.current;
+    trigger?.focus();
+    lastTriggerAction.current = null;
+  }, [confirmationAction]);
+
   if (!session) return null;
 
   const item = detailQuery.data?.data;
   const canManage = hasPermission(session.operator.role, 'operations.dead_letters.manage');
   const mutationFailure = (requeueMutation.error ?? resolveMutation.error) as ApiFailure | null;
   const mutationPending = requeueMutation.isPending || resolveMutation.isPending;
+
+  const openConfirmation = (action: RecoveryAction) => {
+    lastTriggerAction.current = action;
+    setConfirmationAction(action);
+  };
+
+  const runConfirmedAction = () => {
+    if (confirmationAction === 'requeue') requeueMutation.mutate();
+    if (confirmationAction === 'resolve') resolveMutation.mutate();
+  };
+
+  const confirmationTitle = confirmationAction === 'requeue'
+    ? 'Confirmar reencolado'
+    : 'Confirmar resolución administrativa';
+  const confirmationDescription = confirmationAction === 'requeue'
+    ? 'El trabajo volverá a la cola para un nuevo intento. Esta acción no se ejecutará hasta que confirmes.'
+    : 'El trabajo se cerrará administrativamente y no será reencolado. Esta acción no se ejecutará hasta que confirmes.';
 
   return (
     <OperatorShell>
@@ -113,14 +153,74 @@ export function AdminDeadLetterDetailPage() {
               </div>
 
               {canManage ? (
-                <div className="recovery-actions">
-                  <button className="recovery-action-button is-requeue" type="button" disabled={mutationPending} onClick={() => requeueMutation.mutate()}>
-                    {requeueMutation.isPending ? 'Reencolando…' : 'Reencolar para nuevo intento'}
-                  </button>
-                  <button className="recovery-action-button is-resolve" type="button" disabled={mutationPending} onClick={() => resolveMutation.mutate()}>
-                    {resolveMutation.isPending ? 'Resolviendo…' : 'Resolver administrativamente'}
-                  </button>
-                </div>
+                <>
+                  <div className="recovery-actions">
+                    <button
+                      ref={requeueTriggerRef}
+                      className="recovery-action-button is-requeue"
+                      type="button"
+                      disabled={mutationPending || confirmationAction !== null}
+                      aria-haspopup="dialog"
+                      aria-expanded={confirmationAction === 'requeue'}
+                      onClick={() => openConfirmation('requeue')}
+                    >
+                      {requeueMutation.isPending ? 'Reencolando…' : 'Reencolar para nuevo intento'}
+                    </button>
+                    <button
+                      ref={resolveTriggerRef}
+                      className="recovery-action-button is-resolve"
+                      type="button"
+                      disabled={mutationPending || confirmationAction !== null}
+                      aria-haspopup="dialog"
+                      aria-expanded={confirmationAction === 'resolve'}
+                      onClick={() => openConfirmation('resolve')}
+                    >
+                      {resolveMutation.isPending ? 'Resolviendo…' : 'Resolver administrativamente'}
+                    </button>
+                  </div>
+
+                  {confirmationAction && (
+                    <div
+                      className={`recovery-confirmation is-${confirmationAction}`}
+                      role="alertdialog"
+                      aria-labelledby="recovery-confirmation-title"
+                      aria-describedby="recovery-confirmation-description recovery-confirmation-version"
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape' && !mutationPending) closeConfirmation();
+                      }}
+                    >
+                      <div className="recovery-confirmation-copy">
+                        <span className="recovery-confirmation-kicker">Confirmación requerida</span>
+                        <h3 id="recovery-confirmation-title">{confirmationTitle}</h3>
+                        <p id="recovery-confirmation-description">{confirmationDescription}</p>
+                        <p id="recovery-confirmation-version" className="recovery-confirmation-version">
+                          Se enviará <code>expectedVersion {item.version}</code>. Si la versión cambió, el 409 refrescará la proyección y no repetirá la mutación automáticamente.
+                        </p>
+                      </div>
+                      <div className="recovery-confirmation-actions">
+                        <button
+                          className="recovery-confirmation-button is-cancel"
+                          type="button"
+                          disabled={mutationPending}
+                          onClick={closeConfirmation}
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          ref={confirmButtonRef}
+                          className={`recovery-confirmation-button is-confirm is-${confirmationAction}`}
+                          type="button"
+                          disabled={mutationPending}
+                          onClick={runConfirmedAction}
+                        >
+                          {confirmationAction === 'requeue'
+                            ? (requeueMutation.isPending ? 'Reencolando…' : 'Sí, reencolar')
+                            : (resolveMutation.isPending ? 'Resolviendo…' : 'Sí, resolver')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="recovery-readonly-note">Modo lectura: falta <code>operations.dead_letters.manage</code>.</div>
               )}

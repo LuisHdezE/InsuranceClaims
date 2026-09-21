@@ -1,0 +1,142 @@
+/* UI-RECOVERY-001 productization layer.
+ * Preserves the existing Recovery R3 visual baseline while making state-changing
+ * dead-letter actions explicit, keyboard-visible and responsive.
+ */
+
+.r3-ui-shell .recovery-confirmation {
+  width: 100%;
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 14px;
+  border: 1px solid #c9d8ea;
+  border-radius: 10px;
+  background: #f8fbff;
+  box-shadow: 0 8px 22px rgba(11, 24, 48, .055);
+}
+
+.r3-ui-shell .recovery-confirmation.is-resolve {
+  border-color: #d7dfd5;
+  background: #f7fbf8;
+}
+
+.r3-ui-shell .recovery-confirmation-copy {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.r3-ui-shell .recovery-confirmation-kicker {
+  color: #5b6b7d;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.r3-ui-shell .recovery-confirmation h3 {
+  margin: 0;
+  color: var(--recovery-ink);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.r3-ui-shell .recovery-confirmation p {
+  margin: 0;
+  color: var(--recovery-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.r3-ui-shell .recovery-confirmation-version {
+  padding-top: 3px;
+}
+
+.r3-ui-shell .recovery-confirmation-version code {
+  color: #52657b;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.r3-ui-shell .recovery-confirmation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.r3-ui-shell .recovery-confirmation-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.r3-ui-shell .recovery-confirmation-button.is-cancel {
+  border: 1px solid var(--recovery-border);
+  background: #fff;
+  color: #344054;
+}
+
+.r3-ui-shell .recovery-confirmation-button.is-confirm.is-requeue {
+  border: 1px solid var(--recovery-primary);
+  background: var(--recovery-primary);
+  color: #fff;
+}
+
+.r3-ui-shell .recovery-confirmation-button.is-confirm.is-resolve {
+  border: 1px solid #b7dbc6;
+  background: #eaf7ef;
+  color: var(--recovery-success);
+}
+
+.r3-ui-shell .recovery-confirmation-button:hover:not(:disabled).is-cancel {
+  border-color: #9dbbe2;
+  background: #f8fbff;
+}
+
+.r3-ui-shell .recovery-confirmation-button:hover:not(:disabled).is-confirm.is-requeue {
+  border-color: var(--recovery-primary-strong);
+  background: var(--recovery-primary-strong);
+}
+
+.r3-ui-shell .recovery-confirmation-button:hover:not(:disabled).is-confirm.is-resolve {
+  border-color: #8fc9a7;
+  background: #def2e7;
+}
+
+.r3-ui-shell .recovery-confirmation-button:focus-visible {
+  outline: 3px solid rgba(15, 95, 204, .18);
+  outline-offset: 2px;
+}
+
+.r3-ui-shell .recovery-confirmation-button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 680px) {
+  .r3-ui-shell .recovery-confirmation {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .r3-ui-shell .recovery-confirmation-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .r3-ui-shell .recovery-confirmation-button {
+    width: 100%;
+  }
+}

@@ -69,18 +69,21 @@ describe('operator navigation integration baseline', () => {
       'Orientación',
       'Automatizaciones',
       'Importaciones gobernadas',
+      'Integraciones y recuperación',
     ]);
-    expect(adminTitles).not.toContain('Integraciones y recuperación');
   });
 
-  it('never lets a pending workspace card become clickable even when the role owns its permission', () => {
-    const pendingAdminCards = OPERATOR_WORKSPACE_CARDS.filter((card) => (
-      card.navPaths.some((path) => operatorNavItemForPath(path)?.maturity === 'pending')
-    ));
+  it('promotes Recovery only for the real role that owns its permissions', () => {
+    const recovery = operatorNavItemForPath('/operator/admin/recovery');
+    expect(recovery).toBeTruthy();
+    expect(recovery?.maturity).toBe('ready');
+    expect(operatorNavItemCanLink(recovery!, 'PLATFORM_ADMIN')).toBe(true);
+    expect(operatorNavItemCanLink(recovery!, 'CLAIMS_SUPERVISOR')).toBe(false);
+    expect(operatorNavItemCanLink(recovery!, 'CLAIMS_OPERATOR')).toBe(false);
 
-    expect(pendingAdminCards.length).toBeGreaterThan(0);
-    for (const card of pendingAdminCards) {
-      expect(operatorWorkspaceCardCanLink(card, 'PLATFORM_ADMIN'), card.title).toBe(false);
-    }
+    const recoveryCard = OPERATOR_WORKSPACE_CARDS.find((card) => card.href === '/operator/admin/recovery');
+    expect(recoveryCard).toBeTruthy();
+    expect(operatorWorkspaceCardCanLink(recoveryCard!, 'PLATFORM_ADMIN')).toBe(true);
+    expect(operatorWorkspaceCardCanLink(recoveryCard!, 'CLAIMS_SUPERVISOR')).toBe(false);
   });
 });

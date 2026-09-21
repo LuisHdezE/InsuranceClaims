@@ -193,7 +193,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '↺',
     group: 'administration',
     allOf: ['operations.integration.read', 'operations.dead_letters.read'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Operaciones de recuperación R3 · Integraciones y dead letters con acceso separado',
   },
 ] as const;

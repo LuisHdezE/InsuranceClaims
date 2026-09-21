@@ -3,9 +3,11 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StaffRole } from '../api/types';
+import { PUBLIC_DEMO_PERSONAS } from '../demo-access';
 import { StaffWorkspacePage } from './StaffWorkspacePage';
 
 const sessionState = vi.hoisted(() => ({
+  id: 'operator-1',
   role: 'PLATFORM_ADMIN' as StaffRole,
 }));
 
@@ -15,7 +17,7 @@ vi.mock('../flow/OperatorSessionContext', () => ({
       accessToken: 'test-token',
       expiresAt: Date.now() + 60_000,
       operator: {
-        id: 'operator-1',
+        id: sessionState.id,
         login: 'staff@example.test',
         role: sessionState.role,
       },
@@ -39,6 +41,7 @@ function renderWorkspace() {
 
 describe('StaffWorkspacePage', () => {
   beforeEach(() => {
+    sessionState.id = 'operator-1';
     sessionState.role = 'PLATFORM_ADMIN';
   });
 
@@ -51,7 +54,7 @@ describe('StaffWorkspacePage', () => {
 
     expect(screen.getByRole('heading', { name: 'Tu espacio de trabajo' })).toBeTruthy();
     expect(screen.getAllByText('Administrador de plataforma').length).toBeGreaterThan(0);
-    expect(screen.getByText('7 módulos disponibles')).toBeTruthy();
+    expect(screen.getByText('8 módulos disponibles')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Supervisión' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Configuración de plataforma' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Operación técnica' })).toBeTruthy();
@@ -65,14 +68,13 @@ describe('StaffWorkspacePage', () => {
       'Orientación',
       'Automatizaciones',
       'Importaciones gobernadas',
+      'Integraciones y recuperación',
     ];
 
     for (const name of expectedLinks) {
       expect(screen.getByRole('link', { name: new RegExp(name, 'i') })).toBeTruthy();
     }
     expect(screen.getAllByRole('link')).toHaveLength(expectedLinks.length);
-
-    expect(screen.queryByRole('link', { name: /Integraciones y recuperación/i })).toBeNull();
 
     expect(screen.queryByText('Custom Fields')).toBeNull();
     expect(screen.queryByText('Guidance')).toBeNull();
@@ -84,6 +86,15 @@ describe('StaffWorkspacePage', () => {
     expect(screen.queryByText(/UI planificada/i)).toBeNull();
     expect(screen.queryByText(/permisos de presentación/i)).toBeNull();
     expect(screen.getByText(/Sin superusuario implícito/i)).toBeTruthy();
+  });
+
+  it('keeps Recovery out of the public Administration demo workspace', () => {
+    sessionState.id = PUBLIC_DEMO_PERSONAS.administration.id;
+    renderWorkspace();
+
+    expect(screen.getByText('7 módulos disponibles')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Importaciones gobernadas/i })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /Integraciones y recuperación/i })).toBeNull();
   });
 
   it('gives Claims Supervisor concise operations plus Analítica but no platform administration', () => {

@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StaffRole } from '../api/types';
-import { PUBLIC_DEMO_OPERATOR_ID } from '../demo-access';
+import { PUBLIC_DEMO_OPERATOR_ID, PUBLIC_DEMO_PERSONAS } from '../demo-access';
 import { OperatorShell } from './OperatorShell';
 
 const sessionState = vi.hoisted(() => ({
@@ -87,10 +87,7 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('link', { name: /^Orientación$/ }).getAttribute('href')).toBe('/operator/admin/guidance');
     expect(screen.getByRole('link', { name: /^Automatizaciones$/ }).getAttribute('href')).toBe('/operator/admin/automations');
     expect(screen.getByRole('link', { name: /^Importaciones$/ }).getAttribute('href')).toBe('/operator/admin/imports');
-
-    const recovery = screen.getByText('Recuperación');
-    expect(recovery.closest('[aria-disabled="true"]')).toBeTruthy();
-    expect(screen.queryByRole('link', { name: /^Recuperación$/ })).toBeNull();
+    expect(screen.getByRole('link', { name: /^Recuperación$/ }).getAttribute('href')).toBe('/operator/admin/recovery');
 
     expect(screen.queryByText('Tablero')).toBeNull();
     expect(screen.queryByText('Siniestros')).toBeNull();
@@ -143,6 +140,23 @@ describe('OperatorShell', () => {
       expect(nav.queryByText(hiddenLabel)).toBeNull();
     }
     expect(navigation.querySelectorAll('[aria-disabled="true"]')).toHaveLength(0);
+  });
+
+  it('keeps Recovery hidden from the public Administration persona after productization', () => {
+    sessionState.id = PUBLIC_DEMO_PERSONAS.administration.id;
+    sessionState.role = 'PLATFORM_ADMIN';
+
+    render(
+      <MemoryRouter initialEntries={['/operator/workspace']}>
+        <OperatorShell><div>Contenido</div></OperatorShell>
+      </MemoryRouter>,
+    );
+
+    const navigation = screen.getByRole('navigation');
+    const nav = within(navigation);
+    expect(nav.getByRole('link', { name: /^Importaciones$/ })).toBeTruthy();
+    expect(nav.queryByRole('link', { name: /^Recuperación$/ })).toBeNull();
+    expect(nav.queryByText('Recuperación')).toBeNull();
   });
 
   it('keeps logout wired to the existing session action', () => {
