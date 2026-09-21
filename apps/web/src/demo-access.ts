@@ -54,6 +54,10 @@ const DEMO_DETAIL_ROUTES = new Set([
   '/operator/admin/imports',
 ]);
 
+const DEMO_BLOCKED_ROUTE_PREFIXES = [
+  '/operator/admin/recovery',
+] as const;
+
 export function demoPersonaForOperator(
   operator: Pick<OperatorIdentity, 'id'> | null | undefined,
 ): DemoPersonaKey | null {
@@ -68,6 +72,13 @@ export function isPublicDemoPath(pathname: string, role: StaffRole): boolean {
   const normalizedPath = pathname.length > 1 && pathname.endsWith('/')
     ? pathname.slice(0, -1)
     : pathname;
+
+  if (DEMO_BLOCKED_ROUTE_PREFIXES.some((prefix) => (
+    normalizedPath === prefix || normalizedPath.startsWith(`${prefix}/`)
+  ))) {
+    return false;
+  }
+
   const item = OPERATOR_NAV_ITEMS.find((candidate) => (
     normalizedPath === candidate.to || normalizedPath.startsWith(`${candidate.to}/`)
   ));
