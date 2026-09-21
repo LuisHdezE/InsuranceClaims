@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { listAdminAutomations } from '../api/automation-admin';
@@ -30,7 +30,7 @@ export function AdminAutomationsPage() {
   const result = automationsQuery.data?.data;
   const items = result?.items ?? [];
   const demoReadOnly = isPublicDemoOperator(session.operator);
-  const summary = useMemo(() => summarizePage(items), [items]);
+  const summary = summarizePage(items);
 
   return (
     <OperatorShell>
