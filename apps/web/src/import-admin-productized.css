@@ -1,0 +1,385 @@
+/* UI-IMPORTS-001: productized governed-import audit experience.
+ * This layer refines the existing R3 import styles without changing the domain workflow.
+ */
+
+.r3-ui-shell .imports-r3-directory,
+.r3-ui-shell .imports-r3-detail {
+  gap: 18px;
+}
+
+.r3-ui-shell .imports-r3-heading h1,
+.r3-ui-shell .imports-r3-detail-hero h1 {
+  font-size: clamp(28px, 3vw, 38px);
+  letter-spacing: -.035em;
+}
+
+.r3-ui-shell .imports-r3-demo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  border: 1px solid #c9daf2;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #f5f9ff 0%, #eef5ff 100%);
+  color: #24436f;
+}
+
+.r3-ui-shell .imports-r3-demo-banner > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.r3-ui-shell .imports-r3-demo-banner strong {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.r3-ui-shell .imports-r3-demo-banner span {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.r3-ui-shell .imports-r3-demo-role,
+.r3-ui-shell .imports-r3-readonly-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid #a9c4e9;
+  border-radius: 999px;
+  background: #fff;
+  color: #245b9e;
+  font-size: 9px !important;
+  font-weight: 900;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.r3-ui-shell .imports-r3-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.r3-ui-shell .imports-r3-summary-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 4px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dce4ee;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(11, 24, 48, .04);
+}
+
+.r3-ui-shell .imports-r3-summary-mark {
+  width: 4px;
+  min-height: 58px;
+  border-radius: 999px;
+  background: #3b82f6;
+}
+
+.r3-ui-shell .imports-r3-summary-card.is-green .imports-r3-summary-mark { background: #2f8a5c; }
+.r3-ui-shell .imports-r3-summary-card.is-red .imports-r3-summary-mark { background: #c85a55; }
+.r3-ui-shell .imports-r3-summary-card.is-yellow .imports-r3-summary-mark { background: #c79521; }
+
+.r3-ui-shell .imports-r3-summary-card > div {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+}
+
+.r3-ui-shell .imports-r3-summary-card span:not(.imports-r3-summary-mark) {
+  color: #667085;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.r3-ui-shell .imports-r3-summary-card strong {
+  color: #172033;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.r3-ui-shell .imports-r3-summary-card small {
+  color: #7b8798;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.r3-ui-shell .imports-r3-panel {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.r3-ui-shell .imports-r3-panel-heading {
+  padding: 16px 18px;
+  border-bottom: 1px solid #e5ebf2;
+}
+
+.r3-ui-shell .imports-r3-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.r3-ui-shell .imports-r3-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+}
+
+.r3-ui-shell .imports-r3-table th,
+.r3-ui-shell .imports-r3-table td {
+  padding: 12px 13px;
+  border-bottom: 1px solid #edf1f5;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.r3-ui-shell .imports-r3-table th {
+  background: #f8fafc;
+  color: #667085;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.r3-ui-shell .imports-r3-table td {
+  color: #344054;
+  font-size: 11px;
+}
+
+.r3-ui-shell .imports-r3-table tbody tr:hover {
+  background: #fbfdff;
+}
+
+.r3-ui-shell .imports-r3-type-cell {
+  min-width: 220px;
+}
+
+.r3-ui-shell .imports-r3-type-cell > a {
+  display: block;
+  color: #172033;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.r3-ui-shell .imports-r3-type-cell > a:hover,
+.r3-ui-shell .imports-r3-open-cell a:hover {
+  color: #0f5fcc;
+  text-decoration: underline;
+}
+
+.r3-ui-shell .imports-r3-type-cell code {
+  display: block;
+  margin-top: 4px;
+  color: #98a2b3;
+  font-size: 9px;
+}
+
+.r3-ui-shell .imports-r3-number {
+  text-align: center !important;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+.r3-ui-shell .imports-r3-date {
+  min-width: 150px;
+  color: #667085 !important;
+  white-space: nowrap;
+}
+
+.r3-ui-shell .imports-r3-open-cell {
+  min-width: 130px;
+  text-align: right !important;
+}
+
+.r3-ui-shell .imports-r3-open-cell a {
+  color: #0f5fcc;
+  font-size: 10px;
+  font-weight: 850;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.r3-ui-shell .imports-r3-footer {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  color: #667085;
+  font-size: 10px;
+  background: #fbfcfe;
+}
+
+.r3-ui-shell .imports-r3-footer .gi-pagination {
+  margin: 0;
+}
+
+.r3-ui-shell .gi-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #98a2b3;
+  font-size: 10px;
+}
+
+.r3-ui-shell .gi-breadcrumbs a {
+  color: #526071;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.r3-ui-shell .imports-r3-detail-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid #d6dee8;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(11, 24, 48, .045);
+}
+
+.r3-ui-shell .imports-r3-detail-hero > div:first-child {
+  min-width: 0;
+}
+
+.r3-ui-shell .imports-r3-detail-hero h1 {
+  margin: 5px 0 6px;
+  color: #172033;
+  line-height: 1.08;
+}
+
+.r3-ui-shell .imports-r3-detail-hero p {
+  max-width: 760px;
+  margin: 0 0 8px;
+  color: #667085;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.r3-ui-shell .imports-r3-detail-hero code {
+  color: #98a2b3;
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+.r3-ui-shell .imports-r3-detail-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.r3-ui-shell .imports-r3-detail-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.r3-ui-shell .imports-r3-lifecycle-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.r3-ui-shell .imports-r3-lifecycle-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.r3-ui-shell .imports-r3-lifecycle-meta span,
+.r3-ui-shell .imports-r3-mapping-grid span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px;
+  border: 1px solid #e6ebf2;
+  border-radius: 9px;
+  background: #f9fbfd;
+}
+
+.r3-ui-shell .imports-r3-lifecycle-meta small,
+.r3-ui-shell .imports-r3-mapping-grid small {
+  color: #7b8798;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.r3-ui-shell .imports-r3-lifecycle-meta strong,
+.r3-ui-shell .imports-r3-mapping-grid strong {
+  color: #344054;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.r3-ui-shell .imports-r3-mapping {
+  display: grid;
+  gap: 13px;
+}
+
+.r3-ui-shell .imports-r3-mapping-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.r3-ui-shell .imports-r3-rows .gi-table-wrap {
+  border: 1px solid #e4eaf1;
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.r3-ui-shell .imports-r3-rows table {
+  min-width: 720px;
+}
+
+@media (max-width: 1100px) {
+  .r3-ui-shell .imports-r3-summary,
+  .r3-ui-shell .imports-r3-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .r3-ui-shell .imports-r3-demo-banner,
+  .r3-ui-shell .imports-r3-detail-hero,
+  .r3-ui-shell .imports-r3-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .r3-ui-shell .imports-r3-detail-actions {
+    justify-content: flex-start;
+  }
+
+  .r3-ui-shell .imports-r3-summary,
+  .r3-ui-shell .imports-r3-detail-grid,
+  .r3-ui-shell .imports-r3-mapping-grid,
+  .r3-ui-shell .imports-r3-lifecycle-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .r3-ui-shell .imports-r3-demo-role,
+  .r3-ui-shell .imports-r3-readonly-badge {
+    width: fit-content;
+  }
+}

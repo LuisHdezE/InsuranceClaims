@@ -51,6 +51,7 @@ const DEMO_DETAIL_ROUTES = new Set([
   '/operator/admin/communication-templates',
   '/operator/admin/custom-fields',
   '/operator/admin/automations',
+  '/operator/admin/imports',
 ]);
 
 export function demoPersonaForOperator(

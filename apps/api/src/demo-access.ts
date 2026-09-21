@@ -10,7 +10,8 @@ export type PublicDemoFixtureKind =
   | 'pipeline'
   | 'communicationTemplate'
   | 'customField'
-  | 'automation';
+  | 'automation'
+  | 'importJob';
 
 export const PUBLIC_DEMO_ACCESS_HEADER = 'x-demo-read-only';
 export const PUBLIC_DEMO_PERSONA_HEADER = 'x-demo-persona';
@@ -79,6 +80,12 @@ export const PUBLIC_DEMO_FIXTURES = {
     'a5000000-0000-4000-8000-000000000004',
     'a5000000-0000-4000-8000-000000000005',
     'a5000000-0000-4000-8000-000000000006',
+  ],
+  importJob: [
+    'a6000000-0000-4000-8000-000000000001',
+    'a6000000-0000-4000-8000-000000000002',
+    'a6000000-0000-4000-8000-000000000003',
+    'a6000000-0000-4000-8000-000000000004',
   ],
 } as const satisfies Record<PublicDemoFixtureKind, readonly string[]>;
 
@@ -161,6 +168,11 @@ function matchesGovernedDetail(path: string, prefix: string, kind: PublicDemoFix
   return Boolean(match?.[1] && isPublicDemoFixtureId(kind, match[1]));
 }
 
+function matchesGovernedChild(path: string, prefix: string, child: string, kind: PublicDemoFixtureKind): boolean {
+  const match = path.match(new RegExp(`^${prefix}/([0-9a-f-]{36})/${child}$`, 'i'));
+  return Boolean(match?.[1] && isPublicDemoFixtureId(kind, match[1]));
+}
+
 export function isAllowedPublicDemoReadPath(
   path: unknown,
   actor: Pick<ActorContext, 'operatorId'> | undefined,
@@ -202,6 +214,9 @@ export function isAllowedPublicDemoReadPath(
     if (matchesGovernedDetail(path, '/api/v1/admin/custom-fields', 'customField')) return true;
     if (path === '/api/v1/admin/automations') return true;
     if (matchesGovernedDetail(path, '/api/v1/admin/automations', 'automation')) return true;
+    if (path === '/api/v1/admin/import-jobs') return true;
+    if (matchesGovernedDetail(path, '/api/v1/admin/import-jobs', 'importJob')) return true;
+    if (matchesGovernedChild(path, '/api/v1/admin/import-jobs', 'rows', 'importJob')) return true;
   }
 
   return false;

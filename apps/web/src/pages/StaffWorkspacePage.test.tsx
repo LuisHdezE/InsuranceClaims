@@ -51,10 +51,10 @@ describe('StaffWorkspacePage', () => {
 
     expect(screen.getByRole('heading', { name: 'Tu espacio de trabajo' })).toBeTruthy();
     expect(screen.getAllByText('Administrador de plataforma').length).toBeGreaterThan(0);
-    expect(screen.getByText('6 módulos disponibles')).toBeTruthy();
+    expect(screen.getByText('7 módulos disponibles')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Supervisión' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Configuración de plataforma' })).toBeTruthy();
-    expect(screen.queryByRole('heading', { name: 'Operación técnica' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Operación técnica' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Operación' })).toBeNull();
 
     const expectedLinks = [
@@ -64,6 +64,7 @@ describe('StaffWorkspacePage', () => {
       'Campos personalizados',
       'Orientación',
       'Automatizaciones',
+      'Importaciones gobernadas',
     ];
 
     for (const name of expectedLinks) {
@@ -71,12 +72,7 @@ describe('StaffWorkspacePage', () => {
     }
     expect(screen.getAllByRole('link')).toHaveLength(expectedLinks.length);
 
-    for (const pending of [
-      'Importaciones gobernadas',
-      'Integraciones y recuperación',
-    ]) {
-      expect(screen.queryByRole('link', { name: new RegExp(pending, 'i') })).toBeNull();
-    }
+    expect(screen.queryByRole('link', { name: /Integraciones y recuperación/i })).toBeNull();
 
     expect(screen.queryByText('Custom Fields')).toBeNull();
     expect(screen.queryByText('Guidance')).toBeNull();
