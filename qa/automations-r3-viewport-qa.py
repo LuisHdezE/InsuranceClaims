@@ -179,7 +179,7 @@ try:
 
     if len(driver.find_elements(By.CSS_SELECTOR, ".automations-r3-detail .aa-version-card")) != 2:
         raise AssertionError("Governed automation detail must expose its two synthetic versions")
-    if "Solo lectura" not in driver.find_element(By.CSS_SELECTOR, ".automations-r3-readonly-badge").text:
+    if "solo lectura" not in driver.find_element(By.CSS_SELECTOR, ".automations-r3-readonly-badge").text.lower():
         raise AssertionError("Automation detail must disclose public demo read-only mode")
 
     for width, height in TARGETS:
