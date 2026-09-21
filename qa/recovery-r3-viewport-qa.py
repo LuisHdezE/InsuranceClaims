@@ -139,8 +139,13 @@ try:
         results.append({"surface": "directory", "width": width, "height": height, **metric, "gridColumns": columns, "screenshot": shot, "fullPageScreenshot": full})
 
     viewport(1366, 768)
-    wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(normalize-space(.),'Inspeccionar')]"))).click()
-    wait.until(lambda d: d.current_url.endswith(f"/operator/admin/recovery/dead-letters/{DEAD_LETTER_ID}"))
+    inspect_link = wait.until(EC.visibility_of_element_located((By.XPATH, "//a[contains(normalize-space(.),'Inspeccionar')]")))
+    expected_detail_path = f"/operator/admin/recovery/dead-letters/{DEAD_LETTER_ID}"
+    inspect_href = inspect_link.get_attribute("href") or ""
+    if not inspect_href.endswith(expected_detail_path):
+        raise AssertionError(f"Recovery inspect href drifted: {inspect_href}")
+    spa(expected_detail_path)
+    wait.until(lambda d: d.current_url.endswith(expected_detail_path))
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".recovery-actions")))
 
     for width, height in TARGETS:
