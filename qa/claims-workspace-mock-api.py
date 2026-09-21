@@ -140,6 +140,7 @@ PAGINATED_EMPTY_PATHS = {
     "/api/v1/admin/custom-fields",
     "/api/v1/admin/guidance",
     "/api/v1/admin/automations",
+    "/api/v1/admin/import-jobs",
 }
 
 
