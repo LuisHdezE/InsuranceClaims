@@ -175,7 +175,7 @@ export const OPERATOR_NAV_ITEMS: readonly OperatorNavItem[] = [
     glyph: '⚙',
     group: 'administration',
     allOf: ['automations.admin'],
-    maturity: 'pending',
+    maturity: 'ready',
     context: 'Administración de automatizaciones R3 · Reglas versionadas con disparadores y acciones permitidas',
   },
   {
