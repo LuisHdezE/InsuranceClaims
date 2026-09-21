@@ -1,4 +1,5 @@
 name: Visual Functional Review Evidence - Web
+# Evidence refresh trigger: post UI-IMPORTS-001 / PR #145 merge 94fd3460bf20034a7805ab5e88cc7a455d0ce8a5
 
 on:
   push:
