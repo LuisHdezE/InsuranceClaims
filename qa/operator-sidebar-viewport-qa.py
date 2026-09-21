@@ -58,12 +58,12 @@ PERSONAS = {
             "/operator/admin/custom-fields",
             "/operator/admin/guidance",
             "/operator/admin/automations",
+            "/operator/admin/imports",
         },
     },
 }
 
 PENDING_PATHS = {
-    "/operator/admin/imports",
     "/operator/admin/recovery",
 }
 
