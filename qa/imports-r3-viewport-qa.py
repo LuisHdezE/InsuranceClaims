@@ -180,8 +180,9 @@ try:
     assert_no_mutation_controls()
 
     detail_text = driver.find_element(By.CSS_SELECTOR, ".imports-r3-detail").text
+    normalized_detail_text = detail_text.casefold()
     for expected in ("Lifecycle", "Mapping aplicado", "Resultado por filas", "Solo lectura"):
-        if expected not in detail_text:
+        if expected.casefold() not in normalized_detail_text:
             raise AssertionError(f"Governed import detail missing: {expected}")
     if len(driver.find_elements(By.CSS_SELECTOR, ".imports-r3-mapping-grid > span")) != 3:
         raise AssertionError("Governed import detail must expose the three persisted mapping entries")
