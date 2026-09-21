@@ -16,7 +16,7 @@ export class DeadLetterAdminController {
   ) {}
 
   private rate(req: any, mutation: boolean): void {
-    this.limits.consume(`dead-letter-admin-${mutation ? 'write' : 'read'}:${req.actor?.operatorId ?? callerIp(req)}`, mutation ? 30 : 120, 60);
+    this.limits.consume(`dead-letter-admin-${mutation ? 'write' : 'read'}:${req.actor?.operatorId ?? callerIp(req)}`, mutation ? 20 : 120, 60);
   }
 
   @Get()
