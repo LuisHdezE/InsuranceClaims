@@ -67,8 +67,8 @@ describe('operator navigation integration baseline', () => {
       'Plantillas de comunicación',
       'Campos personalizados',
       'Orientación',
+      'Automatizaciones',
     ]);
-    expect(adminTitles).not.toContain('Automatizaciones');
     expect(adminTitles).not.toContain('Importaciones gobernadas');
     expect(adminTitles).not.toContain('Integraciones y recuperación');
   });

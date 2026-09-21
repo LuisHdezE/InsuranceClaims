@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AUTOMATION_TRIGGER_EVENTS } from '@insurance/application/automation-admin';
 import { API_RUNTIME, type ApiRuntimeContract } from './contracts.js';
 import { JwtAuthGuard } from './auth.guard.js';
+import { isPublicDemoOperator, scopePublicDemoPage } from './demo-access.js';
 import { RateLimitService, callerIp } from './transport.js';
 
 const uuidSchema = z.string().uuid();
@@ -67,6 +68,14 @@ export class AutomationAdminController {
       page: z.coerce.number().int().min(1).optional(),
       pageSize: z.coerce.number().int().min(1).max(100).optional(),
     }).parse(query);
+
+    if (isPublicDemoOperator(req.actor)) {
+      const page = parsed.page ?? 1;
+      const pageSize = parsed.pageSize ?? 25;
+      const catalog = await this.runtime.automationAdmin.listAutomations({ page: 1, pageSize: 100 }, req.actor);
+      return scopePublicDemoPage(catalog.items, 'automation', (item) => item.definitionId, page, pageSize);
+    }
+
     return this.runtime.automationAdmin.listAutomations(parsed, req.actor);
   }
 

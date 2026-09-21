@@ -85,12 +85,9 @@ describe('OperatorShell', () => {
     expect(screen.getByRole('link', { name: /^Plantillas$/ }).getAttribute('href')).toBe('/operator/admin/communication-templates');
     expect(screen.getByRole('link', { name: /^Campos$/ }).getAttribute('href')).toBe('/operator/admin/custom-fields');
     expect(screen.getByRole('link', { name: /^Orientación$/ }).getAttribute('href')).toBe('/operator/admin/guidance');
+    expect(screen.getByRole('link', { name: /^Automatizaciones$/ }).getAttribute('href')).toBe('/operator/admin/automations');
 
-    const pendingLabels = [
-      'Automatizaciones',
-      'Importaciones',
-      'Recuperación',
-    ];
+    const pendingLabels = ['Importaciones', 'Recuperación'];
     for (const label of pendingLabels) {
       const text = screen.getByText(label);
       expect(text.closest('[aria-disabled="true"]')).toBeTruthy();

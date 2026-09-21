@@ -57,12 +57,12 @@ PERSONAS = {
             "/operator/admin/communication-templates",
             "/operator/admin/custom-fields",
             "/operator/admin/guidance",
+            "/operator/admin/automations",
         },
     },
 }
 
 PENDING_PATHS = {
-    "/operator/admin/automations",
     "/operator/admin/imports",
     "/operator/admin/recovery",
 }
@@ -73,6 +73,7 @@ FORBIDDEN_WRITE_LABELS = {
     "/operator/admin/communication-templates": ("Nueva plantilla",),
     "/operator/admin/custom-fields": ("Nuevo campo",),
     "/operator/admin/guidance": ("Nueva orientación",),
+    "/operator/admin/automations": ("Nueva automatización",),
 }
 
 ADMIN_WRITE_ROUTES = (
@@ -84,6 +85,8 @@ ADMIN_WRITE_ROUTES = (
     "/operator/admin/custom-fields/00000000-0000-4000-8000-000000000001/versions/new",
     "/operator/admin/guidance/new",
     "/operator/admin/guidance/00000000-0000-4000-8000-000000000001/versions/new",
+    "/operator/admin/automations/new",
+    "/operator/admin/automations/a5000000-0000-4000-8000-000000000001/versions/new",
 )
 
 options = webdriver.ChromeOptions()

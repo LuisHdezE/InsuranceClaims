@@ -9,7 +9,8 @@ export type PublicDemoFixtureKind =
   | 'collection'
   | 'pipeline'
   | 'communicationTemplate'
-  | 'customField';
+  | 'customField'
+  | 'automation';
 
 export const PUBLIC_DEMO_ACCESS_HEADER = 'x-demo-read-only';
 export const PUBLIC_DEMO_PERSONA_HEADER = 'x-demo-persona';
@@ -71,6 +72,14 @@ export const PUBLIC_DEMO_FIXTURES = {
   ],
   communicationTemplate: [],
   customField: [],
+  automation: [
+    'a5000000-0000-4000-8000-000000000001',
+    'a5000000-0000-4000-8000-000000000002',
+    'a5000000-0000-4000-8000-000000000003',
+    'a5000000-0000-4000-8000-000000000004',
+    'a5000000-0000-4000-8000-000000000005',
+    'a5000000-0000-4000-8000-000000000006',
+  ],
 } as const satisfies Record<PublicDemoFixtureKind, readonly string[]>;
 
 const PUBLIC_DEMO_CLAIM_IDS = new Set<string>(PUBLIC_DEMO_CLAIMS.map((claim) => claim.claimId));
@@ -191,6 +200,8 @@ export function isAllowedPublicDemoReadPath(
     if (matchesGovernedDetail(path, '/api/v1/admin/communication-templates', 'communicationTemplate')) return true;
     if (path === '/api/v1/admin/custom-fields') return true;
     if (matchesGovernedDetail(path, '/api/v1/admin/custom-fields', 'customField')) return true;
+    if (path === '/api/v1/admin/automations') return true;
+    if (matchesGovernedDetail(path, '/api/v1/admin/automations', 'automation')) return true;
   }
 
   return false;
