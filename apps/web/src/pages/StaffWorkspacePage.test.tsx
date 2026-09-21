@@ -51,7 +51,7 @@ describe('StaffWorkspacePage', () => {
 
     expect(screen.getByRole('heading', { name: 'Tu espacio de trabajo' })).toBeTruthy();
     expect(screen.getAllByText('Administrador de plataforma').length).toBeGreaterThan(0);
-    expect(screen.getByText('5 módulos disponibles')).toBeTruthy();
+    expect(screen.getByText('6 módulos disponibles')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Supervisión' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Configuración de plataforma' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Operación técnica' })).toBeNull();
@@ -63,6 +63,7 @@ describe('StaffWorkspacePage', () => {
       'Plantillas de comunicación',
       'Campos personalizados',
       'Orientación',
+      'Automatizaciones',
     ];
 
     for (const name of expectedLinks) {
@@ -71,7 +72,6 @@ describe('StaffWorkspacePage', () => {
     expect(screen.getAllByRole('link')).toHaveLength(expectedLinks.length);
 
     for (const pending of [
-      'Automatizaciones',
       'Importaciones gobernadas',
       'Integraciones y recuperación',
     ]) {
@@ -80,7 +80,6 @@ describe('StaffWorkspacePage', () => {
 
     expect(screen.queryByText('Custom Fields')).toBeNull();
     expect(screen.queryByText('Guidance')).toBeNull();
-    expect(screen.queryByText('Automations')).toBeNull();
     expect(screen.queryByText('Imports gobernados')).toBeNull();
     expect(screen.queryByText('Siniestros y trabajo operativo')).toBeNull();
     expect(screen.queryByText('Clientes y pólizas')).toBeNull();
@@ -106,6 +105,7 @@ describe('StaffWorkspacePage', () => {
     expect(screen.getByRole('link', { name: /Cobranzas/i })).toBeTruthy();
     expect(screen.getByRole('link', { name: /Métricas operacionales/i })).toBeTruthy();
     expect(screen.queryByText('Administración de pipelines')).toBeNull();
+    expect(screen.queryByText('Automatizaciones')).toBeNull();
     expect(screen.queryByText('Importaciones gobernadas')).toBeNull();
   });
 
