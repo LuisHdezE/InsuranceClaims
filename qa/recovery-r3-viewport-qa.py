@@ -109,7 +109,7 @@ try:
     driver.get(f"{BASE}/operator/login")
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#operator-login"))).send_keys("demo.admin@eliasworks.invalid")
     driver.find_element(By.CSS_SELECTOR, "#operator-password").send_keys("visual-qa-password")
-    driver.find_element(By.XPATH, "//button[normalize-space(.)='Ingresar al workspace']").click()
+    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label='Ingresar al workspace']"))).click()
     wait.until(lambda d: d.current_url.endswith("/operator/workspace"))
 
     spa("/operator/admin/recovery")
