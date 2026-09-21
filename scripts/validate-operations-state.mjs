@@ -4,14 +4,19 @@ import { execFileSync } from 'node:child_process';
 const HISTORICAL_RELEASE_BASELINE = '49c52a380e3a5c40ec1c1ee72e5c114b5607019f';
 const HISTORICAL_OPERATIONS_CANDIDATE = '2a10afc8e1b99d8e656ea5511c334235df444e69';
 const HISTORICAL_OPERATIONS_MERGE = 'b450204d8fbed14660dde90a900c21211875e5d7';
-const PRIOR_GOVERNED_BASELINE = 'b2f089476559795f30a3c0eec2b05fd0ac32531f';
-const CURRENT_GOVERNED_BASELINE = 'c107703e5d1f41058fb18b878cc1833afb9d85ff';
-const RELEASE_GATE_RECONCILIATION_MERGE = '50c77fec8482e87295ec7cfd4b800a132557a728';
+const EARLIER_GOVERNED_BASELINE = 'b2f089476559795f30a3c0eec2b05fd0ac32531f';
+const PRIOR_GOVERNED_BASELINE = 'c107703e5d1f41058fb18b878cc1833afb9d85ff';
+const CURRENT_GOVERNED_BASELINE = 'ecd8bb99e49a3393d821de2349fad1eb44cc4339';
+const PRIOR_RELEASE_GATE_RECONCILIATION_MERGE = '50c77fec8482e87295ec7cfd4b800a132557a728';
+const CURRENT_RELEASE_GATE_RECONCILIATION_MERGE = '06f730418518784246d8bf416260483ca4347290';
 const R3_RELEASE_COMMIT = '014b2a4c4c38d94b07346aaa54bc32a8bbb7c5f9';
-const PRIOR_VFR_REVIEWED_COMMIT = 'a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a';
-const FRESH_VFR_REVIEWED_COMMIT = '1f774dc4f3c0ce4a02b3c3caa664c78f304e7de1';
-const CURRENT_OBSERVABILITY_REVALIDATION_RUN = '35530710935';
-const CURRENT_OBSERVABILITY_REVALIDATION_HEAD = 'bbb5a67a7757742b6ccc87e097dab91895eb324e';
+const EARLIER_VFR_REVIEWED_COMMIT = 'a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a';
+const PRIOR_VFR_REVIEWED_COMMIT = '1f774dc4f3c0ce4a02b3c3caa664c78f304e7de1';
+const FRESH_VFR_REVIEWED_COMMIT = '37fb75846e0cd38a88d8773c937bc42d6c408d57';
+const PRIOR_OBSERVABILITY_REVALIDATION_RUN = '35530710935';
+const PRIOR_OBSERVABILITY_REVALIDATION_HEAD = 'bbb5a67a7757742b6ccc87e097dab91895eb324e';
+const CURRENT_OBSERVABILITY_REVALIDATION_RUN = '35607410451';
+const CURRENT_OBSERVABILITY_REVALIDATION_HEAD = '56e182f57c2509512f60d6585a5c490b76ffa05c';
 const EVIDENCE_ID = 'EVD-OPERATIONS-OBSERVABILITY-001';
 const EVIDENCE_FILE = 'documentation/operations/OPERATIONS_OBSERVABILITY_EVIDENCE.md';
 const RUNBOOK_FILE = 'documentation/operations/OPERATIONS_RUNBOOK.md';
@@ -121,10 +126,13 @@ for (const marker of [
   'ba7f519f36567b142604e213f50e13de4732348d',
   '05bb93081248c02ecfb93b7b77477bd4862d3281',
   'db9d8092d9ed34be283bef0b1908aa7c7a6c8ab9',
+  PRIOR_GOVERNED_BASELINE,
   CURRENT_GOVERNED_BASELINE,
   R3_RELEASE_COMMIT,
+  PRIOR_VFR_REVIEWED_COMMIT,
   FRESH_VFR_REVIEWED_COMMIT,
   'Apruebo VFR fresco PR #140',
+  'Apruebo VFR fresco PR #146',
   'API-IMPACT-001',
   'API-IMPACT-002',
   'v0.3.0',
@@ -137,21 +145,27 @@ for (const marker of [
   HISTORICAL_RELEASE_BASELINE,
   HISTORICAL_OPERATIONS_CANDIDATE,
   HISTORICAL_OPERATIONS_MERGE,
+  EARLIER_GOVERNED_BASELINE,
   PRIOR_GOVERNED_BASELINE,
   CURRENT_GOVERNED_BASELINE,
-  RELEASE_GATE_RECONCILIATION_MERGE,
+  PRIOR_RELEASE_GATE_RECONCILIATION_MERGE,
+  CURRENT_RELEASE_GATE_RECONCILIATION_MERGE,
   R3_RELEASE_COMMIT,
+  EARLIER_VFR_REVIEWED_COMMIT,
   PRIOR_VFR_REVIEWED_COMMIT,
   FRESH_VFR_REVIEWED_COMMIT,
   MACHINE_COMMIT,
   MACHINE_RUN,
   '34119017625',
   '35482185068',
+  PRIOR_OBSERVABILITY_REVALIDATION_RUN,
+  PRIOR_OBSERVABILITY_REVALIDATION_HEAD,
   CURRENT_OBSERVABILITY_REVALIDATION_RUN,
   CURRENT_OBSERVABILITY_REVALIDATION_HEAD,
   'API-IMPACT-001',
   'API-IMPACT-002',
   'Apruebo VFR fresco PR #140',
+  'Apruebo VFR fresco PR #146',
   'v0.3.0',
 ]) {
   assert(lineage.includes(marker), `Operations lineage reconciliation missing marker: ${marker}`);
@@ -160,13 +174,18 @@ for (const marker of [
 assert(isAncestor(HISTORICAL_RELEASE_BASELINE, HISTORICAL_OPERATIONS_CANDIDATE), 'historical Release baseline must remain ancestor of Operations candidate');
 assert(isAncestor(HISTORICAL_OPERATIONS_CANDIDATE, HISTORICAL_OPERATIONS_MERGE), 'historical Operations candidate must remain ancestor of Operations merge');
 assert(isAncestor(HISTORICAL_OPERATIONS_MERGE, R3_RELEASE_COMMIT), 'R3 release must descend from the historical Operations completion');
-assert(isAncestor(R3_RELEASE_COMMIT, PRIOR_GOVERNED_BASELINE), 'prior Operations lineage checkpoint must descend from the R3 release');
+assert(isAncestor(R3_RELEASE_COMMIT, EARLIER_GOVERNED_BASELINE), 'earlier Operations lineage checkpoint must descend from the R3 release');
+assert(isAncestor(EARLIER_GOVERNED_BASELINE, PRIOR_GOVERNED_BASELINE), 'prior Operations product checkpoint must descend from the earlier governed checkpoint');
 assert(isAncestor(PRIOR_GOVERNED_BASELINE, CURRENT_GOVERNED_BASELINE), 'current Operations product checkpoint must descend from the prior governed checkpoint');
-assert(isAncestor(PRIOR_VFR_REVIEWED_COMMIT, PRIOR_GOVERNED_BASELINE), 'prior Operations checkpoint must include the PR #132 VFR-reviewed product');
-assert(isAncestor(FRESH_VFR_REVIEWED_COMMIT, CURRENT_GOVERNED_BASELINE), 'current Operations checkpoint must include the fresh PR #140 VFR-reviewed product');
-assert(isAncestor(CURRENT_GOVERNED_BASELINE, RELEASE_GATE_RECONCILIATION_MERGE), 'Release Gate reconciliation merge must descend from the current Operations product checkpoint');
-assert(isAncestor(CURRENT_OBSERVABILITY_REVALIDATION_HEAD, RELEASE_GATE_RECONCILIATION_MERGE), 'Release Gate reconciliation merge must include the current Operations observability revalidation head');
-assert(isAncestor(RELEASE_GATE_RECONCILIATION_MERGE, 'HEAD'), 'current Release Gate reconciliation merge must be an ancestor of HEAD');
+assert(isAncestor(EARLIER_VFR_REVIEWED_COMMIT, EARLIER_GOVERNED_BASELINE), 'earlier Operations checkpoint must include the PR #132 VFR-reviewed product');
+assert(isAncestor(PRIOR_VFR_REVIEWED_COMMIT, PRIOR_GOVERNED_BASELINE), 'prior Operations checkpoint must include the PR #140 VFR-reviewed product');
+assert(isAncestor(FRESH_VFR_REVIEWED_COMMIT, CURRENT_GOVERNED_BASELINE), 'current Operations checkpoint must include the fresh PR #146 VFR-reviewed product');
+assert(isAncestor(PRIOR_GOVERNED_BASELINE, PRIOR_RELEASE_GATE_RECONCILIATION_MERGE), 'prior Release Gate reconciliation merge must descend from the prior Operations product checkpoint');
+assert(isAncestor(PRIOR_OBSERVABILITY_REVALIDATION_HEAD, PRIOR_RELEASE_GATE_RECONCILIATION_MERGE), 'prior Release Gate reconciliation merge must include the prior Operations observability revalidation head');
+assert(isAncestor(PRIOR_RELEASE_GATE_RECONCILIATION_MERGE, CURRENT_GOVERNED_BASELINE), 'current Operations product checkpoint must descend from the prior Release Gate reconciliation');
+assert(isAncestor(CURRENT_GOVERNED_BASELINE, CURRENT_RELEASE_GATE_RECONCILIATION_MERGE), 'current Release Gate reconciliation merge must descend from the current Operations product checkpoint');
+assert(isAncestor(CURRENT_OBSERVABILITY_REVALIDATION_HEAD, CURRENT_RELEASE_GATE_RECONCILIATION_MERGE), 'current Release Gate reconciliation merge must include the current Operations observability revalidation head');
+assert(isAncestor(CURRENT_RELEASE_GATE_RECONCILIATION_MERGE, 'HEAD'), 'current Release Gate reconciliation merge must be an ancestor of HEAD');
 assert(isAncestor(CURRENT_GOVERNED_BASELINE, 'HEAD'), 'current Operations product checkpoint must be an ancestor of HEAD');
 
 // From the current governed product checkpoint onward, product/API/runtime drift
@@ -213,13 +232,17 @@ console.log(JSON.stringify({
   historicalReleaseBaseline: HISTORICAL_RELEASE_BASELINE,
   historicalOperationsCandidate: HISTORICAL_OPERATIONS_CANDIDATE,
   historicalOperationsMerge: HISTORICAL_OPERATIONS_MERGE,
+  earlierGovernedLineageCheckpoint: EARLIER_GOVERNED_BASELINE,
   priorGovernedLineageCheckpoint: PRIOR_GOVERNED_BASELINE,
   governedProductCheckpoint: CURRENT_GOVERNED_BASELINE,
-  releaseGateReconciliationMerge: RELEASE_GATE_RECONCILIATION_MERGE,
+  priorReleaseGateReconciliationMerge: PRIOR_RELEASE_GATE_RECONCILIATION_MERGE,
+  releaseGateReconciliationMerge: CURRENT_RELEASE_GATE_RECONCILIATION_MERGE,
   r3ReleaseCommit: R3_RELEASE_COMMIT,
   check: 'operations.observability',
   historicalMachineRun: MACHINE_RUN,
   historicalMachineCommit: MACHINE_COMMIT,
+  priorObservabilityRevalidationRun: PRIOR_OBSERVABILITY_REVALIDATION_RUN,
+  priorObservabilityRevalidationHead: PRIOR_OBSERVABILITY_REVALIDATION_HEAD,
   currentObservabilityRevalidationRun: CURRENT_OBSERVABILITY_REVALIDATION_RUN,
   currentObservabilityRevalidationHead: CURRENT_OBSERVABILITY_REVALIDATION_HEAD,
   resolvedApiImpacts: ['API-IMPACT-001', 'API-IMPACT-002'],
