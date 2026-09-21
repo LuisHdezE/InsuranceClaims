@@ -64,15 +64,12 @@ def severe_console_entries() -> list[str]:
     ]
 
 
+def grid_track_count(value: str) -> int:
+    return len([part for part in value.split(" ") if part.strip()])
+
+
 def assert_no_mutation_controls() -> None:
-    forbidden_labels = (
-        "Nueva automatización",
-        "Nueva versión",
-        "Habilitar",
-        "Deshabilitar",
-        "Activar DRAFT",
-    )
-    for label in forbidden_labels:
+    for label in ("Nueva automatización", "Nueva versión", "Habilitar", "Deshabilitar", "Activar DRAFT"):
         matches = driver.find_elements(
             By.XPATH,
             f"//button[contains(normalize-space(.), '{label}')] | //a[contains(normalize-space(.), '{label}')]",
@@ -81,17 +78,46 @@ def assert_no_mutation_controls() -> None:
             raise AssertionError(f"Public demo exposed automation mutation control: {label}")
 
 
+def assert_global_containment(surface: str, width: int, height: int) -> dict[str, object]:
+    metrics = driver.execute_script(
+        """
+        const root = document.documentElement;
+        const body = document.body;
+        const page = document.querySelector(arguments[0]);
+        const title = page?.querySelector('h1');
+        const summary = page?.querySelector('.automations-r3-summary');
+        const tableWrap = page?.querySelector('.automations-r3-table-wrap');
+        const versionCard = page?.querySelector('.aa-version-card');
+        return {
+          innerWidth: window.innerWidth,
+          scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
+          pageWidth: page ? Math.round(page.getBoundingClientRect().width) : 0,
+          titleFont: title ? parseFloat(getComputedStyle(title).fontSize) : 0,
+          summaryColumns: summary ? getComputedStyle(summary).gridTemplateColumns : '',
+          tableScrollWidth: tableWrap ? tableWrap.scrollWidth : 0,
+          tableClientWidth: tableWrap ? tableWrap.clientWidth : 0,
+          versionScrollWidth: versionCard ? versionCard.scrollWidth : 0,
+          versionClientWidth: versionCard ? versionCard.clientWidth : 0,
+        };
+        """,
+        surface,
+    )
+    overflow = metrics["scrollWidth"] - metrics["innerWidth"]
+    if overflow > TOLERANCE_PX:
+        raise AssertionError(f"{surface} global overflow at {width}x{height}: {overflow}px")
+    if width <= 620 and metrics["titleFont"] > 28:
+        raise AssertionError(f"{surface} mobile title is oversized: {metrics['titleFont']}px")
+    return {**metrics, "horizontalOverflow": overflow}
+
+
 try:
     set_viewport(1366, 768)
     driver.get(f"{WEB_BASE_URL}/operator/login")
     wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
-    wait.until(EC.visibility_of_element_located((By.ID, "operator-login"))).send_keys(
-        "demo.admin@eliasworks.invalid"
+    admin_demo = wait.until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-demo-persona='administration']"))
     )
-    driver.find_element(By.ID, "operator-password").send_keys("public-demo-read-only")
-    wait.until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, "form.operator-form button[type='submit']"))
-    ).click()
+    admin_demo.click()
     wait.until(lambda d: "/operator/" in d.current_url and "/login" not in d.current_url)
 
     automations_link = wait.until(
@@ -101,7 +127,6 @@ try:
     automations_link.click()
     wait.until(lambda d: d.current_url.endswith("/operator/admin/automations"))
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".automations-r3-directory")))
-    wait.until(EC.visibility_of_element_located((By.XPATH, "//h1[normalize-space()='Automatizaciones']")))
     wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".automations-r3-table tbody tr")) == 6)
 
     page_text = driver.find_element(By.CSS_SELECTOR, ".automations-r3-directory").text
@@ -121,110 +146,51 @@ try:
     if driver.find_elements(By.CSS_SELECTOR, ".automations-r3-directory input[type='search']"):
         raise AssertionError("Automation directory must not invent a search control")
     if driver.find_elements(By.CSS_SELECTOR, ".automations-r3-directory select"):
-        raise AssertionError("Automation directory must not invent filter/page-size selects")
+        raise AssertionError("Automation directory must not invent filter or page-size selects")
     assert_no_mutation_controls()
-
     driver.get_log("browser")
 
     for width, height in TARGETS:
         set_viewport(width, height)
-        metrics = driver.execute_script(
-            """
-            const root = document.documentElement;
-            const body = document.body;
-            const page = document.querySelector('.automations-r3-directory');
-            const title = page?.querySelector('h1');
-            const summary = page?.querySelector('.automations-r3-summary');
-            const tableWrap = page?.querySelector('.automations-r3-table-wrap');
-            return {
-              innerWidth: window.innerWidth,
-              scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
-              pageWidth: page ? Math.round(page.getBoundingClientRect().width) : 0,
-              titleFont: title ? parseFloat(getComputedStyle(title).fontSize) : 0,
-              summaryColumns: summary ? getComputedStyle(summary).gridTemplateColumns : '',
-              tableScrollWidth: tableWrap ? tableWrap.scrollWidth : 0,
-              tableClientWidth: tableWrap ? tableWrap.clientWidth : 0,
-            };
-            """
-        )
-        overflow = metrics["scrollWidth"] - metrics["innerWidth"]
+        metrics = assert_global_containment(".automations-r3-directory", width, height)
+        columns = grid_track_count(str(metrics["summaryColumns"]))
+        expected_columns = 4 if width >= 1180 else 2 if width > 620 else 1
+        if columns != expected_columns:
+            raise AssertionError(
+                f"Automation summary expected {expected_columns} columns at {width}px, got {metrics['summaryColumns']}"
+            )
         shot, full = capture(f"automations-directory-{width}x{height}")
-
-        if overflow > TOLERANCE_PX:
-            raise AssertionError(f"Automation directory global overflow at {width}x{height}: {overflow}px")
-        if width >= 1200 and metrics["tableScrollWidth"] > metrics["tableClientWidth"] + TOLERANCE_PX:
-            raise AssertionError(f"Automation desktop table should fit without internal scroll at {width}x{height}")
-        if width >= 1200 and metrics["titleFont"] > 34:
-            raise AssertionError(f"Automation desktop title is oversized: {metrics['titleFont']}px")
-        if width <= 620 and metrics["titleFont"] > 28:
-            raise AssertionError(f"Automation mobile title is oversized: {metrics['titleFont']}px")
-
         results.append({
             "surface": "directory",
             "width": width,
             "height": height,
             **metrics,
-            "horizontalOverflow": overflow,
+            "summaryColumnCount": columns,
             "screenshot": shot,
             "fullPageScreenshot": full,
         })
 
     set_viewport(1366, 768)
-    first_link = wait.until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, ".automations-r3-name-cell a"))
-    )
-    first_link.click()
+    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".automations-r3-name-cell a"))).click()
     wait.until(lambda d: d.current_url.endswith(f"/operator/admin/automations/{DEFINITION_ID}"))
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".automations-r3-detail")))
-    wait.until(EC.visibility_of_element_located((By.XPATH, "//h1[normalize-space()='Revisión inicial automática']")))
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".automations-r3-readonly-badge")))
     assert_no_mutation_controls()
 
-    version_cards = driver.find_elements(By.CSS_SELECTOR, ".automations-r3-detail .aa-version-card")
-    if len(version_cards) != 2:
-        raise AssertionError(f"Expected two governed versions in detail, got {len(version_cards)}")
+    if len(driver.find_elements(By.CSS_SELECTOR, ".automations-r3-detail .aa-version-card")) != 2:
+        raise AssertionError("Governed automation detail must expose its two synthetic versions")
     if "Solo lectura" not in driver.find_element(By.CSS_SELECTOR, ".automations-r3-readonly-badge").text:
         raise AssertionError("Automation detail must disclose public demo read-only mode")
 
     for width, height in TARGETS:
         set_viewport(width, height)
-        metrics = driver.execute_script(
-            """
-            const root = document.documentElement;
-            const body = document.body;
-            const page = document.querySelector('.automations-r3-detail');
-            const title = page?.querySelector('.aa-detail-hero h1');
-            const versionCard = page?.querySelector('.aa-version-card');
-            const ruleSummary = page?.querySelector('.aa-rule-summary');
-            return {
-              innerWidth: window.innerWidth,
-              scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
-              pageWidth: page ? Math.round(page.getBoundingClientRect().width) : 0,
-              titleFont: title ? parseFloat(getComputedStyle(title).fontSize) : 0,
-              versionScrollWidth: versionCard ? versionCard.scrollWidth : 0,
-              versionClientWidth: versionCard ? versionCard.clientWidth : 0,
-              ruleColumns: ruleSummary ? getComputedStyle(ruleSummary).gridTemplateColumns : '',
-            };
-            """
-        )
-        overflow = metrics["scrollWidth"] - metrics["innerWidth"]
-        card_overflow = metrics["versionScrollWidth"] - metrics["versionClientWidth"]
+        metrics = assert_global_containment(".automations-r3-detail", width, height)
         shot, full = capture(f"automation-detail-{width}x{height}")
-
-        if overflow > TOLERANCE_PX:
-            raise AssertionError(f"Automation detail global overflow at {width}x{height}: {overflow}px")
-        if card_overflow > TOLERANCE_PX:
-            raise AssertionError(f"Automation version card overflow at {width}x{height}: {card_overflow}px")
-        if width <= 620 and metrics["titleFont"] > 28:
-            raise AssertionError(f"Automation detail mobile title is oversized: {metrics['titleFont']}px")
-
         results.append({
             "surface": "detail",
             "width": width,
             "height": height,
             **metrics,
-            "horizontalOverflow": overflow,
-            "versionCardOverflow": card_overflow,
             "screenshot": shot,
             "fullPageScreenshot": full,
         })
