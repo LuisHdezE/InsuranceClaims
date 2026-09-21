@@ -45,6 +45,11 @@ describe('public demo route access', () => {
     expect(isPublicDemoPath('/operator/admin/imports', 'CLAIMS_SUPERVISOR')).toBe(false);
   });
 
+  it('keeps Recovery outside the public demo even after productization', () => {
+    expect(isPublicDemoPath('/operator/admin/recovery', 'PLATFORM_ADMIN')).toBe(false);
+    expect(isPublicDemoPath('/operator/admin/recovery/dead-letters/dead-letter-123', 'PLATFORM_ADMIN')).toBe(false);
+  });
+
   it('rejects public demo create and nested mutation routes', () => {
     expect(isPublicDemoPath('/operator/admin/pipelines/new', 'PLATFORM_ADMIN')).toBe(false);
     expect(isPublicDemoPath('/operator/admin/pipelines/pipeline-123/versions/new', 'PLATFORM_ADMIN')).toBe(false);
