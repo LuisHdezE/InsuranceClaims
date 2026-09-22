@@ -2,25 +2,25 @@
 
 ## Purpose
 
-Record the fresh human revalidation of the three governed Web Visual & Functional Review slices after the current product evolved through the public-demo CORS correction, Automation administration productization and governed Imports productization.
+Record the fresh human revalidation of the three governed Web Visual & Functional Review slices after UI-RECOVERY-001 / PR #151 was merged to `main`.
 
-This reconciliation belongs to PR #146 and refreshes only the VFR evidence-to-human-approval binding. It does not rewrite historical approvals and does not independently alter Release Gate, Operations State, R3 Full Product Technical Closure, Neon or production decisions.
+This reconciliation belongs to PR #152 and refreshes only the VFR evidence-to-human-approval binding. It preserves historical approvals and does not independently alter Release Gate, Operations State, R3 Full Product Technical Closure, Neon or production decisions.
 
-## Fresh human-approved candidate - PR #146
+## Fresh human-approved candidate - PR #152
 
-- Base `main`: `94fd3460bf20034a7805ab5e88cc7a455d0ce8a5`
-- Approved PR review head at human decision: `88a6ebc0fb87c4e891c39ebf02910c3d9a13e59d`
-- Browser-tested product/review commit: `37fb75846e0cd38a88d8773c937bc42d6c408d57`
-- Browser evidence commit: `88a6ebc0fb87c4e891c39ebf02910c3d9a13e59d`
-- Browser evidence run: `35600164993` - **SUCCESS**
+- Base `main`: `822cd49e9a1aafe2aea08648521941002f84cb25`
+- Approved PR review head at human decision: `9cb68df02bd5e3c9a5805525f7c33ed2bc7e2100`
+- Browser-tested product/review commit: `498c04c8bfe3728c12c7f6b76d0ba3e26cb8a590`
+- Browser evidence commit: `9cb68df02bd5e3c9a5805525f7c33ed2bc7e2100`
+- Browser evidence run: `35669776564` - **SUCCESS**
 - Browser: Chrome `152.0.7977.82`
-- Generated evidence time: `2026-09-21T12:34:23Z`
-- Human approval time: `2026-09-21T09:57:00-03:00` (`America/Montevideo`)
+- Generated evidence time: `2026-09-21T23:57:10Z`
+- Human approval time: `2026-09-21T21:05:19-03:00` (`America/Montevideo`)
 - Approver: Luis Hernández
-- Explicit approval statement: `Apruebo VFR fresco PR #146`
-- Published artifact: `visual-functional-review-37fb75846e0cd38a88d8773c937bc42d6c408d57`
-- Artifact id: `10638069544`
-- Artifact digest: `sha256:5c860466ce312264251d3d3d3b0d878c0dc8d70e5bcda0b5aafe34b9c16f2011`
+- Explicit approval statement: `Apruebo VFR fresco PR #152`
+- Published artifact: `visual-functional-review-498c04c8bfe3728c12c7f6b76d0ba3e26cb8a590`
+- Artifact id: `10670928011`
+- Artifact digest: `sha256:adcd2bb1fe12d22bc679e6c4240cdb7aa72c5a8cd17917040d1f4af83c2fb54b`
 
 The generated evidence contains exactly 12 screenshots and reports:
 
@@ -30,7 +30,7 @@ The generated evidence contains exactly 12 screenshots and reports:
 - machine PASS for every applicable VFR check in all three governed slices
 - immutable machine evidence preserving `review.human_complete = PENDING_MANUAL` until this explicit human approval
 
-Luis manually reviewed the supplied fresh evidence set and explicitly approved it with `Apruebo VFR fresco PR #146`. That human decision is now bound to the exact browser-tested commit above. No `apps/**`, `packages/**`, API contract, RBAC, persistence, fixture or production runtime behavior changed between the browser-tested commit and the evidence commit.
+Luis manually reviewed the supplied fresh evidence set and explicitly approved it with `Apruebo VFR fresco PR #152`. That human decision is now bound to the exact browser-tested commit above. No `apps/**`, `packages/**`, API contract, RBAC, persistence, fixture or production runtime behavior changed between the browser-tested commit and the evidence commit.
 
 ## Fresh approved scopes
 
@@ -46,17 +46,28 @@ Their active human approval records are:
 - `documentation/visual-functional-review/CUSTOMER_CLAIM_TRACKING_WEB_APPROVAL.md`
 - `documentation/visual-functional-review/CLAIMS_BACKOFFICE_WEB_APPROVAL.md`
 
-Each active record binds its first `Browser-tested commit` entry to `37fb75846e0cd38a88d8773c937bc42d6c408d57`.
+Each active record binds its first `Browser-tested commit` entry to `498c04c8bfe3728c12c7f6b76d0ba3e26cb8a590`.
 
 ## Gate behavior
 
-Immediately before this fresh approval, the previous active records remained correctly bound to PR #140 browser-tested commit `1f774dc4f3c0ce4a02b3c3caa664c78f304e7de1`, and the global VFR gate rejected the later CORS/Automation/Imports product drift. The fresh evidence run then validated the current product and produced an immutable machine record for `37fb75846e0cd38a88d8773c937bc42d6c408d57`.
+Immediately before this fresh approval, the active records remained correctly bound to PR #146 browser-tested commit `37fb75846e0cd38a88d8773c937bc42d6c408d57`, and the global VFR gate rejected later Recovery product drift. The fresh evidence run then validated the current product and produced an immutable machine record for `498c04c8bfe3728c12c7f6b76d0ba3e26cb8a590`.
 
 This approval supplies the required exact-commit human binding. It does not weaken, bypass or redefine the VFR gate.
 
-## Prior fresh revalidation - PR #140
+## Prior fresh revalidation - PR #146
 
 The previous active VFR approval remains preserved as audit history:
+
+- Base `main`: `94fd3460bf20034a7805ab5e88cc7a455d0ce8a5`
+- Browser-tested commit: `37fb75846e0cd38a88d8773c937bc42d6c408d57`
+- Browser evidence commit: `88a6ebc0fb87c4e891c39ebf02910c3d9a13e59d`
+- Browser evidence run: `35600164993` - **SUCCESS**
+- Human approval time: `2026-09-21T09:57:00-03:00`
+- Approval statement: `Apruebo VFR fresco PR #146`
+
+That decision remains historical audit evidence and no longer supplies the active browser-commit binding after UI-RECOVERY-001 / PR #151.
+
+## Prior fresh revalidation - PR #140
 
 - Base `main`: `20a842de8868fe96ed0010b9a22a68ba0d2a6b30`
 - Browser-tested commit: `1f774dc4f3c0ce4a02b3c3caa664c78f304e7de1`
@@ -65,7 +76,7 @@ The previous active VFR approval remains preserved as audit history:
 - Human approval time: `2026-09-20T14:50:45-03:00`
 - Approval statement: `Apruebo VFR fresco PR #140`
 
-That decision no longer supplies the active browser-commit binding after PRs #143, #144 and #145.
+That decision remains historical audit evidence.
 
 ## Prior fresh revalidation - PR #132
 
@@ -90,4 +101,4 @@ That original decision remains valid as historical evidence but does not supply 
 
 ## Separation of gates
 
-This VFR revalidation does **not** authorize merge of PR #146. Merge remains a separate explicit human decision after exact-head regression validation. It also does not itself reconcile the separate Release Gate Ready State, Operations State or R3 Full Product Technical Closure lanes.
+This VFR revalidation does **not** authorize merge of PR #152. Merge remains a separate explicit human decision after exact-head regression validation. It also does not itself reconcile the separate Release Gate Ready State, Operations State or R3 Full Product Technical Closure lanes.

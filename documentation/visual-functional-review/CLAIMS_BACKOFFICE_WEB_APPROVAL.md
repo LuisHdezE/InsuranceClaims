@@ -1,6 +1,6 @@
 # Visual & Functional Review Approval - claims-backoffice / web
 
-## Fresh revalidation - PR #146
+## Fresh revalidation - PR #152
 
 - Blueprint baseline: **0.5.2**
 - Gate: `visual_functional_review_pass`
@@ -9,29 +9,39 @@
 - Platform: `web`
 - Decision: **APPROVED / PASS**
 - Approver: **Luis Hernández**
-- Approval statement: `Apruebo VFR fresco PR #146`
-- Approval time: **2026-09-21T09:57:00-03:00** (`America/Montevideo`)
-- Pull request: **#146**
-- Base `main`: `94fd3460bf20034a7805ab5e88cc7a455d0ce8a5`
-- Approved review head at human decision: `88a6ebc0fb87c4e891c39ebf02910c3d9a13e59d`
-- Browser-tested commit: `37fb75846e0cd38a88d8773c937bc42d6c408d57`
-- Browser evidence commit: `88a6ebc0fb87c4e891c39ebf02910c3d9a13e59d`
-- Browser evidence run: `35600164993` - **SUCCESS**
+- Approval statement: `Apruebo VFR fresco PR #152`
+- Approval time: **2026-09-21T21:05:19-03:00** (`America/Montevideo`)
+- Pull request: **#152**
+- Base `main`: `822cd49e9a1aafe2aea08648521941002f84cb25`
+- Approved review head at human decision: `9cb68df02bd5e3c9a5805525f7c33ed2bc7e2100`
+- Browser-tested commit: `498c04c8bfe3728c12c7f6b76d0ba3e26cb8a590`
+- Browser evidence commit: `9cb68df02bd5e3c9a5805525f7c33ed2bc7e2100`
+- Browser evidence run: `35669776564` - **SUCCESS**
 - Browser: Chrome `152.0.7977.82`
-- Artifact: `visual-functional-review-37fb75846e0cd38a88d8773c937bc42d6c408d57` (id `10638069544`)
-- Artifact digest: `sha256:5c860466ce312264251d3d3d3b0d878c0dc8d70e5bcda0b5aafe34b9c16f2011`
+- Artifact: `visual-functional-review-498c04c8bfe3728c12c7f6b76d0ba3e26cb8a590` (id `10670928011`)
+- Artifact digest: `sha256:adcd2bb1fe12d22bc679e6c4240cdb7aa72c5a8cd17917040d1f4af83c2fb54b`
 
 ### Approved fresh evidence
 
 This approval applies to the fresh browser evidence for `claims-backoffice / web`, covering inventory items `WEB-008`, `WEB-009` and `WEB-010` and the governed bindings used by the reviewed operator flow.
 
-The accepted evidence is the immutable machine summary at `documentation/visual-functional-review/generated/visual-functional-review-browser.json`, the five governed backoffice screenshots under `documentation/visual-functional-review/generated/assets/`, and the published GitHub Actions artifact for run `35600164993`. The machine review recorded PASS for interface fidelity, design-system fidelity, API/permission fidelity, business-data fidelity, interaction states, responsive behavior and accessibility; static reference comparison remains `N/A` for this slice. The machine evidence preserves `review.human_complete = PENDING_MANUAL` as immutable evidence until this explicit human approval.
+The accepted evidence is the immutable machine summary at `documentation/visual-functional-review/generated/visual-functional-review-browser.json`, the five governed backoffice screenshots under `documentation/visual-functional-review/generated/assets/`, and the published GitHub Actions artifact for run `35669776564`. The machine review recorded PASS for interface fidelity, design-system fidelity, API/permission fidelity, business-data fidelity, interaction states, responsive behavior and accessibility; static reference comparison remains `N/A` for this slice. The machine evidence preserves `review.human_complete = PENDING_MANUAL` as immutable evidence until this explicit human approval.
 
-The reviewed backoffice preserves protected-route behavior, operator authentication, authoritative claim data continuity and responsive desktop/mobile rendering. This approval supersedes the active PR #140 binding while preserving it below as audit history.
+The reviewed backoffice preserves protected-route behavior, operator authentication, authoritative claim data continuity and responsive desktop/mobile rendering. This approval supersedes the active PR #146 binding while preserving it below as audit history.
 
 ### Gate consequence
 
-This explicit approval refreshes the active human binding for `claims-backoffice / web` to browser-reviewed commit `37fb75846e0cd38a88d8773c937bc42d6c408d57`. It does not independently authorize merge of PR #146 and does not rewrite downstream Release Gate, Operations State or R3 Closure decisions.
+This explicit approval refreshes the active human binding for `claims-backoffice / web` to browser-reviewed commit `498c04c8bfe3728c12c7f6b76d0ba3e26cb8a590`. It does not independently authorize merge of PR #152 and does not rewrite downstream Release Gate, Operations State or R3 Closure decisions.
+
+## Prior fresh revalidation - PR #146
+
+- Approval statement: `Apruebo VFR fresco PR #146`
+- Approval time: `2026-09-21T09:57:00-03:00`
+- Browser-tested commit: `37fb75846e0cd38a88d8773c937bc42d6c408d57`
+- Browser evidence commit: `88a6ebc0fb87c4e891c39ebf02910c3d9a13e59d`
+- Browser evidence run: `35600164993` - **SUCCESS**
+
+That decision remains historical audit evidence and no longer supplies the active browser-commit binding.
 
 ## Prior fresh revalidation - PR #140
 
@@ -51,7 +61,7 @@ That decision remains historical audit evidence and no longer supplies the activ
 - Browser evidence commit: `9703deeac7e96988b6a3bb290537f058df46151a`
 - Browser evidence run: `35478752855` - **SUCCESS**
 
-That decision remains historical audit evidence and no longer supplies the active browser-commit binding.
+That decision remains historical audit evidence.
 
 ## Historical approval record - PR #17
 
@@ -66,4 +76,4 @@ That original decision remains part of the audit trail but does not supply the a
 
 ## Merge separation
 
-**This approval does not authorize merge of PR #146.** Merge remains a separate explicit human decision after exact-head validation.
+**This approval does not authorize merge of PR #152.** Merge remains a separate explicit human decision after exact-head validation.
