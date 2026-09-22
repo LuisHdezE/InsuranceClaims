@@ -30,7 +30,16 @@ const currentReleaseLineageMerge = '06f730418518784246d8bf416260483ca4347290';
 const currentTechnicalRevalidationHead = 'a1fd208f797a75d0b55796f4d3f54908ed739082';
 const currentTechnicalRevalidationRun = '35610337205';
 const currentOperationsLineageMerge = '838f928703cb6a0dbcd284d05f72410e0d5628ce';
-const currentGovernedCheckpoint = currentOperationsLineageMerge;
+const priorR3ReconciliationHead = '7d284f4647565c4f2a97edc2a3ff19c2e60972bc';
+const priorR3ReconciliationMerge = '54fa02f459ea16b8cc9cdb4c37b96b711a02e7e9';
+const latestVfrReviewedCommit = '498c04c8bfe3728c12c7f6b76d0ba3e26cb8a590';
+const latestProductCheckpoint = 'a3671bf40ba0b0b96dd86bf40014f40e9351c5de';
+const latestReleaseLineageHead = 'ae4fb8b08d16b7ffa8b0fba8e26fef9a5aec078f';
+const latestReleaseLineageMerge = 'cf91523041122f227b09f050cba742688b6f11b0';
+const latestTechnicalRevalidationHead = '6b18786388de39f6770b8ff4eb654f252962bff4';
+const latestTechnicalRevalidationRun = '35678400616';
+const latestOperationsLineageMerge = '7b1a521a7300d9f46fcff7239ea6062116e7fd35';
+const currentGovernedCheckpoint = latestOperationsLineageMerge;
 
 const expectedApi = {
   operations: 90,
@@ -268,14 +277,26 @@ for (const marker of [
   currentTechnicalRevalidationHead,
   currentTechnicalRevalidationRun,
   currentOperationsLineageMerge,
+  priorR3ReconciliationHead,
+  priorR3ReconciliationMerge,
+  latestVfrReviewedCommit,
+  latestProductCheckpoint,
+  latestReleaseLineageHead,
+  latestReleaseLineageMerge,
+  latestTechnicalRevalidationHead,
+  latestTechnicalRevalidationRun,
+  latestOperationsLineageMerge,
   'v0.3.0',
   '101/101 PASS',
   '106/106 PASS',
+  '107/107 PASS',
   '128/128 PASS',
+  '135/135 PASS',
   '90/90 PASS',
   'Apruebo VFR fresco PR #132',
   'Apruebo VFR fresco PR #140',
   'Apruebo VFR fresco PR #146',
+  'Apruebo VFR fresco PR #152',
 ]) {
   assert(lineage.includes(marker), `R3 closure lineage reconciliation missing marker: ${marker}`);
 }
@@ -287,7 +308,10 @@ for (const marker of [
   priorVfrReviewedCommit,
   currentVfrReviewedCommit,
   currentProductCheckpoint,
+  latestVfrReviewedCommit,
+  latestProductCheckpoint,
   'Apruebo VFR fresco PR #146',
+  'Apruebo VFR fresco PR #152',
   'API-IMPACT-001',
   'API-IMPACT-002',
 ]) {
@@ -302,7 +326,11 @@ for (const marker of [
   currentVfrReviewedCommit,
   currentProductCheckpoint,
   currentReleaseLineageMerge,
+  latestVfrReviewedCommit,
+  latestProductCheckpoint,
+  latestReleaseLineageMerge,
   'Apruebo VFR fresco PR #146',
+  'Apruebo VFR fresco PR #152',
   'API-IMPACT-001',
   'API-IMPACT-002',
 ]) {
@@ -337,12 +365,21 @@ assert(isAncestor(priorGovernedCheckpoint, priorVfrReviewedCommit), 'PR #140 bro
 assert(isAncestor(priorVfrReviewedCommit, priorProductCheckpoint), 'PR #140 product checkpoint must contain its browser-reviewed product');
 assert(isAncestor(priorProductCheckpoint, priorReleaseLineageMerge), 'PR #141 Release Gate reconciliation must descend from the PR #140 product checkpoint');
 assert(isAncestor(priorReleaseLineageMerge, priorOperationsLineageMerge), 'PR #142 Operations reconciliation must descend from PR #141 Release Gate reconciliation');
-assert(isAncestor(priorOperationsLineageMerge, currentVfrReviewedCommit), 'current PR #146 browser-reviewed product must descend from the prior Operations lineage');
-assert(isAncestor(currentVfrReviewedCommit, currentProductCheckpoint), 'current PR #146 product checkpoint must contain the browser-reviewed product');
-assert(isAncestor(currentProductCheckpoint, currentReleaseLineageMerge), 'current PR #147 Release Gate reconciliation must descend from the current product checkpoint');
-assert(isAncestor(currentReleaseLineageMerge, currentTechnicalRevalidationHead), 'PR #148 exact review head must descend from the current Release Gate reconciliation');
+assert(isAncestor(priorOperationsLineageMerge, currentVfrReviewedCommit), 'PR #146 browser-reviewed product must descend from the prior Operations lineage');
+assert(isAncestor(currentVfrReviewedCommit, currentProductCheckpoint), 'PR #146 product checkpoint must contain the browser-reviewed product');
+assert(isAncestor(currentProductCheckpoint, currentReleaseLineageMerge), 'PR #147 Release Gate reconciliation must descend from the PR #146 product checkpoint');
+assert(isAncestor(currentReleaseLineageMerge, currentTechnicalRevalidationHead), 'PR #148 exact review head must descend from PR #147 Release Gate reconciliation');
 assert(isAncestor(currentTechnicalRevalidationHead, currentOperationsLineageMerge), 'PR #148 Operations merge must contain the exact technical revalidation head');
-assert(isAncestor(currentReleaseLineageMerge, currentOperationsLineageMerge), 'current Operations reconciliation must descend from current Release Gate reconciliation');
+assert(isAncestor(currentReleaseLineageMerge, currentOperationsLineageMerge), 'PR #148 Operations reconciliation must descend from PR #147 Release Gate reconciliation');
+assert(isAncestor(currentOperationsLineageMerge, priorR3ReconciliationHead), 'PR #149 exact review head must descend from PR #148 Operations reconciliation');
+assert(isAncestor(priorR3ReconciliationHead, priorR3ReconciliationMerge), 'PR #149 merge must contain its exact reconciliation head');
+assert(isAncestor(priorR3ReconciliationMerge, latestVfrReviewedCommit), 'PR #152 browser-reviewed product must descend from the prior R3 reconciliation');
+assert(isAncestor(latestVfrReviewedCommit, latestProductCheckpoint), 'PR #152 product checkpoint must contain the browser-reviewed product');
+assert(isAncestor(latestProductCheckpoint, latestReleaseLineageHead), 'PR #153 exact review head must descend from the PR #152 product checkpoint');
+assert(isAncestor(latestReleaseLineageHead, latestReleaseLineageMerge), 'PR #153 Release Gate merge must contain the exact review head');
+assert(isAncestor(latestReleaseLineageMerge, latestTechnicalRevalidationHead), 'PR #154 exact review head must descend from PR #153 Release Gate reconciliation');
+assert(isAncestor(latestTechnicalRevalidationHead, latestOperationsLineageMerge), 'PR #154 Operations merge must contain the exact technical revalidation head');
+assert(isAncestor(latestReleaseLineageMerge, latestOperationsLineageMerge), 'PR #154 Operations reconciliation must descend from PR #153 Release Gate reconciliation');
 assert(isAncestor(currentGovernedCheckpoint, 'HEAD'), 'HEAD must descend from the current governed R3 closure checkpoint');
 
 // Fail closed after the reconciled checkpoint. Governance maintenance for the release/operations/closure clocks is allowed;
@@ -356,10 +393,12 @@ console.log('R3 FULL PRODUCT TECHNICAL CLOSURE: PASS WITH GOVERNED EVOLUTION');
 console.log(`Historical product baseline: ${expectedBaseline}`);
 console.log(`Historical closure merge: ${expectedClosureMerge}`);
 console.log(`Prior governed checkpoint: ${priorGovernedCheckpoint}`);
-console.log(`Current product checkpoint: ${currentProductCheckpoint}`);
-console.log(`Current Release Gate reconciliation: ${currentReleaseLineageMerge}`);
-console.log(`Current Operations reconciliation: ${currentOperationsLineageMerge}`);
-console.log(`Current technical revalidation run: ${currentTechnicalRevalidationRun}`);
+console.log(`Previous product checkpoint: ${currentProductCheckpoint}`);
+console.log(`Previous R3 reconciliation merge: ${priorR3ReconciliationMerge}`);
+console.log(`Current product checkpoint: ${latestProductCheckpoint}`);
+console.log(`Current Release Gate reconciliation: ${latestReleaseLineageMerge}`);
+console.log(`Current Operations reconciliation: ${latestOperationsLineageMerge}`);
+console.log(`Current technical revalidation run: ${latestTechnicalRevalidationRun}`);
 console.log(`Current governed checkpoint: ${currentGovernedCheckpoint}`);
 console.log(`Historical closure files preserved: ${historicalClosurePaths.length}`);
 console.log(`Post-checkpoint governance-only files: ${postCheckpointPaths.length}`);
