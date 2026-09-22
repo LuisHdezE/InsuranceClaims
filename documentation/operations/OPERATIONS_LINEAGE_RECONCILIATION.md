@@ -38,116 +38,129 @@ Nothing in this reconciliation modifies those historical facts or upgrades the o
 - Annotated tag: `v0.3.0`
 - Effective REST contract: 90 operations / 76 paths / 16 families
 
-## Earlier Operations lineage reconciliation - PR #134
+## Initial Operations lineage reconciliation - PR #134
 
 PR #134 first reconciled the historical Operations clock with the governed R2/R3 and post-release state available at that time:
 
-- Earlier governed product checkpoint: `b2f089476559795f30a3c0eec2b05fd0ac32531f`
+- Initial governed product checkpoint: `b2f089476559795f30a3c0eec2b05fd0ac32531f`
 - PR #134 exact review head: `18c9b20428ec8a0c83cb21bb76615cc26d73f098`
 - PR #134 merge: `ac555d064cf8a9a68fe4c10e04ec625396f94a6b`
-- Earlier browser-reviewed product commit: `a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a`
+- PR #132 browser-reviewed product commit: `a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a`
 - Operations Observability run on the preceding PR #133 review head: `35482185068` - SUCCESS
 
-That checkpoint remains part of the audit trail and ancestry requirements.
+This checkpoint remains preserved as audit history.
 
-## Prior Operations lineage - PR #140 / PR #141
+## Earlier governed lineage - PR #140 / PR #141
 
-After further governed product evolution, including Guidance productization and operator-login containment, the product was revalidated through PR #140:
+After further governed product evolution, the product was revalidated through PR #140:
 
 - PR #140 browser-reviewed product commit: `1f774dc4f3c0ce4a02b3c3caa664c78f304e7de1`
-- Browser evidence run: `35525301921` - SUCCESS
 - Explicit approval: `Apruebo VFR fresco PR #140`
-- PR #140 merge / prior governed product checkpoint: `c107703e5d1f41058fb18b878cc1833afb9d85ff`
+- PR #140 merge / governed product checkpoint: `c107703e5d1f41058fb18b878cc1833afb9d85ff`
 
-PR #141 then reconciled Release Gate on top of that product state:
+PR #141 reconciled Release Gate on top of that product state:
 
 - PR #141 exact review head: `bbb5a67a7757742b6ccc87e097dab91895eb324e`
 - PR #141 merge: `50c77fec8482e87295ec7cfd4b800a132557a728`
-- Release Gate Ready State run: `35530711021` - SUCCESS
-- Release Gate Evidence run: `35530711008` - SUCCESS
 - Operations Observability Evidence run: `35530710935` - SUCCESS
 
-The prior observability revalidation head was therefore `bbb5a67a7757742b6ccc87e097dab91895eb324e`. That execution remains audit history and is not replaced or rewritten by this reconciliation.
+## Prior governed lineage - PR #146 / PR #147 / PR #148
 
-## Product evolution after PR #140
-
-After `c107703e...`, the repository evolved again through separately governed work:
-
-- Release Gate and Operations governance reconciliation;
-- public-demo persona CORS correction;
-- Automations administration productization;
-- governed Imports productization;
-- fresh global VFR after those product changes.
-
-The Operations sentinel correctly turned red once product-specific files appeared beyond its prior product checkpoint. On the PR #147 exact head it still failed closed with:
-
-`product/API/runtime drift detected after governed Operations checkpoint: .github/workflows/automations-r3-viewport.yml`
-
-That failure proves the existing boundary remained effective. This reconciliation does not add Automations, Imports or any other product-specific path to a permanent allowlist.
-
-## Fresh current-product revalidation - PR #146
-
-The current product was revalidated through PR #146 before advancing Operations:
+The next product state was revalidated through PR #146:
 
 - PR #146 browser-reviewed commit: `37fb75846e0cd38a88d8773c937bc42d6c408d57`
-- Browser evidence commit: `88a6ebc0fb87c4e891c39ebf02910c3d9a13e59d`
-- Browser evidence run: `35600164993` - SUCCESS
-- Evidence: 12/12 screenshots
 - Explicit approval: `Apruebo VFR fresco PR #146`
-- VFR approval-recording head: `6b6c837d3b60bf51379a75a44716c2a6aac207b5`
-- PR #146 merge / current governed product checkpoint: `ecd8bb99e49a3393d821de2349fad1eb44cc4339`
+- PR #146 merge / governed product checkpoint: `ecd8bb99e49a3393d821de2349fad1eb44cc4339`
 
-The earlier PR #132 VFR-reviewed commit `a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a` and the prior PR #140 VFR-reviewed commit `1f774dc4f3c0ce4a02b3c3caa664c78f304e7de1` remain preserved in lineage.
-
-## Current Release Gate reconciliation - PR #147
-
-PR #147 reconciled Release Gate after the PR #146 product/VFR checkpoint without changing product behavior:
+Release Gate then moved independently through PR #147:
 
 - PR #147 exact review head: `56e182f57c2509512f60d6585a5c490b76ffa05c`
 - PR #147 merge: `06f730418518784246d8bf416260483ca4347290`
-- Release Gate Ready State run: `35607410447` - SUCCESS
-- Release Gate Evidence run: `35607410397` - SUCCESS
-- Integration QA run: `35607410530` - SUCCESS
+- Operations Observability Evidence run: `35607410451` - SUCCESS
 
-The Release Gate product checkpoint is `ecd8bb99e49a3393d821de2349fad1eb44cc4339`; PR #147 is governance lineage layered on top of that product state.
+PR #148 then advanced only the Operations lineage boundary to the PR #146 product checkpoint. That reconciliation is preserved as history and is not rewritten here.
+
+## Product evolution after PR #146
+
+After `ecd8bb99...`, the repository evolved again through separately governed work, including Recovery productization and its dedicated browser/viewport QA workflow.
+
+The Operations sentinel correctly turned red. On PR #153 exact head it failed closed with:
+
+`product/API/runtime drift detected after governed Operations checkpoint: .github/workflows/recovery-r3-viewport.yml`
+
+That failure proves the prior boundary remained effective. This reconciliation does not permanently allowlist `recovery-r3-viewport.yml` or any Recovery/product path.
+
+## Fresh current-product revalidation - PR #152
+
+The evolved product completed a fresh global VFR through PR #152:
+
+- Browser-tested product/review commit: `498c04c8bfe3728c12c7f6b76d0ba3e26cb8a590`
+- Browser evidence commit: `9cb68df02bd5e3c9a5805525f7c33ed2bc7e2100`
+- Browser evidence run: `35669776564` - SUCCESS
+- Browser: Chrome `152.0.7977.82`
+- Fresh evidence: 12/12 screenshots
+- Explicit approval: `Apruebo VFR fresco PR #152`
+- PR #152 merge / current governed product checkpoint: `a3671bf40ba0b0b96dd86bf40014f40e9351c5de`
+
+Earlier VFR-reviewed commits remain preserved:
+
+- PR #132: `a3f3d05656b1e5d8cd35368deec2e6b0e599fa7a`
+- PR #140: `1f774dc4f3c0ce4a02b3c3caa664c78f304e7de1`
+- PR #146: `37fb75846e0cd38a88d8773c937bc42d6c408d57`
+
+## Current Release Gate reconciliation - PR #153
+
+PR #153 reconciled Release Gate after PR #152 without changing product behavior:
+
+- PR #153 exact review head: `ae4fb8b08d16b7ffa8b0fba8e26fef9a5aec078f`
+- PR #153 merge: `cf91523041122f227b09f050cba742688b6f11b0`
+- Release Gate Ready State run: `35673365814` - SUCCESS
+- Release Gate Evidence run: `35673365853` - SUCCESS
+- Integration QA run: `35673365732` - SUCCESS
+
+The active Release Gate product checkpoint is `a3671bf40ba0b0b96dd86bf40014f40e9351c5de`; PR #153 is governance lineage layered on top of that product state.
 
 ## Fresh Operations observability revalidation
 
-Operations capability was re-executed on the current post-VFR product lineage during PR #147:
+Operations capability was re-executed on the PR #153 exact review head:
 
-- Exact revalidation head: `56e182f57c2509512f60d6585a5c490b76ffa05c`
-- Operations Observability Evidence run: `35607410451` - SUCCESS
+- Exact revalidation head: `ae4fb8b08d16b7ffa8b0fba8e26fef9a5aec078f`
+- Operations Observability Evidence run: `35673365885` - SUCCESS
 
-That run again validated the executable operational surface, including the production typecheck and the governed observability evidence workflow. The same exact head also completed Integration QA successfully, including ephemeral PostgreSQL, security/contract/concurrency/rate-limit QA, durable audit/persistence invariants, real-dependency Web API clients, responsive/accessibility browser journeys and offline/degraded behavior.
+The same exact head also completed Integration QA successfully, including locked dependency installation, Prisma contract emission, backend/web typecheck and tests, architecture and production builds, ephemeral PostgreSQL, security/contract/concurrency/rate-limit QA, durable audit/persistence invariants, real-dependency web API clients, responsive/accessibility browser journeys, offline/degraded behavior and evidence validation/upload.
 
-This fresh execution does not rewrite the historical `34102498663` evidence or the prior `35530710935` revalidation. It proves that the operational capability still works on the latest human-revalidated product lineage.
+This execution does not rewrite the historical `34102498663` evidence or the earlier `35530710935` / prior `35607410451` revalidations. It demonstrates that the operational capability still works on the latest fresh-VFR product lineage.
 
 ## Current governed Operations product checkpoint
 
-The governed product checkpoint for Operations lineage is now:
+The active Operations product checkpoint is now:
 
-`ecd8bb99e49a3393d821de2349fad1eb44cc4339`
+`a3671bf40ba0b0b96dd86bf40014f40e9351c5de`
 
-This is the PR #146 merged product state. It is not a new Operations phase completion event and not a new human Operations gate; Blueprint 0.5.2 defines no separate Operations gate.
+This is the PR #152 merged product/VFR state. It is not a new Operations phase completion event and not a new human Operations gate; Blueprint 0.5.2 defines no separate Operations gate.
 
-The current governance chain additionally requires the Release Gate reconciliation merge:
+Current governance additionally requires the Release Gate reconciliation merge:
 
-`06f730418518784246d8bf416260483ca4347290`
+`cf91523041122f227b09f050cba742688b6f11b0`
 
-The prior Release Gate reconciliation merge `50c77fec8482e87295ec7cfd4b800a132557a728` remains preserved as ancestry and audit history.
+Earlier Release Gate reconciliation merges remain preserved:
 
-The validator therefore applies six linked rules:
+- `50c77fec8482e87295ec7cfd4b800a132557a728`
+- `06f730418518784246d8bf416260483ca4347290`
 
-1. preserve the historical Operations evidence, runbook and phase state exactly;
-2. preserve PR #134 as the earlier governed checkpoint;
-3. preserve PR #140 / PR #141 as the prior governed product and Release Gate lineage;
-4. require the fresh PR #146 VFR-approved product;
-5. require the current PR #147 Release Gate reconciliation and fresh Operations observability revalidation;
-6. reject new product/API/runtime drift after `ecd8bb99...` unless a later explicit product reconciliation advances that checkpoint.
+The validator therefore applies these linked rules:
+
+1. preserve the historical Operations evidence, runbook and Blueprint phase state;
+2. preserve PR #134 as the initial governed checkpoint;
+3. preserve PR #140 / #141 lineage;
+4. preserve PR #146 / #147 lineage;
+5. require the fresh PR #152 VFR-approved product;
+6. require the PR #153 Release Gate reconciliation and fresh Operations observability revalidation;
+7. reject any new product/API/runtime drift after `a3671bf4...` unless a later explicit product reconciliation advances that checkpoint.
 
 ## Fail-closed boundary after the checkpoint
 
-After `ecd8bb99...`, governance/evidence maintenance may proceed without being misclassified as product drift. Product/API/runtime changes remain fail-closed.
+After `a3671bf4...`, governance/evidence maintenance may proceed without being misclassified as product drift. Product/API/runtime changes remain fail-closed.
 
 Changes that must still invalidate Operations lineage until explicitly revalidated include, among others:
 
@@ -160,13 +173,13 @@ Changes that must still invalidate Operations lineage until explicitly revalidat
 - authoritative API contract surfaces
 - product-specific QA/workflow additions that accompany new behavior
 
-Documentation and validator maintenance for Release, Operations and R3 technical-closure governance may advance without implying a product change.
+No Recovery, Imports, Automations or other product workflow is permanently allowlisted.
 
 ## Separation from R3 Full Product Technical Closure
 
-This reconciliation deliberately does not change `scripts/validate-r3-full-product-closure.mjs`, its lineage document or its governed product checkpoint.
+This reconciliation deliberately does not change `scripts/validate-r3-full-product-closure.mjs`, its lineage document or its governed full-product checkpoint.
 
-On PR #147 exact head, the R3 technical suite passed contract emit, backend typecheck/build/tests, architecture, web typecheck/tests/build, R3 runtime reconciliation, OpenAPI zero drift, Postman zero drift and inherited API R3 closure, then failed only at `Validate full-product closure boundary` with the still-stale R3 product checkpoint.
+On PR #153 exact head, R3 passed dependency installation, contract emit, backend typecheck/build/tests (`107/107`), architecture conformance, web typecheck/tests (`135/135`)/build, R3 runtime reconciliation (`90/90`), OpenAPI R3 zero drift (`90 operations / 76 paths / 24 fragments`), Postman R3 zero drift (`90 operations / 16 families`) and inherited API R3 closure. It then failed only at `Validate full-product closure boundary` because the R3 lineage still predates Recovery.
 
 That boundary belongs to the next separate governance PR.
 
